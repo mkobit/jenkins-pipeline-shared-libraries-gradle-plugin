@@ -15,6 +15,7 @@ buildscript {
 
 plugins {
   kotlin("jvm")
+  `kotlin-dsl`
   `java-library`
   id("com.gradle.plugin-publish") version "0.9.7"
 }
