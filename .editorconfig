@@ -1,0 +1,18 @@
+root = true
+
+# Unix-style newlines with a newline ending every file
+# Use UTF-8 by default
+[*]
+end_of_line = lf
+charset = utf-8
+insert_final_newline = true
+indent_style = space
+indent_size = 2
+
+# Windows style line endings for Gradlew bat file
+[gradlew.bat]
+end_of_line = crlf
+
+# Use 4 spaces for indentation in Markdown files
+[*.md]
+indent_size = 4
