@@ -15,8 +15,9 @@ buildscript {
 
 plugins {
   kotlin("jvm")
-  `kotlin-dsl`
+//  `kotlin-dsl`
   `java-library`
+  `java-gradle-plugin`
   id("com.gradle.plugin-publish") version "0.9.7"
 }
 
@@ -59,15 +60,30 @@ tasks.withType(KotlinCompile::class.java) {
   kotlinOptions.jvmTarget = "1.8"
 }
 
+val sharedLibraryPluginId = "com.mkobit.jenkins.pipelines.shared-library"
+gradlePlugin {
+  plugins {
+    // Don't get the extensions for NamedDomainObjectContainer here because we only have a NamedDomainObjectContainer
+    this {
+      "sharedLibrary" {
+        id = sharedLibraryPluginId
+        implementationClass = "com.mkobit.jenkins.pipelines.SharedLibraryPlugin"
+      }
+    }
+  }
+}
+
 pluginBundle {
   vcsUrl = "https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin"
   description = "Configures and sets up a pipeline project for development and testing of a shared library created for https://jenkins.io/doc/book/pipeline/shared-libraries/"
-  tags = listOf("jenkins", "pipeline", "shared library")
+  tags = listOf("jenkins", "pipeline", "shared library", "global library")
 
   plugins(delegateClosureOf<NamedDomainObjectContainer<PluginConfig>> {
-    create("pipelineLibraryDevelopment") {
-      id = "com.mkobit.jenkins.pipelines.shared-library"
-      displayName = "Jenkins Pipeline Shared Library Development"
+    this {
+      "pipelineLibraryDevelopment" {
+        id = "com.mkobit.jenkins.pipelines.shared-library"
+        displayName = "Jenkins Pipeline Shared Library Development"
+      }
     }
   })
 }

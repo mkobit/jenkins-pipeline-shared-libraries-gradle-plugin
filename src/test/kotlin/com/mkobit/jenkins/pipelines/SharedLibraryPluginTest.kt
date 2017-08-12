@@ -1,0 +1,146 @@
+package com.mkobit.jenkins.pipelines
+
+import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Condition
+import org.assertj.core.condition.AllOf.allOf
+import org.gradle.api.JavaVersion
+import org.gradle.api.Project
+import org.gradle.api.artifacts.Dependency
+import org.gradle.api.artifacts.repositories.MavenArtifactRepository
+import org.gradle.api.internal.project.ProjectInternal
+import org.gradle.api.plugins.JavaPluginConvention
+import org.gradle.testfixtures.ProjectBuilder
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import testsupport.NotImplementedYet
+import java.util.function.Predicate
+
+internal class SharedLibraryPluginTest {
+  private lateinit var project: Project
+
+  @BeforeEach
+  internal fun setUp() {
+    project = ProjectBuilder.builder().build()
+    project.pluginManager.apply(SharedLibraryPlugin::class.java)
+  }
+
+  @Test
+  internal fun `Groovy plugin is applied`() {
+    assertThat(project.pluginManager).satisfies {
+      assertThat(it.hasPlugin("groovy")).isTrue()
+    }
+  }
+
+  @Test
+  internal fun `Jenkins repository is added`() {
+    val repository = project.repositories.getByName(SharedLibraryPlugin.JENKINS_REPOSITORY_NAME)
+    assertThat(repository)
+      .isInstanceOf(MavenArtifactRepository::class.java)
+      .isNotNull()
+    assertThat(repository as MavenArtifactRepository)
+    .satisfies { mavenArtifactRepository ->
+      assertThat(mavenArtifactRepository.url)
+        .hasAuthority("repo.jenkins-ci.org")
+        .hasScheme("https")
+      assertThat(mavenArtifactRepository.name).isEqualTo(SharedLibraryPlugin.JENKINS_REPOSITORY_NAME)
+    }
+  }
+
+  @Test
+  internal fun `sourceCompatibility is Java 8`() {
+    val convention = project.convention.getPlugin(JavaPluginConvention::class.java)
+
+    assertThat(convention.sourceCompatibility).isEqualTo(JavaVersion.VERSION_1_8)
+    assertThat(convention.targetCompatibility).isEqualTo(JavaVersion.VERSION_1_8)
+  }
+
+  @Test
+  internal fun `src is a Groovy source directory`() {
+    val convention = project.convention.getPlugin(JavaPluginConvention::class.java)
+    val main = convention.sourceSets.getByName("main")
+    assertThat(main).isNotNull()
+    assertThat(main.groovy.srcDirs).anySatisfy {
+      assertThat(it.endsWith("src"))
+    }
+  }
+
+  @Test
+  internal fun `vars is a Groovy source directory`() {
+    val convention = project.convention.getPlugin(JavaPluginConvention::class.java)
+    val main = convention.sourceSets.getByName("main")
+    assertThat(main).isNotNull()
+    assertThat(main.groovy.srcDirs).anySatisfy {
+      assertThat(it.endsWith("src"))
+    }
+  }
+
+  @Test
+  internal fun `src is a resources directory`() {
+    val convention = project.convention.getPlugin(JavaPluginConvention::class.java)
+    val main = convention.sourceSets.getByName("main")
+    assertThat(main).isNotNull()
+    assertThat(main.resources.srcDirs).anySatisfy {
+      assertThat(it.endsWith("src"))
+    }
+  }
+
+  @Test
+  internal fun `main has no Java sources`() {
+    val convention = project.convention.getPlugin(JavaPluginConvention::class.java)
+    val main = convention.sourceSets.getByName("main")
+    assertThat(main).isNotNull()
+    assertThat(main.java.srcDirs).isEmpty()
+  }
+
+  @Test
+  internal fun `default Groovy dependency is added to implementation configuration`() {
+    val implementation = project.configurations.getByName("implementation")
+    project.evaluate()
+
+    val group = Condition<Dependency>(Predicate {
+      it.group == "org.codehaus.groovy"
+    }, "org.codehaus.groovy")
+    val name = Condition<Dependency>(Predicate {
+      it.name == "groovy"
+    }, "groovy")
+    val version = Condition<Dependency>(Predicate {
+      it.version == "2.4.8"
+    }, "2.4.8")
+    assertThat(implementation.dependencies).haveExactly(1, allOf(group, name, version))
+  }
+
+  @Test
+  internal fun `can configure Groovy dependency version`() {
+    val groovyVersion = "2.5.0"
+    project.extensions.getByType(SharedLibraryExtension::class.java).groovyVersion = groovyVersion
+    project.evaluate()
+
+    val group = Condition<Dependency>(Predicate {
+      it.group == "org.codehaus.groovy"
+    }, "org.codehaus.groovy")
+    val name = Condition<Dependency>(Predicate {
+      it.name == "groovy"
+    }, "groovy")
+    val version = Condition<Dependency>(Predicate {
+      it.version == groovyVersion
+    }, groovyVersion)
+
+    val implementation = project.configurations.getByName("implementation")
+    assertThat(implementation.dependencies).haveExactly(1, allOf(group, name, version))
+  }
+
+  @NotImplementedYet
+  @Test
+  internal fun `Jenkins Pipeline Unit is added to testImplementation configuration`() {
+  }
+
+  @NotImplementedYet
+  @Test
+  internal fun `Jenkins Test Harness is added to integrationTestImplementation configuration`() {
+  }
+
+  // Internal function needed here to trigger evaluation
+  private fun Project.evaluate(): Unit {
+    (this as ProjectInternal).evaluate()
+  }
+}
