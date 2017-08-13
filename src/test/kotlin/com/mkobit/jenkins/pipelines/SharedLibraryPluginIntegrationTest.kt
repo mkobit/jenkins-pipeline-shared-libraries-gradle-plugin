@@ -131,6 +131,16 @@ class MyLibTest {
   internal fun `@Grab not supported for untrusted libraries`() {
   }
 
+  @NotImplementedYet
+  @Test
+  internal fun `Groovydoc JAR can be generated`() {
+  }
+
+  @NotImplementedYet
+  @Test
+  internal fun `Groovy sources JAR can be generated`() {
+  }
+
   private fun groovyBuildScript(): String = """
 plugins {
   id 'com.mkobit.jenkins.pipelines.shared-library'
