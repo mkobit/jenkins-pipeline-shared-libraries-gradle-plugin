@@ -11,6 +11,7 @@ import testsupport.writeRelativeFile
 
 @Tag("integration")
 internal class SharedLibraryPluginIntegrationTest {
+  // TODO: test both groovy and kotlin usages
   @Test
   internal fun `main Groovy code is compiled`() {
     val projectDir = createTempDir().apply { deleteOnExit() }
@@ -39,7 +40,7 @@ class MyLibTest {
   @Test
   void checkAddition() {
     def myLib = new MyLib()
-    Assert.assertEquals(myLib.add(1, 2), 3)
+    Assert.assertEquals(3, myLib.add(1, 2))
   }
 }
 """
@@ -94,11 +95,12 @@ class MyLibTest {
 
     val buildResult: BuildResult = GradleRunner.create()
       .withPluginClasspath()
-      .withArguments("test")
+      .withArguments("test", "-s")
       .withProjectDir(projectDir)
       .build()
 
     val task = buildResult.task(":test")
+    assertThat(task).isNotNull()
     assertThat(task?.outcome)
       .describedAs("test task outcome")
       .withFailMessage("Build output: ${buildResult.output}")
@@ -106,9 +108,65 @@ class MyLibTest {
       .isEqualTo(TaskOutcome.SUCCESS)
   }
 
+  @Test
+  internal fun `can use @JenkinsRule in integration tests`() {
+    val projectDir = createTempDir().apply { deleteOnExit() }
+    projectDir.writeRelativeFile(fileName = "build.gradle") {
+      groovyBuildScript()
+    }
+
+    projectDir.writeRelativeFile("test", "integration", "groovy", "com", "mkobit", fileName = "MyLibIntegrationTest.groovy") {
+      """
+package com.mkobit
+
+import org.junit.Assert
+import org.junit.Rule
+import org.junit.Test
+import org.jvnet.hudson.test.JenkinsRule
+
+class MyLibIntegrationTest {
+
+  @Rule
+  public JenkinsRule rule = new JenkinsRule()
+
+  @Test
+  void canUseJenkins() {
+    rule.createOnlineSlave()
+    Assert.assertEquals(1, rule.jenkins.nodes.size())
+  }
+}
+"""
+    }
+
+    val buildResult: BuildResult = GradleRunner.create()
+      .withPluginClasspath()
+      .withArguments("integrationTest", "-s", "-i")
+      .withProjectDir(projectDir)
+      .build()
+
+    val task = buildResult.task(":integrationTest")
+    assertThat(task?.outcome)
+      .describedAs("integrationTest task outcome")
+      .withFailMessage("Build output: ${buildResult.output}")
+      .isNotNull()
+      .isEqualTo(TaskOutcome.SUCCESS)
+  }
+
   @NotImplementedYet
   @Test
-  internal fun `can integration test code in src using @JenkinsRule`() {
+  internal fun `integration test output for Jenkins Test Harness is in the build directory`() {
+  }
+
+  // TODO: this should be tested but may or may not be needed. I have a feeling classloader errors
+  // will happen in pipeline code if those classes are available.
+  @NotImplementedYet
+  @Test
+  internal fun `cannot use classes from main source code in integration test`() {
+  }
+
+  @NotImplementedYet
+  @Test
+  internal fun `can set up pipeline library in an integration test`() {
   }
 
   @NotImplementedYet

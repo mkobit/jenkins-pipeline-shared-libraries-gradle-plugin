@@ -134,9 +134,49 @@ internal class SharedLibraryPluginTest {
   internal fun `Jenkins Pipeline Unit is added to testImplementation configuration`() {
   }
 
-  @NotImplementedYet
   @Test
   internal fun `Jenkins Test Harness is added to integrationTestImplementation configuration`() {
+    project.evaluate()
+
+    val group = Condition<Dependency>(Predicate {
+      it.group == "org.jenkins-ci.main"
+    }, "org.jenkins-ci.main")
+    val name = Condition<Dependency>(Predicate {
+      it.name == "jenkins-test-harness"
+    }, "jenkins-test-harness")
+
+    val implementation = project.configurations.getByName("integrationTestImplementation")
+    assertThat(implementation.dependencies).haveExactly(1, allOf(group, name))
+  }
+
+  @Test
+  internal fun `Jenkins Core dependency is added to integrationTestImplementation configuration`() {
+    project.evaluate()
+
+    val group = Condition<Dependency>(Predicate {
+      it.group == "org.jenkins-ci.main"
+    }, "org.jenkins-ci.main")
+    val name = Condition<Dependency>(Predicate {
+      it.name == "jenkins-core"
+    }, "jenkins-core")
+
+    val implementation = project.configurations.getByName("integrationTestImplementation")
+    assertThat(implementation.dependencies).haveExactly(1, allOf(group, name))
+  }
+
+  @Test
+  internal fun `integrationTest task sets the system property for the buildDirectory`() {
+    val integrationTest = project.tasks.getByName("integrationTest")
+
+    assertThat(integrationTest).isNotNull().isInstanceOf(org.gradle.api.tasks.testing.Test::class.java)
+    assertThat((integrationTest as org.gradle.api.tasks.testing.Test).systemProperties).hasEntrySatisfying("buildDirectory") {
+      assertThat(it).isEqualTo(project.buildDir.absolutePath)
+    }
+  }
+
+  @NotImplementedYet
+  @Test
+  internal fun `Jenkins Global Library plugin implementation and HPI dependencies are added`() {
   }
 
   // Internal function needed here to trigger evaluation

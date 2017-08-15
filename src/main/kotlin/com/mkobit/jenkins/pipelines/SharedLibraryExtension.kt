@@ -6,7 +6,8 @@ import org.gradle.api.provider.PropertyState
 open class SharedLibraryExtension(
   val groovyVersionState: PropertyState<String>,
   val coreVersionState: PropertyState<String>,
-  val globalLibPluginVersionState: PropertyState<String>
+  val globalLibPluginVersionState: PropertyState<String>,
+  val testHarnessVersionState: PropertyState<String>
 ) {
 
   private val pluginDependencySpec: PluginDependencySpec = DefaultPluginDependencySpec()
@@ -33,6 +34,10 @@ open class SharedLibraryExtension(
   var groovyVersion: String
     get() = groovyVersionState.get()
     set(value) = groovyVersionState.set(value)
+
+  var testHarnessVersion: String
+    get() = testHarnessVersionState.get()
+    set(value) = testHarnessVersionState.set(value)
 
   fun pluginDependencies(action: Action<in PluginDependencySpec>) {
     action.execute(pluginDependencySpec)

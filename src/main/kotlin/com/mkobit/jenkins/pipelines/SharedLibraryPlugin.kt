@@ -6,17 +6,18 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.ConfigurationContainer
 import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.artifacts.dsl.RepositoryHandler
-import org.gradle.api.file.SourceDirectorySet
-import org.gradle.api.internal.HasConvention
+import org.gradle.api.file.ProjectLayout
 import org.gradle.api.plugins.GroovyPlugin
 import org.gradle.api.plugins.JavaPluginConvention
-import org.gradle.api.provider.PropertyState
-import org.gradle.api.tasks.GroovySourceSet
 import org.gradle.api.tasks.SourceSet
+import org.gradle.api.tasks.TaskContainer
 import org.gradle.api.tasks.testing.Test
 import org.gradle.language.base.plugins.LifecycleBasePlugin
+import javax.inject.Inject
 
-open class SharedLibraryPlugin : Plugin<Project> {
+open class SharedLibraryPlugin @Inject constructor(
+  private val projectLayout: ProjectLayout
+) : Plugin<Project> {
 
   companion object {
     val JENKINS_REPOSITORY_NAME = "JenkinsPublic"
@@ -25,6 +26,7 @@ open class SharedLibraryPlugin : Plugin<Project> {
     private val DEFAULT_GROOVY_VERSION = "2.4.8"
     private val DEFAULT_CORE_VERSION = "2.60.2"
     private val DEFAULT_GLOBAL_LIB_PLUGIN_VERSION = "2.8"
+    private val DEFAULT_TEST_HARNESS_VERSION = "2.24"
     internal val PLUGIN_HPI_CONFIGURATION = "pluginJpiDependencies"
   }
 
@@ -33,16 +35,7 @@ open class SharedLibraryPlugin : Plugin<Project> {
     setupJenkinsRepository(project.repositories)
     val (main, test, integrationTest) = setupJava(project.convention.getPlugin(JavaPluginConvention::class.java))
     val sharedLibraryExtension = createSharedLibraryExtension(project)
-    project.tasks.create("integrationTest", Test::class.java) {
-      it.apply {
-        dependsOn(main.classesTaskName)
-        mustRunAfter("test")
-        group = LifecycleBasePlugin.VERIFICATION_GROUP
-        description = "Runs tests with the jenkins-test-harness"
-        testClassesDirs = integrationTest.output.classesDirs
-        classpath = integrationTest.runtimeClasspath
-      }
-    }
+    setupIntegrationTestTask(project.tasks, main, integrationTest)
     setupPluginHpiConfiguration(
       project.configurations,
       main,
@@ -55,13 +48,46 @@ open class SharedLibraryPlugin : Plugin<Project> {
     }
   }
 
+  private fun setupIntegrationTestTask(
+    tasks: TaskContainer,
+    main: SourceSet,
+    integrationTest: SourceSet
+  ) {
+    tasks.create("integrationTest", Test::class.java) {
+      it.apply {
+        dependsOn(main.classesTaskName)
+        mustRunAfter("test")
+        group = LifecycleBasePlugin.VERIFICATION_GROUP
+        description = "Runs tests with the jenkins-test-harness"
+        testClassesDirs = integrationTest.output.classesDirs
+        classpath = integrationTest.runtimeClasspath
+        // Set the build directory for Jenkins test harness.
+        // See https://issues.jenkins-ci.org/browse/JENKINS-26331
+        systemProperty("buildDirectory", projectLayout.buildDirectory.get().get().absolutePath)
+      }
+    }
+  }
+
   private fun setupIntegrationTestDependencies(
     configurations: ConfigurationContainer,
     dependencies: DependencyHandler,
     sharedLibraryExtension: SharedLibraryExtension,
     integrationTest: SourceSet
   ) {
-    // TODO
+    dependencies.add(
+      integrationTest.implementationConfigurationName,
+      jenkinsTestHarnessDependency(sharedLibraryExtension.testHarnessVersion)
+    )
+
+    dependencies.add(
+      integrationTest.runtimeOnlyConfigurationName,
+      jenkinsWar(sharedLibraryExtension.coreVersion)
+    )
+
+    dependencies.add(
+      integrationTest.implementationConfigurationName,
+      jenkinsCoreDependency(sharedLibraryExtension.coreVersion)
+    )
   }
 
   private fun setupPluginHpiConfiguration(
@@ -72,7 +98,7 @@ open class SharedLibraryPlugin : Plugin<Project> {
   ) {
     val pluginHpiConfiguration = configurations.create(PLUGIN_HPI_CONFIGURATION) {
       it.apply {
-        isCanBeResolved = false
+        isCanBeResolved = true
         isVisible = false
       }
     }
@@ -133,26 +159,23 @@ open class SharedLibraryPlugin : Plugin<Project> {
     val groovyVersion = project.initializedProperty(DEFAULT_GROOVY_VERSION)
     val coreVersion = project.initializedProperty(DEFAULT_CORE_VERSION)
     val globalLibPluginVersion = project.initializedProperty(DEFAULT_GLOBAL_LIB_PLUGIN_VERSION)
+    val testHarnessVersion = project.initializedProperty(DEFAULT_TEST_HARNESS_VERSION)
     return project.extensions.create(
       "sharedLibrary",
       SharedLibraryExtension::class.java,
       groovyVersion,
       coreVersion,
-      globalLibPluginVersion
+      globalLibPluginVersion,
+      testHarnessVersion
     )
   }
 
+  private fun jenkinsCoreDependency(version: String) = "org.jenkins-ci.main:jenkins-core:$version"
   private fun groovyDependency(version: String) = "org.codehaus.groovy:groovy:$version"
   private fun jenkinsTestHarnessDependency(version: String) = "org.jenkins-ci.main:jenkins-test-harness:$version"
-  private fun jenkinsWar(version: String) = "org.jenkins-ci.main:jenkins-war:$version"
   // See https://issues.jenkins-ci.org/browse/JENKINS-24064 and 2.64 release notes about war-for-test not being needed in some cases
   // Also, see https://github.com/jenkinsci/jenkins/pull/2899/files
+  // https://github.com/jenkinsci/plugin-pom/pull/40/files shows how the new plugin-pom does the jenkins.war generation
+  private fun jenkinsWar(version: String) = "org.jenkins-ci.main:jenkins-war:$version@war"
   private fun jenkinsWarForTest(version: String) = "org.jenkins-ci.main:jenkins-war:$version:war-for-test@jar"
 }
-
-inline internal fun <reified T> Project.initializedProperty(initialState: T): PropertyState<T> = this.property(T::class.java).apply {
-  set(initialState)
-}
-
-internal val SourceSet.groovy: SourceDirectorySet
-  get() = (this as HasConvention).convention.getPlugin(GroovySourceSet::class.java).groovy
