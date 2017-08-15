@@ -11,7 +11,9 @@ import org.gradle.api.plugins.GroovyPlugin
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.TaskContainer
+import org.gradle.api.tasks.javadoc.Groovydoc
 import org.gradle.api.tasks.testing.Test
+import org.gradle.jvm.tasks.Jar
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import javax.inject.Inject
 
@@ -36,6 +38,7 @@ open class SharedLibraryPlugin @Inject constructor(
     val (main, test, integrationTest) = setupJava(project.convention.getPlugin(JavaPluginConvention::class.java))
     val sharedLibraryExtension = createSharedLibraryExtension(project)
     setupIntegrationTestTask(project.tasks, main, integrationTest)
+    setupDocumentationTasks(project.tasks, main)
     setupPluginHpiConfiguration(
       project.configurations,
       main,
@@ -45,6 +48,25 @@ open class SharedLibraryPlugin @Inject constructor(
     project.afterEvaluate {
       setupGroovyDependency(project.dependencies, sharedLibraryExtension, main)
       setupIntegrationTestDependencies(project.configurations, project.dependencies, sharedLibraryExtension, integrationTest)
+    }
+  }
+
+  private fun setupDocumentationTasks(tasks: TaskContainer, main: SourceSet) {
+    tasks.create("sourcesJar", Jar::class.java) {
+      it.apply {
+        description = "Assemble the sources JAR"
+        classifier = "sources"
+        from(main.allSource)
+      }
+    }
+
+    tasks.create("groovydocJar", Jar::class.java) {
+      it.apply {
+        val groovydoc = tasks.getByName(GroovyPlugin.GROOVYDOC_TASK_NAME) as Groovydoc
+        dependsOn(groovydoc)
+        description = "Assemble the Groovydoc JAR"
+        classifier = "javadoc"
+      }
     }
   }
 

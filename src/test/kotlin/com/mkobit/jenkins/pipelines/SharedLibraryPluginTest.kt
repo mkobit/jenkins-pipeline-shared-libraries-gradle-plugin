@@ -9,6 +9,7 @@ import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
 import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.api.plugins.JavaPluginConvention
+import org.gradle.jvm.tasks.Jar
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -172,6 +173,22 @@ internal class SharedLibraryPluginTest {
     assertThat((integrationTest as org.gradle.api.tasks.testing.Test).systemProperties).hasEntrySatisfying("buildDirectory") {
       assertThat(it).isEqualTo(project.buildDir.absolutePath)
     }
+  }
+
+  @Test
+  internal fun `groovydocJar task is created`() {
+    val groovydocJar = project.tasks.getByName("groovydocJar")
+    assertThat(groovydocJar)
+      .isNotNull()
+      .isInstanceOf(Jar::class.java)
+  }
+
+  @Test
+  internal fun `sourcesJar task is created`() {
+    val groovydocJar = project.tasks.getByName("sourcesJar")
+    assertThat(groovydocJar)
+      .isNotNull()
+      .isInstanceOf(Jar::class.java)
   }
 
   @NotImplementedYet

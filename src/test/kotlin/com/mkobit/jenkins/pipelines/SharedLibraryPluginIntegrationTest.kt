@@ -189,14 +189,64 @@ class MyLibIntegrationTest {
   internal fun `@Grab not supported for untrusted libraries`() {
   }
 
-  @NotImplementedYet
   @Test
   internal fun `Groovydoc JAR can be generated`() {
+    val projectDir = createTempDir().apply { deleteOnExit() }
+    projectDir.writeRelativeFile(fileName = "build.gradle") {
+      groovyBuildScript()
+    }
+    projectDir.writeRelativeFile("src", "com", "mkobit", fileName = "MyLib.groovy") {
+      """
+package com.mkobit
+class MyLib {
+  int add(int a, int b) {
+    return a + b
+  }
+}
+"""
+    }
+
+    val buildResult: BuildResult = GradleRunner.create()
+      .withPluginClasspath()
+      .withArguments("groovydocJar")
+      .withProjectDir(projectDir)
+      .build()
+
+    val task = buildResult.task(":groovydocJar")
+    assertThat(task?.outcome)
+      .describedAs("groovydocJar task outcome")
+      .isNotNull()
+      .isEqualTo(TaskOutcome.SUCCESS)
   }
 
-  @NotImplementedYet
   @Test
   internal fun `Groovy sources JAR can be generated`() {
+    val projectDir = createTempDir().apply { deleteOnExit() }
+    projectDir.writeRelativeFile(fileName = "build.gradle") {
+      groovyBuildScript()
+    }
+    projectDir.writeRelativeFile("src", "com", "mkobit", fileName = "MyLib.groovy") {
+      """
+package com.mkobit
+class MyLib {
+  int add(int a, int b) {
+    return a + b
+  }
+}
+"""
+    }
+
+    val buildResult: BuildResult = GradleRunner.create()
+      .withPluginClasspath()
+      .withArguments("sourcesJar")
+      .withProjectDir(projectDir)
+      .build()
+
+    val task = buildResult.task(":sourcesJar")
+    assertThat(task?.outcome)
+      .describedAs("groovydocJar task outcome")
+      .isNotNull()
+      .isEqualTo(TaskOutcome.SUCCESS)
   }
 
   private fun groovyBuildScript(): String = """
