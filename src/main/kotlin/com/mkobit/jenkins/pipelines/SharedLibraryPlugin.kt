@@ -3,6 +3,7 @@ package com.mkobit.jenkins.pipelines
 import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ConfigurationContainer
 import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.artifacts.dsl.RepositoryHandler
@@ -29,7 +30,11 @@ open class SharedLibraryPlugin @Inject constructor(
     private val DEFAULT_CORE_VERSION = "2.60.2"
     private val DEFAULT_GLOBAL_LIB_PLUGIN_VERSION = "2.8"
     private val DEFAULT_TEST_HARNESS_VERSION = "2.24"
-    internal val PLUGIN_HPI_CONFIGURATION = "pluginJpiDependencies"
+    private val PLUGIN_HPI_JPI_CONFIGURATION = "jenkinsPluginHpisAndJpis"
+    private val PLUGIN_LIBRARY_CONFIGURATION = "jenkinsPluginLibraries"
+    private val CORE_LIBRARY_CONFIGURATION = "jenkinsCoreLibraries"
+    private val TEST_LIBRARY_CONFIGURATION = "jenkinsTestLibraries"
+    private val TEST_LIBRARY_RUNTIME_ONLY_CONFIGURATION = "jenkinsTestLibrariesRuntimeOnly"
   }
 
   override fun apply(project: Project) {
@@ -39,7 +44,7 @@ open class SharedLibraryPlugin @Inject constructor(
     val sharedLibraryExtension = createSharedLibraryExtension(project)
     setupIntegrationTestTask(project.tasks, main, integrationTest)
     setupDocumentationTasks(project.tasks, main)
-    setupPluginHpiConfiguration(
+    setupConfigurations(
       project.configurations,
       main,
       test,
@@ -97,7 +102,7 @@ open class SharedLibraryPlugin @Inject constructor(
     integrationTest: SourceSet
   ) {
     dependencies.add(
-      integrationTest.implementationConfigurationName,
+      TEST_LIBRARY_CONFIGURATION,
       jenkinsTestHarnessDependency(sharedLibraryExtension.testHarnessVersion)
     )
 
@@ -112,23 +117,36 @@ open class SharedLibraryPlugin @Inject constructor(
     )
   }
 
-  private fun setupPluginHpiConfiguration(
+  private fun setupConfigurations(
     configurations: ConfigurationContainer,
     main: SourceSet,
     test: SourceSet,
     integrationTest: SourceSet
   ) {
-    val pluginHpiConfiguration = configurations.create(PLUGIN_HPI_CONFIGURATION) {
+    val configurationAction: (Configuration) -> Unit = {
       it.apply {
         isCanBeResolved = true
         isVisible = false
       }
     }
+    val pluginHpiJpiConfiguration = configurations.create(PLUGIN_HPI_JPI_CONFIGURATION, configurationAction)
+    val pluginLibraries = configurations.create(PLUGIN_LIBRARY_CONFIGURATION, configurationAction)
+    val coreLibraries = configurations.create(CORE_LIBRARY_CONFIGURATION, configurationAction)
+    val testLibrary = configurations.create(TEST_LIBRARY_CONFIGURATION, configurationAction)
+    val testLibraryRuntimeOnly = configurations.create(TEST_LIBRARY_RUNTIME_ONLY_CONFIGURATION, configurationAction)
+
+
     configurations.getByName(integrationTest.implementationConfigurationName).extendsFrom(
       configurations.getByName(main.implementationConfigurationName),
-      configurations.getByName(test.implementationConfigurationName)
+      configurations.getByName(test.implementationConfigurationName),
+      coreLibraries,
+      pluginLibraries,
+      testLibrary
     )
-    configurations.getByName(integrationTest.runtimeOnlyConfigurationName).extendsFrom(pluginHpiConfiguration)
+    configurations.getByName(integrationTest.runtimeOnlyConfigurationName).extendsFrom(
+      pluginHpiJpiConfiguration,
+      testLibraryRuntimeOnly
+    )
   }
 
   private fun setupGroovyDependency(

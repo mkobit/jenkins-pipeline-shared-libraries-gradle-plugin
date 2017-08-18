@@ -6,6 +6,7 @@ import org.assertj.core.condition.AllOf.allOf
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Dependency
+import org.gradle.api.artifacts.ExternalModuleDependency
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
 import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.api.plugins.JavaPluginConvention
@@ -132,11 +133,11 @@ internal class SharedLibraryPluginTest {
 
   @NotImplementedYet
   @Test
-  internal fun `Jenkins Pipeline Unit is added to testImplementation configuration`() {
+  internal fun `Jenkins Pipeline Unit is available in testImplementation configuration`() {
   }
 
   @Test
-  internal fun `Jenkins Test Harness is added to integrationTestImplementation configuration`() {
+  internal fun `Jenkins Test Harness is available in integrationTestImplementation configuration`() {
     project.evaluate()
 
     val group = Condition<Dependency>(Predicate {
@@ -147,11 +148,29 @@ internal class SharedLibraryPluginTest {
     }, "jenkins-test-harness")
 
     val implementation = project.configurations.getByName("integrationTestImplementation")
-    assertThat(implementation.dependencies).haveExactly(1, allOf(group, name))
+    assertThat(implementation.incoming.dependencies).haveExactly(1, allOf(group, name))
   }
 
   @Test
-  internal fun `Jenkins Core dependency is added to integrationTestImplementation configuration`() {
+  internal fun `Jenkins WAR is available in integrationTestRuntimeOnly configuration`() {
+    project.evaluate()
+
+    val group = Condition<Dependency>(Predicate {
+      it.group == "org.jenkins-ci.main"
+    }, "org.jenkins-ci.main")
+    val name = Condition<Dependency>(Predicate {
+      it.name == "jenkins-war"
+    }, "jenkins-war")
+    val extension = Condition<Dependency>(Predicate {
+      it is ExternalModuleDependency && it.artifacts.any { it.extension == "war" }
+    }, "war")
+
+    val implementation = project.configurations.getByName("integrationTestRuntimeOnly")
+    assertThat(implementation.incoming.dependencies).haveExactly(1, allOf(group, name, extension))
+  }
+
+  @Test
+  internal fun `Jenkins Core dependency is available in integrationTestImplementation configuration`() {
     project.evaluate()
 
     val group = Condition<Dependency>(Predicate {
@@ -162,7 +181,7 @@ internal class SharedLibraryPluginTest {
     }, "jenkins-core")
 
     val implementation = project.configurations.getByName("integrationTestImplementation")
-    assertThat(implementation.dependencies).haveExactly(1, allOf(group, name))
+    assertThat(implementation.incoming.dependencies).haveExactly(1, allOf(group, name))
   }
 
   @Test
@@ -189,6 +208,38 @@ internal class SharedLibraryPluginTest {
     assertThat(groovydocJar)
       .isNotNull()
       .isInstanceOf(Jar::class.java)
+  }
+
+  @Test
+  internal fun `configuration exists for Jenkins plugins HPI and JPI dependencies`() {
+    val config = project.configurations.getByName("jenkinsPluginHpisAndJpis")
+    assertThat(config)
+      .isNotNull
+    assertThat(config.isVisible).isFalse()
+  }
+
+  @Test
+  internal fun `configuration exists for Jenkins plugins JAR dependencies`() {
+    val config = project.configurations.getByName("jenkinsPluginLibraries")
+    assertThat(config)
+      .isNotNull
+    assertThat(config.isVisible).isFalse()
+  }
+
+  @Test
+  internal fun `configuration exists for Jenkins core dependencies`() {
+    val config = project.configurations.getByName("jenkinsCoreLibraries")
+    assertThat(config)
+      .isNotNull
+    assertThat(config.isVisible).isFalse()
+  }
+
+  @Test
+  internal fun `configuration exists for Jenkins test dependencies`() {
+    val config = project.configurations.getByName("jenkinsTestLibraries")
+    assertThat(config)
+      .isNotNull
+    assertThat(config.isVisible).isFalse()
   }
 
   @NotImplementedYet

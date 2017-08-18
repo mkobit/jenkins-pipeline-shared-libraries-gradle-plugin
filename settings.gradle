@@ -1,8 +1,6 @@
 pluginManagement {
   it.resolutionStrategy {
     it.eachPlugin {
-      println('Name: ' + it.requested.id.name)
-      println('Namspace: ' + it.requested.id.namespace)
       if (it.requested.id.id.startsWith('org.jetbrains.kotlin')) {
         it.useVersion("${kotlinVersion}")
       }
