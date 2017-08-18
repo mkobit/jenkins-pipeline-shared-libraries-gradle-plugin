@@ -199,5 +199,4 @@ open class SharedLibraryPlugin @Inject constructor(
   // Also, see https://github.com/jenkinsci/jenkins/pull/2899/files
   // https://github.com/jenkinsci/plugin-pom/pull/40/files shows how the new plugin-pom does the jenkins.war generation
   private fun jenkinsWar(version: String) = "org.jenkins-ci.main:jenkins-war:$version@war"
-  private fun jenkinsWarForTest(version: String) = "org.jenkins-ci.main:jenkins-war:$version:war-for-test@jar"
 }

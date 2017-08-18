@@ -115,7 +115,7 @@ class MyLibTest {
       groovyBuildScript()
     }
 
-    projectDir.writeRelativeFile("test", "integration", "groovy", "com", "mkobit", fileName = "MyLibIntegrationTest.groovy") {
+    projectDir.writeRelativeFile("test", "integration", "groovy", "com", "mkobit", fileName = "JenkinsRuleUsageTest.groovy") {
       """
 package com.mkobit
 
@@ -124,7 +124,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.jvnet.hudson.test.JenkinsRule
 
-class MyLibIntegrationTest {
+class JenkinsRuleUsageTest {
 
   @Rule
   public JenkinsRule rule = new JenkinsRule()
@@ -167,6 +167,100 @@ class MyLibIntegrationTest {
   @NotImplementedYet
   @Test
   internal fun `can set up pipeline library in an integration test`() {
+    val projectDir = createTempDir().apply { deleteOnExit() }
+    projectDir.writeRelativeFile(fileName = "build.gradle") {
+      groovyBuildScript()
+    }
+
+    projectDir.writeRelativeFile("src", "com", "mkobit", fileName = "LibHelper.groovy") {
+      """
+package com.mkobit
+
+class LibHelper {
+  private script
+  LibHelper(script) {
+    this.script = script
+  }
+
+  void sayHelloTo(String name) {
+    script.echo "LibHelper says hello to ${'$'}name!"
+  }
+}
+"""
+    }
+
+    projectDir.writeRelativeFile("test", "integration", "groovy", "com", "mkobit", fileName = "JenkinsGlobalLibraryTest.groovy") {
+      """
+package com.mkobit
+
+import jenkins.plugins.git.GitSCMSource
+import org.jenkinsci.plugins.workflow.libs.GlobalLibraries
+import org.jenkinsci.plugins.workflow.libs.LibraryConfiguration
+import org.jenkinsci.plugins.workflow.libs.SCMSourceRetriever
+import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition
+import org.jenkinsci.plugins.workflow.job.WorkflowJob
+import org.jenkinsci.plugins.workflow.job.WorkflowRun
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import org.jvnet.hudson.test.JenkinsRule
+
+class JenkinsGlobalLibraryTest {
+
+  @Rule
+  public JenkinsRule rule = new JenkinsRule()
+
+  @Before
+  void configureGlobalGitLibraries() {
+    final SCMSourceRetriever retriever = new SCMSourceRetriever(
+      new GitSCMSource(
+        null,
+        System.getProperty('user.dir'),
+        '',
+        'local-source-code',
+        // Fetch everything - if this is not used builds fail on Jenkins for some reason
+        '*:refs/remotes/origin/*',
+        '*',
+        '',
+        true
+      )
+    )
+    final LibraryConfiguration localLibrary =
+      new LibraryConfiguration('pipelineUtilities', retriever)
+    localLibrary.implicit = true
+    localLibrary.defaultVersion = 'git rev-parse HEAD'.execute().text.trim()
+    localLibrary.allowVersionOverride = false
+    GlobalLibraries.get().setLibraries(Collections.singletonList(localLibrary))
+  }
+
+  @Test
+  void testingMyLibrary() {
+    final CpsFlowDefinition flow = new CpsFlowDefinition('''
+import com.mkobit.LibHelper
+
+final libHelper = new LibHelper(this)
+libHelper.sayHelloTo('mkobit')
+    ''', true)
+    final WorkflowJob workflowJob = rule.createProject(WorkflowJob, 'project')
+    project.definition = flowDefinition
+    rule.buildAndAssertSuccess(workflowJob)
+  }
+}
+"""
+    }
+
+    val buildResult: BuildResult = GradleRunner.create()
+      .withPluginClasspath()
+      .withArguments("integrationTest", "-s", "-i")
+      .withProjectDir(projectDir)
+      .build()
+
+    val task = buildResult.task(":integrationTest")
+    assertThat(task?.outcome)
+      .describedAs("integrationTest task outcome")
+      .withFailMessage("Build output: ${buildResult.output}")
+      .isNotNull()
+      .isEqualTo(TaskOutcome.SUCCESS)
   }
 
   @NotImplementedYet

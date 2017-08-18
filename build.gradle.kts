@@ -19,6 +19,7 @@ plugins {
   `java-library`
   `java-gradle-plugin`
   id("com.gradle.plugin-publish") version "0.9.7"
+  id("com.github.ben-manes.versions") version "0.15.0"
 }
 
 apply {
@@ -29,6 +30,9 @@ apply {
 version = "0.1.0"
 group = "com.mkobit.jenkins.pipelines"
 
+val kotlinVersion: String = project.property("kotlinVersion") as String
+// Below not working for some reason
+//val kotlinVersion: String by project.properties
 val junitPlatformVersion: String by rootProject.extra
 val junitTestImplementationArtifacts: Map<String, Map<String, String>> by rootProject.extra
 val junitTestRuntimeOnlyArtifacts: Map<String, Map<String, String>> by rootProject.extra
@@ -44,9 +48,11 @@ java {
 
 dependencies {
   api(gradleApi())
-  implementation(kotlin("stdlib-jre8"))
-  testImplementation(kotlin("reflect"))
+  implementation(kotlin("stdlib-jre8", kotlinVersion))
+  testImplementation(kotlin("reflect", kotlinVersion))
+  testImplementation("com.google.guava:guava:23.0")
   testImplementation("org.assertj:assertj-core:3.8.0")
+  testImplementation("org.eclipse.jgit:org.eclipse.jgit.junit:4.8.0.201706111038-r")
   testImplementation("com.nhaarman:mockito-kotlin:1.5.0")
   junitTestImplementationArtifacts.values.forEach {
     testImplementation(it)
@@ -62,13 +68,12 @@ tasks.withType(KotlinCompile::class.java) {
 
 val sharedLibraryPluginId = "com.mkobit.jenkins.pipelines.shared-library"
 gradlePlugin {
-  plugins {
+  plugins.invoke {
     // Don't get the extensions for NamedDomainObjectContainer here because we only have a NamedDomainObjectContainer
-    this {
-      "sharedLibrary" {
-        id = sharedLibraryPluginId
-        implementationClass = "com.mkobit.jenkins.pipelines.SharedLibraryPlugin"
-      }
+    // See https://github.com/gradle/kotlin-dsl/issues/459
+    "sharedLibrary" {
+      id = sharedLibraryPluginId
+      implementationClass = "com.mkobit.jenkins.pipelines.SharedLibraryPlugin"
     }
   }
 }

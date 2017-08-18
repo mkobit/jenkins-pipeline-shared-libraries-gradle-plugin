@@ -1,6 +1,6 @@
 package com.mkobit.jenkins.pipelines
 
-internal class DefaultPluginDependencySpec : PluginDependencySpec {
+class DefaultPluginDependencySpec : PluginDependencySpec {
 
   private val dependencies: MutableList<PluginDependency> = mutableListOf()
 
