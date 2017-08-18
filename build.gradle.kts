@@ -1,5 +1,6 @@
 import com.gradle.publish.PluginConfig
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.preprocessor.mkdirsOrFail
 import org.junit.platform.console.options.Details
 import org.junit.platform.gradle.plugin.JUnitPlatformExtension
 
@@ -102,4 +103,39 @@ extensions.getByType(JUnitPlatformExtension::class.java).apply {
   }
   logManager = "org.apache.logging.log4j.jul.LogManager"
   details = Details.TREE
+}
+
+tasks {
+  "wrapper"(Wrapper::class) {
+    gradleVersion = "4.1"
+  }
+
+  val circleCiScriptDestination = file("$buildDir/circle/circleci")
+  val downloadCircleCiScript by creating(Exec::class) {
+    val downloadUrl = "https://circle-downloads.s3.amazonaws.com/releases/build_agent_wrapper/circleci"
+    inputs.property("url", downloadUrl)
+    outputs.file(circleCiScriptDestination)
+    circleCiScriptDestination.parentFile.mkdirsOrFail()
+    commandLine("curl", "--fail", "-L", downloadUrl, "-o", circleCiScriptDestination)
+    doLast {
+      project.exec { commandLine("chmod", "+x", circleCiScriptDestination) }
+    }
+  }
+
+  val checkCircleConfig by creating(Exec::class) {
+    // Disabled until https://discuss.circleci.com/t/allow-for-using-circle-ci-tooling-without-a-tty/15501
+    disabled = true
+    dependsOn(downloadCircleCiScript)
+    val circleConfig = file(".circleci/config.yml")
+    executable(circleCiScriptDestination)
+    args("config", "validate", "-c", circleConfig)
+  }
+
+  val circleCiBuild by creating(Exec::class) {
+    // Disabled until https://discuss.circleci.com/t/allow-for-using-circle-ci-tooling-without-a-tty/15501
+    disabled = true
+    dependsOn(downloadCircleCiScript)
+    executable(circleCiScriptDestination)
+    args("build")
+  }
 }
