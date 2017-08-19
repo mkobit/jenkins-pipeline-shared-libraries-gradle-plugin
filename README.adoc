@@ -1,0 +1,8 @@
+= Jenkins Pipeline Shared Library Gradle Plugin
+:toc:
+:uri-jenkins-docs: https://jenkins.io/doc/book/pipeline/shared-libraries/
+:uri-jenkins-pipeline-unit: https://github.com/lesfurets/JenkinsPipelineUnit
+
+Gradle plugin to assist with developing link:{uri-jenkins-docs}[_Shared Libraries for Jenkins Pipelines_].
+
+NOTE: Work in progress
