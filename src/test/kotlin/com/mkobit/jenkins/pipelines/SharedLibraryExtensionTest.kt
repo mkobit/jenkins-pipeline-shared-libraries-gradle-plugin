@@ -15,6 +15,7 @@ internal class SharedLibraryExtensionTest {
     private val INITIAL_CORE_VERSION = "2.0"
     private val INITIAL_GLOBAL_LIB_VERSION = "3.0"
     private val INITIAL_TEST_HARNESS_VERSION = "4.0"
+    private val INITIAL_PIPELINE_UNIT_VERSION = "5.0"
   }
 
   @BeforeEach
@@ -24,7 +25,8 @@ internal class SharedLibraryExtensionTest {
       project.initializedProperty(INITIAL_GROOVY_VERSION),
       project.initializedProperty(INITIAL_CORE_VERSION),
       project.initializedProperty(INITIAL_GLOBAL_LIB_VERSION),
-      project.initializedProperty(INITIAL_TEST_HARNESS_VERSION)
+      project.initializedProperty(INITIAL_TEST_HARNESS_VERSION),
+      project.initializedProperty(INITIAL_PIPELINE_UNIT_VERSION)
     )
   }
 
@@ -37,36 +39,44 @@ internal class SharedLibraryExtensionTest {
         INITIAL_GLOBAL_LIB_VERSION)
       assertThat(sharedLibraryExtension.testHarnessVersion).isEqualTo(
         INITIAL_TEST_HARNESS_VERSION)
-      assertAll()
+      assertThat(sharedLibraryExtension.pipelineTestUnitVersion).isEqualTo(
+        INITIAL_PIPELINE_UNIT_VERSION)
     }
   }
 
   @Test
   internal fun `can set Groovy version`() {
-    sharedLibraryExtension.groovyVersion = "newVersion"
+    sharedLibraryExtension.groovyVersion = "newGroovyVersion"
 
-    assertThat(sharedLibraryExtension.groovyVersion).isEqualTo("newVersion")
+    assertThat(sharedLibraryExtension.groovyVersion).isEqualTo("newGroovyVersion")
   }
 
   @Test
   internal fun `can set Jenkins core version`() {
-    sharedLibraryExtension.coreVersion = "newVersion"
+    sharedLibraryExtension.coreVersion = "newCoreVersion"
 
-    assertThat(sharedLibraryExtension.coreVersion).isEqualTo("newVersion")
+    assertThat(sharedLibraryExtension.coreVersion).isEqualTo("newCoreVersion")
   }
 
   @Test
   internal fun `can set Global Library Plugin version`() {
-    sharedLibraryExtension.globalLibPluginVersion= "newVersion"
+    sharedLibraryExtension.globalLibPluginVersion = "newGlobalLibraryVersion"
 
-    assertThat(sharedLibraryExtension.globalLibPluginVersion).isEqualTo("newVersion")
+    assertThat(sharedLibraryExtension.globalLibPluginVersion).isEqualTo("newGlobalLibraryVersion")
   }
 
   @Test
   internal fun `can set Jenkins Test Harness version`() {
-    sharedLibraryExtension.testHarnessVersion= "newVersion"
+    sharedLibraryExtension.testHarnessVersion = "newTestHarnessVersion"
 
-    assertThat(sharedLibraryExtension.testHarnessVersion).isEqualTo("newVersion")
+    assertThat(sharedLibraryExtension.testHarnessVersion).isEqualTo("newTestHarnessVersion")
+  }
+
+  @Test
+  internal fun `can set PipelineTestUnit version`() {
+    sharedLibraryExtension.pipelineTestUnitVersion = "newPipelineTestUnitVersion"
+
+    assertThat(sharedLibraryExtension.pipelineTestUnitVersion).isEqualTo("newPipelineTestUnitVersion")
   }
 
   @NotImplementedYet

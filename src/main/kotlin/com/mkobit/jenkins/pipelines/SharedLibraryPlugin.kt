@@ -41,7 +41,7 @@ open class SharedLibraryPlugin @Inject constructor(
     project.pluginManager.apply(GroovyPlugin::class.java)
     setupJenkinsRepository(project.repositories)
     val (main, test, integrationTest) = setupJava(project.convention.getPlugin(JavaPluginConvention::class.java))
-    val sharedLibraryExtension = createSharedLibraryExtension(project)
+    val sharedLibraryExtension = setupSharedLibraryExtension(project)
     setupIntegrationTestTask(project.tasks, main, integrationTest)
     setupDocumentationTasks(project.tasks, main)
     setupConfigurations(
@@ -52,7 +52,35 @@ open class SharedLibraryPlugin @Inject constructor(
     )
     project.afterEvaluate {
       setupGroovyDependency(project.dependencies, sharedLibraryExtension, main)
-      setupIntegrationTestDependencies(project.configurations, project.dependencies, sharedLibraryExtension, integrationTest)
+      setupDependencies(project.dependencies, sharedLibraryExtension, test)
+    }
+  }
+
+  private fun setupDependencies(
+    dependencies: DependencyHandler,
+    sharedLibraryExtension: SharedLibraryExtension,
+    test: SourceSet
+  ) {
+    dependencies.add(
+      TEST_LIBRARY_CONFIGURATION,
+      jenkinsTestHarnessDependency(sharedLibraryExtension.testHarnessVersion)
+    )
+
+    dependencies.add(
+      TEST_LIBRARY_RUNTIME_ONLY_CONFIGURATION,
+      jenkinsWar(sharedLibraryExtension.coreVersion)
+    )
+
+    dependencies.add(
+      CORE_LIBRARY_CONFIGURATION,
+      jenkinsCoreDependency(sharedLibraryExtension.coreVersion)
+    )
+
+    sharedLibraryExtension.pipelineTestUnitVersion?.let {
+      dependencies.add(
+        test.implementationConfigurationName,
+        jenkinsPipelineUnitDependency(it)
+      )
     }
   }
 
@@ -95,28 +123,6 @@ open class SharedLibraryPlugin @Inject constructor(
     }
   }
 
-  private fun setupIntegrationTestDependencies(
-    configurations: ConfigurationContainer,
-    dependencies: DependencyHandler,
-    sharedLibraryExtension: SharedLibraryExtension,
-    integrationTest: SourceSet
-  ) {
-    dependencies.add(
-      TEST_LIBRARY_CONFIGURATION,
-      jenkinsTestHarnessDependency(sharedLibraryExtension.testHarnessVersion)
-    )
-
-    dependencies.add(
-      integrationTest.runtimeOnlyConfigurationName,
-      jenkinsWar(sharedLibraryExtension.coreVersion)
-    )
-
-    dependencies.add(
-      integrationTest.implementationConfigurationName,
-      jenkinsCoreDependency(sharedLibraryExtension.coreVersion)
-    )
-  }
-
   private fun setupConfigurations(
     configurations: ConfigurationContainer,
     main: SourceSet,
@@ -134,7 +140,6 @@ open class SharedLibraryPlugin @Inject constructor(
     val coreLibraries = configurations.create(CORE_LIBRARY_CONFIGURATION, configurationAction)
     val testLibrary = configurations.create(TEST_LIBRARY_CONFIGURATION, configurationAction)
     val testLibraryRuntimeOnly = configurations.create(TEST_LIBRARY_RUNTIME_ONLY_CONFIGURATION, configurationAction)
-
 
     configurations.getByName(integrationTest.implementationConfigurationName).extendsFrom(
       configurations.getByName(main.implementationConfigurationName),
@@ -195,23 +200,26 @@ open class SharedLibraryPlugin @Inject constructor(
     return Triple(main, test, integrationTest)
   }
 
-  private fun createSharedLibraryExtension(project: Project): SharedLibraryExtension {
+  private fun setupSharedLibraryExtension(project: Project): SharedLibraryExtension {
     val groovyVersion = project.initializedProperty(DEFAULT_GROOVY_VERSION)
     val coreVersion = project.initializedProperty(DEFAULT_CORE_VERSION)
     val globalLibPluginVersion = project.initializedProperty(DEFAULT_GLOBAL_LIB_PLUGIN_VERSION)
     val testHarnessVersion = project.initializedProperty(DEFAULT_TEST_HARNESS_VERSION)
+    val pipelineTestUnitVersion = project.property(String::class.java)
     return project.extensions.create(
       "sharedLibrary",
       SharedLibraryExtension::class.java,
       groovyVersion,
       coreVersion,
       globalLibPluginVersion,
-      testHarnessVersion
+      testHarnessVersion,
+      pipelineTestUnitVersion
     )
   }
 
   private fun jenkinsCoreDependency(version: String) = "org.jenkins-ci.main:jenkins-core:$version"
   private fun groovyDependency(version: String) = "org.codehaus.groovy:groovy:$version"
+  private fun jenkinsPipelineUnitDependency(version: String) = "com.lesfurets:jenkins-pipeline-unit:$version"
   private fun jenkinsTestHarnessDependency(version: String) = "org.jenkins-ci.main:jenkins-test-harness:$version"
   // See https://issues.jenkins-ci.org/browse/JENKINS-24064 and 2.64 release notes about war-for-test not being needed in some cases
   // Also, see https://github.com/jenkinsci/jenkins/pull/2899/files

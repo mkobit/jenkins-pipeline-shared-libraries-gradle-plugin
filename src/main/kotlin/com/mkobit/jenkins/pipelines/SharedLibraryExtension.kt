@@ -7,7 +7,8 @@ open class SharedLibraryExtension(
   val groovyVersionState: PropertyState<String>,
   val coreVersionState: PropertyState<String>,
   val globalLibPluginVersionState: PropertyState<String>,
-  val testHarnessVersionState: PropertyState<String>
+  val testHarnessVersionState: PropertyState<String>,
+  val pipelineTestUnitVersionState: PropertyState<String>
 ) {
 
   private val pluginDependencySpec: PluginDependencySpec = DefaultPluginDependencySpec()
@@ -38,6 +39,11 @@ open class SharedLibraryExtension(
   var testHarnessVersion: String
     get() = testHarnessVersionState.get()
     set(value) = testHarnessVersionState.set(value)
+
+  var pipelineTestUnitVersion: String?
+    get() = pipelineTestUnitVersionState.orNull
+    set(value) = pipelineTestUnitVersionState.set(value)
+
 
   fun pluginDependencies(action: Action<in PluginDependencySpec>) {
     action.execute(pluginDependencySpec)

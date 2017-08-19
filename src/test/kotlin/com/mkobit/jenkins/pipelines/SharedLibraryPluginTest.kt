@@ -3,6 +3,8 @@ package com.mkobit.jenkins.pipelines
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Condition
 import org.assertj.core.condition.AllOf.allOf
+import org.assertj.core.condition.AnyOf.anyOf
+import org.assertj.core.condition.DoesNotHave.doesNotHave
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Dependency
@@ -131,9 +133,42 @@ internal class SharedLibraryPluginTest {
     assertThat(implementation.dependencies).haveExactly(1, allOf(group, name, version))
   }
 
-  @NotImplementedYet
   @Test
-  internal fun `Jenkins Pipeline Unit is available in testImplementation configuration`() {
+  internal fun `JenkinsPipelineUnit is not available in testImplementation configuration when version is not set`() {
+    project.evaluate()
+
+    val group = Condition<Dependency>(Predicate {
+      it.group == "com.lesfurets"
+    }, "com.lesfurets")
+    val name = Condition<Dependency>(Predicate {
+      it.name == "jenkins-pipeline-unit"
+    }, "jenkins-pipeline-unit")
+
+    val implementation = project.configurations.getByName("testImplementation")
+    assertThat(implementation.incoming.dependencies).anySatisfy {
+      assertThat(it).doesNotHave(anyOf(group, name))
+    }
+  }
+
+  @Test
+  internal fun `JenkinsPipelineUnit is available in testImplementation configuration when a version is set`() {
+    val pipelineUnitVersion = "1.0"
+
+    project.extensions.getByType(SharedLibraryExtension::class.java).pipelineTestUnitVersion = pipelineUnitVersion
+    project.evaluate()
+
+    val group = Condition<Dependency>(Predicate {
+      it.group == "com.lesfurets"
+    }, "com.lesfurets")
+    val name = Condition<Dependency>(Predicate {
+      it.name == "jenkins-pipeline-unit"
+    }, "jenkins-pipeline-unit")
+    val version = Condition<Dependency>(Predicate {
+      it.version == pipelineUnitVersion
+    }, pipelineUnitVersion)
+
+    val implementation = project.configurations.getByName("testImplementation")
+    assertThat(implementation.incoming.dependencies).haveExactly(1, allOf(group, name, version))
   }
 
   @Test
@@ -263,7 +298,7 @@ internal class SharedLibraryPluginTest {
   }
 
   // Internal function needed here to trigger evaluation
-  private fun Project.evaluate(): Unit {
+  private fun Project.evaluate() {
     (this as ProjectInternal).evaluate()
   }
 }

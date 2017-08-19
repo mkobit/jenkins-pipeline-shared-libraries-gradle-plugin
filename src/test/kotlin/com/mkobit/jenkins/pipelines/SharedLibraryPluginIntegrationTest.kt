@@ -4,17 +4,27 @@ import org.assertj.core.api.Assertions.assertThat
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import testsupport.NotImplementedYet
 import testsupport.writeRelativeFile
+import java.io.File
 
+// TODO: do better assertions on output from tasks
 @Tag("integration")
 internal class SharedLibraryPluginIntegrationTest {
+
+  private lateinit var projectDir: File
+
+  @BeforeEach
+  internal fun setUp() {
+    projectDir = createTempDir().apply { deleteOnExit() }
+  }
+
   // TODO: test both groovy and kotlin usages
   @Test
   internal fun `main Groovy code is compiled`() {
-    val projectDir = createTempDir().apply { deleteOnExit() }
     projectDir.writeRelativeFile(fileName = "build.gradle") {
       groovyBuildScript()
     }
@@ -61,7 +71,6 @@ class MyLibTest {
 
   @Test
   internal fun `can unit test code in src`() {
-    val projectDir = createTempDir().apply { deleteOnExit() }
     projectDir.writeRelativeFile(fileName = "build.gradle") {
       groovyBuildScript()
     }
@@ -110,7 +119,6 @@ class MyLibTest {
 
   @Test
   internal fun `can use @JenkinsRule in integration tests`() {
-    val projectDir = createTempDir().apply { deleteOnExit() }
     projectDir.writeRelativeFile(fileName = "build.gradle") {
       groovyBuildScript()
     }
@@ -157,6 +165,71 @@ class JenkinsRuleUsageTest {
   internal fun `integration test output for Jenkins Test Harness is in the build directory`() {
   }
 
+  @Test
+  internal fun `can write unit tests using JenkinsPipelineUnit`() {
+    projectDir.writeRelativeFile(fileName = "build.gradle") {
+      groovyBuildScript() +
+        """
+sharedLibrary {
+  pipelineTestUnitVersion = "1.0"
+}
+"""
+    }
+
+    projectDir.writeRelativeFile(fileName = "example.jenkins") {
+      """
+def execute() {
+  node {
+    echo "We in the pipeline now!"
+  }
+}
+
+return this
+"""
+    }
+
+    projectDir.writeRelativeFile("test", "unit", "groovy", "com", "mkobit", fileName = "JenkinsPipelineUnitUsageTest.groovy") {
+      """
+package com.mkobit
+
+import org.junit.Assert
+import org.junit.Before
+import org.junit.Test
+import com.lesfurets.jenkins.unit.BasePipelineTest
+
+class JenkinsPipelineUnitUsageTest extends BasePipelineTest {
+
+  @Override
+  @Before
+  void setUp() throws Exception {
+    super.setUp()
+  }
+
+  @Test
+  void canExecutePipelineJob() {
+    final script = loadScript("example.jenkins")
+    script.execute()
+    printCallStack()
+  }
+}
+"""
+    }
+
+    val buildResult: BuildResult = GradleRunner.create()
+      .withPluginClasspath()
+      .withArguments("test", "-s", "-i")
+      .withProjectDir(projectDir)
+      .build()
+
+    val task = buildResult.task(":test")
+    assertThat(task).isNotNull()
+    assertThat(task?.outcome)
+      .describedAs("test task outcome")
+      .withFailMessage("Build output: ${buildResult.output}")
+      .isNotNull()
+      .isEqualTo(TaskOutcome.SUCCESS)
+  }
+
   // TODO: this should be tested but may or may not be needed. I have a feeling classloader errors
   // will happen in pipeline code if those classes are available.
   @NotImplementedYet
@@ -167,7 +240,6 @@ class JenkinsRuleUsageTest {
   @NotImplementedYet
   @Test
   internal fun `can set up pipeline library in an integration test`() {
-    val projectDir = createTempDir().apply { deleteOnExit() }
     projectDir.writeRelativeFile(fileName = "build.gradle") {
       groovyBuildScript()
     }
@@ -285,7 +357,6 @@ libHelper.sayHelloTo('mkobit')
 
   @Test
   internal fun `Groovydoc JAR can be generated`() {
-    val projectDir = createTempDir().apply { deleteOnExit() }
     projectDir.writeRelativeFile(fileName = "build.gradle") {
       groovyBuildScript()
     }
@@ -315,7 +386,6 @@ class MyLib {
 
   @Test
   internal fun `Groovy sources JAR can be generated`() {
-    val projectDir = createTempDir().apply { deleteOnExit() }
     projectDir.writeRelativeFile(fileName = "build.gradle") {
       groovyBuildScript()
     }
