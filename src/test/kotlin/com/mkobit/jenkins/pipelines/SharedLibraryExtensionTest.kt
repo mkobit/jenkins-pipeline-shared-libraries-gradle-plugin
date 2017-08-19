@@ -5,6 +5,7 @@ import org.assertj.core.api.SoftAssertions
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import testsupport.NotImplementedYet
 
 internal class SharedLibraryExtensionTest {
   private lateinit var sharedLibraryExtension: SharedLibraryExtension
@@ -66,6 +67,11 @@ internal class SharedLibraryExtensionTest {
     sharedLibraryExtension.testHarnessVersion= "newVersion"
 
     assertThat(sharedLibraryExtension.testHarnessVersion).isEqualTo("newVersion")
+  }
+
+  @NotImplementedYet
+  @Test
+  internal fun `can set a URL to a target Jenkins instance`() {
   }
 
   private fun softlyAssert(assertions: SoftAssertions.() -> Unit) {

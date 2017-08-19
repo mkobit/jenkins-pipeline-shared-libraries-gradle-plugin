@@ -247,6 +247,21 @@ internal class SharedLibraryPluginTest {
   internal fun `Jenkins Global Library plugin implementation and HPI dependencies are added`() {
   }
 
+  @NotImplementedYet
+  @Test
+  internal fun `resources directory added for main to be able to use the Jenkins GDSL`() {
+  }
+
+  @NotImplementedYet
+  @Test
+  internal fun `task exists to download the GDSL`() {
+  }
+
+  @NotImplementedYet
+  @Test
+  internal fun `task exists to determine plugins from a specific Jenkins instance`() {
+  }
+
   // Internal function needed here to trigger evaluation
   private fun Project.evaluate(): Unit {
     (this as ProjectInternal).evaluate()

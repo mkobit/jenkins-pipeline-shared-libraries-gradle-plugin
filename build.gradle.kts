@@ -115,11 +115,9 @@ tasks {
     val downloadUrl = "https://circle-downloads.s3.amazonaws.com/releases/build_agent_wrapper/circleci"
     inputs.property("url", downloadUrl)
     outputs.file(circleCiScriptDestination)
-    circleCiScriptDestination.parentFile.mkdirsOrFail()
+    doFirst { circleCiScriptDestination.parentFile.mkdirsOrFail() }
     commandLine("curl", "--fail", "-L", downloadUrl, "-o", circleCiScriptDestination)
-    doLast {
-      project.exec { commandLine("chmod", "+x", circleCiScriptDestination) }
-    }
+    doLast { project.exec { commandLine("chmod", "+x", circleCiScriptDestination) } }
   }
 
   val checkCircleConfig by creating(Exec::class) {
