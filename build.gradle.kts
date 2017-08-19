@@ -124,7 +124,7 @@ tasks {
 
   val checkCircleConfig by creating(Exec::class) {
     // Disabled until https://discuss.circleci.com/t/allow-for-using-circle-ci-tooling-without-a-tty/15501
-    disabled = true
+    enabled = false
     dependsOn(downloadCircleCiScript)
     val circleConfig = file(".circleci/config.yml")
     executable(circleCiScriptDestination)
@@ -133,7 +133,7 @@ tasks {
 
   val circleCiBuild by creating(Exec::class) {
     // Disabled until https://discuss.circleci.com/t/allow-for-using-circle-ci-tooling-without-a-tty/15501
-    disabled = true
+    enabled = false
     dependsOn(downloadCircleCiScript)
     executable(circleCiScriptDestination)
     args("build")
