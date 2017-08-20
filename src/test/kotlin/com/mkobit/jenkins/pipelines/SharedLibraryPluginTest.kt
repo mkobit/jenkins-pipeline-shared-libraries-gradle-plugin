@@ -187,6 +187,26 @@ internal class SharedLibraryPluginTest {
   }
 
   @Test
+  internal fun `Jenkins Pipeline Shared Groovy Libraries Plugin available in integrationTestImplementationConfiguration and HPI available in integrationTestRuntimeOnly`() {
+    project.evaluate()
+
+    val group = Condition<Dependency>(Predicate {
+      it.group == "org.jenkins-ci.plugins.workflow"
+    }, "org.jenkins-ci.plugins.workflow")
+    val name = Condition<Dependency>(Predicate {
+      it.name == "workflow-cps-global-lib"
+    }, "workflow-cps-global-lib")
+    val extension = Condition<Dependency>(Predicate {
+      it is ExternalModuleDependency && it.artifacts.any { it.extension == "hpi" }
+    }, "hpi")
+
+    val implementation = project.configurations.getByName("integrationTestImplementation")
+    assertThat(implementation.incoming.dependencies).haveExactly(1, allOf(group, name))
+    val runtimeOnly = project.configurations.getByName("integrationTestRuntimeOnly")
+    assertThat(runtimeOnly.incoming.dependencies).haveExactly(1, allOf(group, name, extension))
+  }
+
+  @Test
   internal fun `Jenkins WAR is available in integrationTestRuntimeOnly configuration`() {
     project.evaluate()
 

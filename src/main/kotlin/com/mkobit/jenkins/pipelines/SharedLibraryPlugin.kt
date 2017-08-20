@@ -45,6 +45,7 @@ open class SharedLibraryPlugin @Inject constructor(
     setupIntegrationTestTask(project.tasks, main, integrationTest)
     setupDocumentationTasks(project.tasks, main)
     setupConfigurations(
+      project.dependencies,
       project.configurations,
       main,
       test,
@@ -74,6 +75,16 @@ open class SharedLibraryPlugin @Inject constructor(
     dependencies.add(
       CORE_LIBRARY_CONFIGURATION,
       jenkinsCoreDependency(sharedLibraryExtension.coreVersion)
+    )
+
+    dependencies.add(
+      PLUGIN_LIBRARY_CONFIGURATION,
+      jenkinsGlobalLibDependency(sharedLibraryExtension.globalLibPluginVersion)
+    )
+
+    dependencies.add(
+      PLUGIN_HPI_JPI_CONFIGURATION,
+      "${jenkinsGlobalLibDependency(sharedLibraryExtension.globalLibPluginVersion)}@hpi"
     )
 
     sharedLibraryExtension.pipelineTestUnitVersion?.let {
@@ -124,6 +135,7 @@ open class SharedLibraryPlugin @Inject constructor(
   }
 
   private fun setupConfigurations(
+    dependencies: DependencyHandler,
     configurations: ConfigurationContainer,
     main: SourceSet,
     test: SourceSet,
@@ -218,6 +230,7 @@ open class SharedLibraryPlugin @Inject constructor(
   }
 
   private fun jenkinsCoreDependency(version: String) = "org.jenkins-ci.main:jenkins-core:$version"
+  private fun jenkinsGlobalLibDependency(version: String) = "org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:$version"
   private fun groovyDependency(version: String) = "org.codehaus.groovy:groovy:$version"
   private fun jenkinsPipelineUnitDependency(version: String) = "com.lesfurets:jenkins-pipeline-unit:$version"
   private fun jenkinsTestHarnessDependency(version: String) = "org.jenkins-ci.main:jenkins-test-harness:$version"

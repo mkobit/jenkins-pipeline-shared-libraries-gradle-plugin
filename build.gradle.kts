@@ -1,4 +1,6 @@
 import com.gradle.publish.PluginConfig
+import org.gradle.api.internal.HasConvention
+import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.preprocessor.mkdirsOrFail
 import org.junit.platform.console.options.Details
@@ -42,9 +44,25 @@ repositories {
   jcenter()
 }
 
+val SourceSet.kotlin: SourceDirectorySet
+  get() = (this as HasConvention).convention.getPlugin(KotlinSourceSet::class.java).kotlin
+
 java {
   sourceCompatibility = JavaVersion.VERSION_1_8
   targetCompatibility = JavaVersion.VERSION_1_8
+  sourceSets.invoke {
+    val test by getting
+    // This source set used for resources to get IDE completion for ease of writing tests against JenkinsPipelineUnit and Jenkins Test Harness
+    val pipelineTestResources by creating {
+      java.setSrcDirs(emptyList<Any>())
+      kotlin.setSrcDirs(emptyList<Any>())
+      resources.setSrcDirs(listOf(file("src/$name")))
+    }
+
+    "test" {
+      runtimeClasspath += pipelineTestResources.output
+    }
+  }
 }
 
 dependencies {
@@ -60,6 +78,35 @@ dependencies {
   }
   junitTestRuntimeOnlyArtifacts.values.forEach {
     testRuntimeOnly(it)
+  }
+
+  // These are used for code completion in the pipelineTestResources to more easily facilitate writing tests
+  // against the libraries that are used.
+  val pipelineTestResources by java.sourceSets.getting
+  pipelineTestResources.compileOnlyConfigurationName("com.lesfurets:jenkins-pipeline-unit:1.0")
+  pipelineTestResources.compileOnlyConfigurationName("org.jenkins-ci.main:jenkins-test-harness:2.24")
+  pipelineTestResources.compileOnlyConfigurationName("org.codehaus.groovy:groovy:2.4.8")
+  // TODO: have to figure out a better way to manage these dependencies (and transitives)
+  val jenkinsPluginDependencies = listOf(
+    "org.jenkins-ci.plugins:git:3.3.2",
+    "org.jenkins-ci.plugins.workflow:workflow-api:2.20",
+    "org.jenkins-ci.plugins.workflow:workflow-basic-steps:2.6",
+    "org.jenkins-ci.plugins.workflow:workflow-cps:2.39",
+    "org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:2.8",
+    "org.jenkins-ci.plugins.workflow:workflow-durable-task-step:2.13",
+    "org.jenkins-ci.plugins.workflow:workflow-job:2.14.1",
+    "org.jenkins-ci.plugins.workflow:workflow-multibranch:2.16",
+    "org.jenkins-ci.plugins.workflow:workflow-scm-step:2.6",
+    "org.jenkins-ci.plugins.workflow:workflow-step-api:2.12",
+    "org.jenkins-ci.plugins.workflow:workflow-support:2.14"
+  )
+  jenkinsPluginDependencies.forEach {
+    pipelineTestResources.compileOnlyConfigurationName("$it@jar") {
+      isTransitive = true
+    }
+  }
+  pipelineTestResources.compileOnlyConfigurationName("org.jenkins-ci.main:jenkins-core:2.60.2") {
+    isTransitive = false
   }
 }
 

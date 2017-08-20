@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import testsupport.NotImplementedYet
+import testsupport.resourceText
 import testsupport.writeRelativeFile
 import java.io.File
 
@@ -128,6 +129,7 @@ class MyLibTest {
 package com.mkobit
 
 import org.junit.Assert
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.jvnet.hudson.test.JenkinsRule
@@ -137,10 +139,15 @@ class JenkinsRuleUsageTest {
   @Rule
   public JenkinsRule rule = new JenkinsRule()
 
+  @Before
+  void configureRule() {
+    rule.timeout = 30
+  }
+
   @Test
   void canUseJenkins() {
-    rule.createOnlineSlave()
-    Assert.assertEquals(1, rule.jenkins.nodes.size())
+    rule.createFreeStyleProject()
+    Assert.assertEquals(1, rule.jenkins.allItems.size())
   }
 }
 """
@@ -262,63 +269,7 @@ class LibHelper {
     }
 
     projectDir.writeRelativeFile("test", "integration", "groovy", "com", "mkobit", fileName = "JenkinsGlobalLibraryTest.groovy") {
-      """
-package com.mkobit
-
-import jenkins.plugins.git.GitSCMSource
-import org.jenkinsci.plugins.workflow.libs.GlobalLibraries
-import org.jenkinsci.plugins.workflow.libs.LibraryConfiguration
-import org.jenkinsci.plugins.workflow.libs.SCMSourceRetriever
-import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition
-import org.jenkinsci.plugins.workflow.job.WorkflowJob
-import org.jenkinsci.plugins.workflow.job.WorkflowRun
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
-import org.jvnet.hudson.test.JenkinsRule
-
-class JenkinsGlobalLibraryTest {
-
-  @Rule
-  public JenkinsRule rule = new JenkinsRule()
-
-  @Before
-  void configureGlobalGitLibraries() {
-    final SCMSourceRetriever retriever = new SCMSourceRetriever(
-      new GitSCMSource(
-        null,
-        System.getProperty('user.dir'),
-        '',
-        'local-source-code',
-        // Fetch everything - if this is not used builds fail on Jenkins for some reason
-        '*:refs/remotes/origin/*',
-        '*',
-        '',
-        true
-      )
-    )
-    final LibraryConfiguration localLibrary =
-      new LibraryConfiguration('pipelineUtilities', retriever)
-    localLibrary.implicit = true
-    localLibrary.defaultVersion = 'git rev-parse HEAD'.execute().text.trim()
-    localLibrary.allowVersionOverride = false
-    GlobalLibraries.get().setLibraries(Collections.singletonList(localLibrary))
-  }
-
-  @Test
-  void testingMyLibrary() {
-    final CpsFlowDefinition flow = new CpsFlowDefinition('''
-import com.mkobit.LibHelper
-
-final libHelper = new LibHelper(this)
-libHelper.sayHelloTo('mkobit')
-    ''', true)
-    final WorkflowJob workflowJob = rule.createProject(WorkflowJob, 'project')
-    project.definition = flowDefinition
-    rule.buildAndAssertSuccess(workflowJob)
-  }
-}
-"""
+      resourceText("com/mkobit/JenkinsGlobalLibraryTest.groovy")
     }
 
     val buildResult: BuildResult = GradleRunner.create()
@@ -347,7 +298,7 @@ libHelper.sayHelloTo('mkobit')
 
   @NotImplementedYet
   @Test
-  internal fun `@Grab in source is supported for trusted libraries`() {
+  internal fun `@Grab in library source is supported for trusted libraries`() {
   }
 
   @NotImplementedYet
