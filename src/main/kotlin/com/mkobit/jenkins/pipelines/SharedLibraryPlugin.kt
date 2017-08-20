@@ -45,7 +45,6 @@ open class SharedLibraryPlugin @Inject constructor(
     setupIntegrationTestTask(project.tasks, main, integrationTest)
     setupDocumentationTasks(project.tasks, main)
     setupConfigurations(
-      project.dependencies,
       project.configurations,
       main,
       test,
@@ -64,33 +63,38 @@ open class SharedLibraryPlugin @Inject constructor(
   ) {
     dependencies.add(
       TEST_LIBRARY_CONFIGURATION,
-      jenkinsTestHarnessDependency(sharedLibraryExtension.testHarnessVersion)
+      sharedLibraryExtension.jenkinsTestHarnessDependency()
     )
 
     dependencies.add(
       TEST_LIBRARY_RUNTIME_ONLY_CONFIGURATION,
-      jenkinsWar(sharedLibraryExtension.coreVersion)
+      sharedLibraryExtension.jenkinsCoreDependency()
     )
 
     dependencies.add(
       CORE_LIBRARY_CONFIGURATION,
-      jenkinsCoreDependency(sharedLibraryExtension.coreVersion)
+      sharedLibraryExtension.jenkinsCoreDependency()
     )
 
     dependencies.add(
       PLUGIN_LIBRARY_CONFIGURATION,
-      jenkinsGlobalLibDependency(sharedLibraryExtension.globalLibPluginVersion)
+      sharedLibraryExtension.jenkinsGlobalLibDependency()
     )
 
     dependencies.add(
       PLUGIN_HPI_JPI_CONFIGURATION,
-      "${jenkinsGlobalLibDependency(sharedLibraryExtension.globalLibPluginVersion)}@hpi"
+      "${sharedLibraryExtension.jenkinsGlobalLibDependency()}@hpi"
     )
 
-    sharedLibraryExtension.pipelineTestUnitVersion?.let {
+    dependencies.add(
+      TEST_LIBRARY_RUNTIME_ONLY_CONFIGURATION,
+      "${sharedLibraryExtension.jenkinsWar()}@war"
+    )
+
+    sharedLibraryExtension.jenkinsPipelineUnitDependency()?.let {
       dependencies.add(
         test.implementationConfigurationName,
-        jenkinsPipelineUnitDependency(it)
+        it
       )
     }
   }
@@ -135,7 +139,6 @@ open class SharedLibraryPlugin @Inject constructor(
   }
 
   private fun setupConfigurations(
-    dependencies: DependencyHandler,
     configurations: ConfigurationContainer,
     main: SourceSet,
     test: SourceSet,
@@ -173,7 +176,7 @@ open class SharedLibraryPlugin @Inject constructor(
   ) {
     dependencies.add(
       main.implementationConfigurationName,
-      groovyDependency(sharedLibrary.groovyVersion)
+      sharedLibrary.groovyDependency()
     )
   }
 
@@ -228,14 +231,4 @@ open class SharedLibraryPlugin @Inject constructor(
       pipelineTestUnitVersion
     )
   }
-
-  private fun jenkinsCoreDependency(version: String) = "org.jenkins-ci.main:jenkins-core:$version"
-  private fun jenkinsGlobalLibDependency(version: String) = "org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:$version"
-  private fun groovyDependency(version: String) = "org.codehaus.groovy:groovy:$version"
-  private fun jenkinsPipelineUnitDependency(version: String) = "com.lesfurets:jenkins-pipeline-unit:$version"
-  private fun jenkinsTestHarnessDependency(version: String) = "org.jenkins-ci.main:jenkins-test-harness:$version"
-  // See https://issues.jenkins-ci.org/browse/JENKINS-24064 and 2.64 release notes about war-for-test not being needed in some cases
-  // Also, see https://github.com/jenkinsci/jenkins/pull/2899/files
-  // https://github.com/jenkinsci/plugin-pom/pull/40/files shows how the new plugin-pom does the jenkins.war generation
-  private fun jenkinsWar(version: String) = "org.jenkins-ci.main:jenkins-war:$version@war"
 }
