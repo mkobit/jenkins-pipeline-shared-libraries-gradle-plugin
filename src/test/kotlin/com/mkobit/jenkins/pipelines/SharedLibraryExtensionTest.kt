@@ -84,6 +84,11 @@ internal class SharedLibraryExtensionTest {
   internal fun `can set a URL to a target Jenkins instance`() {
   }
 
+  @NotImplementedYet
+  @Test
+  internal fun `plugin dependencies include Global Shared Library Plugin`() {
+  }
+
   private fun softlyAssert(assertions: SoftAssertions.() -> Unit) {
     val softAssertions = SoftAssertions()
     softAssertions.assertions()

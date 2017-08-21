@@ -18,7 +18,7 @@ class JenkinsGlobalLibraryTest {
 
   @Before
   void configureGlobalGitLibraries() {
-    rule.timeout = 45
+    rule.timeout = 30
     final SCMSourceRetriever retriever = new SCMSourceRetriever(
       new GitSCMSource(
         null,

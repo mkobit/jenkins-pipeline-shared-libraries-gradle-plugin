@@ -8,7 +8,7 @@ import org.junit.jupiter.params.provider.ValueSource
 
 internal class PluginDependencyTest {
   @ParameterizedTest
-  @ValueSource(strings = arrayOf("", "group", "group:name:", ":name:version", "group::version", "group:name:version:thing"))
+  @ValueSource(strings = arrayOf("", "::", " : : ", "group", "group:name:", ":name:version", "group::version", "group:name:version:thing"))
   internal fun `throws exception when constructing from invalid dependency notation`(notation: String) {
     assertThatThrownBy { PluginDependency.fromString(notation) }.isInstanceOf(IllegalArgumentException::class.java)
   }
@@ -23,5 +23,15 @@ internal class PluginDependencyTest {
     assertThat(pluginDependency.group).isEqualTo(group)
     assertThat(pluginDependency.name).isEqualTo(name)
     assertThat(pluginDependency.version).isEqualTo(version)
+  }
+
+  @Test
+  internal fun `as string notation`() {
+    val group = "group"
+    val name = "name"
+    val version = "version"
+    val pluginDependency = PluginDependency(group, name, version)
+
+    assertThat(pluginDependency.asStringNotation()).isEqualTo("$group:$name:$version")
   }
 }

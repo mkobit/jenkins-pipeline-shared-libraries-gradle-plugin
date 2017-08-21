@@ -88,7 +88,7 @@ dependencies {
   pipelineTestResources.compileOnlyConfigurationName("org.codehaus.groovy:groovy:2.4.8")
   // TODO: have to figure out a better way to manage these dependencies (and transitives)
   val jenkinsPluginDependencies = listOf(
-    "org.jenkins-ci.plugins:git:3.3.2",
+    "org.jenkins-ci.plugins:git:3.5.0",
     "org.jenkins-ci.plugins.workflow:workflow-api:2.20",
     "org.jenkins-ci.plugins.workflow:workflow-basic-steps:2.6",
     "org.jenkins-ci.plugins.workflow:workflow-cps:2.39",
@@ -101,12 +101,24 @@ dependencies {
     "org.jenkins-ci.plugins.workflow:workflow-support:2.14"
   )
   jenkinsPluginDependencies.forEach {
-    pipelineTestResources.compileOnlyConfigurationName("$it@jar") {
+    pipelineTestResources.compileOnlyConfigurationName(it) {
+      artifact {
+        name = this@compileOnlyConfigurationName.name
+        extension = "jar"
+      }
       isTransitive = true
     }
   }
   pipelineTestResources.compileOnlyConfigurationName("org.jenkins-ci.main:jenkins-core:2.60.2") {
     isTransitive = false
+  }
+
+  tasks.create("mkobitTest") {
+    doFirst {
+      configurations.getByName(pipelineTestResources.compileOnlyConfigurationName).resolvedConfiguration.resolvedArtifacts.forEach {
+        println(it)
+      }
+    }
   }
 }
 

@@ -45,7 +45,7 @@ open class SharedLibraryExtension(
     set(value) = pipelineTestUnitVersionState.set(value)
 
   fun jenkinsCoreDependency() = "org.jenkins-ci.main:jenkins-core:$coreVersion"
-  fun jenkinsGlobalLibDependency() = "org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:$globalLibPluginVersion"
+  fun jenkinsGlobalLibraryPluginDependency() = "org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:$globalLibPluginVersion"
   fun groovyDependency() = "org.codehaus.groovy:groovy:$groovyVersion"
   fun jenkinsPipelineUnitDependency(): String? = pipelineTestUnitVersion?.let { "com.lesfurets:jenkins-pipeline-unit:$it" }
   fun jenkinsTestHarnessDependency() = "org.jenkins-ci.main:jenkins-test-harness:$testHarnessVersion"
@@ -58,5 +58,10 @@ open class SharedLibraryExtension(
     action.execute(pluginDependencySpec)
   }
 
-  fun pluginDependencies(): List<PluginDependency> = pluginDependencySpec.getDependencies()
+  fun pluginDependencies(): List<PluginDependency> {
+    val dependenciesFromSpec = pluginDependencySpec.getDependencies()
+    val globalLibPlugin = PluginDependency.fromString(jenkinsGlobalLibraryPluginDependency())
+
+    return dependenciesFromSpec + globalLibPlugin
+  }
 }

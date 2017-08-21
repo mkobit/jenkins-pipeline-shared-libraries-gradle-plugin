@@ -5,6 +5,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ConfigurationContainer
+import org.gradle.api.artifacts.ExternalModuleDependency
 import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.artifacts.dsl.RepositoryHandler
 import org.gradle.api.file.ProjectLayout
@@ -68,7 +69,7 @@ open class SharedLibraryPlugin @Inject constructor(
 
     dependencies.add(
       TEST_LIBRARY_RUNTIME_ONLY_CONFIGURATION,
-      sharedLibraryExtension.jenkinsCoreDependency()
+      "${sharedLibraryExtension.jenkinsWar()}@war"
     )
 
     dependencies.add(
@@ -76,20 +77,20 @@ open class SharedLibraryPlugin @Inject constructor(
       sharedLibraryExtension.jenkinsCoreDependency()
     )
 
-    dependencies.add(
-      PLUGIN_LIBRARY_CONFIGURATION,
-      sharedLibraryExtension.jenkinsGlobalLibDependency()
-    )
-
-    dependencies.add(
-      PLUGIN_HPI_JPI_CONFIGURATION,
-      "${sharedLibraryExtension.jenkinsGlobalLibDependency()}@hpi"
-    )
-
-    dependencies.add(
-      TEST_LIBRARY_RUNTIME_ONLY_CONFIGURATION,
-      "${sharedLibraryExtension.jenkinsWar()}@war"
-    )
+    sharedLibraryExtension.pluginDependencies().forEach {
+      // TODO: when kotlin-dsl works in IntelliJ switch to it
+      // TODO: figure out how to get transitive plugin management working
+      val jarDependency = (dependencies.create("${it.asStringNotation()}@jar") as ExternalModuleDependency)
+      val hpiDependency = (dependencies.create("${it.asStringNotation()}@hpi") as ExternalModuleDependency)
+      dependencies.add(
+        PLUGIN_LIBRARY_CONFIGURATION,
+        jarDependency
+      )
+      dependencies.add(
+        PLUGIN_HPI_JPI_CONFIGURATION,
+        hpiDependency
+      )
+    }
 
     sharedLibraryExtension.jenkinsPipelineUnitDependency()?.let {
       dependencies.add(
@@ -150,7 +151,7 @@ open class SharedLibraryPlugin @Inject constructor(
         isVisible = false
       }
     }
-    val pluginHpiJpiConfiguration = configurations.create(PLUGIN_HPI_JPI_CONFIGURATION, configurationAction)
+    val pluginHpiAndJpi = configurations.create(PLUGIN_HPI_JPI_CONFIGURATION, configurationAction)
     val pluginLibraries = configurations.create(PLUGIN_LIBRARY_CONFIGURATION, configurationAction)
     val coreLibraries = configurations.create(CORE_LIBRARY_CONFIGURATION, configurationAction)
     val testLibrary = configurations.create(TEST_LIBRARY_CONFIGURATION, configurationAction)
@@ -164,7 +165,7 @@ open class SharedLibraryPlugin @Inject constructor(
       testLibrary
     )
     configurations.getByName(integrationTest.runtimeOnlyConfigurationName).extendsFrom(
-      pluginHpiJpiConfiguration,
+      pluginHpiAndJpi,
       testLibraryRuntimeOnly
     )
   }

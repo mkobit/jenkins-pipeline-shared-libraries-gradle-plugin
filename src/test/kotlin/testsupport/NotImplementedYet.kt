@@ -2,5 +2,5 @@ package testsupport
 
 import org.junit.jupiter.api.Disabled
 
-@Disabled("not implemented yet")
+@Disabled("test or feature not implemented yet")
 annotation class NotImplementedYet

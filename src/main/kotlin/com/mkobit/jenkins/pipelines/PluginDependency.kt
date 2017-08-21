@@ -14,4 +14,6 @@ data class PluginDependency(val group: String, val name: String, val version: St
       return PluginDependency(splitNotation[0], splitNotation[1], splitNotation[2])
     }
   }
+
+  fun asStringNotation(): String = "$group:$name:$version"
 }

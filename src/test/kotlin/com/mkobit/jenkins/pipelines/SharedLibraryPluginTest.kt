@@ -196,14 +196,17 @@ internal class SharedLibraryPluginTest {
     val name = Condition<Dependency>(Predicate {
       it.name == "workflow-cps-global-lib"
     }, "workflow-cps-global-lib")
-    val extension = Condition<Dependency>(Predicate {
+    val jar = Condition<Dependency>(Predicate {
+      it is ExternalModuleDependency && it.artifacts.any { it.extension == "jar" }
+    }, "jar extension")
+    val hpi = Condition<Dependency>(Predicate {
       it is ExternalModuleDependency && it.artifacts.any { it.extension == "hpi" }
-    }, "hpi")
+    }, "hpi extension")
 
     val implementation = project.configurations.getByName("integrationTestImplementation")
-    assertThat(implementation.incoming.dependencies).haveExactly(1, allOf(group, name))
+    assertThat(implementation.incoming.dependencies).haveExactly(1, allOf(group, name, jar))
     val runtimeOnly = project.configurations.getByName("integrationTestRuntimeOnly")
-    assertThat(runtimeOnly.incoming.dependencies).haveExactly(1, allOf(group, name, extension))
+    assertThat(runtimeOnly.incoming.dependencies).haveExactly(1, allOf(group, name, hpi))
   }
 
   @Test

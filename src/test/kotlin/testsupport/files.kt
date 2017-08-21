@@ -13,6 +13,6 @@ fun File.writeRelativeFile(vararg parentDirectory: String, fileName: String, con
 
 
 fun resourceText(resourceName: String): String {
-  val resource = Resources.getResource("/com/mkobit/JenkinsGlobalLibraryTest.groovy")
+  val resource = Resources.getResource(resourceName)
   return Resources.toString(resource, Charsets.UTF_8)
 }
