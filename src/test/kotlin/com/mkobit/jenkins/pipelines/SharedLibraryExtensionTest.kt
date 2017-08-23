@@ -5,8 +5,14 @@ import org.assertj.core.api.SoftAssertions
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
 import testsupport.NotImplementedYet
+import java.util.stream.Stream
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 internal class SharedLibraryExtensionTest {
   private lateinit var sharedLibraryExtension: SharedLibraryExtension
 
@@ -85,8 +91,19 @@ internal class SharedLibraryExtensionTest {
   }
 
   @NotImplementedYet
-  @Test
-  internal fun `plugin dependencies include Global Shared Library Plugin`() {
+  @ParameterizedTest(name = "[{index}] {0}")
+  @MethodSource("requiredPlugins")
+  internal fun `plugin dependency includes`(pluginName: String) {
+  }
+
+  fun requiredPlugins(): Stream<Arguments> {
+    return Stream.of(
+      Arguments.of("Global Shared Library Plugin"),
+      Arguments.of("SCM API Plugin"),
+      Arguments.of("Git Plugin"),
+      Arguments.of("Workflow API Plugin"),
+      Arguments.of("Workflow Job Plugin")
+    )
   }
 
   private fun softlyAssert(assertions: SoftAssertions.() -> Unit) {

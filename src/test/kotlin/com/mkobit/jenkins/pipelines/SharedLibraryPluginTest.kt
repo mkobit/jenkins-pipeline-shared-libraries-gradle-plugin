@@ -4,17 +4,19 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Condition
 import org.assertj.core.condition.AllOf.allOf
 import org.assertj.core.condition.AnyOf.anyOf
-import org.assertj.core.condition.DoesNotHave.doesNotHave
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.ExternalModuleDependency
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
+import org.gradle.api.internal.HasConvention
 import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.api.plugins.JavaPluginConvention
+import org.gradle.api.tasks.GroovySourceSet
 import org.gradle.jvm.tasks.Jar
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import testsupport.NotImplementedYet
 import java.util.function.Predicate
@@ -63,7 +65,7 @@ internal class SharedLibraryPluginTest {
     val convention = project.convention.getPlugin(JavaPluginConvention::class.java)
     val main = convention.sourceSets.getByName("main")
     assertThat(main).isNotNull()
-    assertThat(main.groovy.srcDirs).anySatisfy {
+    assertThat((main as HasConvention).convention.getPlugin(GroovySourceSet::class.java).groovy.srcDirs).anySatisfy {
       assertThat(it.endsWith("src"))
     }
   }
@@ -73,7 +75,7 @@ internal class SharedLibraryPluginTest {
     val convention = project.convention.getPlugin(JavaPluginConvention::class.java)
     val main = convention.sourceSets.getByName("main")
     assertThat(main).isNotNull()
-    assertThat(main.groovy.srcDirs).anySatisfy {
+    assertThat((main as HasConvention).convention.getPlugin(GroovySourceSet::class.java).groovy.srcDirs).anySatisfy {
       assertThat(it.endsWith("src"))
     }
   }
@@ -83,8 +85,8 @@ internal class SharedLibraryPluginTest {
     val convention = project.convention.getPlugin(JavaPluginConvention::class.java)
     val main = convention.sourceSets.getByName("main")
     assertThat(main).isNotNull()
-    assertThat(main.resources.srcDirs).anySatisfy {
-      assertThat(it.endsWith("src"))
+    assertThat(main.resources.srcDirs).hasOnlyOneElementSatisfying {
+      assertThat(it.endsWith("resources"))
     }
   }
 
@@ -134,7 +136,7 @@ internal class SharedLibraryPluginTest {
   }
 
   @Test
-  internal fun `JenkinsPipelineUnit is not available in testImplementation configuration when version is not set`() {
+  internal fun `JenkinsPipelineUnit is not available in Jenkins unit test libraries configuration when version is not set`() {
     project.evaluate()
 
     val group = Condition<Dependency>(Predicate {
@@ -144,14 +146,14 @@ internal class SharedLibraryPluginTest {
       it.name == "jenkins-pipeline-unit"
     }, "jenkins-pipeline-unit")
 
-    val implementation = project.configurations.getByName("testImplementation")
-    assertThat(implementation.incoming.dependencies).anySatisfy {
+    val configuration = project.configurations.getByName("jenkinsPipelineUnitTestLibraries")
+    assertThat(configuration.incoming.dependencies).allSatisfy {
       assertThat(it).doesNotHave(anyOf(group, name))
     }
   }
 
   @Test
-  internal fun `JenkinsPipelineUnit is available in testImplementation configuration when a version is set`() {
+  internal fun `JenkinsPipelineUnit is available in Jenkins unit test libraries configuration when a version is set`() {
     val pipelineUnitVersion = "1.0"
 
     project.extensions.getByType(SharedLibraryExtension::class.java).pipelineTestUnitVersion = pipelineUnitVersion
@@ -167,12 +169,12 @@ internal class SharedLibraryPluginTest {
       it.version == pipelineUnitVersion
     }, pipelineUnitVersion)
 
-    val implementation = project.configurations.getByName("testImplementation")
+    val implementation = project.configurations.getByName("jenkinsPipelineUnitTestLibraries")
     assertThat(implementation.incoming.dependencies).haveExactly(1, allOf(group, name, version))
   }
 
   @Test
-  internal fun `Jenkins Test Harness is available in integrationTestImplementation configuration`() {
+  internal fun `Jenkins Test Harness is available in Jenkins test libraries configuration`() {
     project.evaluate()
 
     val group = Condition<Dependency>(Predicate {
@@ -182,10 +184,11 @@ internal class SharedLibraryPluginTest {
       it.name == "jenkins-test-harness"
     }, "jenkins-test-harness")
 
-    val implementation = project.configurations.getByName("integrationTestImplementation")
-    assertThat(implementation.incoming.dependencies).haveExactly(1, allOf(group, name))
+    val configuration = project.configurations.getByName("jenkinsTestLibraries")
+    assertThat(configuration.incoming.dependencies).haveExactly(1, allOf(group, name))
   }
 
+  @Disabled("may not happen at configuration evaluation time because will happen during resolution - revisit this")
   @Test
   internal fun `Jenkins Pipeline Shared Groovy Libraries Plugin available in integrationTestImplementationConfiguration and HPI available in integrationTestRuntimeOnly`() {
     project.evaluate()
@@ -210,7 +213,7 @@ internal class SharedLibraryPluginTest {
   }
 
   @Test
-  internal fun `Jenkins WAR is available in integrationTestRuntimeOnly configuration`() {
+  internal fun `Jenkins WAR is available in Jenkins test runtime configuration`() {
     project.evaluate()
 
     val group = Condition<Dependency>(Predicate {
@@ -223,12 +226,12 @@ internal class SharedLibraryPluginTest {
       it is ExternalModuleDependency && it.artifacts.any { it.extension == "war" }
     }, "war")
 
-    val implementation = project.configurations.getByName("integrationTestRuntimeOnly")
-    assertThat(implementation.incoming.dependencies).haveExactly(1, allOf(group, name, extension))
+    val configuration = project.configurations.getByName("jenkinsTestLibrariesRuntimeOnly")
+    assertThat(configuration.incoming.dependencies).haveExactly(1, allOf(group, name, extension))
   }
 
   @Test
-  internal fun `Jenkins Core dependency is available in integrationTestImplementation configuration`() {
+  internal fun `Jenkins Core dependency is available in Jenkins core library configuration`() {
     project.evaluate()
 
     val group = Condition<Dependency>(Predicate {
@@ -238,8 +241,8 @@ internal class SharedLibraryPluginTest {
       it.name == "jenkins-core"
     }, "jenkins-core")
 
-    val implementation = project.configurations.getByName("integrationTestImplementation")
-    assertThat(implementation.incoming.dependencies).haveExactly(1, allOf(group, name))
+    val configuration = project.configurations.getByName("jenkinsCoreLibraries")
+    assertThat(configuration.incoming.dependencies).haveExactly(1, allOf(group, name))
   }
 
   @Test
@@ -300,6 +303,24 @@ internal class SharedLibraryPluginTest {
     assertThat(config.isVisible).isFalse()
   }
 
+  @Test
+  internal fun `integrationTestImplementation extends configurations for Jenkins core, plugins, and testing`() {
+    val configuration = project.configurations.getByName("integrationTestImplementation")
+
+    assertThat(configuration.extendsFrom.map { it.name })
+      .isNotEmpty
+      .contains("jenkinsPluginLibraries", "jenkinsCoreLibraries", "jenkinsTestLibraries")
+  }
+
+  @Test
+  internal fun `integrationTestRuntimeOnly extends configurations for Jenkins test and plugin runtime`() {
+    val configuration = project.configurations.getByName("integrationTestRuntimeOnly")
+
+    assertThat(configuration.extendsFrom.map { it.name })
+      .isNotEmpty
+      .contains("jenkinsTestLibrariesRuntimeOnly", "jenkinsPluginHpisAndJpis")
+  }
+
   @NotImplementedYet
   @Test
   internal fun `Jenkins Global Library plugin implementation and HPI dependencies are added`() {
@@ -307,7 +328,7 @@ internal class SharedLibraryPluginTest {
 
   @NotImplementedYet
   @Test
-  internal fun `resources directory added for main to be able to use the Jenkins GDSL`() {
+  internal fun `additional resources directory available for main to be able to use the Jenkins GDSL in IntelliJ`() {
   }
 
   @NotImplementedYet

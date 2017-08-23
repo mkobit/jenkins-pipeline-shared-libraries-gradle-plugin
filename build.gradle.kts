@@ -42,6 +42,9 @@ val junitTestRuntimeOnlyArtifacts: Map<String, Map<String, String>> by rootProje
 
 repositories {
   jcenter()
+  maven {
+    url = uri("https://repo.jenkins-ci.org/public/")
+  }
 }
 
 val SourceSet.kotlin: SourceDirectorySet
@@ -87,40 +90,34 @@ dependencies {
   pipelineTestResources.compileOnlyConfigurationName("org.jenkins-ci.main:jenkins-test-harness:2.24")
   pipelineTestResources.compileOnlyConfigurationName("org.codehaus.groovy:groovy:2.4.8")
   // TODO: have to figure out a better way to manage these dependencies (and transitives)
-  val jenkinsPluginDependencies = listOf(
-    "org.jenkins-ci.plugins:git:3.5.0",
-    "org.jenkins-ci.plugins.workflow:workflow-api:2.20",
-    "org.jenkins-ci.plugins.workflow:workflow-basic-steps:2.6",
-    "org.jenkins-ci.plugins.workflow:workflow-cps:2.39",
-    "org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:2.8",
-    "org.jenkins-ci.plugins.workflow:workflow-durable-task-step:2.13",
-    "org.jenkins-ci.plugins.workflow:workflow-job:2.14.1",
-    "org.jenkins-ci.plugins.workflow:workflow-multibranch:2.16",
-    "org.jenkins-ci.plugins.workflow:workflow-scm-step:2.6",
-    "org.jenkins-ci.plugins.workflow:workflow-step-api:2.12",
-    "org.jenkins-ci.plugins.workflow:workflow-support:2.14"
-  )
-  jenkinsPluginDependencies.forEach {
-    pipelineTestResources.compileOnlyConfigurationName(it) {
-      artifact {
-        name = this@compileOnlyConfigurationName.name
-        extension = "jar"
-      }
-      isTransitive = true
-    }
-  }
-  pipelineTestResources.compileOnlyConfigurationName("org.jenkins-ci.main:jenkins-core:2.60.2") {
-    isTransitive = false
-  }
-
-  tasks.create("mkobitTest") {
-    doFirst {
-      configurations.getByName(pipelineTestResources.compileOnlyConfigurationName).resolvedConfiguration.resolvedArtifacts.forEach {
-        println(it)
-      }
-    }
-  }
+  // TODO: figure out why failing in IntelliJ
+//  val jenkinsPluginDependencies = listOf(
+//    "org.jenkins-ci.plugins:git:3.5.1",
+//    "org.jenkins-ci.plugins.workflow:workflow-api:2.20",
+//    "org.jenkins-ci.plugins.workflow:workflow-basic-steps:2.6",
+//    "org.jenkins-ci.plugins.workflow:workflow-cps:2.39",
+//    "org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:2.8",
+//    "org.jenkins-ci.plugins.workflow:workflow-durable-task-step:2.13",
+//    "org.jenkins-ci.plugins.workflow:workflow-job:2.14.1",
+//    "org.jenkins-ci.plugins.workflow:workflow-multibranch:2.16",
+//    "org.jenkins-ci.plugins.workflow:workflow-scm-step:2.6",
+//    "org.jenkins-ci.plugins.workflow:workflow-step-api:2.12",
+//    "org.jenkins-ci.plugins.workflow:workflow-support:2.14"
+//  )
+//  jenkinsPluginDependencies.forEach {
+//    pipelineTestResources.compileOnlyConfigurationName(it) {
+//      artifact {
+//        name = this@compileOnlyConfigurationName.name
+//        extension = "jar"
+//      }
+//      isTransitive = true
+//    }
+//  }
+//  pipelineTestResources.compileOnlyConfigurationName("org.jenkins-ci.main:jenkins-core:2.60.2") {
+//    isTransitive = false
+//  }
 }
+
 
 tasks.withType(KotlinCompile::class.java) {
   kotlinOptions.jvmTarget = "1.8"

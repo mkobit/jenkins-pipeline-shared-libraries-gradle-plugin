@@ -9,8 +9,10 @@ import org.gradle.api.artifacts.ExternalModuleDependency
 import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.artifacts.dsl.RepositoryHandler
 import org.gradle.api.file.ProjectLayout
+import org.gradle.api.internal.HasConvention
 import org.gradle.api.plugins.GroovyPlugin
 import org.gradle.api.plugins.JavaPluginConvention
+import org.gradle.api.tasks.GroovySourceSet
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.TaskContainer
 import org.gradle.api.tasks.javadoc.Groovydoc
@@ -31,6 +33,7 @@ open class SharedLibraryPlugin @Inject constructor(
     private val DEFAULT_CORE_VERSION = "2.60.2"
     private val DEFAULT_GLOBAL_LIB_PLUGIN_VERSION = "2.8"
     private val DEFAULT_TEST_HARNESS_VERSION = "2.24"
+    private val UNIT_TESTING_LIBRARY_CONFIGURATION = "jenkinsPipelineUnitTestLibraries"
     private val PLUGIN_HPI_JPI_CONFIGURATION = "jenkinsPluginHpisAndJpis"
     private val PLUGIN_LIBRARY_CONFIGURATION = "jenkinsPluginLibraries"
     private val CORE_LIBRARY_CONFIGURATION = "jenkinsCoreLibraries"
@@ -53,14 +56,14 @@ open class SharedLibraryPlugin @Inject constructor(
     )
     project.afterEvaluate {
       setupGroovyDependency(project.dependencies, sharedLibraryExtension, main)
-      setupDependencies(project.dependencies, sharedLibraryExtension, test)
+      setupDependencies(project.configurations, project.dependencies, sharedLibraryExtension)
     }
   }
 
   private fun setupDependencies(
+    configurations: ConfigurationContainer,
     dependencies: DependencyHandler,
-    sharedLibraryExtension: SharedLibraryExtension,
-    test: SourceSet
+    sharedLibraryExtension: SharedLibraryExtension
   ) {
     dependencies.add(
       TEST_LIBRARY_CONFIGURATION,
@@ -80,21 +83,35 @@ open class SharedLibraryPlugin @Inject constructor(
     sharedLibraryExtension.pluginDependencies().forEach {
       // TODO: when kotlin-dsl works in IntelliJ switch to it
       // TODO: figure out how to get transitive plugin management working
-      val jarDependency = (dependencies.create("${it.asStringNotation()}@jar") as ExternalModuleDependency)
-      val hpiDependency = (dependencies.create("${it.asStringNotation()}@hpi") as ExternalModuleDependency)
-      dependencies.add(
-        PLUGIN_LIBRARY_CONFIGURATION,
-        jarDependency
-      )
+      val hpiDependency = dependencies.createExternal(it.asStringNotation())
+//      val jarDependency = (dependencies.create("${it.asStringNotation()}@jar") as ExternalModuleDependency)
+
       dependencies.add(
         PLUGIN_HPI_JPI_CONFIGURATION,
         hpiDependency
       )
+//      dependencies.add(
+//        PLUGIN_LIBRARY_CONFIGURATION,
+//        jarDependency
+//      )
+    }
+
+    // TODO: don't resolve configurations early if we don't have to.
+    // We do need access to the transitive dependencies to get all of the HPIs and JAR libraries in code completion and I haven't thought of a better way of handling it yet.
+    configurations.getByName(PLUGIN_LIBRARY_CONFIGURATION).incoming.beforeResolve {
+      configurations.getByName(PLUGIN_HPI_JPI_CONFIGURATION).resolvedConfiguration.resolvedArtifacts.filter {
+        it.extension.endsWith(".hpi") || it.extension.endsWith(".jpi")
+      }.forEach {
+        dependencies.add(
+          PLUGIN_LIBRARY_CONFIGURATION,
+          dependencies.createExternal("${it.moduleVersion}@jar")
+        )
+      }
     }
 
     sharedLibraryExtension.jenkinsPipelineUnitDependency()?.let {
       dependencies.add(
-        test.implementationConfigurationName,
+        UNIT_TESTING_LIBRARY_CONFIGURATION,
         it
       )
     }
@@ -156,6 +173,9 @@ open class SharedLibraryPlugin @Inject constructor(
     val coreLibraries = configurations.create(CORE_LIBRARY_CONFIGURATION, configurationAction)
     val testLibrary = configurations.create(TEST_LIBRARY_CONFIGURATION, configurationAction)
     val testLibraryRuntimeOnly = configurations.create(TEST_LIBRARY_RUNTIME_ONLY_CONFIGURATION, configurationAction)
+    val unitTestingLibraries = configurations.create(UNIT_TESTING_LIBRARY_CONFIGURATION, configurationAction)
+
+    configurations.getByName(test.implementationConfigurationName).extendsFrom(unitTestingLibraries)
 
     configurations.getByName(integrationTest.implementationConfigurationName).extendsFrom(
       configurations.getByName(main.implementationConfigurationName),
@@ -195,20 +215,20 @@ open class SharedLibraryPlugin @Inject constructor(
     javaPluginConvention.targetCompatibility = JavaVersion.VERSION_1_8
     val main = javaPluginConvention.sourceSets.getByName("main").apply {
       java.setSrcDirs(emptyList<String>())
-      groovy.setSrcDirs(listOf("src", "vars"))
+      (this as HasConvention).convention.getPlugin(GroovySourceSet::class.java).groovy.setSrcDirs(listOf("src", "vars"))
       resources.setSrcDirs(listOf("resources"))
     }
     val test = javaPluginConvention.sourceSets.getByName("test").apply {
       val unitTestDirectory = "$TEST_ROOT_PATH/unit"
       java.setSrcDirs(listOf("$unitTestDirectory/java"))
-      groovy.setSrcDirs(listOf("$unitTestDirectory/groovy"))
+      (this as HasConvention).convention.getPlugin(GroovySourceSet::class.java).groovy.setSrcDirs(listOf("$unitTestDirectory/groovy"))
       resources.setSrcDirs(listOf("$unitTestDirectory/resources"))
     }
     val integrationTest = javaPluginConvention.sourceSets.create("integrationTest") {
       it.apply {
         val integrationTestDirectory = "$TEST_ROOT_PATH/integration"
         java.setSrcDirs(listOf("$integrationTestDirectory/java"))
-        groovy.setSrcDirs(listOf("$integrationTestDirectory/groovy"))
+        (this as HasConvention).convention.getPlugin(GroovySourceSet::class.java).groovy.setSrcDirs(listOf("$integrationTestDirectory/groovy"))
         resources.setSrcDirs(listOf("$integrationTestDirectory/resources"))
       }
     }
@@ -232,4 +252,10 @@ open class SharedLibraryPlugin @Inject constructor(
       pipelineTestUnitVersion
     )
   }
+
+  private fun DependencyHandler.createExternal(
+    dependencyNotation: Any,
+    configuration: ExternalModuleDependency.() -> Unit = {}
+  ): ExternalModuleDependency = (this.create(
+    dependencyNotation) as ExternalModuleDependency).apply(configuration)
 }

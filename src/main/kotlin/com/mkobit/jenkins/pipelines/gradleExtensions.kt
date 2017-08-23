@@ -12,5 +12,3 @@ inline internal fun <reified T> Project.initializedProperty(initialState: T): Pr
   set(initialState)
 }
 
-internal val SourceSet.groovy: SourceDirectorySet
-  get() = (this as HasConvention).convention.getPlugin(GroovySourceSet::class.java).groovy

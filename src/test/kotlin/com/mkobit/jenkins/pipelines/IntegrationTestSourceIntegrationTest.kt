@@ -18,9 +18,73 @@ internal class IntegrationTestSourceIntegrationTest {
 
   private lateinit var projectDir: File
 
+  /**
+   * Helper method to use the [GradleRunner] to execute a build on the [projectDir].
+   */
+  private fun build(vararg args: String): BuildResult = GradleRunner.create()
+    .withPluginClasspath()
+    .withArguments(*args)
+    .withProjectDir(projectDir)
+    .build()
+
   @BeforeEach
   internal fun setUp() {
     projectDir = createTempDir().apply { deleteOnExit() }
+  }
+
+  @Disabled("cannot resolve dependency directly, need to pick a different one")
+  @Test
+  internal fun `Jenkins Pipeline Shared Groovy Libraries Plugin JAR available in integrationTestImplementation configuration`() {
+    projectDir.writeRelativeFile(fileName = "build.gradle") {
+      groovyBuildScript() + """
+import org.gradle.api.artifacts.ResolvedArtifact
+import org.gradle.api.artifacts.ModuleVersionIdentifier
+
+tasks.create('printOutIntegrationTestImplementationDependencies') {
+  doFirst {
+    final configuration = configurations.getByName('integrationTestImplementation')
+    configuration.resolvedConfiguration.resolvedArtifacts.each { ResolvedArtifact artifact ->
+      final ModuleVersionIdentifier identifier = artifact.moduleVersion.id
+      println("Artifact: ${'$'}{identifier.group}:${'$'}{identifier.name}:${'$'}{artifact.extension}")
+    }
+  }
+}
+"""
+    }
+
+    val buildResult: BuildResult = build("printOutIntegrationTestImplementationDependencies")
+
+    Assertions.assertThat(buildResult.output).contains("Artifact: org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:jar")
+  }
+
+  @Disabled("cannot resolve dependency directly, need to pick a different one")
+  @Test
+  internal fun `Jenkins Pipeline Shared Groovy Libraries Plugin HPI available in integrationTestRuntimeOnly configuration`() {
+    projectDir.writeRelativeFile(fileName = "build.gradle") {
+      groovyBuildScript() + """
+import org.gradle.api.artifacts.ResolvedArtifact
+import org.gradle.api.artifacts.ModuleVersionIdentifier
+
+tasks.create('printOutIntegrationTestRuntimeOnlyDependencies') {
+  doFirst {
+    final configuration = configurations.getByName('integrationTestRuntimeOnly')
+    configuration.resolvedConfiguration.resolvedArtifacts.each { ResolvedArtifact artifact ->
+      final ModuleVersionIdentifier identifier = artifact.moduleVersion.id
+      println("Artifact: ${'$'}{identifier.group}:${'$'}{identifier.name}:${'$'}{artifact.extension}")
+    }
+  }
+}
+"""
+    }
+
+    val buildResult: BuildResult = build("printOutIntegrationTestRuntimeOnlyDependencies")
+
+    Assertions.assertThat(buildResult.output).contains("Artifact: org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:hpi")
+  }
+
+  @NotImplementedYet
+  @Test
+  internal fun `no HPI artifacts are available in integrationTestImplementation configuration`() {
   }
 
   @Disabled("class not on compile classpath - Unable to load class org.jenkinsci.plugins.workflow.libs.SCMSourceRetriever due to missing dependency org/jenkinsci/plugins/workflow/steps/scm/SCMStep")
@@ -34,11 +98,7 @@ internal class IntegrationTestSourceIntegrationTest {
       resourceText("com/mkobit/ImportClassesCompilationTest.groovy")
     }
 
-    val buildResult: BuildResult = GradleRunner.create()
-      .withPluginClasspath()
-      .withArguments("compileIntegrationTestGroovy", "-s", "-i")
-      .withProjectDir(projectDir)
-      .build()
+    val buildResult: BuildResult = build("compileIntegrationTestGroovy", "-s", "-i")
 
     val task = buildResult.task(":compileIntegrationTestGroovy")
     Assertions.assertThat(task?.outcome)
@@ -59,11 +119,7 @@ internal class IntegrationTestSourceIntegrationTest {
       resourceText("com/mkobit/JenkinsRuleUsageTest.groovy")
     }
 
-    val buildResult: BuildResult = GradleRunner.create()
-      .withPluginClasspath()
-      .withArguments("integrationTest", "-s", "-i", "--dry-run")
-      .withProjectDir(projectDir)
-      .build()
+    val buildResult: BuildResult = build("integrationTest", "-s", "-i", "--dry-run")
 
     val task = buildResult.task(":integrationTest")
     Assertions.assertThat(task?.outcome)
@@ -84,11 +140,7 @@ internal class IntegrationTestSourceIntegrationTest {
       resourceText("com/mkobit/WorkflowJobUsageTest.groovy")
     }
 
-    val buildResult: BuildResult = GradleRunner.create()
-      .withPluginClasspath()
-      .withArguments("integrationTest", "-s", "-i")
-      .withProjectDir(projectDir)
-      .build()
+    val buildResult: BuildResult = build("integrationTest", "-s", "-i")
 
     val task = buildResult.task(":integrationTest")
     Assertions.assertThat(task?.outcome)
@@ -126,11 +178,7 @@ class LibHelper {
       resourceText("com/mkobit/JenkinsGlobalLibraryTest.groovy")
     }
 
-    val buildResult: BuildResult = GradleRunner.create()
-      .withPluginClasspath()
-      .withArguments("integrationTest", "-s", "-i")
-      .withProjectDir(projectDir)
-      .build()
+    val buildResult: BuildResult = build("integrationTest", "-s", "-i")
 
     val task = buildResult.task(":integrationTest")
     Assertions.assertThat(task?.outcome)
