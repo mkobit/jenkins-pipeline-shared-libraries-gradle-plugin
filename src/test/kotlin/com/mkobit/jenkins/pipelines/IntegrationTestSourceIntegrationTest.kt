@@ -99,7 +99,6 @@ tasks.create('printOutDependencies') {
       .isEqualTo(TaskOutcome.SUCCESS)
   }
 
-  @Disabled("test seems to hang forever")
   @Test
   internal fun `can use @JenkinsRule in integration tests`() {
     projectDir.writeRelativeFile(fileName = "build.gradle") {
@@ -110,7 +109,7 @@ tasks.create('printOutDependencies') {
       resourceText("com/mkobit/JenkinsRuleUsageTest.groovy")
     }
 
-    val buildResult: BuildResult = build(projectDir, "integrationTest", "-s", "-i", "--dry-run")
+    val buildResult: BuildResult = build(projectDir, "integrationTest", "-s", "-i")
 
     val task = buildResult.task(":integrationTest")
     assertThat(task?.outcome)
