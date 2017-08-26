@@ -1,6 +1,6 @@
 package com.mkobit.jenkins.pipelines
 
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.api.BeforeEach
@@ -57,7 +57,7 @@ class MyLibTest {
     val buildResult: BuildResult = build(projectDir, "compileGroovy")
 
     val task = buildResult.task(":compileGroovy")
-    Assertions.assertThat(task?.outcome)
+    assertThat(task?.outcome)
       .describedAs("compileGroovy task outcome")
       .isNotNull()
       .isEqualTo(TaskOutcome.SUCCESS)
@@ -99,8 +99,7 @@ class MyLibTest {
     val buildResult: BuildResult = build(projectDir, "test", "-s")
 
     val task = buildResult.task(":test")
-    Assertions.assertThat(task).isNotNull()
-    Assertions.assertThat(task?.outcome)
+    assertThat(task?.outcome)
       .describedAs("test task outcome")
       .withFailMessage("Build output: ${buildResult.output}")
       .isNotNull()
@@ -141,7 +140,7 @@ class MyLib {
     val buildResult: BuildResult = build(projectDir, "groovydocJar")
 
     val task = buildResult.task(":groovydocJar")
-    Assertions.assertThat(task?.outcome)
+    assertThat(task?.outcome)
       .describedAs("groovydocJar task outcome")
       .isNotNull()
       .isEqualTo(TaskOutcome.SUCCESS)
@@ -166,7 +165,7 @@ class MyLib {
     val buildResult: BuildResult = build(projectDir, "sourcesJar")
 
     val task = buildResult.task(":sourcesJar")
-    Assertions.assertThat(task?.outcome)
+    assertThat(task?.outcome)
       .describedAs("groovydocJar task outcome")
       .isNotNull()
       .isEqualTo(TaskOutcome.SUCCESS)

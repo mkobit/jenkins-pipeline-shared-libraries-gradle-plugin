@@ -1,6 +1,6 @@
 package com.mkobit.jenkins.pipelines
 
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.api.BeforeEach
@@ -45,7 +45,7 @@ tasks.create('printOutDependencies') {
 
     val buildResult: BuildResult = build(projectDir, "printOutDependencies")
 
-    Assertions.assertThat(buildResult.output).contains("Artifact: org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:jar")
+    assertThat(buildResult.output).contains("Artifact: org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:jar")
   }
 
   @Disabled("may not be artifacts but file dependencies with current hack")
@@ -70,7 +70,7 @@ tasks.create('printOutDependencies') {
 
     val buildResult: BuildResult = build(projectDir, "printOutDependencies")
 
-    Assertions.assertThat(buildResult.output).contains("Artifact: org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:hpi")
+    assertThat(buildResult.output).contains("Artifact: org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:hpi")
   }
 
   @NotImplementedYet
@@ -92,7 +92,7 @@ tasks.create('printOutDependencies') {
     val buildResult: BuildResult = build(projectDir, "compileIntegrationTestGroovy", "-s", "-i")
 
     val task = buildResult.task(":compileIntegrationTestGroovy")
-    Assertions.assertThat(task?.outcome)
+    assertThat(task?.outcome)
       .describedAs("integrationTestCompileGroovy task outcome")
       .withFailMessage("Build output: ${buildResult.output}")
       .isNotNull()
@@ -113,7 +113,7 @@ tasks.create('printOutDependencies') {
     val buildResult: BuildResult = build(projectDir, "integrationTest", "-s", "-i", "--dry-run")
 
     val task = buildResult.task(":integrationTest")
-    Assertions.assertThat(task?.outcome)
+    assertThat(task?.outcome)
       .describedAs("integrationTest task outcome")
       .withFailMessage("Build output: ${buildResult.output}")
       .isNotNull()
@@ -134,7 +134,7 @@ tasks.create('printOutDependencies') {
     val buildResult: BuildResult = build(projectDir, "integrationTest", "-s", "-i")
 
     val task = buildResult.task(":integrationTest")
-    Assertions.assertThat(task?.outcome)
+    assertThat(task?.outcome)
       .describedAs("integrationTest task outcome")
       .withFailMessage("Build output: ${buildResult.output}")
       .isNotNull()
@@ -172,7 +172,7 @@ class LibHelper {
     val buildResult: BuildResult = build(projectDir, "integrationTest", "-s", "-i")
 
     val task = buildResult.task(":integrationTest")
-    Assertions.assertThat(task?.outcome)
+    assertThat(task?.outcome)
       .describedAs("integrationTest task outcome")
       .withFailMessage("Build output: ${buildResult.output}")
       .isNotNull()
