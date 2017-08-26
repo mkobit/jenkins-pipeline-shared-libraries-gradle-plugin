@@ -1,7 +1,7 @@
-val junitPlatformVersion: String by extra { "1.0.0-RC2" }
-val junitPlatformGradlePluginVersion: String by extra { "1.0.0-RC2" }
-val junitJupiterVersion: String by extra { "5.0.0-RC2" }
-val junitVintageVersion: String by extra { "4.12.0-RC2" }
+val junitPlatformVersion: String by extra { "1.0.0-RC3" }
+val junitPlatformGradlePluginVersion: String by extra { "1.0.0-RC3" }
+val junitJupiterVersion: String by extra { "5.0.0-RC3" }
+val junitVintageVersion: String by extra { "4.12.0-RC3" }
 val junit5Log4jVersion: String by extra { "2.8.2" }
 
 extra["junitTestImplementationArtifacts"] = mapOf(

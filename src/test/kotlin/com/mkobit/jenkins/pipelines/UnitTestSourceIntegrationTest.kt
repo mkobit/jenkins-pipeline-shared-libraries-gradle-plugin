@@ -1,15 +1,20 @@
 package com.mkobit.jenkins.pipelines
 
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.gradle.testkit.runner.BuildResult
-import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
-import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
+import testsupport.build
 import testsupport.writeRelativeFile
 import java.io.File
+import java.util.stream.Stream
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Tag("integration")
 internal class UnitTestSourceIntegrationTest {
 
@@ -20,20 +25,39 @@ internal class UnitTestSourceIntegrationTest {
     projectDir = createTempDir().apply { deleteOnExit() }
   }
 
-  @Test
-  internal fun `can write unit tests using JenkinsPipelineUnit`() {
+  @ParameterizedTest(name = "version {0}")
+  @MethodSource("jenkinsPipelineUnitTestData")
+  internal fun `can write unit tests using JenkinsPipelineUnit`(version: String, pipeline: String, groovyTestFile: String) {
     projectDir.writeRelativeFile(fileName = "build.gradle") {
       groovyBuildScript() +
         """
 sharedLibrary {
-  pipelineTestUnitVersion = "1.0"
+  pipelineTestUnitVersion = "$version"
 }
 """
     }
 
     projectDir.writeRelativeFile(fileName = "example.jenkins") {
-      """
-def execute() {
+      pipeline
+    }
+
+    projectDir.writeRelativeFile("test", "unit", "groovy", "com", "mkobit", fileName = "JenkinsPipelineUnitUsageTest.groovy") {
+      groovyTestFile
+    }
+
+    val buildResult: BuildResult = build(projectDir, "test", "-s", "-i")
+
+    val task = buildResult.task(":test")
+    assertThat(task).isNotNull()
+    assertThat(task?.outcome)
+      .describedAs("test task outcome")
+      .withFailMessage("Build output: ${buildResult.output}")
+      .isNotNull()
+      .isEqualTo(TaskOutcome.SUCCESS)
+  }
+
+  fun jenkinsPipelineUnitTestData(): Stream<Arguments> {
+    val exampleJenkins = """def execute() {
   node {
     echo "We in the pipeline now!"
   }
@@ -41,10 +65,9 @@ def execute() {
 
 return this
 """
-    }
 
-    projectDir.writeRelativeFile("test", "unit", "groovy", "com", "mkobit", fileName = "JenkinsPipelineUnitUsageTest.groovy") {
-      """
+    return Stream.of(
+      Arguments.of("1.0", exampleJenkins, """
 package com.mkobit
 
 import org.junit.Assert
@@ -67,22 +90,31 @@ class JenkinsPipelineUnitUsageTest extends BasePipelineTest {
     printCallStack()
   }
 }
-"""
-    }
+"""),
+      Arguments.of("1.1", exampleJenkins, """
+package com.mkobit
 
-    val buildResult: BuildResult = GradleRunner.create()
-      .withPluginClasspath()
-      .withArguments("test", "-s", "-i")
-      .withProjectDir(projectDir)
-      .build()
+import org.junit.Assert
+import org.junit.Before
+import org.junit.Test
+import com.lesfurets.jenkins.unit.BasePipelineTest
 
-    val task = buildResult.task(":test")
-    Assertions.assertThat(task).isNotNull()
-    Assertions.assertThat(task?.outcome)
-      .describedAs("test task outcome")
-      .withFailMessage("Build output: ${buildResult.output}")
-      .isNotNull()
-      .isEqualTo(TaskOutcome.SUCCESS)
+class JenkinsPipelineUnitUsageTest extends BasePipelineTest {
+
+  @Override
+  @Before
+  void setUp() throws Exception {
+    super.setUp()
   }
 
+  @Test
+  void canExecutePipelineJob() {
+    runScript("example.jenkins")
+    printCallStack()
+    assertJobStatusSuccess()
+  }
+}
+""")
+    )
+  }
 }
