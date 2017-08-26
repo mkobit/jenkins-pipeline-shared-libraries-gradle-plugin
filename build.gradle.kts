@@ -68,9 +68,11 @@ java {
   }
 }
 
+
 dependencies {
   api(gradleApi())
   implementation(kotlin("stdlib-jre8", kotlinVersion))
+  implementation("io.github.microutils:kotlin-logging:1.4.6")
   testImplementation(kotlin("reflect", kotlinVersion))
   testImplementation("com.google.guava:guava:23.0")
   testImplementation("org.assertj:assertj-core:3.8.0")

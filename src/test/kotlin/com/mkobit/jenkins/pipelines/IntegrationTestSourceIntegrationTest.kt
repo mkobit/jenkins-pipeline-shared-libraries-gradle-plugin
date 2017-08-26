@@ -32,17 +32,17 @@ internal class IntegrationTestSourceIntegrationTest {
     projectDir = createTempDir().apply { deleteOnExit() }
   }
 
-  @Disabled("cannot resolve dependency directly, need to pick a different one")
+  @Disabled("may not be artifacts but file dependencies with current hack")
   @Test
-  internal fun `Jenkins Pipeline Shared Groovy Libraries Plugin JAR available in integrationTestImplementation configuration`() {
+  internal fun `Jenkins Pipeline Shared Groovy Libraries Plugin JAR available in integrationTestCompileClasspath configuration`() {
     projectDir.writeRelativeFile(fileName = "build.gradle") {
       groovyBuildScript() + """
 import org.gradle.api.artifacts.ResolvedArtifact
 import org.gradle.api.artifacts.ModuleVersionIdentifier
 
-tasks.create('printOutIntegrationTestImplementationDependencies') {
+tasks.create('printOutDependencies') {
   doFirst {
-    final configuration = configurations.getByName('integrationTestImplementation')
+    final configuration = configurations.getByName('integrationTestCompileClasspath')
     configuration.resolvedConfiguration.resolvedArtifacts.each { ResolvedArtifact artifact ->
       final ModuleVersionIdentifier identifier = artifact.moduleVersion.id
       println("Artifact: ${'$'}{identifier.group}:${'$'}{identifier.name}:${'$'}{artifact.extension}")
@@ -52,22 +52,22 @@ tasks.create('printOutIntegrationTestImplementationDependencies') {
 """
     }
 
-    val buildResult: BuildResult = build("printOutIntegrationTestImplementationDependencies")
+    val buildResult: BuildResult = build("printOutDependencies")
 
     Assertions.assertThat(buildResult.output).contains("Artifact: org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:jar")
   }
 
-  @Disabled("cannot resolve dependency directly, need to pick a different one")
+  @Disabled("may not be artifacts but file dependencies with current hack")
   @Test
-  internal fun `Jenkins Pipeline Shared Groovy Libraries Plugin HPI available in integrationTestRuntimeOnly configuration`() {
+  internal fun `Jenkins Pipeline Shared Groovy Libraries Plugin HPI available in integrationRuntimeClasspath configuration`() {
     projectDir.writeRelativeFile(fileName = "build.gradle") {
       groovyBuildScript() + """
 import org.gradle.api.artifacts.ResolvedArtifact
 import org.gradle.api.artifacts.ModuleVersionIdentifier
 
-tasks.create('printOutIntegrationTestRuntimeOnlyDependencies') {
+tasks.create('printOutDependencies') {
   doFirst {
-    final configuration = configurations.getByName('integrationTestRuntimeOnly')
+    final configuration = configurations.getByName('integrationTestRuntimeClasspath')
     configuration.resolvedConfiguration.resolvedArtifacts.each { ResolvedArtifact artifact ->
       final ModuleVersionIdentifier identifier = artifact.moduleVersion.id
       println("Artifact: ${'$'}{identifier.group}:${'$'}{identifier.name}:${'$'}{artifact.extension}")
@@ -77,7 +77,7 @@ tasks.create('printOutIntegrationTestRuntimeOnlyDependencies') {
 """
     }
 
-    val buildResult: BuildResult = build("printOutIntegrationTestRuntimeOnlyDependencies")
+    val buildResult: BuildResult = build("printOutDependencies")
 
     Assertions.assertThat(buildResult.output).contains("Artifact: org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:hpi")
   }
@@ -150,7 +150,7 @@ tasks.create('printOutIntegrationTestRuntimeOnlyDependencies') {
       .isEqualTo(TaskOutcome.SUCCESS)
   }
 
-  @NotImplementedYet
+  @Disabled("class not on compile classpath - unable to resolve class org.jenkinsci.plugins.workflow.job.WorkflowJob")
   @Test
   internal fun `can set up pipeline library in an integration test`() {
     projectDir.writeRelativeFile(fileName = "build.gradle") {

@@ -1,5 +1,6 @@
 package com.mkobit.jenkins.pipelines
 
+import mu.KotlinLogging
 import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -8,6 +9,7 @@ import org.gradle.api.artifacts.ConfigurationContainer
 import org.gradle.api.artifacts.ExternalModuleDependency
 import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.artifacts.dsl.RepositoryHandler
+import org.gradle.api.file.FileCollection
 import org.gradle.api.file.ProjectLayout
 import org.gradle.api.internal.HasConvention
 import org.gradle.api.plugins.GroovyPlugin
@@ -19,11 +21,14 @@ import org.gradle.api.tasks.javadoc.Groovydoc
 import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.tasks.Jar
 import org.gradle.language.base.plugins.LifecycleBasePlugin
+import java.util.concurrent.Callable
 import javax.inject.Inject
 
 open class SharedLibraryPlugin @Inject constructor(
   private val projectLayout: ProjectLayout
 ) : Plugin<Project> {
+
+  private val logger = KotlinLogging.logger {}
 
   companion object {
     val JENKINS_REPOSITORY_NAME = "JenkinsPublic"
@@ -56,14 +61,20 @@ open class SharedLibraryPlugin @Inject constructor(
     )
     project.afterEvaluate {
       setupGroovyDependency(project.dependencies, sharedLibraryExtension, main)
-      setupDependencies(project.configurations, project.dependencies, sharedLibraryExtension)
+      setupDependencies(
+        project,
+        project.dependencies,
+        sharedLibraryExtension,
+        project.configurations
+      )
     }
   }
 
   private fun setupDependencies(
-    configurations: ConfigurationContainer,
+    project: Project,
     dependencies: DependencyHandler,
-    sharedLibraryExtension: SharedLibraryExtension
+    sharedLibraryExtension: SharedLibraryExtension,
+    configurations: ConfigurationContainer
   ) {
     dependencies.add(
       TEST_LIBRARY_CONFIGURATION,
@@ -82,10 +93,10 @@ open class SharedLibraryPlugin @Inject constructor(
 
     sharedLibraryExtension.pluginDependencies().forEach {
       // TODO: when kotlin-dsl works in IntelliJ switch to it
-      // TODO: figure out how to get transitive plugin management working
       val hpiDependency = dependencies.createExternal(it.asStringNotation())
 //      val jarDependency = (dependencies.create("${it.asStringNotation()}@jar") as ExternalModuleDependency)
 
+      logger.debug { "Adding dependency $hpiDependency to configuration $PLUGIN_HPI_JPI_CONFIGURATION" }
       dependencies.add(
         PLUGIN_HPI_JPI_CONFIGURATION,
         hpiDependency
@@ -98,16 +109,28 @@ open class SharedLibraryPlugin @Inject constructor(
 
     // TODO: don't resolve configurations early if we don't have to.
     // We do need access to the transitive dependencies to get all of the HPIs and JAR libraries in code completion and I haven't thought of a better way of handling it yet.
-    configurations.getByName(PLUGIN_LIBRARY_CONFIGURATION).incoming.beforeResolve {
-      configurations.getByName(PLUGIN_HPI_JPI_CONFIGURATION).resolvedConfiguration.resolvedArtifacts.filter {
-        it.extension.endsWith(".hpi") || it.extension.endsWith(".jpi")
-      }.forEach {
-        dependencies.add(
-          PLUGIN_LIBRARY_CONFIGURATION,
-          dependencies.createExternal("${it.moduleVersion}@jar")
-        )
+    logger.debug { "Setting up an action on the incoming dependencies of $PLUGIN_LIBRARY_CONFIGURATION" }
+    val callablePluginLibraries: Callable<FileCollection> = Callable {
+      val pluginHpiJpiConfiguration = configurations.getByName(PLUGIN_HPI_JPI_CONFIGURATION)
+      val pluginHpiJpiDependencies = pluginHpiJpiConfiguration.dependencies
+      logger.debug { "Creating a detached configuration from configuration $PLUGIN_HPI_JPI_CONFIGURATION dependencies $pluginHpiJpiDependencies" }
+      val hpiJpiDetached = configurations.detachedConfiguration(*pluginHpiJpiDependencies.toTypedArray())
+        .resolvedConfiguration
+
+      val hpiDependencies  = hpiJpiDetached.resolvedArtifacts.filter {
+        it.extension in setOf("hpi", "jpi")
       }
+      val jarDependencies = hpiJpiDetached.resolvedArtifacts.filter {
+        it.extension == "jar"
+      }.map {
+        it.file
+      }
+
+      val hpiJars = configurations.detachedConfiguration(*hpiDependencies.map { dependencies.create("${it.moduleVersion}@jar") }.toTypedArray())
+
+      hpiJars + project.files(jarDependencies)
     }
+    dependencies.add(PLUGIN_LIBRARY_CONFIGURATION, project.files(callablePluginLibraries))
 
     sharedLibraryExtension.jenkinsPipelineUnitDependency()?.let {
       dependencies.add(
@@ -134,8 +157,8 @@ open class SharedLibraryPlugin @Inject constructor(
         classifier = "javadoc"
       }
     }
-  }
 
+  }
   private fun setupIntegrationTestTask(
     tasks: TaskContainer,
     main: SourceSet,
@@ -195,6 +218,7 @@ open class SharedLibraryPlugin @Inject constructor(
     sharedLibrary: SharedLibraryExtension,
     main: SourceSet
   ) {
+    logger.debug { "Adding ${sharedLibrary.groovyDependency()} to ${main.implementationConfigurationName}" }
     dependencies.add(
       main.implementationConfigurationName,
       sharedLibrary.groovyDependency()
@@ -202,6 +226,7 @@ open class SharedLibraryPlugin @Inject constructor(
   }
 
   private fun setupJenkinsRepository(repositoryHandler: RepositoryHandler) {
+    logger.debug { "Adding repository named $JENKINS_REPOSITORY_NAME with URL $JENKINS_REPOSITORY_URL" }
     repositoryHandler.maven {
       it.name = JENKINS_REPOSITORY_NAME
       it.setUrl(JENKINS_REPOSITORY_URL)
@@ -224,13 +249,11 @@ open class SharedLibraryPlugin @Inject constructor(
       (this as HasConvention).convention.getPlugin(GroovySourceSet::class.java).groovy.setSrcDirs(listOf("$unitTestDirectory/groovy"))
       resources.setSrcDirs(listOf("$unitTestDirectory/resources"))
     }
-    val integrationTest = javaPluginConvention.sourceSets.create("integrationTest") {
-      it.apply {
-        val integrationTestDirectory = "$TEST_ROOT_PATH/integration"
-        java.setSrcDirs(listOf("$integrationTestDirectory/java"))
-        (this as HasConvention).convention.getPlugin(GroovySourceSet::class.java).groovy.setSrcDirs(listOf("$integrationTestDirectory/groovy"))
-        resources.setSrcDirs(listOf("$integrationTestDirectory/resources"))
-      }
+    val integrationTest = javaPluginConvention.sourceSets.create("integrationTest").apply {
+      val integrationTestDirectory = "$TEST_ROOT_PATH/integration"
+      java.setSrcDirs(listOf("$integrationTestDirectory/java"))
+      (this as HasConvention).convention.getPlugin(GroovySourceSet::class.java).groovy.setSrcDirs(listOf("$integrationTestDirectory/groovy"))
+      resources.setSrcDirs(listOf("$integrationTestDirectory/resources"))
     }
 
     return Triple(main, test, integrationTest)
