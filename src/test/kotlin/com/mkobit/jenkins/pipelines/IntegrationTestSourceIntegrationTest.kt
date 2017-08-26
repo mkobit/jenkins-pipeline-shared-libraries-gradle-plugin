@@ -2,13 +2,13 @@ package com.mkobit.jenkins.pipelines
 
 import org.assertj.core.api.Assertions
 import org.gradle.testkit.runner.BuildResult
-import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import testsupport.NotImplementedYet
+import testsupport.build
 import testsupport.resourceText
 import testsupport.writeRelativeFile
 import java.io.File
@@ -17,15 +17,6 @@ import java.io.File
 internal class IntegrationTestSourceIntegrationTest {
 
   private lateinit var projectDir: File
-
-  /**
-   * Helper method to use the [GradleRunner] to execute a build on the [projectDir].
-   */
-  private fun build(vararg args: String): BuildResult = GradleRunner.create()
-    .withPluginClasspath()
-    .withArguments(*args)
-    .withProjectDir(projectDir)
-    .build()
 
   @BeforeEach
   internal fun setUp() {
@@ -52,7 +43,7 @@ tasks.create('printOutDependencies') {
 """
     }
 
-    val buildResult: BuildResult = build("printOutDependencies")
+    val buildResult: BuildResult = build(projectDir, "printOutDependencies")
 
     Assertions.assertThat(buildResult.output).contains("Artifact: org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:jar")
   }
@@ -77,7 +68,7 @@ tasks.create('printOutDependencies') {
 """
     }
 
-    val buildResult: BuildResult = build("printOutDependencies")
+    val buildResult: BuildResult = build(projectDir, "printOutDependencies")
 
     Assertions.assertThat(buildResult.output).contains("Artifact: org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:hpi")
   }
@@ -98,7 +89,7 @@ tasks.create('printOutDependencies') {
       resourceText("com/mkobit/ImportClassesCompilationTest.groovy")
     }
 
-    val buildResult: BuildResult = build("compileIntegrationTestGroovy", "-s", "-i")
+    val buildResult: BuildResult = build(projectDir, "compileIntegrationTestGroovy", "-s", "-i")
 
     val task = buildResult.task(":compileIntegrationTestGroovy")
     Assertions.assertThat(task?.outcome)
@@ -119,7 +110,7 @@ tasks.create('printOutDependencies') {
       resourceText("com/mkobit/JenkinsRuleUsageTest.groovy")
     }
 
-    val buildResult: BuildResult = build("integrationTest", "-s", "-i", "--dry-run")
+    val buildResult: BuildResult = build(projectDir, "integrationTest", "-s", "-i", "--dry-run")
 
     val task = buildResult.task(":integrationTest")
     Assertions.assertThat(task?.outcome)
@@ -140,7 +131,7 @@ tasks.create('printOutDependencies') {
       resourceText("com/mkobit/WorkflowJobUsageTest.groovy")
     }
 
-    val buildResult: BuildResult = build("integrationTest", "-s", "-i")
+    val buildResult: BuildResult = build(projectDir, "integrationTest", "-s", "-i")
 
     val task = buildResult.task(":integrationTest")
     Assertions.assertThat(task?.outcome)
@@ -178,7 +169,7 @@ class LibHelper {
       resourceText("com/mkobit/JenkinsGlobalLibraryTest.groovy")
     }
 
-    val buildResult: BuildResult = build("integrationTest", "-s", "-i")
+    val buildResult: BuildResult = build(projectDir, "integrationTest", "-s", "-i")
 
     val task = buildResult.task(":integrationTest")
     Assertions.assertThat(task?.outcome)

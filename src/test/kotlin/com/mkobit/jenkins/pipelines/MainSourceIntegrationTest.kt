@@ -2,12 +2,12 @@ package com.mkobit.jenkins.pipelines
 
 import org.assertj.core.api.Assertions
 import org.gradle.testkit.runner.BuildResult
-import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import testsupport.NotImplementedYet
+import testsupport.build
 import testsupport.writeRelativeFile
 import java.io.File
 
@@ -54,11 +54,7 @@ class MyLibTest {
 """
     }
 
-    val buildResult: BuildResult = GradleRunner.create()
-      .withPluginClasspath()
-      .withArguments("compileGroovy")
-      .withProjectDir(projectDir)
-      .build()
+    val buildResult: BuildResult = build(projectDir, "compileGroovy")
 
     val task = buildResult.task(":compileGroovy")
     Assertions.assertThat(task?.outcome)
@@ -100,11 +96,7 @@ class MyLibTest {
 """
     }
 
-    val buildResult: BuildResult = GradleRunner.create()
-      .withPluginClasspath()
-      .withArguments("test", "-s")
-      .withProjectDir(projectDir)
-      .build()
+    val buildResult: BuildResult = build(projectDir, "test", "-s")
 
     val task = buildResult.task(":test")
     Assertions.assertThat(task).isNotNull()
@@ -146,11 +138,7 @@ class MyLib {
 """
     }
 
-    val buildResult: BuildResult = GradleRunner.create()
-      .withPluginClasspath()
-      .withArguments("groovydocJar")
-      .withProjectDir(projectDir)
-      .build()
+    val buildResult: BuildResult = build(projectDir, "groovydocJar")
 
     val task = buildResult.task(":groovydocJar")
     Assertions.assertThat(task?.outcome)
@@ -175,11 +163,7 @@ class MyLib {
 """
     }
 
-    val buildResult: BuildResult = GradleRunner.create()
-      .withPluginClasspath()
-      .withArguments("sourcesJar")
-      .withProjectDir(projectDir)
-      .build()
+    val buildResult: BuildResult = build(projectDir, "sourcesJar")
 
     val task = buildResult.task(":sourcesJar")
     Assertions.assertThat(task?.outcome)
