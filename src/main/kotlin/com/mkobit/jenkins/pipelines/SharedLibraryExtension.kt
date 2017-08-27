@@ -6,12 +6,28 @@ import org.gradle.api.provider.PropertyState
 open class SharedLibraryExtension(
   val groovyVersionState: PropertyState<String>,
   val coreVersionState: PropertyState<String>,
-  val globalLibPluginVersionState: PropertyState<String>,
+  val pipelineTestUnitVersionState: PropertyState<String>,
   val testHarnessVersionState: PropertyState<String>,
-  val pipelineTestUnitVersionState: PropertyState<String>
+  val workflowApiPluginVersionState: PropertyState<String>,
+  val workflowBasicStepsPluginVersionState: PropertyState<String>,
+  val workflowCpsPluginVersionState: PropertyState<String>,
+  val workflowDurableTaskStepPluginVersionState: PropertyState<String>,
+  val workflowGlobalCpsLibraryPluginVersionState: PropertyState<String>,
+  val workflowJobPluginVersionState: PropertyState<String>,
+  val workflowMultibranchPluginVersionState: PropertyState<String>,
+  val workflowScmStepPluginVersionState: PropertyState<String>,
+  val workflowStepApiPluginVersionState: PropertyState<String>,
+  val workflowSupportPluginVersionState: PropertyState<String>
 ) {
 
   private val pluginDependencySpec: PluginDependencySpec = DefaultPluginDependencySpec()
+
+  /**
+   * Groovy version.
+   */
+  var groovyVersion: String
+    get() = groovyVersionState.get()
+    set(value) = groovyVersionState.set(value)
 
   /**
    * Jenkins version.
@@ -20,35 +36,72 @@ open class SharedLibraryExtension(
     get() = coreVersionState.get()
     set(value) = coreVersionState.set(value)
 
-  /**
-   * Shared pipeline libraries jenkinsCi version.
-   * @see <a href="https://github.com/jenkinsci/workflow-cps-global-lib-jenkinsCi"></a>
-   */
-  var globalLibPluginVersion: String
-    get() = globalLibPluginVersionState.get()
-    set(value) = globalLibPluginVersionState.set(value)
-
-  /**
-   * Shared pipeline libraries jenkinsCi version.
-   * @see <a href="https://github.com/jenkinsci/workflow-cps-global-lib-jenkinsCi"></a>
-   */
-  var groovyVersion: String
-    get() = groovyVersionState.get()
-    set(value) = groovyVersionState.set(value)
+  var pipelineTestUnitVersion: String?
+    get() = pipelineTestUnitVersionState.orNull
+    set(value) = pipelineTestUnitVersionState.set(value)
 
   var testHarnessVersion: String
     get() = testHarnessVersionState.get()
     set(value) = testHarnessVersionState.set(value)
 
-  var pipelineTestUnitVersion: String?
-    get() = pipelineTestUnitVersionState.orNull
-    set(value) = pipelineTestUnitVersionState.set(value)
+  var workflowApiPluginVersion: String
+    get() = workflowApiPluginVersionState.get()
+    set(value) = workflowApiPluginVersionState.set(value)
 
-  fun jenkinsCoreDependency() = "org.jenkins-ci.main:jenkins-core:$coreVersion"
-  fun jenkinsGlobalLibraryPluginDependency() = "org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:$globalLibPluginVersion"
+  var workflowBasicStepsPluginVersion: String
+    get() = workflowBasicStepsPluginVersionState.get()
+    set(value) = workflowBasicStepsPluginVersionState.set(value)
+
+  var workflowCpsPluginVersion: String
+    get() = workflowCpsPluginVersionState.get()
+    set(value) = workflowCpsPluginVersionState.set(value)
+
+  /**
+   * Shared pipeline libraries version.
+   * @see <a href="https://plugins.jenkins.io/workflow-cps-global-lib"></a>
+   */
+  var workflowCpsGlobalLibraryPluginVersion: String
+    get() = workflowGlobalCpsLibraryPluginVersionState.get()
+    set(value) = workflowGlobalCpsLibraryPluginVersionState.set(value)
+
+  var workflowDurableTaskStepPluginVersion: String
+    get() = workflowDurableTaskStepPluginVersionState.get()
+    set(value) = workflowDurableTaskStepPluginVersionState.set(value)
+
+  var workflowJobPluginVersion: String
+    get() = workflowJobPluginVersionState.get()
+    set(value) = workflowJobPluginVersionState.set(value)
+
+  var workflowMultibranchPluginVersion: String
+    get() = workflowMultibranchPluginVersionState.get()
+    set(value) = workflowMultibranchPluginVersionState.set(value)
+
+  var workflowScmStepPluginVersion: String
+    get() = workflowScmStepPluginVersionState.get()
+    set(value) = workflowScmStepPluginVersionState.set(value)
+
+  var workflowStepApiPluginVersion: String
+    get() = workflowStepApiPluginVersionState.get()
+    set(value) = workflowStepApiPluginVersionState.set(value)
+
+  var workflowSupportPluginVersion: String
+    get() = workflowSupportPluginVersionState.get()
+    set(value) = workflowSupportPluginVersionState.set(value)
+
+  fun coreDependency() = "org.jenkins-ci.main:jenkins-core:$coreVersion"
+  fun workflowApiPluginDependency() = "org.jenkins-ci.plugins.workflow:workflow-api:$workflowApiPluginVersion"
+  fun workflowBasicStepsPluginDependency() = "org.jenkins-ci.plugins.workflow:workflow-basic-steps:$workflowBasicStepsPluginVersion"
+  fun workflowCpsPluginDependency() = "org.jenkins-ci.plugins.workflow:workflow-cps:$workflowCpsPluginVersion"
+  fun workflowDurableTaskStepPluginDependency() = "org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:$workflowDurableTaskStepPluginVersion"
+  fun workflowGlobalCpsLibraryPluginPluginDependency() = "org.jenkins-ci.plugins.workflow:workflow-durable-task-step:$workflowCpsGlobalLibraryPluginVersion"
+  fun workflowJobPluginDependency() = "org.jenkins-ci.plugins.workflow:workflow-job:$workflowJobPluginVersion"
+  fun workflowMultibranchPluginDependency() = "org.jenkins-ci.plugins.workflow:workflow-multibranch:$workflowMultibranchPluginVersion"
+  fun workflowScmStepPluginDependency() = "org.jenkins-ci.plugins.workflow:workflow-scm-step:$workflowScmStepPluginVersion"
+  fun workflowStepApiPluginDependency() = "org.jenkins-ci.plugins.workflow:workflow-step-api:$workflowApiPluginVersion"
+  fun workflowSupportPluginDependency() = "org.jenkins-ci.plugins.workflow:workflow-support:$workflowSupportPluginVersion"
   fun groovyDependency() = "org.codehaus.groovy:groovy:$groovyVersion"
-  fun jenkinsPipelineUnitDependency(): String? = pipelineTestUnitVersion?.let { "com.lesfurets:jenkins-pipeline-unit:$it" }
-  fun jenkinsTestHarnessDependency() = "org.jenkins-ci.main:jenkins-test-harness:$testHarnessVersion"
+  fun pipelineUnitDependency(): String? = pipelineTestUnitVersion?.let { "com.lesfurets:jenkins-pipeline-unit:$it" }
+  fun testHarnessDependency() = "org.jenkins-ci.main:jenkins-test-harness:$testHarnessVersion"
   // See https://issues.jenkins-ci.org/browse/JENKINS-24064 and 2.64 release notes about war-for-test not being needed in some cases
   // Also, see https://github.com/jenkinsci/jenkins/pull/2899/files
   // https://github.com/jenkinsci/plugin-pom/pull/40/files shows how the new plugin-pom does the jenkins.war generation
@@ -60,8 +113,20 @@ open class SharedLibraryExtension(
 
   fun pluginDependencies(): List<PluginDependency> {
     val dependenciesFromSpec = pluginDependencySpec.getDependencies()
-    val globalLibPlugin = PluginDependency.fromString(jenkinsGlobalLibraryPluginDependency())
+    val workflowPluginDependencies: List<PluginDependency> = listOf(
+        workflowApiPluginDependency(),
+        workflowBasicStepsPluginDependency(),
+        workflowCpsPluginDependency(),
+        workflowDurableTaskStepPluginDependency(),
+        workflowGlobalCpsLibraryPluginPluginDependency(),
+        workflowJobPluginDependency(),
+        workflowMultibranchPluginDependency(),
+        workflowScmStepPluginDependency(),
+        workflowStepApiPluginDependency(),
+        workflowSupportPluginDependency()
+    ).map { PluginDependency.fromString(it) }
 
-    return dependenciesFromSpec + globalLibPlugin
+
+    return dependenciesFromSpec + workflowPluginDependencies
   }
 }

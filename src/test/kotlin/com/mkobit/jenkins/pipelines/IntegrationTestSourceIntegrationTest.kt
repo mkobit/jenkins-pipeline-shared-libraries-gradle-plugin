@@ -119,7 +119,6 @@ tasks.create('printOutDependencies') {
       .isEqualTo(TaskOutcome.SUCCESS)
   }
 
-  @Disabled("class not on compile classpath - unable to resolve class org.jenkinsci.plugins.workflow.job.WorkflowJob")
   @Test
   internal fun `WorkflowJob can be created and executed in integration tests`() {
     projectDir.writeRelativeFile(fileName = "build.gradle") {
@@ -178,6 +177,20 @@ class LibHelper {
       .isEqualTo(TaskOutcome.SUCCESS)
   }
 
+  @NotImplementedYet
+  @Test
+  internal fun `can use 'stage' step in test`() {
+  }
+
+  @NotImplementedYet
+  @Test
+  internal fun `can use 'sh' step in test`() {
+  }
+
+  @NotImplementedYet
+  @Test
+  internal fun `can use 'node' step in test`() {
+  }
 
   @NotImplementedYet
   @Test

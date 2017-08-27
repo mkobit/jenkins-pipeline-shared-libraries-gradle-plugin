@@ -36,7 +36,16 @@ open class SharedLibraryPlugin @Inject constructor(
     private val TEST_ROOT_PATH = "test"
     private val DEFAULT_GROOVY_VERSION = "2.4.8"
     private val DEFAULT_CORE_VERSION = "2.60.2"
-    private val DEFAULT_GLOBAL_LIB_PLUGIN_VERSION = "2.8"
+    private val DEFAULT_WORKFLOW_API_PLUGIN_VERSION = "2.8"
+    private val DEFAULT_WORKFLOW_BASIC_STEPS_PLUGIN_VERSION = "2.3"
+    private val DEFAULT_WORKFLOW_CPS_PLUGIN_VERSION = "2.24"
+    private val DEFAULT_WORKFLOW_DURABLE_TASK_STEP_PLUGIN_VERSION = "2.8"
+    private val DEFAULT_WORKFLOW_GLOBAL_CPS_LIBRARY_PLUGIN_VERSION = "2.8"
+    private val DEFAULT_WORKFLOW_JOB_PLUGIN_VERSION = "2.9"
+    private val DEFAULT_WORKFLOW_MULTIBRANCH_PLUGIN_VERSION = "2.9.2"
+    private val DEFAULT_WORKFLOW_STEP_API_PLUGIN_VERSION = "2.7"
+    private val DEFAULT_WORKFLOW_SCM_STEP_PLUGIN_VERSION = "2.3"
+    private val DEFAULT_WORKFLOW_SUPPORT_PLUGIN_VERSION = "2.12"
     private val DEFAULT_TEST_HARNESS_VERSION = "2.24"
     private val UNIT_TESTING_LIBRARY_CONFIGURATION = "jenkinsPipelineUnitTestLibraries"
     private val PLUGIN_HPI_JPI_CONFIGURATION = "jenkinsPluginHpisAndJpis"
@@ -78,7 +87,7 @@ open class SharedLibraryPlugin @Inject constructor(
   ) {
     dependencies.add(
       TEST_LIBRARY_CONFIGURATION,
-      sharedLibraryExtension.jenkinsTestHarnessDependency()
+      sharedLibraryExtension.testHarnessDependency()
     )
 
     dependencies.add(
@@ -88,7 +97,7 @@ open class SharedLibraryPlugin @Inject constructor(
 
     dependencies.add(
       CORE_LIBRARY_CONFIGURATION,
-      sharedLibraryExtension.jenkinsCoreDependency()
+      sharedLibraryExtension.coreDependency()
     )
 
     sharedLibraryExtension.pluginDependencies().forEach {
@@ -128,11 +137,12 @@ open class SharedLibraryPlugin @Inject constructor(
 
       val hpiJars = configurations.detachedConfiguration(*hpiDependencies.map { dependencies.create("${it.moduleVersion}@jar") }.toTypedArray())
 
+      // TODO: should probably force dependency versions or something for both the JARs and HPIs
       hpiJars + project.files(jarDependencies)
     }
     dependencies.add(PLUGIN_LIBRARY_CONFIGURATION, project.files(callablePluginLibraries))
 
-    sharedLibraryExtension.jenkinsPipelineUnitDependency()?.let {
+    sharedLibraryExtension.pipelineUnitDependency()?.let {
       dependencies.add(
         UNIT_TESTING_LIBRARY_CONFIGURATION,
         it
@@ -262,17 +272,42 @@ open class SharedLibraryPlugin @Inject constructor(
   private fun setupSharedLibraryExtension(project: Project): SharedLibraryExtension {
     val groovyVersion = project.initializedProperty(DEFAULT_GROOVY_VERSION)
     val coreVersion = project.initializedProperty(DEFAULT_CORE_VERSION)
-    val globalLibPluginVersion = project.initializedProperty(DEFAULT_GLOBAL_LIB_PLUGIN_VERSION)
-    val testHarnessVersion = project.initializedProperty(DEFAULT_TEST_HARNESS_VERSION)
     val pipelineTestUnitVersion = project.property(String::class.java)
+    val testHarnessVersion = project.initializedProperty(DEFAULT_TEST_HARNESS_VERSION)
+    // TODO: find a better DSL for managing these dependencies, possibly by using aggregator plugin because we are still missing some
+    val workflowApiPluginVersion = project.initializedProperty(DEFAULT_WORKFLOW_API_PLUGIN_VERSION)
+    val workflowBasicStepsPluginVersion = project.initializedProperty(
+      DEFAULT_WORKFLOW_BASIC_STEPS_PLUGIN_VERSION)
+    val workflowCpsPluginVersion = project.initializedProperty(DEFAULT_WORKFLOW_CPS_PLUGIN_VERSION)
+    val workflowDurableTaskStepPluginVersion = project.initializedProperty(
+      DEFAULT_WORKFLOW_DURABLE_TASK_STEP_PLUGIN_VERSION)
+    val workflowGlobalCpsLibraryPluginVersion = project.initializedProperty(
+      DEFAULT_WORKFLOW_GLOBAL_CPS_LIBRARY_PLUGIN_VERSION)
+    val workflowJobPluginVersion = project.initializedProperty(DEFAULT_WORKFLOW_JOB_PLUGIN_VERSION)
+    val workflowMultibranchPluginVersion = project.initializedProperty(
+      DEFAULT_WORKFLOW_MULTIBRANCH_PLUGIN_VERSION)
+    val workflowStepApiPluginVersion = project.initializedProperty(
+      DEFAULT_WORKFLOW_STEP_API_PLUGIN_VERSION)
+    val workflowScmStepPluginVersion = project.initializedProperty(DEFAULT_WORKFLOW_SCM_STEP_PLUGIN_VERSION)
+    val workflowSupportPluginVersion = project.initializedProperty(
+      DEFAULT_WORKFLOW_SUPPORT_PLUGIN_VERSION)
     return project.extensions.create(
       "sharedLibrary",
       SharedLibraryExtension::class.java,
       groovyVersion,
       coreVersion,
-      globalLibPluginVersion,
+      pipelineTestUnitVersion,
       testHarnessVersion,
-      pipelineTestUnitVersion
+      workflowApiPluginVersion,
+      workflowBasicStepsPluginVersion,
+      workflowCpsPluginVersion,
+      workflowDurableTaskStepPluginVersion,
+      workflowGlobalCpsLibraryPluginVersion,
+      workflowJobPluginVersion,
+      workflowMultibranchPluginVersion,
+      workflowScmStepPluginVersion,
+      workflowStepApiPluginVersion,
+      workflowSupportPluginVersion
     )
   }
 

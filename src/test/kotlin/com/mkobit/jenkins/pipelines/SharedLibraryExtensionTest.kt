@@ -19,9 +19,18 @@ internal class SharedLibraryExtensionTest {
   companion object {
     private val INITIAL_GROOVY_VERSION = "1.0"
     private val INITIAL_CORE_VERSION = "2.0"
-    private val INITIAL_GLOBAL_LIB_VERSION = "3.0"
+    private val INITIAL_PIPELINE_UNIT_VERSION = "3.0"
     private val INITIAL_TEST_HARNESS_VERSION = "4.0"
-    private val INITIAL_PIPELINE_UNIT_VERSION = "5.0"
+    private val INITIAL_WORKFLOW_API_PLUGIN_VERSION = "5.0"
+    private val INITIAL_WORKFLOW_BASIC_STEPS_PLUGIN_VERSION = "6.0"
+    private val INITIAL_WORKFLOW_CPS_PLUGIN_VERSION = "7.0"
+    private val INITIAL_WORKFLOW_DURABLE_TASK_STEP_PLUGIN_VERSION = "8.0"
+    private val INITIAL_GLOBAL_LIB_VERSION = "9.0"
+    private val INITIAL_WORKFLOW_JOB_PLUGIN_VERSION = "10.0"
+    private val INITIAL_WORKFLOW_MULTIBRANCH_PLUGIN_VERSION = "11.0"
+    private val INITIAL_WORKFLOW_SCM_STEP_PLUGIN_VERSION = "12.0"
+    private val INITIAL_WORKFLOW_STEP_API_PLUGIN_VERSION = "13.0"
+    private val INITIAL_WORKFLOW_SUPPORT_PLUGIN_VERSION = "14.0"
   }
 
   @BeforeEach
@@ -30,9 +39,18 @@ internal class SharedLibraryExtensionTest {
     sharedLibraryExtension = SharedLibraryExtension(
       project.initializedProperty(INITIAL_GROOVY_VERSION),
       project.initializedProperty(INITIAL_CORE_VERSION),
-      project.initializedProperty(INITIAL_GLOBAL_LIB_VERSION),
+      project.initializedProperty(INITIAL_PIPELINE_UNIT_VERSION),
       project.initializedProperty(INITIAL_TEST_HARNESS_VERSION),
-      project.initializedProperty(INITIAL_PIPELINE_UNIT_VERSION)
+      project.initializedProperty(INITIAL_WORKFLOW_API_PLUGIN_VERSION),
+      project.initializedProperty(INITIAL_WORKFLOW_BASIC_STEPS_PLUGIN_VERSION),
+      project.initializedProperty(INITIAL_WORKFLOW_CPS_PLUGIN_VERSION),
+      project.initializedProperty(INITIAL_WORKFLOW_DURABLE_TASK_STEP_PLUGIN_VERSION),
+      project.initializedProperty(INITIAL_GLOBAL_LIB_VERSION),
+      project.initializedProperty(INITIAL_WORKFLOW_JOB_PLUGIN_VERSION),
+      project.initializedProperty(INITIAL_WORKFLOW_MULTIBRANCH_PLUGIN_VERSION),
+      project.initializedProperty(INITIAL_WORKFLOW_SCM_STEP_PLUGIN_VERSION),
+      project.initializedProperty(INITIAL_WORKFLOW_STEP_API_PLUGIN_VERSION),
+      project.initializedProperty(INITIAL_WORKFLOW_SUPPORT_PLUGIN_VERSION)
     )
   }
 
@@ -41,12 +59,25 @@ internal class SharedLibraryExtensionTest {
     softlyAssert {
       assertThat(sharedLibraryExtension.groovyVersion).isEqualTo(INITIAL_GROOVY_VERSION)
       assertThat(sharedLibraryExtension.coreVersion).isEqualTo(INITIAL_CORE_VERSION)
-      assertThat(sharedLibraryExtension.globalLibPluginVersion).isEqualTo(
-        INITIAL_GLOBAL_LIB_VERSION)
       assertThat(sharedLibraryExtension.testHarnessVersion).isEqualTo(
         INITIAL_TEST_HARNESS_VERSION)
       assertThat(sharedLibraryExtension.pipelineTestUnitVersion).isEqualTo(
         INITIAL_PIPELINE_UNIT_VERSION)
+      assertThat(sharedLibraryExtension.workflowApiPluginVersion).isEqualTo(
+        INITIAL_WORKFLOW_API_PLUGIN_VERSION)
+      assertThat(sharedLibraryExtension.workflowBasicStepsPluginVersion).isEqualTo(
+        INITIAL_WORKFLOW_BASIC_STEPS_PLUGIN_VERSION)
+      assertThat(sharedLibraryExtension.workflowCpsPluginVersion).isEqualTo(
+        INITIAL_WORKFLOW_CPS_PLUGIN_VERSION)
+      assertThat(sharedLibraryExtension.workflowDurableTaskStepPluginVersion).isEqualTo(
+        INITIAL_WORKFLOW_DURABLE_TASK_STEP_PLUGIN_VERSION)
+      assertThat(sharedLibraryExtension.workflowCpsGlobalLibraryPluginVersion).isEqualTo(
+        INITIAL_GLOBAL_LIB_VERSION)
+      assertThat(sharedLibraryExtension.workflowJobPluginVersion).isEqualTo(INITIAL_WORKFLOW_JOB_PLUGIN_VERSION)
+      assertThat(sharedLibraryExtension.workflowMultibranchPluginVersion).isEqualTo(INITIAL_WORKFLOW_MULTIBRANCH_PLUGIN_VERSION)
+      assertThat(sharedLibraryExtension.workflowScmStepPluginVersion).isEqualTo(INITIAL_WORKFLOW_SCM_STEP_PLUGIN_VERSION)
+      assertThat(sharedLibraryExtension.workflowStepApiPluginVersion).isEqualTo(INITIAL_WORKFLOW_STEP_API_PLUGIN_VERSION)
+      assertThat(sharedLibraryExtension.workflowSupportPluginVersion).isEqualTo(INITIAL_WORKFLOW_SUPPORT_PLUGIN_VERSION)
     }
   }
 
@@ -65,10 +96,10 @@ internal class SharedLibraryExtensionTest {
   }
 
   @Test
-  internal fun `can set Global Library Plugin version`() {
-    sharedLibraryExtension.globalLibPluginVersion = "newGlobalLibraryVersion"
+  internal fun `can set PipelineTestUnit version`() {
+    sharedLibraryExtension.pipelineTestUnitVersion = "newPipelineTestUnitVersion"
 
-    assertThat(sharedLibraryExtension.globalLibPluginVersion).isEqualTo("newGlobalLibraryVersion")
+    assertThat(sharedLibraryExtension.pipelineTestUnitVersion).isEqualTo("newPipelineTestUnitVersion")
   }
 
   @Test
@@ -79,10 +110,66 @@ internal class SharedLibraryExtensionTest {
   }
 
   @Test
-  internal fun `can set PipelineTestUnit version`() {
-    sharedLibraryExtension.pipelineTestUnitVersion = "newPipelineTestUnitVersion"
+  internal fun `can set Workflow API Plugin version`() {
+    sharedLibraryExtension.workflowApiPluginVersion = "newWorkflowApiVersion"
 
-    assertThat(sharedLibraryExtension.pipelineTestUnitVersion).isEqualTo("newPipelineTestUnitVersion")
+    assertThat(sharedLibraryExtension.workflowApiPluginVersion).isEqualTo("newWorkflowApiVersion")
+  }
+
+  @Test
+  internal fun `can set Workflow Basic Steps Plugin version`() {
+    sharedLibraryExtension.workflowBasicStepsPluginVersion = "newWorkflowBasicStepsPluginVersion"
+
+    assertThat(sharedLibraryExtension.workflowBasicStepsPluginVersion).isEqualTo("newWorkflowBasicStepsPluginVersion")
+  }
+
+  @Test
+  internal fun `can set Workflow CPS Plugin version`() {
+    sharedLibraryExtension.workflowCpsPluginVersion = "newWorkflowCPSPluginVersion"
+
+    assertThat(sharedLibraryExtension.workflowCpsPluginVersion).isEqualTo("newWorkflowCPSPluginVersion")
+  }
+
+  @Test
+  internal fun `can set Workflow Durable Task Step Plugin Version`() {
+    sharedLibraryExtension.workflowDurableTaskStepPluginVersion = "newWorkflowDurableTaskStepPluginVersion"
+
+    assertThat(sharedLibraryExtension.workflowDurableTaskStepPluginVersion).isEqualTo("newWorkflowDurableTaskStepPluginVersion")
+  }
+
+  @Test
+  internal fun `can set Workflow CPS Global Library Plugin version`() {
+    sharedLibraryExtension.workflowCpsGlobalLibraryPluginVersion = "newWorkflowCpsGlobalLibraryPluginVersion"
+
+    assertThat(sharedLibraryExtension.workflowCpsGlobalLibraryPluginVersion).isEqualTo("newWorkflowCpsGlobalLibraryPluginVersion")
+  }
+
+  @Test
+  internal fun `can set Workflow Job Plugin version`() {
+    sharedLibraryExtension.workflowJobPluginVersion = "newWorkflowJobPluginVersion"
+
+    assertThat(sharedLibraryExtension.workflowJobPluginVersion).isEqualTo("newWorkflowJobPluginVersion")
+  }
+
+  @Test
+  internal fun `can set Workflow Multibranch Plugin version`() {
+    sharedLibraryExtension.workflowMultibranchPluginVersion = "newWorkflowMultibranchPluginVersion"
+
+    assertThat(sharedLibraryExtension.workflowMultibranchPluginVersion).isEqualTo("newWorkflowMultibranchPluginVersion")
+  }
+
+  @Test
+  internal fun `can set Workflow Step API version`() {
+    sharedLibraryExtension.workflowStepApiPluginVersion = "newWorkflowStepApiPluginVersion"
+
+    assertThat(sharedLibraryExtension.workflowStepApiPluginVersion).isEqualTo("newWorkflowStepApiPluginVersion")
+  }
+
+  @Test
+  internal fun `can set Workflow Support version`() {
+    sharedLibraryExtension.workflowSupportPluginVersion = "newWorkflowSupportPluginVersion"
+
+    assertThat(sharedLibraryExtension.workflowSupportPluginVersion).isEqualTo("newWorkflowSupportPluginVersion")
   }
 
   @NotImplementedYet
@@ -98,11 +185,17 @@ internal class SharedLibraryExtensionTest {
 
   fun requiredPlugins(): Stream<Arguments> {
     return Stream.of(
-      Arguments.of("Global Shared Library Plugin"),
       Arguments.of("SCM API Plugin"),
       Arguments.of("Git Plugin"),
       Arguments.of("Workflow API Plugin"),
-      Arguments.of("Workflow Job Plugin")
+      Arguments.of("Workflow Basic Steps Plugin"),
+      Arguments.of("Workflow CPS Plugin"),
+      Arguments.of("Workflow Durable Task Step Plugin"),
+      Arguments.of("Workflow Job Plugin"),
+      Arguments.of("Workflow Multibranch Plugin"),
+      Arguments.of("Workflow SCM Step Plugin"),
+      Arguments.of("Workflow Step API Plugin"),
+      Arguments.of("Workflow Support Plugin")
     )
   }
 
