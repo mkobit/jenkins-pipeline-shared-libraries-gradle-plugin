@@ -1,6 +1,7 @@
 package com.mkobit.jenkins.pipelines
 
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Condition
 import org.assertj.core.api.SoftAssertions
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.jupiter.api.BeforeEach
@@ -10,6 +11,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import testsupport.NotImplementedYet
+import java.util.function.Predicate
 import java.util.stream.Stream
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -21,6 +23,7 @@ internal class SharedLibraryExtensionTest {
     private val INITIAL_CORE_VERSION = "2.0"
     private val INITIAL_PIPELINE_UNIT_VERSION = "3.0"
     private val INITIAL_TEST_HARNESS_VERSION = "4.0"
+    private val INITIAL_GIT_PLUGIN_VERSION_VERSION = "4.5"
     private val INITIAL_WORKFLOW_API_PLUGIN_VERSION = "5.0"
     private val INITIAL_WORKFLOW_BASIC_STEPS_PLUGIN_VERSION = "6.0"
     private val INITIAL_WORKFLOW_CPS_PLUGIN_VERSION = "7.0"
@@ -41,6 +44,7 @@ internal class SharedLibraryExtensionTest {
       project.initializedProperty(INITIAL_CORE_VERSION),
       project.initializedProperty(INITIAL_PIPELINE_UNIT_VERSION),
       project.initializedProperty(INITIAL_TEST_HARNESS_VERSION),
+      project.initializedProperty(INITIAL_GIT_PLUGIN_VERSION_VERSION),
       project.initializedProperty(INITIAL_WORKFLOW_API_PLUGIN_VERSION),
       project.initializedProperty(INITIAL_WORKFLOW_BASIC_STEPS_PLUGIN_VERSION),
       project.initializedProperty(INITIAL_WORKFLOW_CPS_PLUGIN_VERSION),
@@ -50,8 +54,7 @@ internal class SharedLibraryExtensionTest {
       project.initializedProperty(INITIAL_WORKFLOW_MULTIBRANCH_PLUGIN_VERSION),
       project.initializedProperty(INITIAL_WORKFLOW_SCM_STEP_PLUGIN_VERSION),
       project.initializedProperty(INITIAL_WORKFLOW_STEP_API_PLUGIN_VERSION),
-      project.initializedProperty(INITIAL_WORKFLOW_SUPPORT_PLUGIN_VERSION)
-    )
+      project.initializedProperty(INITIAL_WORKFLOW_SUPPORT_PLUGIN_VERSION))
   }
 
   @Test
@@ -63,6 +66,8 @@ internal class SharedLibraryExtensionTest {
         INITIAL_TEST_HARNESS_VERSION)
       assertThat(sharedLibraryExtension.pipelineTestUnitVersion).isEqualTo(
         INITIAL_PIPELINE_UNIT_VERSION)
+      assertThat(sharedLibraryExtension.gitPluginVersion).isEqualTo(
+        INITIAL_GIT_PLUGIN_VERSION_VERSION)
       assertThat(sharedLibraryExtension.workflowApiPluginVersion).isEqualTo(
         INITIAL_WORKFLOW_API_PLUGIN_VERSION)
       assertThat(sharedLibraryExtension.workflowBasicStepsPluginVersion).isEqualTo(
@@ -107,6 +112,13 @@ internal class SharedLibraryExtensionTest {
     sharedLibraryExtension.testHarnessVersion = "newTestHarnessVersion"
 
     assertThat(sharedLibraryExtension.testHarnessVersion).isEqualTo("newTestHarnessVersion")
+  }
+
+  @Test
+  internal fun `can set Git Plugin version`() {
+    sharedLibraryExtension.gitPluginVersion = "newGitVersion"
+
+    assertThat(sharedLibraryExtension.gitPluginVersion).isEqualTo("newGitVersion")
   }
 
   @Test
@@ -177,25 +189,32 @@ internal class SharedLibraryExtensionTest {
   internal fun `can set a URL to a target Jenkins instance`() {
   }
 
-  @NotImplementedYet
-  @ParameterizedTest(name = "[{index}] {0}")
+  @ParameterizedTest(name = "[{index}] {0} with artifact Id {1}")
   @MethodSource("requiredPlugins")
-  internal fun `plugin dependency includes`(pluginName: String) {
+  internal fun `plugin dependency includes`(pluginName: String, artifactId: String) {
+    val pluginDependencies = sharedLibraryExtension.pluginDependencies()
+
+    val artifactCondition = Condition<PluginDependency>(Predicate {
+      it.name == artifactId
+    }, artifactId)
+
+    assertThat(pluginDependencies).haveExactly(1, artifactCondition)
   }
 
   fun requiredPlugins(): Stream<Arguments> {
     return Stream.of(
-      Arguments.of("SCM API Plugin"),
-      Arguments.of("Git Plugin"),
-      Arguments.of("Workflow API Plugin"),
-      Arguments.of("Workflow Basic Steps Plugin"),
-      Arguments.of("Workflow CPS Plugin"),
-      Arguments.of("Workflow Durable Task Step Plugin"),
-      Arguments.of("Workflow Job Plugin"),
-      Arguments.of("Workflow Multibranch Plugin"),
-      Arguments.of("Workflow SCM Step Plugin"),
-      Arguments.of("Workflow Step API Plugin"),
-      Arguments.of("Workflow Support Plugin")
+      // TODO: should we include scm-api?
+//      Arguments.of("SCM API Plugin", "scm-api"),
+      Arguments.of("Git Plugin", "git"),
+      Arguments.of("Workflow API Plugin", "workflow-api"),
+      Arguments.of("Workflow Basic Steps Plugin", "workflow-basic-steps"),
+      Arguments.of("Workflow CPS Plugin", "workflow-cps"),
+      Arguments.of("Workflow Durable Task Step Plugin", "workflow-durable-task-step"),
+      Arguments.of("Workflow Job Plugin", "workflow-job"),
+      Arguments.of("Workflow Multibranch Plugin", "workflow-multibranch"),
+      Arguments.of("Workflow SCM Step Plugin", "workflow-scm-step"),
+      Arguments.of("Workflow Step API Plugin", "workflow-step-api"),
+      Arguments.of("Workflow Support Plugin", "workflow-support")
     )
   }
 

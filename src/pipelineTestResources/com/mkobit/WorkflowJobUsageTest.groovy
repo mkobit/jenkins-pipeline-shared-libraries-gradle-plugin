@@ -20,11 +20,7 @@ class WorkflowJobUsageTest {
   @Test
   void canUseJenkins() {
     final WorkflowJob project = rule.createProject(WorkflowJob)
-    project.definition = new CpsFlowDefinition('''
-node {
-  echo "Hello ${env.JOB_NAME}"
-}
-''')
+    project.definition = new CpsFlowDefinition('echo "Hello ${env.JOB_NAME}"')
 
     rule.buildAndAssertSuccess(project)
   }

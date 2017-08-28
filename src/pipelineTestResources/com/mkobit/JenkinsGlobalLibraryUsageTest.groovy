@@ -11,7 +11,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.jvnet.hudson.test.JenkinsRule
 
-class JenkinsGlobalLibraryTest {
+class JenkinsGlobalLibraryUsageTest {
 
   @Rule
   public JenkinsRule rule = new JenkinsRule()
@@ -19,10 +19,12 @@ class JenkinsGlobalLibraryTest {
   @Before
   void configureGlobalGitLibraries() {
     rule.timeout = 30
+    final libraryPath = System.getProperty('user.dir')
+    println("Using Git library path at $libraryPath")
     final SCMSourceRetriever retriever = new SCMSourceRetriever(
       new GitSCMSource(
         null,
-        System.getProperty('user.dir'),
+        libraryPath,
         '',
         'local-source-code',
         // Fetch everything - if this is not used builds fail on Jenkins for some reason

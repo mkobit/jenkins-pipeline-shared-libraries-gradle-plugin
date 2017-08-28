@@ -1,6 +1,7 @@
 package com.mkobit.jenkins.pipelines
 
 import org.assertj.core.api.Assertions.assertThat
+import org.eclipse.jgit.api.Git
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.api.BeforeEach
@@ -139,9 +140,8 @@ tasks.create('printOutDependencies') {
       .isEqualTo(TaskOutcome.SUCCESS)
   }
 
-  @Disabled("class not on compile classpath - unable to resolve class org.jenkinsci.plugins.workflow.job.WorkflowJob")
   @Test
-  internal fun `can set up pipeline library in an integration test`() {
+  internal fun `can set up Global Pipeline Library and use them in an integration test`() {
     projectDir.writeRelativeFile(fileName = "build.gradle") {
       groovyBuildScript()
     }
@@ -163,8 +163,13 @@ class LibHelper {
 """
     }
 
-    projectDir.writeRelativeFile("test", "integration", "groovy", "com", "mkobit", fileName = "JenkinsGlobalLibraryTest.groovy") {
-      resourceText("com/mkobit/JenkinsGlobalLibraryTest.groovy")
+    projectDir.writeRelativeFile("test", "integration", "groovy", "com", "mkobit", fileName = "JenkinsGlobalLibraryUsageTest.groovy") {
+      resourceText("com/mkobit/JenkinsGlobalLibraryUsageTest.groovy")
+    }
+
+    Git.init().setDirectory(projectDir).call().use {
+      it.add().addFilepattern(".").call()
+      it.commit().setMessage("Commit all the files").setAuthor("Mr. Manager", "mrmanager@example.com").call()
     }
 
     val buildResult: BuildResult = build(projectDir, "integrationTest", "-s", "-i")

@@ -36,6 +36,8 @@ open class SharedLibraryPlugin @Inject constructor(
     private val TEST_ROOT_PATH = "test"
     private val DEFAULT_GROOVY_VERSION = "2.4.8"
     private val DEFAULT_CORE_VERSION = "2.60.2"
+    private val DEFAULT_TEST_HARNESS_VERSION = "2.24"
+    private val DEFAULT_GIT_PLUGIN_VERSION = "3.5.1"
     private val DEFAULT_WORKFLOW_API_PLUGIN_VERSION = "2.8"
     private val DEFAULT_WORKFLOW_BASIC_STEPS_PLUGIN_VERSION = "2.3"
     private val DEFAULT_WORKFLOW_CPS_PLUGIN_VERSION = "2.24"
@@ -46,7 +48,6 @@ open class SharedLibraryPlugin @Inject constructor(
     private val DEFAULT_WORKFLOW_STEP_API_PLUGIN_VERSION = "2.7"
     private val DEFAULT_WORKFLOW_SCM_STEP_PLUGIN_VERSION = "2.3"
     private val DEFAULT_WORKFLOW_SUPPORT_PLUGIN_VERSION = "2.12"
-    private val DEFAULT_TEST_HARNESS_VERSION = "2.24"
     private val UNIT_TESTING_LIBRARY_CONFIGURATION = "jenkinsPipelineUnitTestLibraries"
     private val PLUGIN_HPI_JPI_CONFIGURATION = "jenkinsPluginHpisAndJpis"
     private val PLUGIN_LIBRARY_CONFIGURATION = "jenkinsPluginLibraries"
@@ -103,17 +104,12 @@ open class SharedLibraryPlugin @Inject constructor(
     sharedLibraryExtension.pluginDependencies().forEach {
       // TODO: when kotlin-dsl works in IntelliJ switch to it
       val hpiDependency = dependencies.createExternal(it.asStringNotation())
-//      val jarDependency = (dependencies.create("${it.asStringNotation()}@jar") as ExternalModuleDependency)
 
       logger.debug { "Adding dependency $hpiDependency to configuration $PLUGIN_HPI_JPI_CONFIGURATION" }
       dependencies.add(
         PLUGIN_HPI_JPI_CONFIGURATION,
         hpiDependency
       )
-//      dependencies.add(
-//        PLUGIN_LIBRARY_CONFIGURATION,
-//        jarDependency
-//      )
     }
 
     // TODO: don't resolve configurations early if we don't have to.
@@ -274,6 +270,7 @@ open class SharedLibraryPlugin @Inject constructor(
     val coreVersion = project.initializedProperty(DEFAULT_CORE_VERSION)
     val pipelineTestUnitVersion = project.property(String::class.java)
     val testHarnessVersion = project.initializedProperty(DEFAULT_TEST_HARNESS_VERSION)
+    val gitPluginVersion = project.initializedProperty(DEFAULT_GIT_PLUGIN_VERSION)
     // TODO: find a better DSL for managing these dependencies, possibly by using aggregator plugin because we are still missing some
     val workflowApiPluginVersion = project.initializedProperty(DEFAULT_WORKFLOW_API_PLUGIN_VERSION)
     val workflowBasicStepsPluginVersion = project.initializedProperty(
@@ -298,6 +295,7 @@ open class SharedLibraryPlugin @Inject constructor(
       coreVersion,
       pipelineTestUnitVersion,
       testHarnessVersion,
+      gitPluginVersion,
       workflowApiPluginVersion,
       workflowBasicStepsPluginVersion,
       workflowCpsPluginVersion,
