@@ -79,7 +79,6 @@ tasks.create('printOutDependencies') {
   internal fun `no HPI artifacts are available in integrationTestImplementation configuration`() {
   }
 
-  @Disabled("class not on compile classpath - Unable to load class org.jenkinsci.plugins.workflow.libs.SCMSourceRetriever due to missing dependency org/jenkinsci/plugins/workflow/steps/scm/SCMStep")
   @Test
   internal fun `can compile integration test sources that use Jenkins libraries`() {
     projectDir.writeRelativeFile(fileName = "build.gradle") {
