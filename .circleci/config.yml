@@ -3,6 +3,8 @@ jobs:
   build:
     docker:
       - image: circleci/openjdk:8-jdk
+        environment:
+          GRADLE_OPTS: -Dorg.gradle.daemon=false
 
     working_directory: ~/jenkins-pipeline-shared-libraries-gradle-plugin
     steps:
@@ -13,10 +15,15 @@ jobs:
           - home-cache-{{ checksum "build.gradle.kts" }}-{{ checksum "gradle.properties" }}-{{ checksum "gradle/junit5.gradle.kts" }}
           - build-cache-{{ checksum "build.gradle.kts" }}-{{ checksum "gradle.properties" }}-{{ checksum "gradle/junit5.gradle.kts" }}
 
-      - run: ./gradlew build --no-daemon
+      - run: ./gradlew build
 
       - store_test_results:
           path: ~/jenkins-pipeline-shared-libraries-gradle-plugin/build/test-results/
+
+      - save_cache:
+          paths:
+            - ~/.gradle
+          key: home-cache-{{ checksum "build.gradle.kts" }}-{{ checksum "gradle.properties" }}-{{ checksum "gradle/junit5.gradle.kts" }}
 
       - save_cache:
           paths:
