@@ -1,5 +1,8 @@
 import com.gradle.publish.PluginConfig
+import com.gradle.publish.PublishPlugin
 import org.gradle.api.internal.HasConvention
+import org.gradle.jvm.tasks.Jar
+import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.preprocessor.mkdirsOrFail
@@ -7,12 +10,15 @@ import org.junit.platform.console.options.Details
 import org.junit.platform.gradle.plugin.JUnitPlatformExtension
 
 buildscript {
+  val dokkaVersion = "0.9.15"
   repositories {
     mavenCentral()
+    jcenter()
   }
   dependencies {
     // TODO: load from properties or script plugin
     classpath("org.junit.platform:junit-platform-gradle-plugin:1.0.0-RC3")
+    classpath("org.jetbrains.dokka:dokka-gradle-plugin:${dokkaVersion}")
   }
 }
 
@@ -27,6 +33,7 @@ plugins {
 
 apply {
   plugin("org.junit.platform.gradle.plugin")
+  plugin("org.jetbrains.dokka")
   from("gradle/junit5.gradle.kts")
 }
 
@@ -125,33 +132,6 @@ tasks.withType(KotlinCompile::class.java) {
   kotlinOptions.jvmTarget = "1.8"
 }
 
-val sharedLibraryPluginId = "com.mkobit.jenkins.pipelines.shared-library"
-gradlePlugin {
-  plugins.invoke {
-    // Don't get the extensions for NamedDomainObjectContainer here because we only have a NamedDomainObjectContainer
-    // See https://github.com/gradle/kotlin-dsl/issues/459
-    "sharedLibrary" {
-      id = sharedLibraryPluginId
-      implementationClass = "com.mkobit.jenkins.pipelines.SharedLibraryPlugin"
-    }
-  }
-}
-
-pluginBundle {
-  vcsUrl = "https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin"
-  description = "Configures and sets up a pipeline project for development and testing of a shared library created for https://jenkins.io/doc/book/pipeline/shared-libraries/"
-  tags = listOf("jenkins", "pipeline", "shared library", "global library")
-
-  plugins(delegateClosureOf<NamedDomainObjectContainer<PluginConfig>> {
-    this {
-      "pipelineLibraryDevelopment" {
-        id = "com.mkobit.jenkins.pipelines.shared-library"
-        displayName = "Jenkins Pipeline Shared Library Development"
-      }
-    }
-  })
-}
-
 extensions.getByType(JUnitPlatformExtension::class.java).apply {
   platformVersion = junitPlatformVersion
   filters {
@@ -170,6 +150,7 @@ tasks {
 
   val circleCiScriptDestination = file("$buildDir/circle/circleci")
   val downloadCircleCiScript by creating(Exec::class) {
+    description = "Download the Circle CI binary"
     val downloadUrl = "https://circle-downloads.s3.amazonaws.com/releases/build_agent_wrapper/circleci"
     inputs.property("url", downloadUrl)
     outputs.file(circleCiScriptDestination)
@@ -179,6 +160,7 @@ tasks {
   }
 
   val checkCircleConfig by creating(Exec::class) {
+    description = "Checks that the Circle configuration is valid"
     // Disabled until https://discuss.circleci.com/t/allow-for-using-circle-ci-tooling-without-a-tty/15501
     enabled = false
     dependsOn(downloadCircleCiScript)
@@ -188,10 +170,73 @@ tasks {
   }
 
   val circleCiBuild by creating(Exec::class) {
+    description = "Runs a build using the local Circle CI configuration"
     // Disabled until https://discuss.circleci.com/t/allow-for-using-circle-ci-tooling-without-a-tty/15501
     enabled = false
     dependsOn(downloadCircleCiScript)
     executable(circleCiScriptDestination)
     args("build")
   }
+
+  val main by java.sourceSets
+  val sourcesJar by creating(Jar::class) {
+    group = JavaBasePlugin.DOCUMENTATION_GROUP
+    description = "Assembles a JAR of the source code"
+    classifier = "sources"
+    from(main.allSource)
+  }
+
+// No Java code, so don't need the javadoc task.
+// Dokka generates our documentation.
+  remove(getByName("javadoc"))
+  val dokka by getting(DokkaTask::class) {
+    dependsOn(main.classesTaskName)
+    outputFormat = "html"
+    outputDirectory = "$buildDir/javadoc"
+    sourceDirs = main.kotlin.srcDirs
+  }
+
+  val javadocJar by creating(Jar::class) {
+    dependsOn(dokka)
+    description = "Assembles a JAR of the generated Javadoc"
+    from(dokka.outputDirectory)
+    group = JavaBasePlugin.DOCUMENTATION_GROUP
+    classifier = "javadoc"
+  }
+
+  val assemble by getting {
+    dependsOn(sourcesJar, javadocJar)
+  }
+
+  artifacts {
+    add("archives", sourcesJar)
+    add("archives", javadocJar)
+  }
+}
+
+val sharedLibraryPluginId = "com.mkobit.jenkins.pipelines.shared-library"
+gradlePlugin {
+  plugins.invoke {
+    // Don't get the extensions for NamedDomainObjectContainer here because we only have a NamedDomainObjectContainer
+    // See https://github.com/gradle/kotlin-dsl/issues/459
+    "sharedLibrary" {
+      id = sharedLibraryPluginId
+      implementationClass = "com.mkobit.jenkins.pipelines.SharedLibraryPlugin"
+    }
+  }
+}
+
+pluginBundle {
+  vcsUrl = "https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin"
+  description = "Configures and sets up a Gradle project for development and testing of a Jenkins Pipeline shared library (https://jenkins.io/doc/book/pipeline/shared-libraries/)"
+  tags = listOf("jenkins", "pipeline", "shared library", "global library")
+
+  plugins(delegateClosureOf<NamedDomainObjectContainer<PluginConfig>> {
+    invoke {
+      "pipelineLibraryDevelopment" {
+        id = sharedLibraryPluginId
+        displayName = "Jenkins Pipeline Shared Library Development"
+      }
+    }
+  })
 }
