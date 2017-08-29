@@ -101,7 +101,8 @@ open class SharedLibraryPlugin @Inject constructor(
       sharedLibraryExtension.coreDependency()
     )
 
-    sharedLibraryExtension.pluginDependencies().forEach {
+    // TODO: fix method name after relocation
+    sharedLibraryExtension.pluginDependencies().pluginDependencies().forEach {
       // TODO: when kotlin-dsl works in IntelliJ switch to it
       val hpiDependency = dependencies.createExternal(it.asStringNotation())
 
@@ -288,13 +289,8 @@ open class SharedLibraryPlugin @Inject constructor(
     val workflowScmStepPluginVersion = project.initializedProperty(DEFAULT_WORKFLOW_SCM_STEP_PLUGIN_VERSION)
     val workflowSupportPluginVersion = project.initializedProperty(
       DEFAULT_WORKFLOW_SUPPORT_PLUGIN_VERSION)
-    return project.extensions.create(
-      "sharedLibrary",
-      SharedLibraryExtension::class.java,
-      groovyVersion,
-      coreVersion,
-      pipelineTestUnitVersion,
-      testHarnessVersion,
+
+    val pluginDependencySpec = PluginDependencySpec(
       gitPluginVersion,
       workflowApiPluginVersion,
       workflowBasicStepsPluginVersion,
@@ -306,6 +302,15 @@ open class SharedLibraryPlugin @Inject constructor(
       workflowScmStepPluginVersion,
       workflowStepApiPluginVersion,
       workflowSupportPluginVersion
+    )
+    return project.extensions.create(
+      "sharedLibrary",
+      SharedLibraryExtension::class.java,
+      groovyVersion,
+      coreVersion,
+      pipelineTestUnitVersion,
+      testHarnessVersion,
+      pluginDependencySpec
     )
   }
 

@@ -331,6 +331,12 @@ internal class SharedLibraryPluginTest {
   internal fun `additional resources directory available for main to be able to use the Jenkins GDSL in IntelliJ`() {
   }
 
+  // TODO: having this is incredibly useful for authoring integration tests with source code completion in global shared libraries
+  @NotImplementedYet
+  @Test
+  internal fun `integrationTestPipelineResources directory is a source set and available on integrationRuntimeOnly classpath`() {
+  }
+
   @NotImplementedYet
   @Test
   internal fun `task exists to download the GDSL`() {
