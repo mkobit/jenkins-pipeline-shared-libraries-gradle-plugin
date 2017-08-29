@@ -5,7 +5,7 @@ jobs:
       - image: circleci/openjdk:8-jdk
         environment:
           GRADLE_OPTS: -Dorg.gradle.daemon=false
-          JAVA_OPTS: -XX:+UseCGroupMemoryLimitForHeap
+          JAVA_OPTS: -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap
 
     working_directory: ~/jenkins-pipeline-shared-libraries-gradle-plugin
     steps:
