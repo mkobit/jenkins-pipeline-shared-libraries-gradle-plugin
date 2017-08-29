@@ -13,7 +13,7 @@ jobs:
           - home-cache-{{ checksum "build.gradle.kts" }}-{{ checksum "gradle.properties" }}-{{ checksum "gradle/junit5.gradle.kts" }}
           - build-cache-{{ checksum "build.gradle.kts" }}-{{ checksum "gradle.properties" }}-{{ checksum "gradle/junit5.gradle.kts" }}
 
-      - run: ./gradlew build
+      - run: ./gradlew build --no-daemon
 
       - store_test_results:
           path: ~/jenkins-pipeline-shared-libraries-gradle-plugin/build/test-results/
