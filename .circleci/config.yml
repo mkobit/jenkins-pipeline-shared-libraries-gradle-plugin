@@ -23,7 +23,7 @@ jobs:
           name: Show Java Version
 
       - run:
-          command: ./gradlew build --info --max-workers 2 --scan
+          command: ./gradlew build --max-workers 2 --info --stacktrace --scan
           name: Gradle Build
 
       - store_test_results:
