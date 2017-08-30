@@ -2,6 +2,9 @@
 :toc:
 :uri-jenkins-docs: https://jenkins.io/doc/book/pipeline/shared-libraries/
 :uri-jenkins-pipeline-unit: https://github.com/lesfurets/JenkinsPipelineUnit
+:circle-ci-status-badge: image:https://circleci.com/gh/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/tree/master.svg?style=svg["CircleCI", link="https://circleci.com/gh/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/tree/master"]
+
+{circle-ci-status-badge}
 
 Gradle plugin to assist with developing link:{uri-jenkins-docs}[_Shared Libraries for Jenkins Pipelines_].
 
