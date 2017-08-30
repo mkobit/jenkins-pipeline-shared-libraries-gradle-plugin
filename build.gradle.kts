@@ -23,6 +23,7 @@ buildscript {
 }
 
 plugins {
+  id("com.gradle.build-scan") version "1.9"
   kotlin("jvm")
 //  `kotlin-dsl`
   `java-library`
@@ -35,6 +36,26 @@ apply {
   plugin("org.junit.platform.gradle.plugin")
   plugin("org.jetbrains.dokka")
   from("gradle/junit5.gradle.kts")
+}
+
+buildScan {
+  fun env(key: String): String? = System.getenv(key)
+
+  setLicenseAgree("yes")
+  setLicenseAgreementUrl("https://gradle.com/terms-of-service")
+
+  // Env variables from https://circleci.com/docs/2.0/env-vars/
+  if (env("CI") != null) {
+    logger.lifecycle("Running in CI environment, setting build scan attributes.")
+    tag("CI")
+    env("CIRCLE_BRANCH")?.let { tag(it) }
+    env("CIRCLE_BUILD_NUM")?.let { value("Circle CI Build Number", it) }
+    env("CIRCLE_BUILD_URL")?.let { link("Build URL", it) }
+    env("CIRCLE_SHA1")?.let { value("Revision", it) }
+    env("CIRCLE_COMPARE_URL")?.let { link("Diff", it) }
+    env("CIRCLE_REPOSITORY_URL")?.let { value("Repository", it) }
+    env("CIRCLE_PR_NUMBER")?.let { value("Pull Request Number", it) }
+  }
 }
 
 version = "0.1.0"
@@ -146,6 +167,22 @@ extensions.getByType(JUnitPlatformExtension::class.java).apply {
 tasks {
   "wrapper"(Wrapper::class) {
     gradleVersion = "4.1"
+  }
+
+  "downloadedDependencies" {
+    val downloadedDependenciesIndex = file("$buildDir/downloadedDependencies.txt")
+    description = "Downloads dependencies for caching and usage on Circle CI"
+    configurations.filter { it.isCanBeResolved }.forEach { inputs.files(it) }
+    outputs.file(downloadedDependenciesIndex)
+    doFirst {
+      val fileNames =configurations.filter { it.isCanBeResolved }.flatMap {
+        logger.info("Resolving configuration named ${it.name}")
+        it.resolve()
+      }.map {
+        it.name
+      }.joinToString(separator = System.lineSeparator())
+      downloadedDependenciesIndex.bufferedWriter().use { it.write(fileNames) }
+    }
   }
 
   val circleCiScriptDestination = file("$buildDir/circle/circleci")

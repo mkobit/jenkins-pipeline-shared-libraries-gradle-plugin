@@ -5,6 +5,7 @@ jobs:
       - image: circleci/openjdk:8-jdk
         environment:
           GRADLE_OPTS: -Dorg.gradle.daemon=false
+          JAVA_OPTS: -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -Xmx2g -Xms512m
 
     working_directory: ~/jenkins-pipeline-shared-libraries-gradle-plugin
     steps:
@@ -15,15 +16,27 @@ jobs:
           - home-cache-{{ checksum "build.gradle.kts" }}-{{ checksum "gradle.properties" }}-{{ checksum "gradle/junit5.gradle.kts" }}
           - build-cache-{{ checksum "build.gradle.kts" }}-{{ checksum "gradle.properties" }}-{{ checksum "gradle/junit5.gradle.kts" }}
 
-      - run: ./gradlew build
+      - run:
+          command: |
+            java -version
+            javac -version
+          name: Show Java Version
 
-      - store_test_results:
-          path: ~/jenkins-pipeline-shared-libraries-gradle-plugin/build/test-results/
+      - run:
+          command: ./gradlew downloadDependencies --max-workers 2 --info --stacktrace
+          name: Download Dependencies
 
       - save_cache:
           paths:
             - ~/.gradle
           key: home-cache-{{ checksum "build.gradle.kts" }}-{{ checksum "gradle.properties" }}-{{ checksum "gradle/junit5.gradle.kts" }}
+
+      - run:
+          command: ./gradlew build --max-workers 2 --info --stacktrace --scan
+          name: Gradle Build
+
+      - store_test_results:
+          path: ~/jenkins-pipeline-shared-libraries-gradle-plugin/build/test-results/
 
       - save_cache:
           paths:
