@@ -23,16 +23,20 @@ jobs:
           name: Show Java Version
 
       - run:
-          command: ./gradlew build --max-workers 2 --info --stacktrace --scan
-          name: Gradle Build
-
-      - store_test_results:
-          path: ~/jenkins-pipeline-shared-libraries-gradle-plugin/build/test-results/
+          command: ./gradlew downloadDependencies --max-workers 2 --info --stacktrace
+          name: Download Dependencies
 
       - save_cache:
           paths:
             - ~/.gradle
           key: home-cache-{{ checksum "build.gradle.kts" }}-{{ checksum "gradle.properties" }}-{{ checksum "gradle/junit5.gradle.kts" }}
+
+      - run:
+          command: ./gradlew build --max-workers 2 --info --stacktrace --scan
+          name: Gradle Build
+
+      - store_test_results:
+          path: ~/jenkins-pipeline-shared-libraries-gradle-plugin/build/test-results/
 
       - save_cache:
           paths:

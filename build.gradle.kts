@@ -189,6 +189,22 @@ tasks {
     gradleVersion = "4.1"
   }
 
+  "downloadedDependencies" {
+    val downloadedDependenciesIndex = file("$buildDir/downloadedDependencies.txt")
+    description = "Downloads dependencies for caching and usage on Circle CI"
+    configurations.filter { it.isCanBeResolved }.forEach { inputs.files(it) }
+    outputs.file(downloadedDependenciesIndex)
+    doFirst {
+      val fileNames =configurations.filter { it.isCanBeResolved }.flatMap {
+        logger.info("Resolving configuration named ${it.name}")
+        it.resolve()
+      }.map {
+        it.name
+      }.joinToString(separator = System.lineSeparator())
+      downloadedDependenciesIndex.bufferedWriter().use { it.write(fileNames) }
+    }
+  }
+
   val circleCiScriptDestination = file("$buildDir/circle/circleci")
   val downloadCircleCiScript by creating(Exec::class) {
     val downloadUrl = "https://circle-downloads.s3.amazonaws.com/releases/build_agent_wrapper/circleci"
