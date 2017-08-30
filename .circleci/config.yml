@@ -5,7 +5,7 @@ jobs:
       - image: circleci/openjdk:8-jdk
         environment:
           GRADLE_OPTS: -Dorg.gradle.daemon=false
-          JAVA_OPTS: -XX:+UnlockExperimentalVMOptions -XX:-UseConcMarkSweepGC -XX:+UseG1GC -Xmx2g -Xms512m
+          JAVA_OPTS: -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -Xmx2g -Xms512m
 
     working_directory: ~/jenkins-pipeline-shared-libraries-gradle-plugin
     steps:
