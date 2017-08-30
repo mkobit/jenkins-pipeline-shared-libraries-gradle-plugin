@@ -202,7 +202,7 @@ class LibHelper {
 
   @NotImplementedYet
   @Test
-  internal fun `can use pipeline resources in integraiton tests`() {
+  internal fun `can use pipeline resources in integration tests`() {
   }
 
   @NotImplementedYet
@@ -210,10 +210,31 @@ class LibHelper {
   internal fun `no configurations are resolved during configuration phase`() {
   }
 
-  // TODO: relocate?
-  @NotImplementedYet
   @Test
   internal fun `Kotlin DSL has friendly accessors`() {
+    projectDir.writeRelativeFile(fileName = "build.gradle") {
+      kotlinBuildScript() + """
+sharedLibrary {
+  groovyVersion = "2.4.12"
+  coreVersion = "2.73"
+  pipelineTestUnitVersion = "1.1"
+  testHarnessVersion = "2.24"
+  pluginDependencies {
+    workflowCpsGlobalLibraryPluginVersion = "2.8"
+    blueocean("blueocean-web", "1.2.0")
+  }
+}
+"""
+    }
+
+    val buildResult: BuildResult = build(projectDir, "dependencies", "-s", "-i")
+
+    val task = buildResult.task(":dependencies")
+    assertThat(task?.outcome)
+      .describedAs("tasks task outcome")
+      .withFailMessage("Build output: ${buildResult.output}")
+      .isNotNull()
+      .isEqualTo(TaskOutcome.SUCCESS)
   }
 
   @NotImplementedYet

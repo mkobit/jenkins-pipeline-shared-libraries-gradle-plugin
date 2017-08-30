@@ -33,6 +33,7 @@ open class SharedLibraryPlugin @Inject constructor(
   companion object {
     val JENKINS_REPOSITORY_NAME = "JenkinsPublic"
     val JENKINS_REPOSITORY_URL = "https://repo.jenkins-ci.org/public/"
+    private val SHARED_LIBRARY_EXTENSION_NAME = "sharedLibrary"
     private val TEST_ROOT_PATH = "test"
     private val DEFAULT_GROOVY_VERSION = "2.4.8"
     private val DEFAULT_CORE_VERSION = "2.60.2"
@@ -304,7 +305,7 @@ open class SharedLibraryPlugin @Inject constructor(
       workflowSupportPluginVersion
     )
     return project.extensions.create(
-      "sharedLibrary",
+      SHARED_LIBRARY_EXTENSION_NAME,
       SharedLibraryExtension::class.java,
       groovyVersion,
       coreVersion,

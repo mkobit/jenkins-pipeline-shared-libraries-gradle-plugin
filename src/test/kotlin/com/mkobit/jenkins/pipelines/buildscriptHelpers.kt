@@ -24,6 +24,6 @@ repositories {
 }
 
 dependencies {
-  testImplementation("junit", "junit", "4.12")
+  testImplementation("junit:junit:4.12")
 }
 """
