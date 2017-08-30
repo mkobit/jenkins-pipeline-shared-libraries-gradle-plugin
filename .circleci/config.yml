@@ -5,7 +5,7 @@ jobs:
       - image: circleci/openjdk:8-jdk
         environment:
           GRADLE_OPTS: -Dorg.gradle.daemon=false
-          JAVA_OPTS: -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap
+          JAVA_OPTS: -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:-UseConcMarkSweepGC -XX:+UseG1GC
 
     working_directory: ~/jenkins-pipeline-shared-libraries-gradle-plugin
     steps:
@@ -23,7 +23,7 @@ jobs:
           name: Show Java Version
 
       - run:
-          command: ./gradlew build --info
+          command: ./gradlew build --info --scan
           name: Gradle Build
 
       - store_test_results:
