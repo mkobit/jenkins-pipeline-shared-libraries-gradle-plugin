@@ -148,7 +148,6 @@ dependencies {
 //  }
 }
 
-
 tasks.withType(KotlinCompile::class.java) {
   kotlinOptions.jvmTarget = "1.8"
 }
@@ -183,6 +182,10 @@ tasks {
       }.joinToString(separator = System.lineSeparator())
       downloadedDependenciesIndex.bufferedWriter().use { it.write(fileNames) }
     }
+  }
+
+  "junitPlatformTest"(JavaExec::class) {
+    jvmArgs("-XX:+PrintGCDetails", "-XX:+PrintGCDetails", "-XX:+PrintGCTimeStamps", "-XX:+UseG1GC")
   }
 
   val circleCiScriptDestination = file("$buildDir/circle/circleci")
