@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import testsupport.NotImplementedYet
+import testsupport.SampleCandidate
 import testsupport.build
 import testsupport.resourceText
 import testsupport.writeRelativeFile
@@ -272,5 +273,18 @@ sharedLibrary {
   @NotImplementedYet
   @Test
   internal fun `can use declared plugin dependencies in integration test`() {
+  }
+
+  // TODO: figure out better way to split out sample-like tests
+  @NotImplementedYet
+  @SampleCandidate
+  @Test
+  internal fun `can use parameterized pipeline build`() {
+  }
+
+  @NotImplementedYet
+  @SampleCandidate
+  @Test
+  internal fun `can use Spock testing library`() {
   }
 }
