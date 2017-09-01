@@ -11,12 +11,13 @@ import org.junit.jupiter.api.extension.ExtensionContext
 @Disabled("test or feature not implemented yet")
 annotation class NotImplementedYet
 
-@Tag("possible-sample")
-annotation class SampleCandidate
-
-@ExtendWith(TestExecutionLogger::class)
 @Tag("integration")
+@ExtendWith(TestExecutionLogger::class, ResourceGradleProjectProviderExtension::class)
 annotation class Integration
+
+@Tag("possible-sample")
+@ExtendWith(TestExecutionLogger::class, ResourceGradleProjectProviderExtension::class)
+annotation class SampleCandidate
 
 class TestExecutionLogger : BeforeTestExecutionCallback, AfterTestExecutionCallback {
   companion object {
