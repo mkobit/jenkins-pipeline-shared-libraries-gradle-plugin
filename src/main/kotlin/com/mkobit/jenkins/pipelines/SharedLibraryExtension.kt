@@ -3,6 +3,9 @@ package com.mkobit.jenkins.pipelines
 import org.gradle.api.Action
 import org.gradle.api.provider.PropertyState
 
+/**
+ * Extension for the [SharedLibraryPlugin].
+ */
 open class SharedLibraryExtension(
   val groovyVersionState: PropertyState<String>,
   val coreVersionState: PropertyState<String>,

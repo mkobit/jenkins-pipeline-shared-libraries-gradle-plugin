@@ -114,7 +114,7 @@ open class SharedLibraryPlugin @Inject constructor(
       )
     }
 
-    // TODO: don't resolve configurations early if we don't have to.
+    // TODO: Come up with a better way to collect all the transitive dependencies and HPI/JAR versions of each plugin.
     // We do need access to the transitive dependencies to get all of the HPIs and JAR libraries in code completion and I haven't thought of a better way of handling it yet.
     logger.debug { "Setting up an action on the incoming dependencies of $PLUGIN_LIBRARY_CONFIGURATION" }
     val callablePluginLibraries: Callable<FileCollection> = Callable {

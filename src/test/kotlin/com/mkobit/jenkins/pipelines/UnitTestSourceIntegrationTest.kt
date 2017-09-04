@@ -9,13 +9,14 @@ import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
+import testsupport.Integration
 import testsupport.build
 import testsupport.writeRelativeFile
 import java.io.File
 import java.util.stream.Stream
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@Tag("integration")
+@Integration
 internal class UnitTestSourceIntegrationTest {
 
   private lateinit var projectDir: File

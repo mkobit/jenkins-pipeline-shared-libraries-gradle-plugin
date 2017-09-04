@@ -8,3 +8,6 @@ annotation class NotImplementedYet
 
 @Tag("possible-sample")
 annotation class SampleCandidate
+
+@Tag("integration")
+annotation class Integration

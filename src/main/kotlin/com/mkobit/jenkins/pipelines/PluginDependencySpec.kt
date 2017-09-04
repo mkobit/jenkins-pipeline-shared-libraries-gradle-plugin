@@ -18,6 +18,9 @@ class PluginDependencySpec(
 
   private val currentDependencies: MutableList<PluginDependency> = mutableListOf()
 
+  /**
+   * The current set of plugin dependencies from this specification.
+   */
   val dependencies: List<PluginDependency>
     get() = currentDependencies.toList()
 

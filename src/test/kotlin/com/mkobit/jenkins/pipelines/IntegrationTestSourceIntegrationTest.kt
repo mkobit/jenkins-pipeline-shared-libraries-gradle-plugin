@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
+import testsupport.Integration
 import testsupport.NotImplementedYet
 import testsupport.SampleCandidate
 import testsupport.build
@@ -15,7 +16,7 @@ import testsupport.resourceText
 import testsupport.writeRelativeFile
 import java.io.File
 
-@Tag("integration")
+@Integration
 internal class IntegrationTestSourceIntegrationTest {
 
   private lateinit var projectDir: File

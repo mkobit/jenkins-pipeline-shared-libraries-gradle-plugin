@@ -116,7 +116,7 @@ dependencies {
   // These are used for code completion in the pipelineTestResources to more easily facilitate writing tests
   // against the libraries that are used.
   val pipelineTestResources by java.sourceSets.getting
-  pipelineTestResources.compileOnlyConfigurationName("com.lesfurets:jenkins-pipeline-unit:1.0")
+  pipelineTestResources.compileOnlyConfigurationName("com.lesfurets:jenkins-pipeline-unit:1.1")
   pipelineTestResources.compileOnlyConfigurationName("org.jenkins-ci.main:jenkins-test-harness:2.24")
   pipelineTestResources.compileOnlyConfigurationName("org.codehaus.groovy:groovy:2.4.8")
   // TODO: have to figure out a better way to manage these dependencies (and transitives)
@@ -168,7 +168,7 @@ tasks {
     gradleVersion = "4.1"
   }
 
-  "downloadedDependencies" {
+  "downloadDependencies" {
     val downloadedDependenciesIndex = file("$buildDir/downloadedDependencies.txt")
     description = "Downloads dependencies for caching and usage on Circle CI"
     configurations.filter { it.isCanBeResolved }.forEach { inputs.files(it) }
@@ -226,8 +226,8 @@ tasks {
     from(main.allSource)
   }
 
-// No Java code, so don't need the javadoc task.
-// Dokka generates our documentation.
+  // No Java code, so don't need the javadoc task.
+  // Dokka generates our documentation.
   remove(getByName("javadoc"))
   val dokka by getting(DokkaTask::class) {
     dependsOn(main.classesTaskName)
@@ -270,6 +270,7 @@ pluginBundle {
   vcsUrl = "https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin"
   description = "Configures and sets up a Gradle project for development and testing of a Jenkins Pipeline shared library (https://jenkins.io/doc/book/pipeline/shared-libraries/)"
   tags = listOf("jenkins", "pipeline", "shared library", "global library")
+  website = "https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin"
 
   plugins(delegateClosureOf<NamedDomainObjectContainer<PluginConfig>> {
     invoke {
