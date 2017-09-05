@@ -18,6 +18,7 @@ jobs:
       - run:
           command: |
             java -XshowSettings:vm -XX:+PrintCommandLineFlags -version
+            java -XshowSettings:vm -XX:+PrintCommandLineFlags -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -version
             javac -version
           name: Show Java Version
 

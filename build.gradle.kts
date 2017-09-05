@@ -185,7 +185,7 @@ tasks {
   }
 
   "junitPlatformTest"(JavaExec::class) {
-    jvmArgs("-XX:+PrintGCTimeStamps", "-XX:+UseG1GC", "-Xmx2g", "-Xms512m")
+    jvmArgs("-XshowSettings:vm", "-XX:+PrintGCTimeStamps", "-XX:+UseG1GC", "-Xmx2g", "-Xms512m")
   }
 
   val circleCiScriptDestination = file("$buildDir/circle/circleci")
