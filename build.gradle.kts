@@ -174,7 +174,7 @@ tasks {
     configurations.filter { it.isCanBeResolved }.forEach { inputs.files(it) }
     outputs.file(downloadedDependenciesIndex)
     doFirst {
-      val fileNames =configurations.filter { it.isCanBeResolved }.flatMap {
+      val fileNames = configurations.filter { it.isCanBeResolved }.flatMap {
         logger.info("Resolving configuration named ${it.name}")
         it.resolve()
       }.map {
@@ -185,7 +185,7 @@ tasks {
   }
 
   "junitPlatformTest"(JavaExec::class) {
-    jvmArgs("-XX:+PrintGCDetails", "-XX:+PrintGCDetails", "-XX:+PrintGCTimeStamps", "-XX:+UseG1GC")
+    jvmArgs("-XX:+PrintGCTimeStamps", "-XX:+UseG1GC", "-Xmx2g", "-Xms512m")
   }
 
   val circleCiScriptDestination = file("$buildDir/circle/circleci")

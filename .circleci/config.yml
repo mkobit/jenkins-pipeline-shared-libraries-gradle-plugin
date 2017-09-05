@@ -4,7 +4,7 @@ jobs:
     docker:
       - image: circleci/openjdk:8-jdk
         environment:
-          JAVA_OPTS: -XX:+UseG1GC -Xmx2g -Xms512m
+          JAVA_OPTS: -XX:+UseG1GC -Xmx1536m -Xms512m
 
     working_directory: ~/jenkins-pipeline-shared-libraries-gradle-plugin
     steps:
@@ -17,7 +17,7 @@ jobs:
 
       - run:
           command: |
-            java -XX:+PrintCommandLineFlags -version
+            java -XshowSettings:vm -XX:+PrintCommandLineFlags -version
             javac -version
           name: Show Java Version
 
