@@ -6,9 +6,11 @@
     </Console>
   </Appenders>
   <Loggers>
-    <Logger name="org.junit" level="warn"/>
     <Root level="error">
       <AppenderRef ref="Console"/>
     </Root>
+    <Logger name="org.junit" level="warn"/>
+    <Logger name="com.mkobit.jenkins.pipelines" level="debug"/>
+    <Logger name="testsupport" level="info"/>
   </Loggers>
 </Configuration>

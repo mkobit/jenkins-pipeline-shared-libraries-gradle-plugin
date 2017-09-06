@@ -28,9 +28,8 @@ open class SharedLibraryPlugin @Inject constructor(
   private val projectLayout: ProjectLayout
 ) : Plugin<Project> {
 
-  private val logger = KotlinLogging.logger {}
-
   companion object {
+    private val logger = KotlinLogging.logger {}
     val JENKINS_REPOSITORY_NAME = "JenkinsPublic"
     val JENKINS_REPOSITORY_URL = "https://repo.jenkins-ci.org/public/"
     private val SHARED_LIBRARY_EXTENSION_NAME = "sharedLibrary"

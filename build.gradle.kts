@@ -1,5 +1,4 @@
 import com.gradle.publish.PluginConfig
-import com.gradle.publish.PublishPlugin
 import org.gradle.api.internal.HasConvention
 import org.gradle.jvm.tasks.Jar
 import org.jetbrains.dokka.gradle.DokkaTask
@@ -37,6 +36,8 @@ apply {
   plugin("org.jetbrains.dokka")
   from("gradle/junit5.gradle.kts")
 }
+
+val onCircleCi: Boolean = System.getenv("CIRCLECI") != null
 
 buildScan {
   fun env(key: String): String? = System.getenv(key)
@@ -185,7 +186,11 @@ tasks {
   }
 
   "junitPlatformTest"(JavaExec::class) {
-    jvmArgs("-XshowSettings:vm", "-XX:+PrintGCTimeStamps", "-XX:+UseG1GC", "-Xmx2g", "-Xms512m")
+    if (onCircleCi) {
+      jvmArgs("-XX:+UnlockExperimentalVMOptions", "-XX:+UseCGroupMemoryLimitForHeap", "-XX:MaxRAMFraction=2", "-XshowSettings:vm")
+    } else {
+      jvmArgs("-XshowSettings:vm", "-XX:+PrintGCTimeStamps", "-XX:+UseG1GC", "-Xmx2g", "-Xms512m", "-XshowSettings:vm")
+    }
   }
 
   val circleCiScriptDestination = file("$buildDir/circle/circleci")
