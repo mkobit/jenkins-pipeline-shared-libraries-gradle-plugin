@@ -1,5 +1,4 @@
 import com.gradle.publish.PluginConfig
-import com.gradle.publish.PublishPlugin
 import org.gradle.api.internal.HasConvention
 import org.gradle.jvm.tasks.Jar
 import org.jetbrains.dokka.gradle.DokkaTask
@@ -174,7 +173,7 @@ tasks {
     configurations.filter { it.isCanBeResolved }.forEach { inputs.files(it) }
     outputs.file(downloadedDependenciesIndex)
     doFirst {
-      val fileNames =configurations.filter { it.isCanBeResolved }.flatMap {
+      val fileNames = configurations.filter { it.isCanBeResolved }.flatMap {
         logger.info("Resolving configuration named ${it.name}")
         it.resolve()
       }.map {
@@ -185,7 +184,7 @@ tasks {
   }
 
   "junitPlatformTest"(JavaExec::class) {
-    jvmArgs("-XX:+PrintGCDetails", "-XX:+PrintGCDetails", "-XX:+PrintGCTimeStamps", "-XX:+UseG1GC")
+    jvmArgs("-XshowSettings:vm", "-XX:+PrintGCTimeStamps", "-XX:+UseG1GC", "-Xmx1g", "-Xms512m", "-XshowSettings:vm")
   }
 
   val circleCiScriptDestination = file("$buildDir/circle/circleci")
