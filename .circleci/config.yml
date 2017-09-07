@@ -4,8 +4,9 @@ jobs:
     docker:
       - image: circleci/openjdk:8-jdk
         environment:
-          #JAVA_OPTS: -XX:+UseG1GC -Xmx1536m -Xms512m
-          JAVA_OPTS: -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:MaxRAMFraction=4 -XshowSettings:vm
+          JAVA_OPTS: -XX:+UseG1GC -Xmx1024m -Xms512m
+          # Disable Kotlin compiler daemon - https://discuss.kotlinlang.org/t/solved-disable-kotlin-compiler-process-keepalive/2622
+          GRADLE_OPTS: -Dkotlin.compiler.execution.strategy="in-process"
 
     working_directory: ~/jenkins-pipeline-shared-libraries-gradle-plugin
     steps:
@@ -24,7 +25,7 @@ jobs:
           name: Show Java Version
 
       - run:
-          command: ./gradlew downloadDependencies --max-workers 2 --info --stacktrace
+          command: ./gradlew downloadDependencies --max-workers 1 --info --stacktrace
           name: Download Dependencies
 
       - save_cache:
@@ -33,7 +34,7 @@ jobs:
           key: home-cache-{{ checksum "build.gradle.kts" }}-{{ checksum "gradle.properties" }}-{{ checksum "gradle/junit5.gradle.kts" }}
 
       - run:
-          command: ./gradlew build --max-workers 2 --info --stacktrace --scan
+          command: ./gradlew build --max-workers 1 --info --stacktrace --scan
           name: Gradle Build
 
       - store_test_results:

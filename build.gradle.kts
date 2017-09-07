@@ -37,8 +37,6 @@ apply {
   from("gradle/junit5.gradle.kts")
 }
 
-val onCircleCi: Boolean = System.getenv("CIRCLECI") != null
-
 buildScan {
   fun env(key: String): String? = System.getenv(key)
 
@@ -186,11 +184,7 @@ tasks {
   }
 
   "junitPlatformTest"(JavaExec::class) {
-    if (onCircleCi) {
-      jvmArgs("-XX:+UnlockExperimentalVMOptions", "-XX:+UseCGroupMemoryLimitForHeap", "-XX:MaxRAMFraction=2", "-XshowSettings:vm")
-    } else {
-      jvmArgs("-XshowSettings:vm", "-XX:+PrintGCTimeStamps", "-XX:+UseG1GC", "-Xmx2g", "-Xms512m", "-XshowSettings:vm")
-    }
+    jvmArgs("-XshowSettings:vm", "-XX:+PrintGCTimeStamps", "-XX:+UseG1GC", "-Xmx1g", "-Xms512m", "-XshowSettings:vm")
   }
 
   val circleCiScriptDestination = file("$buildDir/circle/circleci")
