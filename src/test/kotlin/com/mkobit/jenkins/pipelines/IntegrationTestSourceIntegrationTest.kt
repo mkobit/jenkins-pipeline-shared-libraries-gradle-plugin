@@ -26,25 +26,6 @@ internal class IntegrationTestSourceIntegrationTest {
     projectDir = createTempDir().apply { deleteOnExit() }
   }
 
-  @Disabled
-  @Test
-  internal fun `delete me`() {
-    projectDir.writeRelativeFile(fileName = "build.gradle") {
-      groovyBuildScript() + """
-tasks.create('mkobitHelloThere') {
-  doFirst {
-    final c = configurations.integrationTestCompileClasspath
-    c.resolve().each {
-      println("Mkobit file: ${'$'}it")
-    }
-  }
-}
-"""
-    }
-    val buildResult = build(projectDir, "mkobitHelloThere", "-i")
-    assertThat(buildResult.output).contains("HIMKOBIT")
-  }
-
   @Disabled("may not be artifacts but file dependencies with current hack")
   @Test
   internal fun `Jenkins Pipeline Shared Groovy Libraries Plugin JAR available in integrationTestCompileClasspath configuration`() {
