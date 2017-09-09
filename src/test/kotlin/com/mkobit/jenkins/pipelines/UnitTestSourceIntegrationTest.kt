@@ -4,7 +4,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -30,7 +29,19 @@ internal class UnitTestSourceIntegrationTest {
   @MethodSource("jenkinsPipelineUnitTestData")
   internal fun `can write unit tests using JenkinsPipelineUnit`(version: String, pipeline: String, groovyTestFile: String) {
     projectDir.writeRelativeFile(fileName = "build.gradle") {
-      groovyBuildScript() +
+      """
+      plugins {
+        id 'com.mkobit.jenkins.pipelines.shared-library'
+      }
+
+      repositories {
+        jcenter()
+      }
+
+      dependencies {
+        testImplementation(group: 'junit', name: 'junit', version: '4.12')
+      }
+      """ +
         """
 sharedLibrary {
   pipelineTestUnitVersion = "$version"

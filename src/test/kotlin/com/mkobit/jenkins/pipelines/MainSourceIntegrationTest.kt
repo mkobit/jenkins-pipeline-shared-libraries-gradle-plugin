@@ -4,22 +4,14 @@ import org.assertj.core.api.Assertions.assertThat
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import testsupport.GradleProject
 import testsupport.Integration
 import testsupport.NotImplementedYet
 import testsupport.buildWithPluginClasspath
-import java.io.File
 
 @Integration
 class MainSourceIntegrationTest {
-  private lateinit var projectDir: File
-
-  @BeforeEach
-  internal fun setUp() {
-    projectDir = createTempDir().apply { deleteOnExit() }
-  }
 
   // TODO: test both groovy and kotlin usages
   @Test
