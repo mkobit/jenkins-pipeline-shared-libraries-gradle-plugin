@@ -2,60 +2,21 @@ package com.mkobit.jenkins.pipelines
 
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.testkit.runner.BuildResult
+import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
+import testsupport.GradleProject
 import testsupport.Integration
 import testsupport.NotImplementedYet
-import testsupport.build
-import testsupport.writeRelativeFile
-import java.io.File
+import testsupport.buildWithPluginClasspath
 
 @Integration
 class MainSourceIntegrationTest {
-  private lateinit var projectDir: File
-
-  @BeforeEach
-  internal fun setUp() {
-    projectDir = createTempDir().apply { deleteOnExit() }
-  }
 
   // TODO: test both groovy and kotlin usages
   @Test
-  internal fun `main Groovy code is compiled`() {
-    projectDir.writeRelativeFile(fileName = "build.gradle") {
-      groovyBuildScript()
-    }
-    projectDir.writeRelativeFile("src", "com", "mkobit", fileName = "MyLib.groovy") {
-      """
-package com.mkobit
-class MyLib {
-  int add(int a, int b) {
-    return a + b
-  }
-}
-"""
-    }
-    projectDir.writeRelativeFile("test", "unit", "groovy", "com", "mkobit", fileName = "MyLibTest.groovy") {
-      """
-package com.mkobit
-
-import org.junit.Assert
-import org.junit.Test
-
-class MyLibTest {
-
-  @Test
-  void checkAddition() {
-    def myLib = new MyLib()
-    Assert.assertEquals(3, myLib.add(1, 2))
-  }
-}
-"""
-    }
-
-    val buildResult: BuildResult = build(projectDir, "compileGroovy")
+  internal fun `main Groovy code is compiled`(@GradleProject gradleRunner: GradleRunner) {
+    val buildResult: BuildResult = gradleRunner.buildWithPluginClasspath("compileGroovy")
 
     val task = buildResult.task(":compileGroovy")
     assertThat(task?.outcome)
@@ -65,39 +26,8 @@ class MyLibTest {
   }
 
   @Test
-  internal fun `can unit test code in src`() {
-    projectDir.writeRelativeFile(fileName = "build.gradle") {
-      groovyBuildScript()
-    }
-    projectDir.writeRelativeFile("src", "com", "mkobit", fileName = "MyLib.groovy") {
-      """
-package com.mkobit
-class MyLib {
-  int add(int a, int b) {
-    return a + b
-  }
-}
-"""
-    }
-    projectDir.writeRelativeFile("test", "unit", "groovy", "com", "mkobit", fileName = "MyLibTest.groovy") {
-      """
-package com.mkobit
-
-import org.junit.Assert
-import org.junit.Test
-
-class MyLibTest {
-
-  @Test
-  void checkAddition() {
-    def myLib = new MyLib()
-    Assert.assertEquals(myLib.add(1, 2), 3)
-  }
-}
-"""
-    }
-
-    val buildResult: BuildResult = build(projectDir, "test", "-s")
+  internal fun `can unit test code in src`(@GradleProject gradleRunner: GradleRunner) {
+    val buildResult: BuildResult = gradleRunner.buildWithPluginClasspath("test", "-s")
 
     val task = buildResult.task(":test")
     assertThat(task?.outcome)
@@ -114,6 +44,11 @@ class MyLibTest {
 
   @NotImplementedYet
   @Test
+  internal fun `cannot add dependencies for compilation or execution`() {
+  }
+
+  @NotImplementedYet
+  @Test
   internal fun `@Grab in library source is supported for trusted libraries`() {
   }
 
@@ -123,22 +58,8 @@ class MyLibTest {
   }
 
   @Test
-  internal fun `Groovydoc JAR can be generated`() {
-    projectDir.writeRelativeFile(fileName = "build.gradle") {
-      groovyBuildScript()
-    }
-    projectDir.writeRelativeFile("src", "com", "mkobit", fileName = "MyLib.groovy") {
-      """
-package com.mkobit
-class MyLib {
-  int add(int a, int b) {
-    return a + b
-  }
-}
-"""
-    }
-
-    val buildResult: BuildResult = build(projectDir, "groovydocJar")
+  internal fun `Groovydoc JAR can be generated`(@GradleProject gradleRunner: GradleRunner) {
+    val buildResult: BuildResult = gradleRunner.buildWithPluginClasspath("groovydocJar")
 
     val task = buildResult.task(":groovydocJar")
     assertThat(task?.outcome)
@@ -148,22 +69,8 @@ class MyLib {
   }
 
   @Test
-  internal fun `Groovy sources JAR can be generated`() {
-    projectDir.writeRelativeFile(fileName = "build.gradle") {
-      groovyBuildScript()
-    }
-    projectDir.writeRelativeFile("src", "com", "mkobit", fileName = "MyLib.groovy") {
-      """
-package com.mkobit
-class MyLib {
-  int add(int a, int b) {
-    return a + b
-  }
-}
-"""
-    }
-
-    val buildResult: BuildResult = build(projectDir, "sourcesJar")
+  internal fun `Groovy sources JAR can be generated`(@GradleProject gradleRunner: GradleRunner) {
+    val buildResult: BuildResult = gradleRunner.buildWithPluginClasspath("sourcesJar")
 
     val task = buildResult.task(":sourcesJar")
     assertThat(task?.outcome)
