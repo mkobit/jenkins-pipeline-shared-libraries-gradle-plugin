@@ -16,7 +16,7 @@ buildscript {
   }
   dependencies {
     // TODO: load from properties or script plugin
-    classpath("org.junit.platform:junit-platform-gradle-plugin:1.0.0-RC3")
+    classpath("org.junit.platform:junit-platform-gradle-plugin:1.0.0")
     classpath("org.jetbrains.dokka:dokka-gradle-plugin:${dokkaVersion}")
   }
 }
