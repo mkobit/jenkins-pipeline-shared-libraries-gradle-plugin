@@ -110,7 +110,7 @@ internal class IntegrationTestSourceIntegrationTest {
     gradleRunner.buildWithPluginClasspath("-s", "-i")
   }
 
-  @Disabled("some strange compiler issues when using the Kotlin DSL")
+  @Disabled("This example works in a local Gradle project, but not with Gradle Test Kit")
   @Test
   internal fun `Kotlin DSL extension configuration`(@GradleProject gradleRunner: GradleRunner) {
     gradleRunner.buildWithPluginClasspath("-s", "-i")
