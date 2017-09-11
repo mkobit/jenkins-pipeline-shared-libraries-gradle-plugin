@@ -247,7 +247,10 @@ tasks {
     dependsOn(sourcesJar, javadocJar)
   }
 
-  val publishPlugins by getting
+  val login by getting
+  val publishPlugins by getting {
+    mustRunAfter(login)
+  }
   // TODO: use a better release plugin
   val createGitTag by creating(Exec::class) {
     description = "Creates a Git tag for ${project.version}"
@@ -266,7 +269,7 @@ tasks {
   "release" {
     group = PublishingPlugin.PUBLISH_TASK_GROUP
     description = "Publishes the plugin to the Gradle plugin portal and pushes up a Git tag for the current commit"
-    dependsOn(publishPlugins, pushGitTag)
+    dependsOn(login, publishPlugins, pushGitTag)
   }
 }
 
