@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.preprocessor.mkdirsOrFail
 import org.junit.platform.console.options.Details
 import org.junit.platform.gradle.plugin.JUnitPlatformExtension
+import java.io.ByteArrayOutputStream
 
 buildscript {
   val dokkaVersion = "0.9.15"
@@ -35,6 +36,24 @@ apply {
   plugin("org.junit.platform.gradle.plugin")
   plugin("org.jetbrains.dokka")
   from("gradle/junit5.gradle.kts")
+}
+
+val gitCommitSha: String by lazy {
+  ByteArrayOutputStream().use {
+    project.exec {
+      commandLine("git", "rev-parse", "HEAD")
+      standardOutput = it
+    }
+    it.toString(Charsets.UTF_8.name()).trim()
+  }
+}
+
+tasks.withType(Jar::class.java) {
+  manifest {
+    attributes(mapOf(
+      "Build-Revision" to gitCommitSha
+    ))
+  }
 }
 
 buildScan {
