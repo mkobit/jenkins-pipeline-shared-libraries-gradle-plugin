@@ -31,7 +31,7 @@ It offers the ability to:
 
 == Using this plugin
 
-. Consume plugin from Gradle plugin portal
+. Consume plugin from Gradle plugin portal (using whatever version you choose)
 +
 [source, kotlin, subs="attributes+"]
 ----
@@ -43,7 +43,13 @@ plugins {
 +
 [source, groovy]
 ----
-include::com/mkobit/jenkins/pipelines/IntegrationTestSourceIntegrationTest/can set up Global Pipeline Library and use them in an integration test/build.gradle[tags=dependencies]
+repositories {
+  jcenter()
+}
+
+dependencies {
+  testImplementation(group: 'junit', name: 'junit', version: '4.12')
+}
 ----
 . (Optional) Add dependency to use Jenkins Pipeline Unit for use in unit tests
 +
@@ -58,13 +64,103 @@ sharedLibrary {
 .src/com/mkobit/LibHelper.groovy
 [source, groovy]
 ----
-include::com/mkobit/jenkins/pipelines/IntegrationTestSourceIntegrationTest/can set up Global Pipeline Library and use them in an integration test/src/com/mkobit/LibHelper.groovy[]
+package com.mkobit
+
+class LibHelper {
+  private script
+  LibHelper(script) {
+    this.script = script
+  }
+
+  void sayHelloTo(String name) {
+    script.echo("LibHelper says hello to ${'$'}name!")
+  }
+}
+
 ----
 . Write test utilizing `JenkinsRule` that sets up the shared library
 +
+.test/integration/groovy/com/mkobit/JenkinsGlobalLibraryUsageTest.groovy
 [source, groovy]
 ----
-include::com/mkobit/jenkins/pipelines/IntegrationTestSourceIntegrationTest/can set up Global Pipeline Library and use them in an integration test/test/integration/groovy/com/mkobit/JenkinsGlobalLibraryUsageTest.groovy[tags=test-class]
+package com.mkobit
+
+import jenkins.plugins.git.GitSCMSource
+import org.jenkinsci.plugins.workflow.libs.GlobalLibraries
+import org.jenkinsci.plugins.workflow.libs.LibraryConfiguration
+import org.jenkinsci.plugins.workflow.libs.SCMSourceRetriever
+import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition
+import org.jenkinsci.plugins.workflow.job.WorkflowJob
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import org.jvnet.hudson.test.JenkinsRule
+
+
+class JenkinsGlobalLibraryUsageTest {
+
+  @Rule
+  public JenkinsRule rule = new JenkinsRule()
+
+  @Before
+  void configureGlobalGitLibraries() {
+    rule.timeout = 30
+    final libraryPath = System.getProperty('user.dir')
+    println("Using Git library path at $libraryPath")
+    final SCMSourceRetriever retriever = new SCMSourceRetriever(
+      new GitSCMSource(
+        null,
+        libraryPath,
+        '',
+        'local-source-code',
+        // Fetch everything - if this is not used builds fail on Jenkins for some reason
+        '*:refs/remotes/origin/*',
+        '*',
+        '',
+        true
+      )
+    )
+    final LibraryConfiguration localLibrary =
+      new LibraryConfiguration('pipelineUtilities', retriever)
+    localLibrary.implicit = true
+    localLibrary.defaultVersion = 'git rev-parse HEAD'.execute().text.trim()
+    localLibrary.allowVersionOverride = false
+    GlobalLibraries.get().setLibraries(Collections.singletonList(localLibrary))
+  }
+
+  @Test
+  void testingMyLibrary() {
+    final CpsFlowDefinition flow = new CpsFlowDefinition('''
+import com.mkobit.LibHelper
+
+final libHelper = new LibHelper(this)
+libHelper.sayHelloTo('mkobit')
+    ''', true)
+    final WorkflowJob workflowJob = rule.createProject(WorkflowJob, 'project')
+    workflowJob.definition = flow
+    rule.buildAndAssertSuccess(workflowJob)
+  }
+}
+----
+
+== Configuring Versions
+
+The `sharedLibrary` extension can be used to add additional plugin dependencies, Groovy version dependency, Jenkins Core dependency, etc.
+As of right now, most of the `workflow`-type plugins are automatically added based on default or configured versions.
+See the code for full details, but here is an example of what you can configure:
+
+.build.gradle.kts
+[source, kotlin]
+----
+sharedLibrary {
+  groovyVersion = "2.4.12"
+  coreVersion = "2.73"
+  testHarnessVersion = "2.24"
+  pluginDependencies {
+    workflowCpsGlobalLibraryPluginVersion = "2.8"
+    blueocean("blueocean-web", "1.2.0")
+  }
+}
 ----
 
 == Example Consumer

@@ -7,6 +7,6 @@ class LibHelper {
   }
 
   void sayHelloTo(String name) {
-    script.echo "LibHelper says hello to ${'$'}name!"
+    script.echo("LibHelper says hello to ${'$'}name!")
   }
 }
