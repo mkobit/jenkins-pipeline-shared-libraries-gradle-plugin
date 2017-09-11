@@ -17,6 +17,7 @@ import org.gradle.jvm.tasks.Jar
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import testsupport.NotImplementedYet
 import java.util.function.Predicate
@@ -135,28 +136,11 @@ internal class SharedLibraryPluginTest {
     assertThat(implementation.dependencies).haveExactly(1, allOf(group, name, version))
   }
 
+
+  @DisplayName("JenkinsPipelineUnit default version is 1.1")
   @Test
-  internal fun `JenkinsPipelineUnit is not available in Jenkins unit test libraries configuration when version is not set`() {
-    project.evaluate()
-
-    val group = Condition<Dependency>(Predicate {
-      it.group == "com.lesfurets"
-    }, "com.lesfurets")
-    val name = Condition<Dependency>(Predicate {
-      it.name == "jenkins-pipeline-unit"
-    }, "jenkins-pipeline-unit")
-
-    val configuration = project.configurations.getByName("jenkinsPipelineUnitTestLibraries")
-    assertThat(configuration.incoming.dependencies).allSatisfy {
-      assertThat(it).doesNotHave(anyOf(group, name))
-    }
-  }
-
-  @Test
-  internal fun `JenkinsPipelineUnit is available in Jenkins unit test libraries configuration when a version is set`() {
-    val pipelineUnitVersion = "1.0"
-
-    project.extensions.getByType(SharedLibraryExtension::class.java).pipelineTestUnitVersion = pipelineUnitVersion
+  internal fun `JenkinsPipelineUnit default version is 1_1`() {
+    val pipelineUnitVersion = "1.1"
     project.evaluate()
 
     val group = Condition<Dependency>(Predicate {

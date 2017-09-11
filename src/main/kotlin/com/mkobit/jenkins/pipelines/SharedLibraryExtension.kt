@@ -28,8 +28,8 @@ open class SharedLibraryExtension(
     get() = coreVersionState.get()
     set(value) = coreVersionState.set(value)
 
-  var pipelineTestUnitVersion: String?
-    get() = pipelineTestUnitVersionState.orNull
+  var pipelineTestUnitVersion: String
+    get() = pipelineTestUnitVersionState.get()
     set(value) = pipelineTestUnitVersionState.set(value)
 
   var testHarnessVersion: String
@@ -38,7 +38,7 @@ open class SharedLibraryExtension(
 
   fun coreDependency() = "org.jenkins-ci.main:jenkins-core:$coreVersion"
   fun groovyDependency() = "org.codehaus.groovy:groovy:$groovyVersion"
-  fun pipelineUnitDependency(): String? = pipelineTestUnitVersion?.let { "com.lesfurets:jenkins-pipeline-unit:$it" }
+  fun pipelineUnitDependency(): String = "com.lesfurets:jenkins-pipeline-unit:$pipelineTestUnitVersion"
   fun testHarnessDependency() = "org.jenkins-ci.main:jenkins-test-harness:$testHarnessVersion"
   // See https://issues.jenkins-ci.org/browse/JENKINS-24064 and 2.64 release notes about war-for-test not being needed in some cases
   // Also, see https://github.com/jenkinsci/jenkins/pull/2899/files

@@ -34,6 +34,7 @@ open class SharedLibraryPlugin @Inject constructor(
     val JENKINS_REPOSITORY_URL = "https://repo.jenkins-ci.org/public/"
     private val SHARED_LIBRARY_EXTENSION_NAME = "sharedLibrary"
     private val TEST_ROOT_PATH = "test"
+    private val DEFAULT_JENKINS_PIPELINE_UNIT_VERSION = "1.1"
     private val DEFAULT_GROOVY_VERSION = "2.4.8"
     private val DEFAULT_CORE_VERSION = "2.60.2"
     private val DEFAULT_TEST_HARNESS_VERSION = "2.24"
@@ -139,7 +140,7 @@ open class SharedLibraryPlugin @Inject constructor(
     }
     dependencies.add(PLUGIN_LIBRARY_CONFIGURATION, project.files(callablePluginLibraries))
 
-    sharedLibraryExtension.pipelineUnitDependency()?.let {
+    sharedLibraryExtension.pipelineUnitDependency().let {
       dependencies.add(
         UNIT_TESTING_LIBRARY_CONFIGURATION,
         it
@@ -269,7 +270,7 @@ open class SharedLibraryPlugin @Inject constructor(
   private fun setupSharedLibraryExtension(project: Project): SharedLibraryExtension {
     val groovyVersion = project.initializedProperty(DEFAULT_GROOVY_VERSION)
     val coreVersion = project.initializedProperty(DEFAULT_CORE_VERSION)
-    val pipelineTestUnitVersion = project.property(String::class.java)
+    val pipelineTestUnitVersion = project.initializedProperty(DEFAULT_JENKINS_PIPELINE_UNIT_VERSION)
     val testHarnessVersion = project.initializedProperty(DEFAULT_TEST_HARNESS_VERSION)
     val gitPluginVersion = project.initializedProperty(DEFAULT_GIT_PLUGIN_VERSION)
     // TODO: find a better DSL for managing these dependencies, possibly by using aggregator plugin because we are still missing some
