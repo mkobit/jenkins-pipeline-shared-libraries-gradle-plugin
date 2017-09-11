@@ -41,7 +41,7 @@ internal class UnitTestSourceIntegrationTest {
       dependencies {
         testImplementation(group: 'junit', name: 'junit', version: '4.12')
       }
-      
+
       sharedLibrary {
         pipelineTestUnitVersion = "$version"
       }
