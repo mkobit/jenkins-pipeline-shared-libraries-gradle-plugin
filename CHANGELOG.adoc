@@ -1,0 +1,27 @@
+= Changelog
+:toc:
+:toclevels: 2
+:uri-keep-a-changelog: http://keepachangelog.com/en/1.0.0/
+:uri-semver: http://semver.org/spec/v2.0.0.html
+
+This document is based on thelink:{uri-keep-a-changelog}[Keep a Changelog 1.0.0 specification].
+
+This project follows link:{uri-semver}[the semantic version 2.0 specification].
+
+Each new should include:
+
+* Version (semantic version)
+* Date of release (in `yyyy/mm/dd` format)
+
+For each release, a subsection should be added for each of the following if they are non-empty:
+
+* `Added` for new features.
+* `Changed` for changes in existing functionality.
+* `Deprecated` for soon-to-be removed features.
+* `Removed` for now removed features.
+* `Fixed` for any bug fixes.
+* `Security` in case of vulnerabilities.
+
+== Unreleased (yyyy/mm/dd)
+
+Initial release

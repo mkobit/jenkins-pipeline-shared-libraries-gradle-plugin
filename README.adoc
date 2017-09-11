@@ -1,11 +1,72 @@
 = Jenkins Pipeline Shared Library Gradle Plugin
 :toc:
+:latest-version: 0.1.0
+:uri-jenkins-test-harness: https://github.com/jenkinsci/jenkins-test-harness.git
+:uri-jenkins-shared-library-docs: https://jenkins.io/doc/book/pipeline/shared-libraries/
 :uri-jenkins-docs: https://jenkins.io/doc/book/pipeline/shared-libraries/
 :uri-jenkins-pipeline-unit: https://github.com/lesfurets/JenkinsPipelineUnit
-:circle-ci-status-badge: image:https://circleci.com/gh/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/tree/master.svg?style=svg["CircleCI", link="https://circleci.com/gh/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/tree/master"]
+:uri-consumer-example: https://github.com/mkobit/jenkins-pipeline-shared-library-example
+:uri-build-status-image: https://circleci.com/gh/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/tree/master.svg?style=svg
+:circle-ci-status-badge: image:{uri-build-status-image}["CircleCI", link="https://circleci.com/gh/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/tree/master"]
+:uri-version-badge-image: https://img.shields.io/badge/Gradle%20Plugin-{latest-version}-blue.svg
+:uri-gradle-plugin-portal: https://plugins.gradle.org/
+:version-badge: image:{uri-version-badge-image}["Plugin Version", link="{uri-version-badge-image}"]
+
+//[![gradle plugin](https://img.shields.io/badge/gradle_plugin-1.0.0.RC4.3-blue.svg?style=flat-square)](https://plugins.gradle.org/plugin/io.gitlab.arturbosch.detekt)
 
 {circle-ci-status-badge}
-
-Gradle plugin to assist with developing link:{uri-jenkins-docs}[_Shared Libraries for Jenkins Pipelines_].
+{version-badge}
 
 NOTE: Work in progress
+
+== Purpose
+
+This plugin intends to help with development of link:{uri-jenkins-shared-library-docs}[_Shared Libraries_].
+
+It offers the ability to:
+
+* Unit test using link:{uri-jenkins-pipeline-unit}[_Jenkins Pipeline Unit_]
+* Integration test using the link:{uri-jenkins-test-harness}[_Jenkins Test Harness_]
+* Code completion in IDE
+
+== Using this plugin
+
+. Consume plugin from Gradle plugin portal
++
+[source, kotlin, subs="attributes+"]
+----
+plugins {
+  id("com.mkobit.jenkins.pipelines.shared-library") version "{latest-version}"
+}
+----
+. Set up test dependencies (like JUnit or Spock)
++
+[source, groovy]
+----
+include::com/mkobit/jenkins/pipelines/IntegrationTestSourceIntegrationTest/can set up Global Pipeline Library and use them in an integration test/build.gradle[tags=dependencies]
+----
+. (Optional) Add dependency to use Jenkins Pipeline Unit for use in unit tests
++
+[source, kotlin]
+----
+sharedLibrary {
+  pipelineTestUnitVersion = "1.1"
+}
+----
+. Write some shared library code
++
+.src/com/mkobit/LibHelper.groovy
+[source, groovy]
+----
+include::com/mkobit/jenkins/pipelines/IntegrationTestSourceIntegrationTest/can set up Global Pipeline Library and use them in an integration test/src/com/mkobit/LibHelper.groovy[]
+----
+. Write test utilizing `JenkinsRule` that sets up the shared library
++
+[source, groovy]
+----
+include::com/mkobit/jenkins/pipelines/IntegrationTestSourceIntegrationTest/can set up Global Pipeline Library and use them in an integration test/test/integration/groovy/com/mkobit/JenkinsGlobalLibraryUsageTest.groovy[tags=test-class]
+----
+
+== Example Consumer
+
+See the link:uri-consumer-example[example] for an example of consuming this plugin.

@@ -2,6 +2,7 @@ plugins {
   id 'com.mkobit.jenkins.pipelines.shared-library'
 }
 
+// tag::dependencies[]
 repositories {
   jcenter()
 }
@@ -9,3 +10,4 @@ repositories {
 dependencies {
   testImplementation(group: 'junit', name: 'junit', version: '4.12')
 }
+// end::dependencies[]
