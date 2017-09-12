@@ -100,7 +100,6 @@ java {
   sourceCompatibility = JavaVersion.VERSION_1_8
   targetCompatibility = JavaVersion.VERSION_1_8
   sourceSets.invoke {
-    val test by getting
     // This source set used for resources to get IDE completion for ease of writing tests against JenkinsPipelineUnit and Jenkins Test Harness
     val pipelineTestResources by creating {
       java.setSrcDirs(emptyList<Any>())
@@ -116,9 +115,10 @@ java {
 
 
 dependencies {
-  api(gradleApi())
-  implementation(kotlin("stdlib-jre8", kotlinVersion))
-  implementation("io.github.microutils:kotlin-logging:1.4.6")
+  // Switch all these to api and implementation when https://discuss.gradle.org/t/com-gradle-plugin-publish-does-not-respect-new-java-library-configurations/24041 is resolved
+  compile(gradleApi())
+  compile(kotlin("stdlib-jre8", kotlinVersion))
+  compile("io.github.microutils:kotlin-logging:1.4.6")
   testImplementation(kotlin("reflect", kotlinVersion))
   testImplementation("com.google.guava:guava:23.0")
   testImplementation("org.assertj:assertj-core:3.8.0")
