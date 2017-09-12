@@ -9,8 +9,8 @@
 :uri-build-status-image: https://circleci.com/gh/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/tree/master.svg?style=svg
 :circle-ci-status-badge: image:{uri-build-status-image}["CircleCI", link="https://circleci.com/gh/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/tree/master"]
 :uri-version-badge-image: https://img.shields.io/badge/Gradle%20Plugin-{latest-version}-blue.svg
-:uri-gradle-plugin-portal: https://plugins.gradle.org/
-:version-badge: image:{uri-version-badge-image}["Plugin Version", link="{uri-version-badge-image}"]
+:uri-gradle-plugin-portal: https://plugins.gradle.org/plugin/com.mkobit.jenkins.pipelines.shared-library
+:version-badge: image:{uri-version-badge-image}["Plugin Version", link="{uri-gradle-plugin-portal}"]
 
 //[![gradle plugin](https://img.shields.io/badge/gradle_plugin-1.0.0.RC4.3-blue.svg?style=flat-square)](https://plugins.gradle.org/plugin/io.gitlab.arturbosch.detekt)
 

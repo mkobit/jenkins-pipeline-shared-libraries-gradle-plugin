@@ -1,4 +1,5 @@
 import com.gradle.publish.PluginConfig
+import com.gradle.publish.PublishTask
 import org.gradle.api.internal.HasConvention
 import org.gradle.jvm.tasks.Jar
 import org.jetbrains.dokka.gradle.DokkaTask
@@ -298,6 +299,8 @@ artifacts {
   add("archives", sourcesJar)
   add("archives", javadocJar)
 }
+
+PublishTask
 
 val sharedLibraryPluginId = "com.mkobit.jenkins.pipelines.shared-library"
 gradlePlugin {
