@@ -73,6 +73,7 @@ buildScan {
     env("CIRCLE_COMPARE_URL")?.let { link("Diff", it) }
     env("CIRCLE_REPOSITORY_URL")?.let { value("Repository", it) }
     env("CIRCLE_PR_NUMBER")?.let { value("Pull Request Number", it) }
+    link("Repository", "https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin")
   }
 }
 
