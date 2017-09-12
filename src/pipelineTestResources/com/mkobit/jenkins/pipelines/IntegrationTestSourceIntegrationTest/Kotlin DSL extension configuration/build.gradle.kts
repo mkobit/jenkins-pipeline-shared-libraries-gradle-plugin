@@ -15,9 +15,8 @@ sharedLibrary {
   coreVersion = "2.73"
   pipelineTestUnitVersion = "1.1"
   testHarnessVersion = "2.24"
-  // TODO: this fails for some reason in Kotlin DSL
-//  pluginDependencies {
-//    workflowCpsGlobalLibraryPluginVersion = "2.8"
-//    blueocean("blueocean-web", "1.2.0")
-//  }
+  pluginDependencies {
+    workflowCpsGlobalLibraryPluginVersion = "2.8"
+    blueocean("blueocean-web", "1.2.0")
+  }
 }
