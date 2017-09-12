@@ -12,8 +12,6 @@
 :uri-gradle-plugin-portal: https://plugins.gradle.org/plugin/com.mkobit.jenkins.pipelines.shared-library
 :version-badge: image:{uri-version-badge-image}["Plugin Version", link="{uri-gradle-plugin-portal}"]
 
-//[![gradle plugin](https://img.shields.io/badge/gradle_plugin-1.0.0.RC4.3-blue.svg?style=flat-square)](https://plugins.gradle.org/plugin/io.gitlab.arturbosch.detekt)
-
 {circle-ci-status-badge}
 {version-badge}
 
