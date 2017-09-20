@@ -114,7 +114,6 @@ java {
   }
 }
 
-
 dependencies {
   // Switch all these to api and implementation when https://discuss.gradle.org/t/com-gradle-plugin-publish-does-not-respect-new-java-library-configurations/24041 is resolved
   compile(gradleApi())
@@ -184,7 +183,8 @@ extensions.getByType(JUnitPlatformExtension::class.java).apply {
 
 tasks {
   "wrapper"(Wrapper::class) {
-    gradleVersion = "4.1"
+    gradleVersion = "4.2"
+    distributionType = Wrapper.DistributionType.ALL
   }
 
   "downloadDependencies" {
