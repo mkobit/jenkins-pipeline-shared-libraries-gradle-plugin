@@ -77,7 +77,7 @@ internal class SharedLibraryPluginTest {
     val main = convention.sourceSets.getByName("main")
     assertThat(main).isNotNull()
     assertThat((main as HasConvention).convention.getPlugin(GroovySourceSet::class.java).groovy.srcDirs).anySatisfy {
-      assertThat(it.endsWith("src"))
+      assertThat(it.endsWith("vars"))
     }
   }
 
