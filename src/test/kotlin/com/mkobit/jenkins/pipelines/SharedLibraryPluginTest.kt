@@ -111,8 +111,8 @@ internal class SharedLibraryPluginTest {
       it.name == "groovy"
     }, "groovy")
     val version = Condition<Dependency>(Predicate {
-      it.version == "2.4.8"
-    }, "2.4.8")
+      it.version == "2.4.11"
+    }, "2.4.11")
     assertThat(implementation.dependencies).haveExactly(1, allOf(group, name, version))
   }
 

@@ -1,5 +1,6 @@
 package com.mkobit.jenkins.pipelines
 
+import org.assertj.core.api.Assertions.allOf
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Condition
 import org.gradle.testfixtures.ProjectBuilder
@@ -19,7 +20,7 @@ internal class PluginDependencySpecTest {
   private lateinit var pluginDependencySpec: PluginDependencySpec
 
   companion object {
-    private val INITIAL_GIT_PLUGIN_VERSION_VERSION = "4.5"
+    private val INITIAL_GIT_PLUGIN_VERSION_VERSION = "4.0"
     private val INITIAL_WORKFLOW_API_PLUGIN_VERSION = "5.0"
     private val INITIAL_WORKFLOW_BASIC_STEPS_PLUGIN_VERSION = "6.0"
     private val INITIAL_WORKFLOW_CPS_PLUGIN_VERSION = "7.0"
@@ -243,30 +244,34 @@ internal class PluginDependencySpecTest {
 
   @ParameterizedTest(name = "[{index}] {0} with artifact Id {1}")
   @MethodSource("requiredPlugins")
-  internal fun `plugin dependency includes`(pluginName: String, artifactId: String) {
+  internal fun `plugin dependency includes`(pluginName: String, artifactId: String, version: String) {
     val pluginDependencies = pluginDependencySpec.pluginDependencies()
 
     val artifactCondition = Condition<PluginDependency>(Predicate {
       it.name == artifactId
     }, artifactId)
+    val versionCondition = Condition<PluginDependency>(Predicate {
+      it.version == version
+    }, version)
 
-    assertThat(pluginDependencies).haveExactly(1, artifactCondition)
+    assertThat(pluginDependencies).haveExactly(1, allOf(artifactCondition, versionCondition))
   }
 
+  @Suppress("UNUSED")
   fun requiredPlugins(): Stream<Arguments> {
     return Stream.of(
       // TODO: should we include scm-api?
 //      Arguments.of("SCM API Plugin", "scm-api"),
-      Arguments.of("Git Plugin", "git"),
-      Arguments.of("Workflow API Plugin", "workflow-api"),
-      Arguments.of("Workflow Basic Steps Plugin", "workflow-basic-steps"),
-      Arguments.of("Workflow CPS Plugin", "workflow-cps"),
-      Arguments.of("Workflow Durable Task Step Plugin", "workflow-durable-task-step"),
-      Arguments.of("Workflow Job Plugin", "workflow-job"),
-      Arguments.of("Workflow Multibranch Plugin", "workflow-multibranch"),
-      Arguments.of("Workflow SCM Step Plugin", "workflow-scm-step"),
-      Arguments.of("Workflow Step API Plugin", "workflow-step-api"),
-      Arguments.of("Workflow Support Plugin", "workflow-support")
+      Arguments.of("Git Plugin", "git", INITIAL_GIT_PLUGIN_VERSION_VERSION),
+      Arguments.of("Workflow API Plugin", "workflow-api", INITIAL_WORKFLOW_API_PLUGIN_VERSION),
+      Arguments.of("Workflow Basic Steps Plugin", "workflow-basic-steps", INITIAL_WORKFLOW_BASIC_STEPS_PLUGIN_VERSION),
+      Arguments.of("Workflow CPS Plugin", "workflow-cps", INITIAL_WORKFLOW_CPS_PLUGIN_VERSION),
+      Arguments.of("Workflow Durable Task Step Plugin", "workflow-durable-task-step", INITIAL_WORKFLOW_DURABLE_TASK_STEP_PLUGIN_VERSION),
+      Arguments.of("Workflow Job Plugin", "workflow-job", INITIAL_WORKFLOW_JOB_PLUGIN_VERSION),
+      Arguments.of("Workflow Multibranch Plugin", "workflow-multibranch", INITIAL_WORKFLOW_MULTIBRANCH_PLUGIN_VERSION),
+      Arguments.of("Workflow SCM Step Plugin", "workflow-scm-step", INITIAL_WORKFLOW_SCM_STEP_PLUGIN_VERSION),
+      Arguments.of("Workflow Step API Plugin", "workflow-step-api", INITIAL_WORKFLOW_STEP_API_PLUGIN_VERSION),
+      Arguments.of("Workflow Support Plugin", "workflow-support", INITIAL_WORKFLOW_SUPPORT_PLUGIN_VERSION)
     )
   }
 }

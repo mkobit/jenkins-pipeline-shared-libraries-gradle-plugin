@@ -108,8 +108,8 @@ class PluginDependencySpec(
   private fun workflowApiPluginDependency() = "org.jenkins-ci.plugins.workflow:workflow-api:$workflowApiPluginVersion"
   private fun workflowBasicStepsPluginDependency() = "org.jenkins-ci.plugins.workflow:workflow-basic-steps:$workflowBasicStepsPluginVersion"
   private fun workflowCpsPluginDependency() = "org.jenkins-ci.plugins.workflow:workflow-cps:$workflowCpsPluginVersion"
-  private fun workflowDurableTaskStepPluginDependency() = "org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:$workflowDurableTaskStepPluginVersion"
-  private fun workflowGlobalCpsLibraryPluginPluginDependency() = "org.jenkins-ci.plugins.workflow:workflow-durable-task-step:$workflowCpsGlobalLibraryPluginVersion"
+  private fun workflowDurableTaskStepPluginDependency() = "org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:$workflowCpsGlobalLibraryPluginVersion"
+  private fun workflowGlobalCpsLibraryPluginDependency() = "org.jenkins-ci.plugins.workflow:workflow-durable-task-step:$workflowDurableTaskStepPluginVersion"
   private fun workflowJobPluginDependency() = "org.jenkins-ci.plugins.workflow:workflow-job:$workflowJobPluginVersion"
   private fun workflowMultibranchPluginDependency() = "org.jenkins-ci.plugins.workflow:workflow-multibranch:$workflowMultibranchPluginVersion"
   private fun workflowScmStepPluginDependency() = "org.jenkins-ci.plugins.workflow:workflow-scm-step:$workflowScmStepPluginVersion"
@@ -124,7 +124,7 @@ class PluginDependencySpec(
         workflowBasicStepsPluginDependency(),
         workflowCpsPluginDependency(),
         workflowDurableTaskStepPluginDependency(),
-        workflowGlobalCpsLibraryPluginPluginDependency(),
+        workflowGlobalCpsLibraryPluginDependency(),
         workflowJobPluginDependency(),
         workflowMultibranchPluginDependency(),
         workflowScmStepPluginDependency(),

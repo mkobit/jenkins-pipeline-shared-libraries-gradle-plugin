@@ -67,6 +67,7 @@ internal class UnitTestSourceIntegrationTest {
       .isEqualTo(TaskOutcome.SUCCESS)
   }
 
+  @Suppress("UNUSED")
   fun jenkinsPipelineUnitTestData(): Stream<Arguments> {
     val exampleJenkins = """def execute() {
   node {

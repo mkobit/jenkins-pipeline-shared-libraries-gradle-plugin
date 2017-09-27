@@ -136,22 +136,22 @@ dependencies {
   // against the libraries that are used.
   val pipelineTestResources by java.sourceSets.getting
   pipelineTestResources.compileOnlyConfigurationName("com.lesfurets:jenkins-pipeline-unit:1.1")
-  pipelineTestResources.compileOnlyConfigurationName("org.jenkins-ci.main:jenkins-test-harness:2.24")
-  pipelineTestResources.compileOnlyConfigurationName("org.codehaus.groovy:groovy:2.4.8")
+  pipelineTestResources.compileOnlyConfigurationName("org.jenkins-ci.main:jenkins-test-harness:2.28")
+  pipelineTestResources.compileOnlyConfigurationName("org.codehaus.groovy:groovy:2.4.11")
   // TODO: have to figure out a better way to manage these dependencies (and transitives)
   // TODO: figure out why failing in IntelliJ
 //  val jenkinsPluginDependencies = listOf(
 //    "org.jenkins-ci.plugins:git:3.5.1",
-//    "org.jenkins-ci.plugins.workflow:workflow-api:2.20",
+//    "org.jenkins-ci.plugins.workflow:workflow-api:2.22",
 //    "org.jenkins-ci.plugins.workflow:workflow-basic-steps:2.6",
-//    "org.jenkins-ci.plugins.workflow:workflow-cps:2.39",
-//    "org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:2.8",
-//    "org.jenkins-ci.plugins.workflow:workflow-durable-task-step:2.13",
+//    "org.jenkins-ci.plugins.workflow:workflow-cps:2.40",
+//    "org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:2.9",
+//    "org.jenkins-ci.plugins.workflow:workflow-durable-task-step:2.15",
 //    "org.jenkins-ci.plugins.workflow:workflow-job:2.14.1",
 //    "org.jenkins-ci.plugins.workflow:workflow-multibranch:2.16",
 //    "org.jenkins-ci.plugins.workflow:workflow-scm-step:2.6",
-//    "org.jenkins-ci.plugins.workflow:workflow-step-api:2.12",
-//    "org.jenkins-ci.plugins.workflow:workflow-support:2.14"
+//    "org.jenkins-ci.plugins.workflow:workflow-step-api:2.13",
+//    "org.jenkins-ci.plugins.workflow:workflow-support:2.15"
 //  )
 //  jenkinsPluginDependencies.forEach {
 //    pipelineTestResources.compileOnlyConfigurationName(it) {
@@ -162,9 +162,9 @@ dependencies {
 //      isTransitive = true
 //    }
 //  }
-//  pipelineTestResources.compileOnlyConfigurationName("org.jenkins-ci.main:jenkins-core:2.60.2") {
-//    isTransitive = false
-//  }
+  pipelineTestResources.compileOnlyConfigurationName("org.jenkins-ci.main:jenkins-core:2.73.1") {
+    isTransitive = false
+  }
 }
 
 tasks.withType(KotlinCompile::class.java) {
