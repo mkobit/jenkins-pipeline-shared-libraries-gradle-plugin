@@ -16,13 +16,7 @@ class PluginDependencySpec(
   val workflowSupportPluginVersionState: PropertyState<String>
 ) {
 
-  private val currentDependencies: MutableList<PluginDependency> = mutableListOf()
-
-  /**
-   * The current set of plugin dependencies from this specification.
-   */
-  val dependencies: List<PluginDependency>
-    get() = currentDependencies.toList()
+  private val additionalDependencies: MutableList<PluginDependency> = mutableListOf()
 
   /**
    * Helper for adding plugins from the `com.cloudbees.jenkins.plugins` group.
@@ -53,7 +47,7 @@ class PluginDependencySpec(
    * Adds a jenkinsCi dependency with the specified
    */
   fun dependency(group: String, name: String, version: String) {
-    currentDependencies.add(PluginDependency(group, name, version))
+    additionalDependencies.add(PluginDependency(group, name, version))
   }
 
   var gitPluginVersion: String
@@ -117,7 +111,6 @@ class PluginDependencySpec(
   private fun workflowSupportPluginDependency() = "org.jenkins-ci.plugins.workflow:workflow-support:$workflowSupportPluginVersion"
 
   fun pluginDependencies(): List<PluginDependency> {
-    val dependenciesFromSpec = dependencies
     val workflowPluginDependencies: List<PluginDependency> = listOf(
         gitPluginDependency(),
         workflowApiPluginDependency(),
@@ -132,6 +125,6 @@ class PluginDependencySpec(
         workflowSupportPluginDependency()
     ).map { PluginDependency.fromString(it) }
 
-    return dependenciesFromSpec + workflowPluginDependencies
+    return additionalDependencies + workflowPluginDependencies
   }
 }

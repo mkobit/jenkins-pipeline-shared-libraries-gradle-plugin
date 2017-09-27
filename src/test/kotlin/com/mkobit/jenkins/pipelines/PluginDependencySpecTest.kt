@@ -10,6 +10,7 @@ import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
+import testsupport.condition
 import testsupport.softlyAssert
 import java.util.function.Predicate
 import java.util.stream.Stream
@@ -160,89 +161,56 @@ internal class PluginDependencySpecTest {
     assertThat(pluginDependencySpec.workflowSupportPluginVersion).isEqualTo("newWorkflowSupportPluginVersion")
   }
 
-  @Test
-  internal fun `cloudbees plugin`() {
-    pluginDependencySpec.cloudbees("name", "1.0")
+  @ParameterizedTest(name = "group {1}")
+  @MethodSource("pluginCreators")
+  internal fun `create plugin for`(
+    addPlugin: PluginDependencySpec.(String, String) -> Unit,
+    expectedGroup: String
+  ) {
+    val expectedName = "name"
+    val expectedVersion = "1.0"
 
-    assertThat(pluginDependencySpec.dependencies).hasOnlyOneElementSatisfying {
-      assertThat(it.group).isEqualTo("com.cloudbees.jenkins.plugins")
-      assertThat(it.name).isEqualTo("name")
-      assertThat(it.version).isEqualTo("1.0")
-    }
+    pluginDependencySpec.addPlugin(expectedName, expectedVersion)
+
+    val group: Condition<PluginDependency> = condition(expectedGroup) { group == expectedGroup }
+    val name: Condition<PluginDependency> = condition(expectedName) { name == expectedName }
+    val version: Condition<PluginDependency> = condition(expectedVersion) { version == expectedVersion }
+    assertThat(pluginDependencySpec.pluginDependencies()).haveExactly(1, allOf(group, name, version))
   }
 
-  @Test
-  internal fun `workflow plugin`() {
-    pluginDependencySpec.workflow("name", "1.0")
+  @Suppress("UNUSED")
+  private fun pluginCreators(): Stream<Arguments> {
+    fun argsOf(addPlugin: PluginDependencySpec.(String, String) -> Unit,
+               expectedGroup: String): Arguments = Arguments.of(addPlugin, expectedGroup)
 
-    assertThat(pluginDependencySpec.dependencies).hasOnlyOneElementSatisfying {
-      assertThat(it.group).isEqualTo("org.jenkins-ci.plugins.workflow")
-      assertThat(it.name).isEqualTo("name")
-      assertThat(it.version).isEqualTo("1.0")
-    }
-  }
-
-  @Test
-  internal fun `jvnet plugin`() {
-    pluginDependencySpec.jvnet("name", "1.0")
-
-    assertThat(pluginDependencySpec.dependencies).hasOnlyOneElementSatisfying {
-      assertThat(it.group).isEqualTo("org.jvnet.hudson.plugins")
-      assertThat(it.name).isEqualTo("name")
-      assertThat(it.version).isEqualTo("1.0")
-    }
-  }
-
-  @Test
-  internal fun `jenkins-ci plugin`() {
-    pluginDependencySpec.jenkinsCi("name", "1.0")
-
-    assertThat(pluginDependencySpec.dependencies).hasOnlyOneElementSatisfying {
-      assertThat(it.group).isEqualTo("org.jenkins-ci.plugins")
-      assertThat(it.name).isEqualTo("name")
-      assertThat(it.version).isEqualTo("1.0")
-    }
-  }
-
-  @Test
-  internal fun `blueocean plugin`() {
-    pluginDependencySpec.blueocean("name", "1.0")
-
-    assertThat(pluginDependencySpec.dependencies).hasOnlyOneElementSatisfying {
-      assertThat(it.group).isEqualTo("io.jenkins.blueocean")
-      assertThat(it.name).isEqualTo("name")
-      assertThat(it.version).isEqualTo("1.0")
-    }
-  }
-
-  @Test
-  internal fun `explicit dependency plugin`() {
-    pluginDependencySpec.dependency("com.mkobit.plugin","name", "1.0")
-
-    assertThat(pluginDependencySpec.dependencies).hasOnlyOneElementSatisfying {
-      assertThat(it.group).isEqualTo("com.mkobit.plugin")
-      assertThat(it.name).isEqualTo("name")
-      assertThat(it.version).isEqualTo("1.0")
-    }
+    return Stream.of(
+      argsOf({ name, version -> blueocean(name, version) }, "io.jenkins.blueocean"),
+      argsOf({ name, version -> jvnet(name, version) }, "org.jvnet.hudson.plugins"),
+      argsOf({ name, version -> jenkinsCi(name, version) }, "org.jenkins-ci.plugins"),
+      argsOf({ name, version -> workflow(name, version) }, "org.jenkins-ci.plugins.workflow"),
+      argsOf({ name, version -> cloudbees(name, version) }, "com.cloudbees.jenkins.plugins"),
+      argsOf({ name, version -> dependency("com.mkobit.plugin", name, version) }, "com.mkobit.plugin")
+    )
   }
 
   @Test
   internal fun `adding multiple plugins`() {
+    val initialSize = pluginDependencySpec.pluginDependencies().size
     pluginDependencySpec.cloudbees("cloudbees", "1.0")
-    assertThat(pluginDependencySpec.dependencies).hasSize(1)
+    assertThat(pluginDependencySpec.pluginDependencies()).hasSize(initialSize + 1)
     pluginDependencySpec.workflow("workflow", "2.0")
-    assertThat(pluginDependencySpec.dependencies).hasSize(2)
+    assertThat(pluginDependencySpec.pluginDependencies()).hasSize(initialSize + 2)
     pluginDependencySpec.jvnet("jvent", "3.0")
-    assertThat(pluginDependencySpec.dependencies).hasSize(3)
+    assertThat(pluginDependencySpec.pluginDependencies()).hasSize(initialSize + 3)
     pluginDependencySpec.jenkinsCi("jenkinsCi", "4.0")
-    assertThat(pluginDependencySpec.dependencies).hasSize(4)
+    assertThat(pluginDependencySpec.pluginDependencies()).hasSize(initialSize + 4)
     pluginDependencySpec.jenkinsCi("blueocean", "5.0")
-    assertThat(pluginDependencySpec.dependencies).hasSize(5)
+    assertThat(pluginDependencySpec.pluginDependencies()).hasSize(initialSize + 5)
     pluginDependencySpec.dependency("com.mkobit", "mkobit-plugin", "6.0")
-    assertThat(pluginDependencySpec.dependencies).hasSize(6)
+    assertThat(pluginDependencySpec.pluginDependencies()).hasSize(initialSize + 6)
   }
 
-  @ParameterizedTest(name = "[{index}] {0} with artifact Id {1}")
+  @ParameterizedTest(name = "{0} with artifact Id {1}")
   @MethodSource("requiredPlugins")
   internal fun `plugin dependency includes`(pluginName: String, artifactId: String, version: String) {
     val pluginDependencies = pluginDependencySpec.pluginDependencies()
@@ -258,7 +226,7 @@ internal class PluginDependencySpecTest {
   }
 
   @Suppress("UNUSED")
-  fun requiredPlugins(): Stream<Arguments> {
+  private fun requiredPlugins(): Stream<Arguments> {
     return Stream.of(
       // TODO: should we include scm-api?
 //      Arguments.of("SCM API Plugin", "scm-api"),
