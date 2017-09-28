@@ -1,7 +1,9 @@
 package com.mkobit.jenkins.pipelines
 
+import com.mkobit.gradle.test.testkit.runner.buildWith
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.testkit.runner.BuildResult
+import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInstance
@@ -9,7 +11,6 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import testsupport.Integration
-import testsupport.build
 import testsupport.writeRelativeFile
 import java.io.File
 import java.util.stream.Stream
@@ -56,7 +57,10 @@ internal class UnitTestSourceIntegrationTest {
       groovyTestFile
     }
 
-    val buildResult: BuildResult = build(projectDir, "test", "-s", "-i")
+    val buildResult: BuildResult = GradleRunner.create().buildWith(
+      projectDir = projectDir,
+      arguments = listOf("test", "-i")
+    )
 
     val task = buildResult.task(":test")
     assertThat(task).isNotNull()

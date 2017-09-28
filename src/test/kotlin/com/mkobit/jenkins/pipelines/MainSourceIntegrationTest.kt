@@ -1,5 +1,6 @@
 package com.mkobit.jenkins.pipelines
 
+import com.mkobit.gradle.test.testkit.runner.buildWith
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
@@ -8,7 +9,6 @@ import org.junit.jupiter.api.Test
 import testsupport.GradleProject
 import testsupport.Integration
 import testsupport.NotImplementedYet
-import testsupport.buildWithPluginClasspath
 
 @Integration
 class MainSourceIntegrationTest {
@@ -16,7 +16,7 @@ class MainSourceIntegrationTest {
   // TODO: test both groovy and kotlin usages
   @Test
   internal fun `main Groovy code is compiled`(@GradleProject gradleRunner: GradleRunner) {
-    val buildResult: BuildResult = gradleRunner.buildWithPluginClasspath("compileGroovy")
+    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("compileGroovy"))
 
     val task = buildResult.task(":compileGroovy")
     assertThat(task?.outcome)
@@ -27,7 +27,7 @@ class MainSourceIntegrationTest {
 
   @Test
   internal fun `can unit test code in src`(@GradleProject gradleRunner: GradleRunner) {
-    val buildResult: BuildResult = gradleRunner.buildWithPluginClasspath("test", "-s")
+    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("test", "-s"))
 
     val task = buildResult.task(":test")
     assertThat(task?.outcome)
@@ -59,7 +59,7 @@ class MainSourceIntegrationTest {
 
   @Test
   internal fun `Groovydoc JAR can be generated`(@GradleProject gradleRunner: GradleRunner) {
-    val buildResult: BuildResult = gradleRunner.buildWithPluginClasspath("groovydocJar")
+    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("groovydocJar"))
 
     val task = buildResult.task(":groovydocJar")
     assertThat(task?.outcome)
@@ -70,7 +70,7 @@ class MainSourceIntegrationTest {
 
   @Test
   internal fun `Groovy sources JAR can be generated`(@GradleProject gradleRunner: GradleRunner) {
-    val buildResult: BuildResult = gradleRunner.buildWithPluginClasspath("sourcesJar")
+    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("sourcesJar"))
 
     val task = buildResult.task(":sourcesJar")
     assertThat(task?.outcome)

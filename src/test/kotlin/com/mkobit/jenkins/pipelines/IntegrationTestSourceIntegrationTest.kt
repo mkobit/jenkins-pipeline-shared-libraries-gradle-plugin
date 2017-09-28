@@ -1,22 +1,17 @@
 package com.mkobit.jenkins.pipelines
 
+import com.mkobit.gradle.test.testkit.runner.buildWith
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.jgit.api.Git
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import testsupport.GradleProject
 import testsupport.Integration
 import testsupport.NotImplementedYet
 import testsupport.SampleCandidate
-import testsupport.build
-import testsupport.buildWithPluginClasspath
-import testsupport.resourceText
-import testsupport.writeRelativeFile
-import java.io.File
 
 @Integration
 internal class IntegrationTestSourceIntegrationTest {
@@ -24,7 +19,7 @@ internal class IntegrationTestSourceIntegrationTest {
   @Disabled("may not be artifacts but file dependencies with current hack")
   @Test
   internal fun `Jenkins Pipeline Shared Groovy Libraries Plugin JAR available in integrationTestCompileClasspath configuration`(@GradleProject gradleRunner: GradleRunner) {
-    val buildResult: BuildResult = gradleRunner.buildWithPluginClasspath("printOutDependencies")
+    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("printOutDependencies"))
 
     assertThat(buildResult.output).contains("Artifact: org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:jar")
   }
@@ -32,7 +27,7 @@ internal class IntegrationTestSourceIntegrationTest {
   @Disabled("may not be artifacts but file dependencies with current hack")
   @Test
   internal fun `Jenkins Pipeline Shared Groovy Libraries Plugin HPI available in integrationRuntimeClasspath configuration`(@GradleProject gradleRunner: GradleRunner) {
-    val buildResult: BuildResult = gradleRunner.buildWithPluginClasspath("printOutDependencies")
+    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("printOutDependencies"))
 
     assertThat(buildResult.output).contains("Artifact: org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:hpi")
   }
@@ -44,7 +39,7 @@ internal class IntegrationTestSourceIntegrationTest {
 
   @Test
   internal fun `can compile integration test sources that use Jenkins libraries`(@GradleProject gradleRunner: GradleRunner) {
-    val buildResult: BuildResult = gradleRunner.buildWithPluginClasspath( "compileIntegrationTestGroovy", "-s", "-i")
+    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf( "compileIntegrationTestGroovy", "-i"))
 
     val task = buildResult.task(":compileIntegrationTestGroovy")
     assertThat(task?.outcome)
@@ -56,7 +51,7 @@ internal class IntegrationTestSourceIntegrationTest {
 
   @Test
   internal fun `can use @JenkinsRule in integration tests`(@GradleProject gradleRunner: GradleRunner) {
-    val buildResult: BuildResult = gradleRunner.buildWithPluginClasspath( "integrationTest", "-s", "-i")
+    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf( "integrationTest", "-i"))
 
     val task = buildResult.task(":integrationTest")
     assertThat(task?.outcome)
@@ -68,7 +63,7 @@ internal class IntegrationTestSourceIntegrationTest {
 
   @Test
   internal fun `WorkflowJob can be created and executed in integration tests`(@GradleProject gradleRunner: GradleRunner) {
-    val buildResult: BuildResult = gradleRunner.buildWithPluginClasspath("integrationTest", "-s", "-i")
+    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("integrationTest", "-i"))
 
     val task = buildResult.task(":integrationTest")
     assertThat(task?.outcome)
@@ -85,7 +80,7 @@ internal class IntegrationTestSourceIntegrationTest {
       it.commit().setMessage("Commit all the files").setAuthor("Mr. Manager", "mrmanager@example.com").call()
     }
 
-    val buildResult: BuildResult = gradleRunner.buildWithPluginClasspath( "integrationTest", "-s", "-i")
+    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf( "integrationTest", "-i"))
 
     val task = buildResult.task(":integrationTest")
     assertThat(task?.outcome)
@@ -107,13 +102,13 @@ internal class IntegrationTestSourceIntegrationTest {
 
   @Test
   internal fun `Groovy DSL extension configuration`(@GradleProject gradleRunner: GradleRunner) {
-    gradleRunner.buildWithPluginClasspath("-s", "-i")
+    gradleRunner.buildWith(arguments = listOf("-i"))
   }
 
   @Disabled("This example works in a local Gradle project, but not with Gradle Test Kit")
   @Test
   internal fun `Kotlin DSL extension configuration`(@GradleProject gradleRunner: GradleRunner) {
-    gradleRunner.buildWithPluginClasspath("-s", "-i")
+    gradleRunner.buildWith(arguments = listOf("-i"))
   }
 
   @NotImplementedYet

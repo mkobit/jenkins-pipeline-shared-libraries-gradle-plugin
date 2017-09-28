@@ -90,9 +90,7 @@ val junitTestRuntimeOnlyArtifacts: Map<String, Map<String, String>> by rootProje
 
 repositories {
   jcenter()
-  maven {
-    url = uri("https://repo.jenkins-ci.org/public/")
-  }
+  maven(url = "https://repo.jenkins-ci.org/public/")
 }
 
 val SourceSet.kotlin: SourceDirectorySet
@@ -121,6 +119,7 @@ dependencies {
   compile(kotlin("stdlib-jre8", kotlinVersion))
   compile("io.github.microutils:kotlin-logging:1.4.6")
   testImplementation(kotlin("reflect", kotlinVersion))
+  testImplementation("com.mkobit.gradle.test:gradle-test-kotlin-extensions:0.1.0")
   testImplementation("com.google.guava:guava:23.0")
   testImplementation("org.assertj:assertj-core:3.8.0")
   testImplementation("org.eclipse.jgit:org.eclipse.jgit.junit:4.8.0.201706111038-r")
@@ -205,6 +204,7 @@ tasks {
   }
 
   "junitPlatformTest"(JavaExec::class) {
+    systemProperty("com.mkobit.gradle.test.testkit.runner.DefaultRunnerConfigurer.stacktrace", "full-stacktrace")
     jvmArgs("-XshowSettings:vm", "-XX:+PrintGCTimeStamps", "-XX:+UseG1GC", "-Xmx1g", "-Xms512m")
   }
 
