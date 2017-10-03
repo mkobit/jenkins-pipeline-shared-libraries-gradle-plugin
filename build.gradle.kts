@@ -118,7 +118,7 @@ dependencies {
   // Switch all these to api and implementation when https://discuss.gradle.org/t/com-gradle-plugin-publish-does-not-respect-new-java-library-configurations/24041 is resolved
   api(gradleApi())
   api(kotlin("stdlib-jre8", kotlinVersion))
-  api("io.github.microutils:kotlin-logging:1.4.6")
+  implementation("io.github.microutils:kotlin-logging:1.4.6")
   testImplementation(kotlin("reflect", kotlinVersion))
   testImplementation("com.mkobit.gradle.test:gradle-test-kotlin-extensions:0.1.0")
   testImplementation("com.google.guava:guava:23.0")
