@@ -301,15 +301,14 @@ tasks {
   val pushGitTag by creating(Exec::class) {
     description = "Pushes Git tag ${project.version} to origin"
     group = PublishingPlugin.PUBLISH_TASK_GROUP
-    dependsOn(gitTag)
-    mustRunAfter(publishPlugins)
+    mustRunAfter(publishPlugins, gitTag)
     commandLine("git", "push", "origin", "refs/tags/${project.version}")
   }
 
   "release" {
     group = PublishingPlugin.PUBLISH_TASK_GROUP
     description = "Publishes the plugin to the Gradle plugin portal and pushes up a Git tag for the current commit"
-    dependsOn(publishPlugins, pushGitTag)
+    dependsOn(publishPlugins, pushGitTag, gitTag)
   }
 }
 
