@@ -118,34 +118,29 @@ open class SharedLibraryPlugin @Inject constructor(
     // We do need access to the transitive dependencies to get all of the HPIs and JAR libraries in code completion and I haven't thought of a better way of handling it yet.
     logger.debug { "Setting up an action on the incoming dependencies of $PLUGIN_LIBRARY_CONFIGURATION" }
     val callablePluginLibraries: Callable<FileCollection> = Callable {
-      val pluginHpiJpiConfiguration = configurations.getByName(PLUGIN_HPI_JPI_CONFIGURATION)
-      val pluginHpiJpiDependencies = pluginHpiJpiConfiguration.dependencies
-      logger.debug { "Creating a detached configuration from configuration $PLUGIN_HPI_JPI_CONFIGURATION dependencies $pluginHpiJpiDependencies" }
-      val hpiJpiDetached = configurations.detachedConfiguration(*pluginHpiJpiDependencies.toTypedArray())
-        .resolvedConfiguration
+      val allHpisAndJpiDependencies = sharedLibraryExtension.pluginDependencies()
+        .pluginDependencies()
+        .map { dependencies.createExternal(it.asStringNotation()) }
+        .toTypedArray()
+      val hpiJpiDetached = configurations.detachedConfiguration(*allHpisAndJpiDependencies).resolvedConfiguration
+      val hpiDependenciesAsJarDependencies  = hpiJpiDetached.resolvedArtifacts
+        .filter { it.extension in setOf("hpi", "jpi") }
+        .map { dependencies.create("${it.moduleVersion}@jar") }
+      val jarDependencyFiles = hpiJpiDetached.resolvedArtifacts
+        .filter { it.extension == "jar" }
+        .map { it.file }
 
-      val hpiDependencies  = hpiJpiDetached.resolvedArtifacts.filter {
-        it.extension in setOf("hpi", "jpi")
-      }
-      val jarDependencies = hpiJpiDetached.resolvedArtifacts.filter {
-        it.extension == "jar"
-      }.map {
-        it.file
-      }
-
-      val hpiJars = configurations.detachedConfiguration(*hpiDependencies.map { dependencies.create("${it.moduleVersion}@jar") }.toTypedArray())
+      val hpiJpiJarFiles = configurations.detachedConfiguration(*hpiDependenciesAsJarDependencies.toTypedArray())
 
       // TODO: should probably force dependency versions or something for both the JARs and HPIs
-      hpiJars + project.files(jarDependencies)
+      hpiJpiJarFiles + project.files(jarDependencyFiles)
     }
     dependencies.add(PLUGIN_LIBRARY_CONFIGURATION, project.files(callablePluginLibraries))
 
-    sharedLibraryExtension.pipelineUnitDependency().let {
-      dependencies.add(
-        UNIT_TESTING_LIBRARY_CONFIGURATION,
-        it
-      )
-    }
+    dependencies.add(
+      UNIT_TESTING_LIBRARY_CONFIGURATION,
+      sharedLibraryExtension.pipelineUnitDependency()
+    )
   }
 
   private fun setupDocumentationTasks(tasks: TaskContainer, main: SourceSet) {
