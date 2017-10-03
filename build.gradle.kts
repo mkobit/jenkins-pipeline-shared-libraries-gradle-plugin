@@ -294,11 +294,12 @@ tasks {
   }
 
   val publishPlugins by getting {
-    dependsOn(gitDirtyCheck, gitTag)
+    dependsOn(gitDirtyCheck)
     mustRunAfter(login)
   }
 
   val pushGitTag by creating(Exec::class) {
+    dependsOn(gitDirtyCheck)
     description = "Pushes Git tag ${project.version} to origin"
     group = PublishingPlugin.PUBLISH_TASK_GROUP
     mustRunAfter(publishPlugins, gitTag)
@@ -308,7 +309,7 @@ tasks {
   "release" {
     group = PublishingPlugin.PUBLISH_TASK_GROUP
     description = "Publishes the plugin to the Gradle plugin portal and pushes up a Git tag for the current commit"
-    dependsOn(publishPlugins, pushGitTag, gitTag)
+    dependsOn(publishPlugins, pushGitTag, gitTag, gitDirtyCheck)
   }
 }
 
