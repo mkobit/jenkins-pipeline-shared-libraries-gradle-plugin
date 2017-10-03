@@ -45,19 +45,19 @@ internal class IntegrationTestSourceIntegrationTest {
     val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("--quiet", "showConfigurationFiles"))
 
     softlyAssert {
-      assertThat(buildResult.output.trim().split(System.lineSeparator())).allSatisfy {
+      assertThat(buildResult.output.trim().split(System.lineSeparator())).isNotEmpty.allSatisfy {
         assertThat(it).endsWith(".jar")
       }
     }
   }
 
-  @Disabled("broken test")
   @Test
   internal fun `only HPI or JPI artifacts exist in jenkinsPluginHpisAndJpis configuration`(@GradleProject gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("--quiet", "showConfigurationFiles"))
 
+    println(buildResult.output)
     softlyAssert {
-      assertThat(buildResult.output.trim().split(System.lineSeparator())).allSatisfy {
+      assertThat(buildResult.output.trim().split(System.lineSeparator())).isNotEmpty.allSatisfy {
         val hpi = condition<String>(".hpi extension") { it.endsWith(".hpi") }
         val jpi = condition<String>(".jpi extension") { it.endsWith(".jpi") }
         assertThat(it).has(anyOf(hpi, jpi))

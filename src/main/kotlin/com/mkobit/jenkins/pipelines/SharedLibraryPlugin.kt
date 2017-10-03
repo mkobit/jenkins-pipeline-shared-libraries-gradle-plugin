@@ -102,17 +102,23 @@ open class SharedLibraryPlugin @Inject constructor(
       sharedLibraryExtension.coreDependency()
     )
 
-    // TODO: fix method name after relocation
-    sharedLibraryExtension.pluginDependencies().pluginDependencies().forEach {
-      // TODO: when kotlin-dsl works in IntelliJ switch to it
-      val hpiDependency = dependencies.createExternal(it.asStringNotation())
+    val callablePluginLibraryHpisAndJpis: Callable<FileCollection> = Callable {
+      // TODO: fix awkward pluginDependencies().pluginDependencies() method names
+      val allHpisAndJpiDependencies = sharedLibraryExtension.pluginDependencies()
+        .pluginDependencies()
+        .map { dependencies.createExternal(it.asStringNotation()) }
+        .toTypedArray()
+      val hpiJpiFiles = configurations.detachedConfiguration(*allHpisAndJpiDependencies).resolvedConfiguration.resolvedArtifacts.filter {
+        it.extension in setOf("hpi", "jpi")
+      }.map { it.file }
 
-      logger.debug { "Adding dependency $hpiDependency to configuration $PLUGIN_HPI_JPI_CONFIGURATION" }
-      dependencies.add(
-        PLUGIN_HPI_JPI_CONFIGURATION,
-        hpiDependency
-      )
+      logger.debug { hpiJpiFiles }
+      project.files(hpiJpiFiles)
     }
+    dependencies.add(
+      PLUGIN_HPI_JPI_CONFIGURATION,
+      project.files(callablePluginLibraryHpisAndJpis)
+    )
 
     // TODO: Come up with a better way to collect all the transitive dependencies and HPI/JAR versions of each plugin.
     // We do need access to the transitive dependencies to get all of the HPIs and JAR libraries in code completion and I haven't thought of a better way of handling it yet.

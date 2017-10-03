@@ -1,4 +1,5 @@
 import com.gradle.publish.PluginConfig
+import com.gradle.publish.PublishPlugin
 import org.gradle.api.internal.HasConvention
 import org.gradle.jvm.tasks.Jar
 import org.jetbrains.dokka.gradle.DokkaTask
