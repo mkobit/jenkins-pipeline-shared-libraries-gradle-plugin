@@ -13,7 +13,6 @@ import testsupport.NotImplementedYet
 @Integration
 class MainSourceIntegrationTest {
 
-  // TODO: test both groovy and kotlin usages
   @Test
   internal fun `main Groovy code is compiled`(@GradleProject gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("compileGroovy"))

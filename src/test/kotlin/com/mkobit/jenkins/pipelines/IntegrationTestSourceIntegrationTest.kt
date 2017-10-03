@@ -1,6 +1,7 @@
 package com.mkobit.jenkins.pipelines
 
 import com.mkobit.gradle.test.testkit.runner.buildWith
+import org.assertj.core.api.Assertions.anyOf
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.jgit.api.Git
 import org.gradle.testkit.runner.BuildResult
@@ -8,10 +9,17 @@ import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
 import testsupport.GradleProject
 import testsupport.Integration
 import testsupport.NotImplementedYet
 import testsupport.SampleCandidate
+import testsupport.condition
+import testsupport.softlyAssert
+import java.util.stream.Stream
+import org.junit.jupiter.params.provider.Arguments.of as arguments
 
 @Integration
 internal class IntegrationTestSourceIntegrationTest {
@@ -32,9 +40,29 @@ internal class IntegrationTestSourceIntegrationTest {
     assertThat(buildResult.output).contains("Artifact: org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:hpi")
   }
 
-  @NotImplementedYet
   @Test
-  internal fun `no HPI artifacts are available in integrationTestImplementation configuration`() {
+  internal fun `no HPI artifacts exist in jenkinsPluginLibraries configuration`(@GradleProject gradleRunner: GradleRunner) {
+    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("--quiet", "showConfigurationFiles"))
+
+    softlyAssert {
+      assertThat(buildResult.output.trim().split(System.lineSeparator())).allSatisfy {
+        assertThat(it).endsWith(".jar")
+      }
+    }
+  }
+
+  @Disabled("broken test")
+  @Test
+  internal fun `only HPI or JPI artifacts exist in jenkinsPluginHpisAndJpis configuration`(@GradleProject gradleRunner: GradleRunner) {
+    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("--quiet", "showConfigurationFiles"))
+
+    softlyAssert {
+      assertThat(buildResult.output.trim().split(System.lineSeparator())).allSatisfy {
+        val hpi = condition<String>(".hpi extension") { it.endsWith(".hpi") }
+        val jpi = condition<String>(".jpi extension") { it.endsWith(".jpi") }
+        assertThat(it).has(anyOf(hpi, jpi))
+      }
+    }
   }
 
   @Test
@@ -112,18 +140,18 @@ internal class IntegrationTestSourceIntegrationTest {
   }
 
   @NotImplementedYet
-  @Test
-  internal fun `can use 'stage' step in test`() {
+  @ParameterizedTest(name = "'{1}'")
+  @MethodSource("stepTests")
+  internal fun `can use step`(stepName: String, stepBody: String) {
   }
 
-  @NotImplementedYet
-  @Test
-  internal fun `can use 'sh' step in test`() {
-  }
-
-  @NotImplementedYet
-  @Test
-  internal fun `can use 'node' step in test`() {
+  @Suppress("UNUSED")
+  private fun stepTests(): Stream<Arguments> {
+    return Stream.of(
+      arguments("stage", "stage('example stage') {}"),
+      arguments("sh", """sh('echo "hello"')"""),
+      arguments("node", "node {}")
+    )
   }
 
   @NotImplementedYet

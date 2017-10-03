@@ -11,4 +11,3 @@ import org.gradle.api.tasks.SourceSet
 inline internal fun <reified T> Project.initializedProperty(initialState: T): PropertyState<T> = this.property(T::class.java).apply {
   set(initialState)
 }
-
