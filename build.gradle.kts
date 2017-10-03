@@ -309,7 +309,7 @@ tasks {
   "release" {
     group = PublishingPlugin.PUBLISH_TASK_GROUP
     description = "Publishes the plugin to the Gradle plugin portal and pushes up a Git tag for the current commit"
-    dependsOn(publishPlugins, pushGitTag, gitTag, gitDirtyCheck)
+    dependsOn(publishPlugins, pushGitTag, gitTag, gitDirtyCheck, "assemble", "check")
   }
 }
 
