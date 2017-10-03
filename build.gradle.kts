@@ -28,7 +28,7 @@ plugins {
 //  `kotlin-dsl`
   `java-library`
   `java-gradle-plugin`
-  id("com.gradle.plugin-publish") version "0.9.7"
+  id("com.gradle.plugin-publish") version "0.9.8"
   id("com.github.ben-manes.versions") version "0.15.0"
 }
 
@@ -115,9 +115,9 @@ java {
 
 dependencies {
   // Switch all these to api and implementation when https://discuss.gradle.org/t/com-gradle-plugin-publish-does-not-respect-new-java-library-configurations/24041 is resolved
-  compile(gradleApi())
-  compile(kotlin("stdlib-jre8", kotlinVersion))
-  compile("io.github.microutils:kotlin-logging:1.4.6")
+  api(gradleApi())
+  api(kotlin("stdlib-jre8", kotlinVersion))
+  api("io.github.microutils:kotlin-logging:1.4.6")
   testImplementation(kotlin("reflect", kotlinVersion))
   testImplementation("com.mkobit.gradle.test:gradle-test-kotlin-extensions:0.1.0")
   testImplementation("com.google.guava:guava:23.0")
