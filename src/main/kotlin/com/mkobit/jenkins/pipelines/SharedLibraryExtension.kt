@@ -7,10 +7,10 @@ import org.gradle.api.provider.PropertyState
  * Extension for the [SharedLibraryPlugin].
  */
 open class SharedLibraryExtension(
-  val groovyVersionState: PropertyState<String>,
-  val coreVersionState: PropertyState<String>,
-  val pipelineTestUnitVersionState: PropertyState<String>,
-  val testHarnessVersionState: PropertyState<String>,
+  private val groovyVersionState: PropertyState<String>,
+  private val coreVersionState: PropertyState<String>,
+  private val pipelineTestUnitVersionState: PropertyState<String>,
+  private val testHarnessVersionState: PropertyState<String>,
   private val pluginDependencySpec: PluginDependencySpec
 ) {
 
@@ -45,9 +45,10 @@ open class SharedLibraryExtension(
   // https://github.com/jenkinsci/plugin-pom/pull/40/files shows how the new plugin-pom does the jenkins.war generation
   fun jenkinsWar() = "org.jenkins-ci.main:jenkins-war:$coreVersion"
 
+  @Suppress("UNUSED")
   fun pluginDependencies(action: Action<in PluginDependencySpec>) {
     action.execute(pluginDependencySpec)
   }
 
-  fun pluginDependencies(): PluginDependencySpec = pluginDependencySpec
+  internal fun pluginDependencies(): PluginDependencySpec = pluginDependencySpec
 }
