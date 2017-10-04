@@ -120,6 +120,11 @@ internal class IntegrationTestSourceIntegrationTest {
 
   @NotImplementedYet
   @Test
+  internal fun `pipeline resources have main sourceSet available on compile classpath for tooling assistance with IDEA`() {
+  }
+
+  @NotImplementedYet
+  @Test
   internal fun `can use pipeline resources in integration tests`() {
   }
 
