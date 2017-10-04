@@ -14,6 +14,7 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import testsupport.GradleProject
 import testsupport.Integration
+import testsupport.IntelliJSupport
 import testsupport.NotImplementedYet
 import testsupport.SampleCandidate
 import testsupport.condition
@@ -120,11 +121,13 @@ internal class IntegrationTestSourceIntegrationTest {
 
   @NotImplementedYet
   @Test
+  @IntelliJSupport
   internal fun `pipeline resources have main sourceSet available on compile classpath for tooling assistance with IDEA`() {
   }
 
   @NotImplementedYet
   @Test
+  @IntelliJSupport
   internal fun `can use pipeline resources in integration tests`() {
   }
 

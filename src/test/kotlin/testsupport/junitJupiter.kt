@@ -15,6 +15,13 @@ annotation class NotImplementedYet
 @ExtendWith(TestExecutionLogger::class, ResourceGradleProjectProviderExtension::class)
 annotation class Integration
 
+@Tag("intellij-support")
+@Target(
+  AnnotationTarget.CLASS,
+  AnnotationTarget.FUNCTION
+)
+annotation class IntelliJSupport
+
 @Tag("possible-sample")
 @ExtendWith(TestExecutionLogger::class, ResourceGradleProjectProviderExtension::class)
 annotation class SampleCandidate
