@@ -79,7 +79,7 @@ buildScan {
   }
 }
 
-version = "0.1.0"
+version = "0.2.0"
 group = "com.mkobit.jenkins.pipelines"
 
 val kotlinVersion: String = project.property("kotlinVersion") as String
