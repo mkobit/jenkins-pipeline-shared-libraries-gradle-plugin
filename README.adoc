@@ -3,7 +3,6 @@
 :latest-version: 0.2.0
 :uri-jenkins-test-harness: https://github.com/jenkinsci/jenkins-test-harness.git
 :uri-jenkins-shared-library-docs: https://jenkins.io/doc/book/pipeline/shared-libraries/
-:uri-jenkins-docs: https://jenkins.io/doc/book/pipeline/shared-libraries/
 :uri-jenkins-pipeline-unit: https://github.com/lesfurets/JenkinsPipelineUnit
 :uri-consumer-example: https://github.com/mkobit/jenkins-pipeline-shared-library-example
 :uri-build-status-image: https://circleci.com/gh/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/tree/master.svg?style=svg
