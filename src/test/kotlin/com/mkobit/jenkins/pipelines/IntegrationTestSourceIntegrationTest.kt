@@ -141,7 +141,7 @@ internal class IntegrationTestSourceIntegrationTest {
     gradleRunner.buildWith(arguments = listOf("-i"))
   }
 
-  @Disabled("This example works in a local Gradle project, but not with Gradle Test Kit")
+  @Disabled("This example works in a local Gradle project, but not with Gradle Test Kit. See https://github.com/gradle/kotlin-dsl/issues/492")
   @Test
   internal fun `Kotlin DSL extension configuration`(@GradleProject gradleRunner: GradleRunner) {
     gradleRunner.buildWith(arguments = listOf("-i"))
