@@ -164,6 +164,11 @@ internal class IntegrationTestSourceIntegrationTest {
 
   @NotImplementedYet
   @Test
+  internal fun `integration tests are executed when build lifecycle task is executed`() {
+  }
+
+  @NotImplementedYet
+  @Test
   internal fun `GlobalLibraries is available for configuration in integration tests`() {
   }
 
