@@ -22,6 +22,8 @@ For each release, a subsection should be added for each of the following if they
 * `Fixed` for any bug fixes.
 * `Security` in case of vulnerabilities.
 
+== UNRELEASED (yyyy/mm/dd)
+
 == 0.2.0 (2017/10/04)
 
 Fixes publishing issues with first release

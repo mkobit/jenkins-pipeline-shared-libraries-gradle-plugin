@@ -49,15 +49,6 @@ val gitCommitSha: String by lazy {
   }
 }
 
-tasks.withType(Jar::class.java) {
-  manifest {
-    attributes(mapOf(
-      "Build-Revision" to gitCommitSha,
-      "Implementation-Version" to project.version
-    ))
-  }
-}
-
 buildScan {
   fun env(key: String): String? = System.getenv(key)
 
@@ -79,7 +70,7 @@ buildScan {
   }
 }
 
-version = "0.2.0"
+version = "0.3.0-SNAPSHOT"
 group = "com.mkobit.jenkins.pipelines"
 
 val kotlinVersion: String = project.property("kotlinVersion") as String
@@ -183,6 +174,15 @@ extensions.getByType(JUnitPlatformExtension::class.java).apply {
 }
 
 tasks {
+  withType(Jar::class.java) {
+    manifest {
+      attributes(mapOf(
+        "Build-Revision" to gitCommitSha,
+        "Implementation-Version" to project.version
+      ))
+    }
+  }
+
   "wrapper"(Wrapper::class) {
     gradleVersion = "4.2.1"
     distributionType = Wrapper.DistributionType.ALL
