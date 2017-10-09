@@ -169,11 +169,6 @@ internal class IntegrationTestSourceIntegrationTest {
 
   @NotImplementedYet
   @Test
-  internal fun `GlobalLibraries is available for configuration in integration tests`() {
-  }
-
-  @NotImplementedYet
-  @Test
   internal fun `integration test output for Jenkins Test Harness is in the build directory`() {
   }
 
