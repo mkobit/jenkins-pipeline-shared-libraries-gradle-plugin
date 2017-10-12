@@ -25,7 +25,6 @@ import org.junit.jupiter.params.provider.Arguments.of as arguments
 @Integration
 internal class IntegrationTestSourceIntegrationTest {
 
-  @Disabled("may not be artifacts but file dependencies with current hack")
   @Test
   internal fun `Jenkins Pipeline Shared Groovy Libraries Plugin JAR available in integrationTestCompileClasspath configuration`(@GradleProject gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("printOutDependencies"))
@@ -33,7 +32,6 @@ internal class IntegrationTestSourceIntegrationTest {
     assertThat(buildResult.output).contains("Artifact: org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:jar")
   }
 
-  @Disabled("may not be artifacts but file dependencies with current hack")
   @Test
   internal fun `Jenkins Pipeline Shared Groovy Libraries Plugin HPI available in integrationRuntimeClasspath configuration`(@GradleProject gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("printOutDependencies"))

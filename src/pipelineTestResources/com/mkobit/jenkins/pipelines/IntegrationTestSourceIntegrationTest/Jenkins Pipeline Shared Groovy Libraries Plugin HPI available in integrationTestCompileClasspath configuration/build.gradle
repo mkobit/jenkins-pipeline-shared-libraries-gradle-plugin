@@ -15,7 +15,7 @@ import org.gradle.api.artifacts.ModuleVersionIdentifier
 
 tasks.create('printOutDependencies') {
   doFirst {
-    final configuration = configurations.getByName(sourceSets.getByName('integrationTest').runtimeConfigurationName)
+    final configuration = configurations.getByName(sourceSets.getByName('integrationTest').compileConfigurationName)
     configuration.resolvedConfiguration.resolvedArtifacts.each { ResolvedArtifact artifact ->
       final ModuleVersionIdentifier identifier = artifact.moduleVersion.id
       println("Artifact: ${'$'}{identifier.group}:${'$'}{identifier.name}:${'$'}{artifact.extension}")
