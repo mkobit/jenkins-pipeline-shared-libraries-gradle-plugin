@@ -4,6 +4,7 @@ import com.mkobit.gradle.test.testkit.runner.buildWith
 import org.assertj.core.api.Assertions.anyOf
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.jgit.api.Git
+import org.gradle.api.artifacts.Configuration
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
@@ -131,9 +132,13 @@ internal class IntegrationTestSourceIntegrationTest {
   internal fun `can use pipeline resources in integration tests`() {
   }
 
-  @NotImplementedYet
   @Test
-  internal fun `no configurations are resolved during configuration phase`() {
+  internal fun `no configurations are resolved if no build tasks are executed`(@GradleProject gradleRunner: GradleRunner) {
+    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("--quiet", "printConfigurationStates"))
+
+    assertThat(buildResult.output.trim().split(System.lineSeparator())).allSatisfy {
+      assertThat(it).endsWith(Configuration.State.UNRESOLVED.name)
+    }
   }
 
   @Test
