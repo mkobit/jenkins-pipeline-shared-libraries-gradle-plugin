@@ -192,6 +192,11 @@ internal class IntegrationTestSourceIntegrationTest {
   }
 
   @NotImplementedYet
+  @Test
+  internal fun `JenkinsPipelineUnit is not on classpath for integration tests`() {
+  }
+
+  @NotImplementedYet
   @SampleCandidate
   @Test
   internal fun `can use Spock testing library`() {
