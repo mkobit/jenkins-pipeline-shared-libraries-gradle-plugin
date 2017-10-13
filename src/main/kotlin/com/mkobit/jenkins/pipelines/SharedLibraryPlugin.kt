@@ -145,7 +145,7 @@ open class SharedLibraryPlugin @Inject constructor(
     main: SourceSet,
     integrationTest: SourceSet
   ) {
-    tasks.create("integrationTest", Test::class.java) {
+    val integrationTestTask = tasks.create("integrationTest", Test::class.java) {
       it.apply {
         dependsOn(main.classesTaskName)
         mustRunAfter("test")
@@ -159,6 +159,7 @@ open class SharedLibraryPlugin @Inject constructor(
         shouldRunAfter("test")
       }
     }
+    tasks.getByName(LifecycleBasePlugin.CHECK_TASK_NAME).dependsOn(integrationTestTask)
   }
 
   private fun setupConfigurationsAndDependencyManagement(

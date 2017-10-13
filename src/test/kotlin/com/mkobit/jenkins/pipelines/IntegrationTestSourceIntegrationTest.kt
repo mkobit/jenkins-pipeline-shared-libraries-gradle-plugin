@@ -3,6 +3,7 @@ package com.mkobit.jenkins.pipelines
 import com.mkobit.gradle.test.testkit.runner.buildWith
 import org.assertj.core.api.Assertions.anyOf
 import org.assertj.core.api.Assertions.assertThat
+import com.mkobit.gradle.test.assertj.GradleAssertions.assertThat
 import org.eclipse.jgit.api.Git
 import org.gradle.api.artifacts.Configuration
 import org.gradle.testkit.runner.BuildResult
@@ -153,6 +154,15 @@ internal class IntegrationTestSourceIntegrationTest {
       arguments("sh", """sh('echo "hello"')"""),
       arguments("node", "node {}")
     )
+  }
+
+  @Test
+  internal fun `"check" lifecycle task executes "integrationTest"`(@GradleProject gradleRunner: GradleRunner) {
+    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("check"))
+
+    assertThat(buildResult)
+      .hasTaskAtPath(":test")
+      .hasTaskAtPath(":integrationTest")
   }
 
   @NotImplementedYet

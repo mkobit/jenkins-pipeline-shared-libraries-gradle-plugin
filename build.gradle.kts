@@ -113,6 +113,7 @@ dependencies {
   implementation("io.github.microutils:kotlin-logging:1.4.6")
   testImplementation(kotlin("reflect", kotlinVersion))
   testImplementation("com.mkobit.gradle.test:gradle-test-kotlin-extensions:0.1.0")
+  testImplementation("com.mkobit.gradle.test:assertj-gradle:0.2.0")
   testImplementation("com.google.guava:guava:23.0")
   testImplementation("org.assertj:assertj-core:3.8.0")
   testImplementation("org.eclipse.jgit:org.eclipse.jgit.junit:4.8.0.201706111038-r")

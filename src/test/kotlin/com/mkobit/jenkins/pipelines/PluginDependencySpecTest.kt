@@ -174,7 +174,7 @@ internal class PluginDependencySpecTest {
 
   @ParameterizedTest(name = "{0} with artifact Id {1}")
   @MethodSource("requiredPlugins")
-  internal fun `plugin dependency includes`(pluginName: String, artifactId: String, version: String) {
+  internal fun `plugin dependency includes`(@Suppress("UNUSED") pluginName: String, artifactId: String, version: String) {
     val pluginDependencies = pluginDependencySpec.pluginDependencies()
 
     val artifactCondition = Condition<PluginDependency>(Predicate {
