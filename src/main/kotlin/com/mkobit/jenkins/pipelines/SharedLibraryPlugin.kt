@@ -9,7 +9,6 @@ import org.gradle.api.artifacts.ConfigurationContainer
 import org.gradle.api.artifacts.ExternalModuleDependency
 import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.artifacts.dsl.RepositoryHandler
-import org.gradle.api.file.FileCollection
 import org.gradle.api.file.ProjectLayout
 import org.gradle.api.internal.HasConvention
 import org.gradle.api.plugins.GroovyPlugin
@@ -21,7 +20,6 @@ import org.gradle.api.tasks.javadoc.Groovydoc
 import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.tasks.Jar
 import org.gradle.language.base.plugins.LifecycleBasePlugin
-import java.util.concurrent.Callable
 import javax.inject.Inject
 
 open class SharedLibraryPlugin @Inject constructor(
@@ -30,7 +28,14 @@ open class SharedLibraryPlugin @Inject constructor(
 
   companion object {
     private val logger = KotlinLogging.logger {}
+    /**
+     * Name of the [org.gradle.api.artifacts.repositories.ArtifactRepository] that is added to the [RepositoryHandler].
+     */
     val JENKINS_REPOSITORY_NAME = "JenkinsPublic"
+    /**
+     * URL of the [org.gradle.api.artifacts.repositories.ArtifactRepository] that is added to the [RepositoryHandler].
+     * @see JENKINS_REPOSITORY_NAME
+     */
     val JENKINS_REPOSITORY_URL = "https://repo.jenkins-ci.org/public/"
     private val SHARED_LIBRARY_EXTENSION_NAME = "sharedLibrary"
     private val TEST_ROOT_PATH = "test"
@@ -49,6 +54,11 @@ open class SharedLibraryPlugin @Inject constructor(
     private val DEFAULT_WORKFLOW_STEP_API_PLUGIN_VERSION = "2.13"
     private val DEFAULT_WORKFLOW_SCM_STEP_PLUGIN_VERSION = "2.6"
     private val DEFAULT_WORKFLOW_SUPPORT_PLUGIN_VERSION = "2.15"
+
+    // This configuration is used for an initial resolution to get the required dependencies
+    private val JENKINS_PLUGINS_CONFIGURATION = "jenkinsPlugins"
+
+    // These are internal configurations used in the compilation and runtime
     private val UNIT_TESTING_LIBRARY_CONFIGURATION = "jenkinsPipelineUnitTestLibraries"
     private val PLUGIN_HPI_JPI_CONFIGURATION = "jenkinsPluginHpisAndJpis"
     private val PLUGIN_LIBRARY_CONFIGURATION = "jenkinsPluginLibraries"
@@ -64,28 +74,25 @@ open class SharedLibraryPlugin @Inject constructor(
     val sharedLibraryExtension = setupSharedLibraryExtension(project)
     setupIntegrationTestTask(project.tasks, main, integrationTest)
     setupDocumentationTasks(project.tasks, main)
-    setupConfigurations(
+    setupConfigurationsAndDependencyManagement(
       project.configurations,
+      project.dependencies,
       main,
       test,
       integrationTest
     )
     project.afterEvaluate {
-      setupGroovyDependency(project.dependencies, sharedLibraryExtension, main)
-      setupDependencies(
-        project,
+      addGroovyDependency(project.dependencies, sharedLibraryExtension, main)
+      addDependenciesFromExtension(
         project.dependencies,
-        sharedLibraryExtension,
-        project.configurations
+        sharedLibraryExtension
       )
     }
   }
 
-  private fun setupDependencies(
-    project: Project,
+  private fun addDependenciesFromExtension(
     dependencies: DependencyHandler,
-    sharedLibraryExtension: SharedLibraryExtension,
-    configurations: ConfigurationContainer
+    sharedLibraryExtension: SharedLibraryExtension
   ) {
     dependencies.add(
       TEST_LIBRARY_CONFIGURATION,
@@ -102,46 +109,11 @@ open class SharedLibraryPlugin @Inject constructor(
       sharedLibraryExtension.coreDependency()
     )
 
-    val callablePluginLibraryHpisAndJpis: Callable<FileCollection> = Callable {
-      // TODO: fix awkward pluginDependencies().pluginDependencies() method names
-      val allHpisAndJpiDependencies = sharedLibraryExtension.pluginDependencies()
-        .pluginDependencies()
-        .map { dependencies.createExternal(it.asStringNotation()) }
-        .toTypedArray()
-      val hpiJpiFiles = configurations.detachedConfiguration(*allHpisAndJpiDependencies).resolvedConfiguration.resolvedArtifacts.filter {
-        it.extension in setOf("hpi", "jpi")
-      }.map { it.file }
-
-      logger.debug { hpiJpiFiles }
-      project.files(hpiJpiFiles)
-    }
-    dependencies.add(
-      PLUGIN_HPI_JPI_CONFIGURATION,
-      project.files(callablePluginLibraryHpisAndJpis)
-    )
-
-    // TODO: Come up with a better way to collect all the transitive dependencies and HPI/JAR versions of each plugin.
-    // We do need access to the transitive dependencies to get all of the HPIs and JAR libraries in code completion and I haven't thought of a better way of handling it yet.
-    logger.debug { "Setting up an action on the incoming dependencies of $PLUGIN_LIBRARY_CONFIGURATION" }
-    val callablePluginLibraries: Callable<FileCollection> = Callable {
-      val allHpisAndJpiDependencies = sharedLibraryExtension.pluginDependencies()
-        .pluginDependencies()
-        .map { dependencies.createExternal(it.asStringNotation()) }
-        .toTypedArray()
-      val hpiJpiDetached = configurations.detachedConfiguration(*allHpisAndJpiDependencies).resolvedConfiguration
-      val hpiDependenciesAsJarDependencies  = hpiJpiDetached.resolvedArtifacts
-        .filter { it.extension in setOf("hpi", "jpi") }
-        .map { dependencies.create("${it.moduleVersion}@jar") }
-      val jarDependencyFiles = hpiJpiDetached.resolvedArtifacts
-        .filter { it.extension == "jar" }
-        .map { it.file }
-
-      val hpiJpiJarFiles = configurations.detachedConfiguration(*hpiDependenciesAsJarDependencies.toTypedArray())
-
-      // TODO: should probably force dependency versions or something for both the JARs and HPIs
-      hpiJpiJarFiles + project.files(jarDependencyFiles)
-    }
-    dependencies.add(PLUGIN_LIBRARY_CONFIGURATION, project.files(callablePluginLibraries))
+    // TODO: remove pluginDependencies().pluginDependencies() confusing method calls
+    sharedLibraryExtension.pluginDependencies()
+      .pluginDependencies()
+      .map { dependencies.createExternal(it.asStringNotation()) }
+      .forEach { dependencies.add(JENKINS_PLUGINS_CONFIGURATION, it) }
 
     dependencies.add(
       UNIT_TESTING_LIBRARY_CONFIGURATION,
@@ -188,8 +160,9 @@ open class SharedLibraryPlugin @Inject constructor(
     }
   }
 
-  private fun setupConfigurations(
+  private fun setupConfigurationsAndDependencyManagement(
     configurations: ConfigurationContainer,
+    dependencies: DependencyHandler,
     main: SourceSet,
     test: SourceSet,
     integrationTest: SourceSet
@@ -198,6 +171,15 @@ open class SharedLibraryPlugin @Inject constructor(
       it.apply {
         isCanBeResolved = true
         isVisible = false
+      }
+    }
+
+    // TODO: Come up with a better way to collect all the transitive dependencies and HPI/JAR versions of each plugin.
+    // Also, forcing dependencies through the extensions does not feel right and is not that intuitive.
+    // Instead, it would probably make sense to introduce configurations that users can add additional configuratoin and dependencies to.
+    val pluginDeclarations = configurations.create(JENKINS_PLUGINS_CONFIGURATION) {
+      it.apply {
+        isCanBeResolved = true
       }
     }
     val pluginHpiAndJpi = configurations.create(PLUGIN_HPI_JPI_CONFIGURATION, configurationAction)
@@ -220,9 +202,35 @@ open class SharedLibraryPlugin @Inject constructor(
       pluginHpiAndJpi,
       testLibraryRuntimeOnly
     )
+
+    pluginDeclarations.incoming.afterResolve {
+      pluginDeclarations.resolvedConfiguration.resolvedArtifacts
+        .filter { it.extension in setOf("hpi", "jpi") }
+        .map { "${it.moduleVersion}@${it.extension}" }
+        .forEach { dependencies.add(pluginHpiAndJpi.name, it) }
+      // Map each included HPI to that plugin's JAR for usage in compilation of tests
+      pluginDeclarations.resolvedConfiguration.resolvedArtifacts
+        .filter { it.extension in setOf("hpi", "jpi") }
+        .map { "${it.moduleVersion}@jar" } // Use the published JAR libraries for each plugin
+        .forEach { dependencies.add(pluginLibraries.name, it) }
+      // Include all of the additional JAR dependencies from the transitive dependencies of the plugin
+      pluginDeclarations.resolvedConfiguration.resolvedArtifacts
+        .filter { it.extension == "jar" }
+        .map { "${it.moduleVersion}@jar" } // TODO: might not need this
+        .forEach { dependencies.add(pluginLibraries.name, it) }
+    }
+
+    configurations.forEach { config ->
+      config.incoming.beforeResolve {
+        if (config.hierarchy.contains(pluginHpiAndJpi) || config.hierarchy.contains(pluginLibraries)) {
+          // Trigger the dependency seeding
+          pluginDeclarations.resolve()
+        }
+      }
+    }
   }
 
-  private fun setupGroovyDependency(
+  private fun addGroovyDependency(
     dependencies: DependencyHandler,
     sharedLibrary: SharedLibraryExtension,
     main: SourceSet

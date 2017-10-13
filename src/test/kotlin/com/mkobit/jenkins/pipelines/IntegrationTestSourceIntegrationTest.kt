@@ -26,20 +26,9 @@ import org.junit.jupiter.params.provider.Arguments.of as arguments
 @Integration
 internal class IntegrationTestSourceIntegrationTest {
 
-  @Disabled("may not be artifacts but file dependencies with current hack")
   @Test
-  internal fun `Jenkins Pipeline Shared Groovy Libraries Plugin JAR available in integrationTestCompileClasspath configuration`(@GradleProject gradleRunner: GradleRunner) {
-    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("printOutDependencies"))
-
-    assertThat(buildResult.output).contains("Artifact: org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:jar")
-  }
-
-  @Disabled("may not be artifacts but file dependencies with current hack")
-  @Test
-  internal fun `Jenkins Pipeline Shared Groovy Libraries Plugin HPI available in integrationRuntimeClasspath configuration`(@GradleProject gradleRunner: GradleRunner) {
-    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("printOutDependencies"))
-
-    assertThat(buildResult.output).contains("Artifact: org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:hpi")
+  internal fun `can execute dependencies task`(@GradleProject gradleRunner: GradleRunner) {
+    gradleRunner.buildWith(arguments = listOf("dependencies"))
   }
 
   @Test
@@ -57,7 +46,6 @@ internal class IntegrationTestSourceIntegrationTest {
   internal fun `only HPI or JPI artifacts exist in jenkinsPluginHpisAndJpis configuration`(@GradleProject gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("--quiet", "showConfigurationFiles"))
 
-    println(buildResult.output)
     softlyAssert {
       assertThat(buildResult.output.trim().split(System.lineSeparator())).isNotEmpty.allSatisfy {
         val hpi = condition<String>(".hpi extension") { it.endsWith(".hpi") }
@@ -69,7 +57,7 @@ internal class IntegrationTestSourceIntegrationTest {
 
   @Test
   internal fun `can compile integration test sources that use Jenkins libraries`(@GradleProject gradleRunner: GradleRunner) {
-    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf( "compileIntegrationTestGroovy", "-i"))
+    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("compileIntegrationTestGroovy", "-i"))
 
     val task = buildResult.task(":compileIntegrationTestGroovy")
     assertThat(task?.outcome)
@@ -110,7 +98,7 @@ internal class IntegrationTestSourceIntegrationTest {
       it.commit().setMessage("Commit all the files").setAuthor("Mr. Manager", "mrmanager@example.com").call()
     }
 
-    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf( "integrationTest", "-i"))
+    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf( "integrationTest", "-d"))
 
     val task = buildResult.task(":integrationTest")
     assertThat(task?.outcome)
@@ -170,6 +158,16 @@ internal class IntegrationTestSourceIntegrationTest {
   @NotImplementedYet
   @Test
   internal fun `integration tests are executed when build lifecycle task is executed`() {
+  }
+
+  @NotImplementedYet
+  @Test
+  internal fun `"integrationTest" task is always ran after "test" task`() {
+  }
+
+  @NotImplementedYet
+  @Test
+  internal fun `failing integration tests fail build tasks`() {
   }
 
   @NotImplementedYet
