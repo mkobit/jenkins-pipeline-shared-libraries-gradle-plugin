@@ -204,20 +204,20 @@ open class SharedLibraryPlugin @Inject constructor(
     )
 
     pluginDeclarations.incoming.afterResolve {
-        pluginDeclarations.resolvedConfiguration.resolvedArtifacts
-          .filter { it.extension in setOf("hpi", "jpi") }
-          .map { "${it.moduleVersion}@${it.extension}" }
-          .forEach { dependencies.add(pluginHpiAndJpi.name, it) }
-        // Map each included HPI to that plugin's JAR for usage in compilation of tests
-        pluginDeclarations.resolvedConfiguration.resolvedArtifacts
-          .filter { it.extension in setOf("hpi", "jpi") }
-          .map { "${it.moduleVersion}@jar" } // Use the published JAR libraries for each plugin
-          .forEach { dependencies.add(pluginLibraries.name, it) }
-        // Include all of the additional JAR dependencies from the transitive dependencies of the plugin
-        pluginDeclarations.resolvedConfiguration.resolvedArtifacts
-          .filter { it.extension == "jar" }
-          .map { "${it.moduleVersion}@jar" } // TODO: might not need this
-          .forEach { dependencies.add(pluginLibraries.name, it) }
+      pluginDeclarations.resolvedConfiguration.resolvedArtifacts
+        .filter { it.extension in setOf("hpi", "jpi") }
+        .map { "${it.moduleVersion}@${it.extension}" }
+        .forEach { dependencies.add(pluginHpiAndJpi.name, it) }
+      // Map each included HPI to that plugin's JAR for usage in compilation of tests
+      pluginDeclarations.resolvedConfiguration.resolvedArtifacts
+        .filter { it.extension in setOf("hpi", "jpi") }
+        .map { "${it.moduleVersion}@jar" } // Use the published JAR libraries for each plugin
+        .forEach { dependencies.add(pluginLibraries.name, it) }
+      // Include all of the additional JAR dependencies from the transitive dependencies of the plugin
+      pluginDeclarations.resolvedConfiguration.resolvedArtifacts
+        .filter { it.extension == "jar" }
+        .map { "${it.moduleVersion}@jar" } // TODO: might not need this
+        .forEach { dependencies.add(pluginLibraries.name, it) }
     }
 
     configurations.forEach { config ->
