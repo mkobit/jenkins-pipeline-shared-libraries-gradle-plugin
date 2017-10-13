@@ -28,7 +28,14 @@ open class SharedLibraryPlugin @Inject constructor(
 
   companion object {
     private val logger = KotlinLogging.logger {}
+    /**
+     * Name of the [org.gradle.api.artifacts.repositories.ArtifactRepository] that is added to the [RepositoryHandler].
+     */
     val JENKINS_REPOSITORY_NAME = "JenkinsPublic"
+    /**
+     * URL of the [org.gradle.api.artifacts.repositories.ArtifactRepository] that is added to the [RepositoryHandler].
+     * @see JENKINS_REPOSITORY_NAME
+     */
     val JENKINS_REPOSITORY_URL = "https://repo.jenkins-ci.org/public/"
     private val SHARED_LIBRARY_EXTENSION_NAME = "sharedLibrary"
     private val TEST_ROOT_PATH = "test"
