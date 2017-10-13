@@ -157,7 +157,7 @@ sharedLibrary {
   testHarnessVersion = "2.24"
   pluginDependencies {
     workflowCpsGlobalLibraryPluginVersion = "2.8"
-    blueocean("blueocean-web", "1.2.0")
+    dependency("io.jenkins.blueocean", "blueocean-web", "1.2.4")
   }
 }
 ----

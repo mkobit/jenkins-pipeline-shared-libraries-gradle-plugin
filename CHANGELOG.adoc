@@ -24,6 +24,11 @@ For each release, a subsection should be added for each of the following if they
 
 == UNRELEASED (yyyy/mm/dd)
 
+=== Removed
+
+* The helper methods from `PluginDependencySpec` for adding dependencies from different groups.
+  `cloudbees()`, `workflow()`, `jvnet()`, `jenkinsCi()`, and `blueocean()` have all been removed.
+
 == 0.2.0 (2017/10/04)
 
 Fixes publishing issues with first release

@@ -161,53 +161,15 @@ internal class PluginDependencySpecTest {
     assertThat(pluginDependencySpec.workflowSupportPluginVersion).isEqualTo("newWorkflowSupportPluginVersion")
   }
 
-  @ParameterizedTest(name = "group {1}")
-  @MethodSource("pluginCreators")
-  internal fun `create plugin for`(
-    addPlugin: PluginDependencySpec.(String, String) -> Unit,
-    expectedGroup: String
-  ) {
-    val expectedName = "name"
-    val expectedVersion = "1.0"
-
-    pluginDependencySpec.addPlugin(expectedName, expectedVersion)
-
-    val group: Condition<PluginDependency> = condition(expectedGroup) { group == expectedGroup }
-    val name: Condition<PluginDependency> = condition(expectedName) { name == expectedName }
-    val version: Condition<PluginDependency> = condition(expectedVersion) { version == expectedVersion }
-    assertThat(pluginDependencySpec.pluginDependencies()).haveExactly(1, allOf(group, name, version))
-  }
-
-  @Suppress("UNUSED")
-  private fun pluginCreators(): Stream<Arguments> {
-    fun argsOf(addPlugin: PluginDependencySpec.(String, String) -> Unit,
-               expectedGroup: String): Arguments = Arguments.of(addPlugin, expectedGroup)
-
-    return Stream.of(
-      argsOf({ name, version -> blueocean(name, version) }, "io.jenkins.blueocean"),
-      argsOf({ name, version -> jvnet(name, version) }, "org.jvnet.hudson.plugins"),
-      argsOf({ name, version -> jenkinsCi(name, version) }, "org.jenkins-ci.plugins"),
-      argsOf({ name, version -> workflow(name, version) }, "org.jenkins-ci.plugins.workflow"),
-      argsOf({ name, version -> cloudbees(name, version) }, "com.cloudbees.jenkins.plugins"),
-      argsOf({ name, version -> dependency("com.mkobit.plugin", name, version) }, "com.mkobit.plugin")
-    )
-  }
-
   @Test
   internal fun `adding multiple plugins`() {
     val initialSize = pluginDependencySpec.pluginDependencies().size
-    pluginDependencySpec.cloudbees("cloudbees", "1.0")
+    pluginDependencySpec.dependency("com.mkobit", "mkobit-a", "1.0")
     assertThat(pluginDependencySpec.pluginDependencies()).hasSize(initialSize + 1)
-    pluginDependencySpec.workflow("workflow", "2.0")
+    pluginDependencySpec.dependency("com.mkobit", "mkobit-b", "2.0")
     assertThat(pluginDependencySpec.pluginDependencies()).hasSize(initialSize + 2)
-    pluginDependencySpec.jvnet("jvent", "3.0")
+    pluginDependencySpec.dependency("com.mkobit", "mkobit-c", "3.0")
     assertThat(pluginDependencySpec.pluginDependencies()).hasSize(initialSize + 3)
-    pluginDependencySpec.jenkinsCi("jenkinsCi", "4.0")
-    assertThat(pluginDependencySpec.pluginDependencies()).hasSize(initialSize + 4)
-    pluginDependencySpec.jenkinsCi("blueocean", "5.0")
-    assertThat(pluginDependencySpec.pluginDependencies()).hasSize(initialSize + 5)
-    pluginDependencySpec.dependency("com.mkobit", "mkobit-plugin", "6.0")
-    assertThat(pluginDependencySpec.pluginDependencies()).hasSize(initialSize + 6)
   }
 
   @ParameterizedTest(name = "{0} with artifact Id {1}")
