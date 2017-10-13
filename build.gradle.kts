@@ -18,13 +18,13 @@ buildscript {
   }
   dependencies {
     // TODO: load from properties or script plugin
-    classpath("org.junit.platform:junit-platform-gradle-plugin:1.0.0")
+    classpath("org.junit.platform:junit-platform-gradle-plugin:1.0.1")
     classpath("org.jetbrains.dokka:dokka-gradle-plugin:${dokkaVersion}")
   }
 }
 
 plugins {
-  id("com.gradle.build-scan") version "1.9"
+  id("com.gradle.build-scan") version "1.9.1"
   kotlin("jvm")
 //  `kotlin-dsl`
   `java-library`
@@ -38,6 +38,10 @@ apply {
   plugin("org.jetbrains.dokka")
   from("gradle/junit5.gradle.kts")
 }
+
+version = "0.3.0-SNAPSHOT"
+group = "com.mkobit.jenkins.pipelines"
+description = "Gradle plugins for Jenkins Shared libraries usage"
 
 val gitCommitSha: String by lazy {
   ByteArrayOutputStream().use {
@@ -70,23 +74,12 @@ buildScan {
   }
 }
 
-version = "0.3.0-SNAPSHOT"
-group = "com.mkobit.jenkins.pipelines"
-
 val kotlinVersion: String = project.property("kotlinVersion") as String
 // Below not working for some reason
 //val kotlinVersion: String by project.properties
 val junitPlatformVersion: String by rootProject.extra
 val junitTestImplementationArtifacts: Map<String, Map<String, String>> by rootProject.extra
 val junitTestRuntimeOnlyArtifacts: Map<String, Map<String, String>> by rootProject.extra
-
-repositories {
-  jcenter()
-  maven(url = "https://repo.jenkins-ci.org/public/")
-}
-
-val SourceSet.kotlin: SourceDirectorySet
-  get() = (this as HasConvention).convention.getPlugin(KotlinSourceSet::class.java).kotlin
 
 java {
   sourceCompatibility = JavaVersion.VERSION_1_8
@@ -104,6 +97,14 @@ java {
     }
   }
 }
+
+repositories {
+  jcenter()
+  maven(url = "https://repo.jenkins-ci.org/public/")
+}
+
+val SourceSet.kotlin: SourceDirectorySet
+  get() = (this as HasConvention).convention.getPlugin(KotlinSourceSet::class.java).kotlin
 
 dependencies {
   // Switch all these to api and implementation when https://discuss.gradle.org/t/com-gradle-plugin-publish-does-not-respect-new-java-library-configurations/24041 is resolved
@@ -158,10 +159,6 @@ dependencies {
   }
 }
 
-tasks.withType(KotlinCompile::class.java) {
-  kotlinOptions.jvmTarget = "1.8"
-}
-
 extensions.getByType(JUnitPlatformExtension::class.java).apply {
   platformVersion = junitPlatformVersion
   filters {
@@ -174,13 +171,17 @@ extensions.getByType(JUnitPlatformExtension::class.java).apply {
 }
 
 tasks {
-  withType(Jar::class.java) {
+  withType<Jar> {
     manifest {
       attributes(mapOf(
         "Build-Revision" to gitCommitSha,
         "Implementation-Version" to project.version
       ))
     }
+  }
+
+  withType<KotlinCompile> {
+    kotlinOptions.jvmTarget = "1.8"
   }
 
   "wrapper"(Wrapper::class) {
@@ -322,21 +323,21 @@ tasks {
 
   val publishPlugins by getting {
     dependsOn(gitDirtyCheck)
-    mustRunAfter(login)
+    mustRunAfter(login, docVersionChecks)
   }
 
   val pushGitTag by creating(Exec::class) {
     dependsOn(gitDirtyCheck)
     description = "Pushes Git tag ${project.version} to origin"
     group = PublishingPlugin.PUBLISH_TASK_GROUP
-    mustRunAfter(publishPlugins, gitTag)
+    mustRunAfter(publishPlugins, gitTag, docVersionChecks)
     commandLine("git", "push", "origin", "refs/tags/${project.version}")
   }
 
   "release" {
     group = PublishingPlugin.PUBLISH_TASK_GROUP
     description = "Publishes the plugin to the Gradle plugin portal and pushes up a Git tag for the current commit"
-    dependsOn(docVersionChecks, publishPlugins, pushGitTag, gitTag, gitDirtyCheck, "assemble", "check")
+    dependsOn(docVersionChecks, publishPlugins, pushGitTag, gitTag, gitDirtyCheck, "build")
   }
 }
 
