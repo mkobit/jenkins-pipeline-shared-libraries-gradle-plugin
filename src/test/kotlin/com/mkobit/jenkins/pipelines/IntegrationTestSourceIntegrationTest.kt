@@ -66,7 +66,7 @@ internal class IntegrationTestSourceIntegrationTest {
 
   @Test
   internal fun `can compile integration test sources that use Jenkins libraries`(@GradleProject gradleRunner: GradleRunner) {
-    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf( "compileIntegrationTestGroovy", "-i"))
+    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("compileIntegrationTestGroovy", "-i"))
 
     val task = buildResult.task(":compileIntegrationTestGroovy")
     assertThat(task?.outcome)
@@ -163,6 +163,16 @@ internal class IntegrationTestSourceIntegrationTest {
   @NotImplementedYet
   @Test
   internal fun `integration tests are executed when build lifecycle task is executed`() {
+  }
+
+  @NotImplementedYet
+  @Test
+  internal fun `"integrationTest" task is always ran after "test" task`() {
+  }
+
+  @NotImplementedYet
+  @Test
+  internal fun `failing integration tests fail build tasks`() {
   }
 
   @NotImplementedYet
