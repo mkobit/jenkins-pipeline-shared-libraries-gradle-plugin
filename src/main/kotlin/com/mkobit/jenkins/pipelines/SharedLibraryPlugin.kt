@@ -156,6 +156,7 @@ open class SharedLibraryPlugin @Inject constructor(
         // Set the build directory for Jenkins test harness.
         // See https://issues.jenkins-ci.org/browse/JENKINS-26331
         systemProperty("buildDirectory", projectLayout.buildDirectory.get().asFile.absolutePath)
+        shouldRunAfter("test")
       }
     }
   }

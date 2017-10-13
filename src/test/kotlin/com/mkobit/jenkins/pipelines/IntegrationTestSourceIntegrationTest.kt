@@ -162,11 +162,6 @@ internal class IntegrationTestSourceIntegrationTest {
 
   @NotImplementedYet
   @Test
-  internal fun `"integrationTest" task is always ran after "test" task`() {
-  }
-
-  @NotImplementedYet
-  @Test
   internal fun `failing integration tests fail build tasks`() {
   }
 
