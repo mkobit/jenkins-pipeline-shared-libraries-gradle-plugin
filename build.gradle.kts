@@ -286,6 +286,33 @@ tasks {
     }
   }
 
+  val docVersionChecks by creating {
+    group = PublishingPlugin.PUBLISH_TASK_GROUP
+    description = "Checks if the repository documentation is up-to-date for the version $version"
+    val readme = file("README.adoc")
+    val changeLog = file("CHANGELOG.adoc")
+    inputs.file(readme)
+    inputs.file(changeLog)
+    // Output is just used for up-to-date checking
+    outputs.dir(file("$buildDir/repositoryDocumentation"))
+    doFirst {
+      readme.bufferedReader().use { it.readText() }.let { text ->
+        val versionAttribute = ":latest-version: $version"
+        val containsVersionAttribute = text.contains(versionAttribute)
+        if (!containsVersionAttribute) {
+          throw GradleException("$readme does not contain up-to-date :latest-version: attribute. Should contain '$versionAttribute'")
+        }
+      }
+      changeLog.bufferedReader().use { it.readLines() }.let { lines ->
+        val changelogLineRegex = Regex("^== ${version.toString().replace(".", "\\.")} \\(\\d{4}\\/\\d{2}\\/\\d{2}\\)\$")
+        val changelogSectionMatch = lines.any { line -> changelogLineRegex.matches(line) }
+        if (!changelogSectionMatch) {
+          throw GradleException("$changeLog does not contain section for $version")
+        }
+      }
+    }
+  }
+
   // TODO: use a better release plugin
   val gitTag by creating(Exec::class) {
     group = PublishingPlugin.PUBLISH_TASK_GROUP
@@ -309,7 +336,7 @@ tasks {
   "release" {
     group = PublishingPlugin.PUBLISH_TASK_GROUP
     description = "Publishes the plugin to the Gradle plugin portal and pushes up a Git tag for the current commit"
-    dependsOn(publishPlugins, pushGitTag, gitTag, gitDirtyCheck, "assemble", "check")
+    dependsOn(docVersionChecks, publishPlugins, pushGitTag, gitTag, gitDirtyCheck, "assemble", "check")
   }
 }
 
