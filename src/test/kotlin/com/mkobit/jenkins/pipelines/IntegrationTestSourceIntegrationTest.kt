@@ -11,10 +11,12 @@ import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestTemplate
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import testsupport.GradleProject
+import testsupport.GradleVersions
 import testsupport.Integration
 import testsupport.IntelliJSupport
 import testsupport.NotImplementedYet
@@ -25,14 +27,15 @@ import java.util.stream.Stream
 import org.junit.jupiter.params.provider.Arguments.of as arguments
 
 @Integration
+@GradleVersions
 internal class IntegrationTestSourceIntegrationTest {
 
-  @Test
+  @TestTemplate
   internal fun `can execute dependencies task`(@GradleProject gradleRunner: GradleRunner) {
     gradleRunner.buildWith(arguments = listOf("dependencies"))
   }
 
-  @Test
+  @TestTemplate
   internal fun `no HPI artifacts exist in jenkinsPluginLibraries configuration`(@GradleProject gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("--quiet", "showConfigurationFiles"))
 
@@ -43,7 +46,7 @@ internal class IntegrationTestSourceIntegrationTest {
     }
   }
 
-  @Test
+  @TestTemplate
   internal fun `only HPI or JPI artifacts exist in jenkinsPluginHpisAndJpis configuration`(@GradleProject gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("--quiet", "showConfigurationFiles"))
 
@@ -56,7 +59,7 @@ internal class IntegrationTestSourceIntegrationTest {
     }
   }
 
-  @Test
+  @TestTemplate
   internal fun `can compile integration test sources that use Jenkins libraries`(@GradleProject gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("compileIntegrationTestGroovy", "-i"))
 
@@ -68,7 +71,7 @@ internal class IntegrationTestSourceIntegrationTest {
       .isEqualTo(TaskOutcome.SUCCESS)
   }
 
-  @Test
+  @TestTemplate
   internal fun `can use @JenkinsRule in integration tests`(@GradleProject gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf( "integrationTest", "-i"))
 
@@ -80,7 +83,7 @@ internal class IntegrationTestSourceIntegrationTest {
       .isEqualTo(TaskOutcome.SUCCESS)
   }
 
-  @Test
+  @TestTemplate
   internal fun `WorkflowJob can be created and executed in integration tests`(@GradleProject gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("integrationTest", "-i"))
 
@@ -92,7 +95,7 @@ internal class IntegrationTestSourceIntegrationTest {
       .isEqualTo(TaskOutcome.SUCCESS)
   }
 
-  @Test
+  @TestTemplate
   internal fun `can set up Global Pipeline Library and use them in an integration test`(@GradleProject gradleRunner: GradleRunner) {
     Git.init().setDirectory(gradleRunner.projectDir).call().use {
       it.add().addFilepattern(".").call()
@@ -121,7 +124,7 @@ internal class IntegrationTestSourceIntegrationTest {
   internal fun `can use pipeline resources in integration tests`() {
   }
 
-  @Test
+  @TestTemplate
   internal fun `no configurations are resolved if no build tasks are executed`(@GradleProject gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("--quiet", "printConfigurationStates"))
 
@@ -130,13 +133,13 @@ internal class IntegrationTestSourceIntegrationTest {
     }
   }
 
-  @Test
+  @TestTemplate
   internal fun `Groovy DSL extension configuration`(@GradleProject gradleRunner: GradleRunner) {
     gradleRunner.buildWith(arguments = listOf("-i"))
   }
 
   @Disabled("This example works in a local Gradle project, but not with Gradle Test Kit. See https://github.com/gradle/kotlin-dsl/issues/492")
-  @Test
+  @TestTemplate
   internal fun `Kotlin DSL extension configuration`(@GradleProject gradleRunner: GradleRunner) {
     gradleRunner.buildWith(arguments = listOf("-i"))
   }
@@ -156,7 +159,7 @@ internal class IntegrationTestSourceIntegrationTest {
     )
   }
 
-  @Test
+  @TestTemplate
   internal fun `"check" lifecycle task executes "integrationTest"`(@GradleProject gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("check"))
 

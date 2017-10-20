@@ -24,6 +24,8 @@ For each release, a subsection should be added for each of the following if they
 
 == UNRELEASED (yyyy/mm/dd)
 
+Runs on Gradle 4.3.
+
 === Removed
 
 * The helper methods from `PluginDependencySpec` for adding dependencies from different groups.

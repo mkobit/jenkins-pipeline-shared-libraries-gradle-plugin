@@ -1,19 +1,19 @@
 package com.mkobit.jenkins.pipelines
 
-import org.gradle.api.provider.PropertyState
+import org.gradle.api.provider.Property
 
 class PluginDependencySpec(
-  private val gitPluginVersionState: PropertyState<String>,
-  private val workflowApiPluginVersionState: PropertyState<String>,
-  private val workflowBasicStepsPluginVersionState: PropertyState<String>,
-  private val workflowCpsPluginVersionState: PropertyState<String>,
-  private val workflowDurableTaskStepPluginVersionState: PropertyState<String>,
-  private val workflowGlobalCpsLibraryPluginVersionState: PropertyState<String>,
-  private val workflowJobPluginVersionState: PropertyState<String>,
-  private val workflowMultibranchPluginVersionState: PropertyState<String>,
-  private val workflowScmStepPluginVersionState: PropertyState<String>,
-  private val workflowStepApiPluginVersionState: PropertyState<String>,
-  private val workflowSupportPluginVersionState: PropertyState<String>
+  private val gitPluginVersionState: Property<String>,
+  private val workflowApiPluginVersionState: Property<String>,
+  private val workflowBasicStepsPluginVersionState: Property<String>,
+  private val workflowCpsPluginVersionState: Property<String>,
+  private val workflowDurableTaskStepPluginVersionState: Property<String>,
+  private val workflowGlobalCpsLibraryPluginVersionState: Property<String>,
+  private val workflowJobPluginVersionState: Property<String>,
+  private val workflowMultibranchPluginVersionState: Property<String>,
+  private val workflowScmStepPluginVersionState: Property<String>,
+  private val workflowStepApiPluginVersionState: Property<String>,
+  private val workflowSupportPluginVersionState: Property<String>
 ) {
 
   private val additionalDependencies: MutableList<PluginDependency> = mutableListOf()

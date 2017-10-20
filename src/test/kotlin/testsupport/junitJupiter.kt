@@ -12,7 +12,7 @@ import org.junit.jupiter.api.extension.ExtensionContext
 annotation class NotImplementedYet
 
 @Tag("integration")
-@ExtendWith(TestExecutionLogger::class, ResourceGradleProjectProviderExtension::class)
+@ExtendWith(TestExecutionLogger::class)
 annotation class Integration
 
 @Tag("intellij-support")
@@ -23,7 +23,7 @@ annotation class Integration
 annotation class IntelliJSupport
 
 @Tag("possible-sample")
-@ExtendWith(TestExecutionLogger::class, ResourceGradleProjectProviderExtension::class)
+@ExtendWith(TestExecutionLogger::class)
 annotation class SampleCandidate
 
 class TestExecutionLogger : BeforeTestExecutionCallback, AfterTestExecutionCallback {
