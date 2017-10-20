@@ -30,6 +30,7 @@ Runs on Gradle 4.3.
 
 * `integrationTest` will executed after `test` if they are both included in the build
 * `check` now `dependsOn` `integrationTest`
+* Default Jenkins Test Harness: `2.28` to `2.31`
 
 === Removed
 

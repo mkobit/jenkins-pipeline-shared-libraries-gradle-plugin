@@ -127,7 +127,7 @@ dependencies {
   // against the libraries that are used.
   val pipelineTestResources by java.sourceSets.getting
   pipelineTestResources.compileOnlyConfigurationName("com.lesfurets:jenkins-pipeline-unit:1.1")
-  pipelineTestResources.compileOnlyConfigurationName("org.jenkins-ci.main:jenkins-test-harness:2.28")
+  pipelineTestResources.compileOnlyConfigurationName("org.jenkins-ci.main:jenkins-test-harness:2.31")
   pipelineTestResources.compileOnlyConfigurationName("org.codehaus.groovy:groovy:2.4.11")
   // TODO: have to figure out a better way to manage these dependencies (and transitives)
   // TODO: figure out why failing in IntelliJ
