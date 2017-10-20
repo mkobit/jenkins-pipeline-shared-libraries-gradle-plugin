@@ -26,6 +26,11 @@ For each release, a subsection should be added for each of the following if they
 
 Runs on Gradle 4.3.
 
+=== Changed
+
+* `integrationTest` will executed after `test` if they are both included in the build
+* `check` now `dependsOn` `integrationTest`
+
 === Removed
 
 * The helper methods from `PluginDependencySpec` for adding dependencies from different groups.
