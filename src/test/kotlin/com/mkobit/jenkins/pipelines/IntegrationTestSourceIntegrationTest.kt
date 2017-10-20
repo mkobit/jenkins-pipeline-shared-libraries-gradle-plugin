@@ -26,6 +26,7 @@ import testsupport.softlyAssert
 import java.util.stream.Stream
 import org.junit.jupiter.params.provider.Arguments.of as arguments
 
+@Integration
 @GradleVersions
 internal class IntegrationTestSourceIntegrationTest {
 
