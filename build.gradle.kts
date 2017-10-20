@@ -24,12 +24,12 @@ buildscript {
 }
 
 plugins {
-  id("com.gradle.build-scan") version "1.9.1"
+  id("com.gradle.build-scan") version "1.10"
   kotlin("jvm")
 //  `kotlin-dsl`
   `java-library`
   `java-gradle-plugin`
-  id("com.gradle.plugin-publish") version "0.9.8"
+  id("com.gradle.plugin-publish") version "0.9.9"
   id("com.github.ben-manes.versions") version "0.15.0"
 }
 
