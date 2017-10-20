@@ -25,8 +25,7 @@ buildscript {
 
 plugins {
   id("com.gradle.build-scan") version "1.10"
-  kotlin("jvm")
-//  `kotlin-dsl`
+  `kotlin-dsl`
   `java-library`
   `java-gradle-plugin`
   id("com.gradle.plugin-publish") version "0.9.9"
@@ -104,14 +103,13 @@ repositories {
 }
 
 val SourceSet.kotlin: SourceDirectorySet
-  get() = (this as HasConvention).convention.getPlugin(KotlinSourceSet::class.java).kotlin
+  get() = withConvention(KotlinSourceSet::class) { kotlin }
 
 dependencies {
   // Switch all these to api and implementation when https://discuss.gradle.org/t/com-gradle-plugin-publish-does-not-respect-new-java-library-configurations/24041 is resolved
   api(gradleApi())
-  api(kotlin("stdlib-jre8", kotlinVersion))
   implementation("io.github.microutils:kotlin-logging:1.4.6")
-  testImplementation(kotlin("reflect", kotlinVersion))
+  testImplementation(kotlin("reflect", embeddedKotlinVersion))
   testImplementation("com.mkobit.gradle.test:gradle-test-kotlin-extensions:0.1.0")
   testImplementation("com.mkobit.gradle.test:assertj-gradle:0.2.0")
   testImplementation("com.google.guava:guava:23.0")
