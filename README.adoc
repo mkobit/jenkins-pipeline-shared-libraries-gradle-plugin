@@ -164,4 +164,4 @@ sharedLibrary {
 
 == Example Consumer
 
-See the link:uri-consumer-example[example] for an example of consuming this plugin.
+See the link:{uri-consumer-example}[example] for an example of consuming this plugin.
