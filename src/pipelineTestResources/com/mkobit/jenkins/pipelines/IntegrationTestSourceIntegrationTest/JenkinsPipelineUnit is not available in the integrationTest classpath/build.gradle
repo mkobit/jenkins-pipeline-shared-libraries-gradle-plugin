@@ -1,0 +1,17 @@
+plugins {
+  id 'com.mkobit.jenkins.pipelines.shared-library'
+}
+
+repositories {
+  jcenter()
+}
+
+final configuration = configurations.getByName(sourceSets.getByName('integrationTest').compileClasspathConfigurationName)
+
+tasks.create('showResolvedArtifacts') {
+  doFirst {
+    configuration.resolvedConfiguration.resolvedArtifacts.each {
+      println("Resolved Artifact: ${it.moduleVersion}@${it.extension}")
+    }
+  }
+}

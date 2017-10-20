@@ -4,6 +4,8 @@ import com.mkobit.gradle.test.testkit.runner.buildWith
 import org.assertj.core.api.Assertions.anyOf
 import org.assertj.core.api.Assertions.assertThat
 import com.mkobit.gradle.test.assertj.GradleAssertions.assertThat
+import org.assertj.core.api.Assertions.allOf
+import org.assertj.core.api.Assertions.not
 import org.eclipse.jgit.api.Git
 import org.gradle.api.artifacts.Configuration
 import org.gradle.testkit.runner.BuildResult
@@ -36,25 +38,45 @@ internal class IntegrationTestSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `no HPI artifacts exist in jenkinsPluginLibraries configuration`(@GradleProject gradleRunner: GradleRunner) {
-    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("--quiet", "showConfigurationFiles"))
+//  internal fun `no HPI artifacts exist in integrationTest compile classpath`(@GradleProject gradleRunner: GradleRunner) {
+  internal fun `integrationTest compile classpath does not contain any HPI or JPI artifacts`(@GradleProject gradleRunner: GradleRunner) {
+    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("--quiet", "showResolvedArtifacts"))
 
     softlyAssert {
       assertThat(buildResult.output.trim().split(System.lineSeparator())).isNotEmpty.allSatisfy {
-        assertThat(it).endsWith(".jar")
+        assertThat(it)
+          .doesNotEndWith("@hpi")
+          .doesNotEndWith("@jpi")
+          .endsWith("@jar")
       }
     }
   }
 
   @TestTemplate
-  internal fun `only HPI or JPI artifacts exist in jenkinsPluginHpisAndJpis configuration`(@GradleProject gradleRunner: GradleRunner) {
-    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("--quiet", "showConfigurationFiles"))
+  internal fun `integrationTest runtimeOnly configuration contains only HPI, JPI, and WAR artifacts`(@GradleProject gradleRunner: GradleRunner) {
+    // Can't test the runtimeOnly directly because we can't
+    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("--quiet", "showResolvedArtifacts"))
 
     softlyAssert {
       assertThat(buildResult.output.trim().split(System.lineSeparator())).isNotEmpty.allSatisfy {
-        val hpi = condition<String>(".hpi extension") { it.endsWith(".hpi") }
-        val jpi = condition<String>(".jpi extension") { it.endsWith(".jpi") }
-        assertThat(it).has(anyOf(hpi, jpi))
+        val hpi = condition<String>(".hpi extension") { it.endsWith("@hpi") }
+        val jpi = condition<String>(".jpi extension") { it.endsWith("@jpi") }
+        val war = condition<String>(".war extension") { it.endsWith("@war") }
+        val jenkinsWar = condition<String>("Jenkins WAR group and module") { it.contains("org.jenkins-ci.main:jenkins-war") }
+        assertThat(it).has(anyOf(allOf(war, jenkinsWar), hpi, jpi))
+      }
+    }
+  }
+
+  @TestTemplate
+  internal fun `JenkinsPipelineUnit is not available in the integrationTest classpath`(@GradleProject gradleRunner: GradleRunner) {
+    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("--quiet", "showResolvedArtifacts"))
+
+    softlyAssert {
+      assertThat(buildResult.output.trim().split(System.lineSeparator())).isNotEmpty.allSatisfy {
+        val group = condition<String>("Jenkins Pipeline Unit group: com.lesfurets") { it.contains("com.lesfurets:") }
+        val module = condition<String>("Jenkins Pipeline Unit module: jenkins-pipeline-unit") { it.contains(":jenkins-pipeline-unit:") }
+        assertThat(it).has(not(anyOf(group, module)))
       }
     }
   }
@@ -139,7 +161,7 @@ internal class IntegrationTestSourceIntegrationTest {
   }
 
   @Disabled("This example works in a local Gradle project, but not with Gradle Test Kit. See https://github.com/gradle/kotlin-dsl/issues/492")
-  @TestTemplate
+  @Test
   internal fun `Kotlin DSL extension configuration`(@GradleProject gradleRunner: GradleRunner) {
     gradleRunner.buildWith(arguments = listOf("-i"))
   }
@@ -200,11 +222,6 @@ internal class IntegrationTestSourceIntegrationTest {
   @SampleCandidate
   @Test
   internal fun `can use parameterized pipeline build`() {
-  }
-
-  @NotImplementedYet
-  @Test
-  internal fun `JenkinsPipelineUnit is not on classpath for integration tests`() {
   }
 
   @NotImplementedYet

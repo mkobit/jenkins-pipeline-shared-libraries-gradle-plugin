@@ -19,6 +19,7 @@ import org.gradle.api.tasks.javadoc.Groovydoc
 import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.creating
+import org.gradle.kotlin.dsl.exclude
 import org.gradle.kotlin.dsl.get
 import org.gradle.kotlin.dsl.getValue // this is actually used, see https://github.com/gradle/kotlin-dsl/issues/564
 import org.gradle.kotlin.dsl.getting
@@ -197,18 +198,22 @@ open class SharedLibraryPlugin @Inject constructor(
     configurations {
       test.implementationConfigurationName().extendsFrom(jenkinsPipelineUnitTestLibraries)
 
-      integrationTest.implementationConfigurationName().extendsFrom(
-        getByName(main.implementationConfigurationName),
-        getByName(test.implementationConfigurationName),
-        jenkinsCoreLibraries,
-        jenkinsPluginLibraries,
-        jenkinsTestLibraries
-      )
+      integrationTest.implementationConfigurationName().run {
+        extendsFrom(
+          getByName(main.implementationConfigurationName),
+          getByName(test.implementationConfigurationName),
+          jenkinsCoreLibraries,
+          jenkinsPluginLibraries,
+          jenkinsTestLibraries
+        )
+        exclude(group = "com.lesfurets", module = "jenkins-pipeline-unit")
+      }
 
       integrationTest.runtimeOnlyConfigurationName().extendsFrom(
         jenkinsPluginHpisAndJpis,
         jenkinsTestLibrariesRuntimeOnly
       )
+
     }
 
     jenkinsPlugins.incoming.afterResolve {
