@@ -19,6 +19,7 @@ import org.gradle.api.tasks.TaskContainer
 import org.gradle.api.tasks.javadoc.Groovydoc
 import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.tasks.Jar
+import org.gradle.kotlin.dsl.withConvention
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import javax.inject.Inject
 
@@ -70,7 +71,7 @@ open class SharedLibraryPlugin @Inject constructor(
   override fun apply(project: Project) {
     project.pluginManager.apply(GroovyPlugin::class.java)
     setupJenkinsRepository(project.repositories)
-    val (main, test, integrationTest) = setupJava(project.convention.getPlugin(JavaPluginConvention::class.java))
+    val (main, test, integrationTest) = project.withConvention(JavaPluginConvention::class) { setupJava(this) }
     val sharedLibraryExtension = setupSharedLibraryExtension(project)
     setupIntegrationTestTask(project.tasks, main, integrationTest)
     setupDocumentationTasks(project.tasks, main)
@@ -123,20 +124,16 @@ open class SharedLibraryPlugin @Inject constructor(
 
   private fun setupDocumentationTasks(tasks: TaskContainer, main: SourceSet) {
     tasks.create("sourcesJar", Jar::class.java) {
-      it.apply {
-        description = "Assemble the sources JAR"
-        classifier = "sources"
-        from(main.allSource)
-      }
+      description = "Assemble the sources JAR"
+      classifier = "sources"
+      from(main.allSource)
     }
 
     tasks.create("groovydocJar", Jar::class.java) {
-      it.apply {
-        val groovydoc = tasks.getByName(GroovyPlugin.GROOVYDOC_TASK_NAME) as Groovydoc
-        dependsOn(groovydoc)
-        description = "Assemble the Groovydoc JAR"
-        classifier = "javadoc"
-      }
+      val groovydoc = tasks.getByName(GroovyPlugin.GROOVYDOC_TASK_NAME) as Groovydoc
+      dependsOn(groovydoc)
+      description = "Assemble the Groovydoc JAR"
+      classifier = "javadoc"
     }
 
   }
@@ -146,18 +143,16 @@ open class SharedLibraryPlugin @Inject constructor(
     integrationTest: SourceSet
   ) {
     val integrationTestTask = tasks.create("integrationTest", Test::class.java) {
-      it.apply {
-        dependsOn(main.classesTaskName)
-        mustRunAfter("test")
-        group = LifecycleBasePlugin.VERIFICATION_GROUP
-        description = "Runs tests with the jenkins-test-harness"
-        testClassesDirs = integrationTest.output.classesDirs
-        classpath = integrationTest.runtimeClasspath
-        // Set the build directory for Jenkins test harness.
-        // See https://issues.jenkins-ci.org/browse/JENKINS-26331
-        systemProperty("buildDirectory", projectLayout.buildDirectory.get().asFile.absolutePath)
-        shouldRunAfter("test")
-      }
+      dependsOn(main.classesTaskName)
+      mustRunAfter("test")
+      group = LifecycleBasePlugin.VERIFICATION_GROUP
+      description = "Runs tests with the jenkins-test-harness"
+      testClassesDirs = integrationTest.output.classesDirs
+      classpath = integrationTest.runtimeClasspath
+      // Set the build directory for Jenkins test harness.
+      // See https://issues.jenkins-ci.org/browse/JENKINS-26331
+      systemProperty("buildDirectory", projectLayout.buildDirectory.get().asFile.absolutePath)
+      shouldRunAfter("test")
     }
     tasks.getByName(LifecycleBasePlugin.CHECK_TASK_NAME).dependsOn(integrationTestTask)
   }
@@ -180,9 +175,7 @@ open class SharedLibraryPlugin @Inject constructor(
     // Also, forcing dependencies through the extensions does not feel right and is not that intuitive.
     // Instead, it would probably make sense to introduce configurations that users can add additional configuratoin and dependencies to.
     val pluginDeclarations = configurations.create(JENKINS_PLUGINS_CONFIGURATION) {
-      it.apply {
-        isCanBeResolved = true
-      }
+      isCanBeResolved = true
     }
     val pluginHpiAndJpi = configurations.create(PLUGIN_HPI_JPI_CONFIGURATION, configurationAction)
     val pluginLibraries = configurations.create(PLUGIN_LIBRARY_CONFIGURATION, configurationAction)
@@ -247,8 +240,8 @@ open class SharedLibraryPlugin @Inject constructor(
   private fun setupJenkinsRepository(repositoryHandler: RepositoryHandler) {
     logger.debug { "Adding repository named $JENKINS_REPOSITORY_NAME with URL $JENKINS_REPOSITORY_URL" }
     repositoryHandler.maven {
-      it.name = JENKINS_REPOSITORY_NAME
-      it.setUrl(JENKINS_REPOSITORY_URL)
+      name = JENKINS_REPOSITORY_NAME
+      setUrl(JENKINS_REPOSITORY_URL)
     }
   }
 
@@ -265,13 +258,13 @@ open class SharedLibraryPlugin @Inject constructor(
     val test = javaPluginConvention.sourceSets.getByName("test").apply {
       val unitTestDirectory = "$TEST_ROOT_PATH/unit"
       java.setSrcDirs(listOf("$unitTestDirectory/java"))
-      (this as HasConvention).convention.getPlugin(GroovySourceSet::class.java).groovy.setSrcDirs(listOf("$unitTestDirectory/groovy"))
+      withConvention(GroovySourceSet::class) { groovy.setSrcDirs(listOf("$unitTestDirectory/groovy")) }
       resources.setSrcDirs(listOf("$unitTestDirectory/resources"))
     }
     val integrationTest = javaPluginConvention.sourceSets.create("integrationTest").apply {
       val integrationTestDirectory = "$TEST_ROOT_PATH/integration"
       java.setSrcDirs(listOf("$integrationTestDirectory/java"))
-      (this as HasConvention).convention.getPlugin(GroovySourceSet::class.java).groovy.setSrcDirs(listOf("$integrationTestDirectory/groovy"))
+      withConvention(GroovySourceSet::class) { groovy.setSrcDirs(listOf("$integrationTestDirectory/groovy")) }
       resources.setSrcDirs(listOf("$integrationTestDirectory/resources"))
     }
 
