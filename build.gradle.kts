@@ -25,7 +25,6 @@ buildscript {
 
 plugins {
   id("com.gradle.build-scan") version "1.10"
-//  kotlin("jvm")
   `kotlin-dsl`
   `java-library`
   `java-gradle-plugin`

@@ -10,7 +10,6 @@ import org.gradle.api.artifacts.ExternalModuleDependency
 import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.artifacts.dsl.RepositoryHandler
 import org.gradle.api.file.ProjectLayout
-import org.gradle.api.internal.HasConvention
 import org.gradle.api.plugins.GroovyPlugin
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.GroovySourceSet
@@ -19,6 +18,11 @@ import org.gradle.api.tasks.TaskContainer
 import org.gradle.api.tasks.javadoc.Groovydoc
 import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.tasks.Jar
+import org.gradle.kotlin.dsl.creating
+import org.gradle.kotlin.dsl.get
+import org.gradle.kotlin.dsl.getValue // this is actually used, see https://github.com/gradle/kotlin-dsl/issues/564
+import org.gradle.kotlin.dsl.getting
+import org.gradle.kotlin.dsl.invoke
 import org.gradle.kotlin.dsl.withConvention
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import javax.inject.Inject
@@ -61,7 +65,10 @@ open class SharedLibraryPlugin @Inject constructor(
 
     // These are internal configurations used in the compilation and runtime
     private val UNIT_TESTING_LIBRARY_CONFIGURATION = "jenkinsPipelineUnitTestLibraries"
+    // These are both unused because we use the kotlin-dsl to create and set them up right now.
+    @Suppress("UNUSED")
     private val PLUGIN_HPI_JPI_CONFIGURATION = "jenkinsPluginHpisAndJpis"
+    @Suppress("UNUSED")
     private val PLUGIN_LIBRARY_CONFIGURATION = "jenkinsPluginLibraries"
     private val CORE_LIBRARY_CONFIGURATION = "jenkinsCoreLibraries"
     private val TEST_LIBRARY_CONFIGURATION = "jenkinsTestLibraries"
@@ -83,7 +90,11 @@ open class SharedLibraryPlugin @Inject constructor(
       integrationTest
     )
     project.afterEvaluate {
-      addGroovyDependency(project.dependencies, sharedLibraryExtension, main)
+      addGroovyDependency(
+        project.dependencies,
+        sharedLibraryExtension,
+        main
+      )
       addDependenciesFromExtension(
         project.dependencies,
         sharedLibraryExtension
@@ -95,6 +106,7 @@ open class SharedLibraryPlugin @Inject constructor(
     dependencies: DependencyHandler,
     sharedLibraryExtension: SharedLibraryExtension
   ) {
+    dependencies
     dependencies.add(
       TEST_LIBRARY_CONFIGURATION,
       sharedLibraryExtension.testHarnessDependency()
@@ -123,38 +135,39 @@ open class SharedLibraryPlugin @Inject constructor(
   }
 
   private fun setupDocumentationTasks(tasks: TaskContainer, main: SourceSet) {
-    tasks.create("sourcesJar", Jar::class.java) {
-      description = "Assemble the sources JAR"
-      classifier = "sources"
-      from(main.allSource)
+    tasks {
+      "sourcesJar"(Jar::class) {
+        description = "Assemble the sources JAR"
+        classifier = "sources"
+        from(main.allSource)
+      }
+      "groovydocJar"(Jar::class) {
+        val groovydoc = tasks.getByName(GroovyPlugin.GROOVYDOC_TASK_NAME) as Groovydoc
+        dependsOn(groovydoc)
+        description = "Assemble the Groovydoc JAR"
+        classifier = "javadoc"
+      }
     }
-
-    tasks.create("groovydocJar", Jar::class.java) {
-      val groovydoc = tasks.getByName(GroovyPlugin.GROOVYDOC_TASK_NAME) as Groovydoc
-      dependsOn(groovydoc)
-      description = "Assemble the Groovydoc JAR"
-      classifier = "javadoc"
-    }
-
   }
+
   private fun setupIntegrationTestTask(
     tasks: TaskContainer,
     main: SourceSet,
-    integrationTest: SourceSet
+    integrationTestSource: SourceSet
   ) {
-    val integrationTestTask = tasks.create("integrationTest", Test::class.java) {
+    val integrationTest by tasks.creating(Test::class.java) {
       dependsOn(main.classesTaskName)
       mustRunAfter("test")
       group = LifecycleBasePlugin.VERIFICATION_GROUP
       description = "Runs tests with the jenkins-test-harness"
-      testClassesDirs = integrationTest.output.classesDirs
-      classpath = integrationTest.runtimeClasspath
+      testClassesDirs = integrationTestSource.output.classesDirs
+      classpath = integrationTestSource.runtimeClasspath
       // Set the build directory for Jenkins test harness.
       // See https://issues.jenkins-ci.org/browse/JENKINS-26331
       systemProperty("buildDirectory", projectLayout.buildDirectory.get().asFile.absolutePath)
       shouldRunAfter("test")
     }
-    tasks.getByName(LifecycleBasePlugin.CHECK_TASK_NAME).dependsOn(integrationTestTask)
+    tasks[LifecycleBasePlugin.CHECK_TASK_NAME].dependsOn(integrationTest)
   }
 
   private fun setupConfigurationsAndDependencyManagement(
@@ -164,62 +177,64 @@ open class SharedLibraryPlugin @Inject constructor(
     test: SourceSet,
     integrationTest: SourceSet
   ) {
-    val configurationAction: (Configuration) -> Unit = {
-      it.apply {
-        isCanBeResolved = true
-        isVisible = false
-      }
+    val configurationAction: Configuration.() -> Unit = {
+      isCanBeResolved = true
+      isVisible = false
     }
 
     // TODO: Come up with a better way to collect all the transitive dependencies and HPI/JAR versions of each plugin.
     // Also, forcing dependencies through the extensions does not feel right and is not that intuitive.
     // Instead, it would probably make sense to introduce configurations that users can add additional configuratoin and dependencies to.
-    val pluginDeclarations = configurations.create(JENKINS_PLUGINS_CONFIGURATION) {
+    val jenkinsPlugins by configurations.creating {
       isCanBeResolved = true
     }
-    val pluginHpiAndJpi = configurations.create(PLUGIN_HPI_JPI_CONFIGURATION, configurationAction)
-    val pluginLibraries = configurations.create(PLUGIN_LIBRARY_CONFIGURATION, configurationAction)
-    val coreLibraries = configurations.create(CORE_LIBRARY_CONFIGURATION, configurationAction)
-    val testLibrary = configurations.create(TEST_LIBRARY_CONFIGURATION, configurationAction)
-    val testLibraryRuntimeOnly = configurations.create(TEST_LIBRARY_RUNTIME_ONLY_CONFIGURATION, configurationAction)
-    val unitTestingLibraries = configurations.create(UNIT_TESTING_LIBRARY_CONFIGURATION, configurationAction)
+    val jenkinsPluginHpisAndJpis by configurations.creating(configurationAction)
+    val jenkinsPluginLibraries by configurations.creating(configurationAction)
+    val jenkinsCoreLibraries by configurations.creating(configurationAction)
+    val jenkinsTestLibraries by configurations.creating(configurationAction)
+    val jenkinsTestLibrariesRuntimeOnly by configurations.creating(configurationAction)
+    val jenkinsPipelineUnitTestLibraries by configurations.creating(configurationAction)
 
-    configurations.getByName(test.implementationConfigurationName).extendsFrom(unitTestingLibraries)
+    configurations {
+      test.implementationConfigurationName().extendsFrom(jenkinsPipelineUnitTestLibraries)
 
-    configurations.getByName(integrationTest.implementationConfigurationName).extendsFrom(
-      configurations.getByName(main.implementationConfigurationName),
-      configurations.getByName(test.implementationConfigurationName),
-      coreLibraries,
-      pluginLibraries,
-      testLibrary
-    )
-    configurations.getByName(integrationTest.runtimeOnlyConfigurationName).extendsFrom(
-      pluginHpiAndJpi,
-      testLibraryRuntimeOnly
-    )
+      integrationTest.implementationConfigurationName().extendsFrom(
+        getByName(main.implementationConfigurationName),
+        getByName(test.implementationConfigurationName),
+        jenkinsCoreLibraries,
+        jenkinsPluginLibraries,
+        jenkinsTestLibraries
+      )
 
-    pluginDeclarations.incoming.afterResolve {
-      pluginDeclarations.resolvedConfiguration.resolvedArtifacts
+      integrationTest.runtimeOnlyConfigurationName().extendsFrom(
+        jenkinsPluginHpisAndJpis,
+        jenkinsTestLibrariesRuntimeOnly
+      )
+    }
+
+    jenkinsPlugins.incoming.afterResolve {
+      val resolvedArtifacts = jenkinsPlugins.resolvedConfiguration.resolvedArtifacts
+      resolvedArtifacts
         .filter { it.extension in setOf("hpi", "jpi") }
         .map { "${it.moduleVersion}@${it.extension}" }
-        .forEach { dependencies.add(pluginHpiAndJpi.name, it) }
+        .forEach { dependencies.add(jenkinsPluginHpisAndJpis.name, it) }
       // Map each included HPI to that plugin's JAR for usage in compilation of tests
-      pluginDeclarations.resolvedConfiguration.resolvedArtifacts
+      resolvedArtifacts
         .filter { it.extension in setOf("hpi", "jpi") }
         .map { "${it.moduleVersion}@jar" } // Use the published JAR libraries for each plugin
-        .forEach { dependencies.add(pluginLibraries.name, it) }
+        .forEach { dependencies.add(jenkinsPluginLibraries.name, it) }
       // Include all of the additional JAR dependencies from the transitive dependencies of the plugin
-      pluginDeclarations.resolvedConfiguration.resolvedArtifacts
+      resolvedArtifacts
         .filter { it.extension == "jar" }
         .map { "${it.moduleVersion}@jar" } // TODO: might not need this
-        .forEach { dependencies.add(pluginLibraries.name, it) }
+        .forEach { dependencies.add(jenkinsPluginLibraries.name, it) }
     }
 
     configurations.forEach { config ->
       config.incoming.beforeResolve {
-        if (config.hierarchy.contains(pluginHpiAndJpi) || config.hierarchy.contains(pluginLibraries)) {
+        if (config.hierarchy.contains(jenkinsPluginHpisAndJpis) || config.hierarchy.contains(jenkinsPluginLibraries)) {
           // Trigger the dependency seeding
-          pluginDeclarations.resolve()
+          jenkinsPlugins.resolve()
         }
       }
     }
@@ -250,18 +265,18 @@ open class SharedLibraryPlugin @Inject constructor(
   ): Triple<SourceSet, SourceSet, SourceSet> {
     javaPluginConvention.sourceCompatibility = JavaVersion.VERSION_1_8
     javaPluginConvention.targetCompatibility = JavaVersion.VERSION_1_8
-    val main = javaPluginConvention.sourceSets.getByName("main").apply {
+    val main by javaPluginConvention.sourceSets.getting {
       java.setSrcDirs(emptyList<String>())
-      (this as HasConvention).convention.getPlugin(GroovySourceSet::class.java).groovy.setSrcDirs(listOf("src", "vars"))
+      withConvention(GroovySourceSet::class) { groovy.setSrcDirs(listOf("src", "vars")) }
       resources.setSrcDirs(listOf("resources"))
     }
-    val test = javaPluginConvention.sourceSets.getByName("test").apply {
+    val test by javaPluginConvention.sourceSets.getting {
       val unitTestDirectory = "$TEST_ROOT_PATH/unit"
       java.setSrcDirs(listOf("$unitTestDirectory/java"))
       withConvention(GroovySourceSet::class) { groovy.setSrcDirs(listOf("$unitTestDirectory/groovy")) }
       resources.setSrcDirs(listOf("$unitTestDirectory/resources"))
     }
-    val integrationTest = javaPluginConvention.sourceSets.create("integrationTest").apply {
+    val integrationTest by javaPluginConvention.sourceSets.creating {
       val integrationTestDirectory = "$TEST_ROOT_PATH/integration"
       java.setSrcDirs(listOf("$integrationTestDirectory/java"))
       withConvention(GroovySourceSet::class) { groovy.setSrcDirs(listOf("$integrationTestDirectory/groovy")) }
