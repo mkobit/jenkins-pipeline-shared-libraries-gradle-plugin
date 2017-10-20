@@ -153,7 +153,7 @@ dependencies {
 //      isTransitive = true
 //    }
 //  }
-  pipelineTestResources.compileOnlyConfigurationName("org.jenkins-ci.main:jenkins-core:2.73.1") {
+  pipelineTestResources.compileOnlyConfigurationName("org.jenkins-ci.main:jenkins-core:2.73.2") {
     isTransitive = false
   }
 }
