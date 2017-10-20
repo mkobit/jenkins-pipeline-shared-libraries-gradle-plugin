@@ -106,7 +106,6 @@ open class SharedLibraryPlugin @Inject constructor(
     dependencies: DependencyHandler,
     sharedLibraryExtension: SharedLibraryExtension
   ) {
-    dependencies
     dependencies.add(
       TEST_LIBRARY_CONFIGURATION,
       sharedLibraryExtension.testHarnessDependency()
