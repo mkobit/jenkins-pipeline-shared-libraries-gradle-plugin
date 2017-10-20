@@ -6,14 +6,17 @@ import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestTemplate
 import testsupport.GradleProject
+import testsupport.GradleVersions
 import testsupport.Integration
 import testsupport.NotImplementedYet
 
 @Integration
+@GradleVersions
 class MainSourceIntegrationTest {
 
-  @Test
+  @TestTemplate
   internal fun `main Groovy code is compiled`(@GradleProject gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("compileGroovy"))
 
@@ -24,7 +27,7 @@ class MainSourceIntegrationTest {
       .isEqualTo(TaskOutcome.SUCCESS)
   }
 
-  @Test
+  @TestTemplate
   internal fun `can unit test code in src`(@GradleProject gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("test", "-s"))
 
@@ -56,7 +59,7 @@ class MainSourceIntegrationTest {
   internal fun `@Grab not supported for untrusted libraries`() {
   }
 
-  @Test
+  @TestTemplate
   internal fun `Groovydoc JAR can be generated`(@GradleProject gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("groovydocJar"))
 
@@ -67,7 +70,7 @@ class MainSourceIntegrationTest {
       .isEqualTo(TaskOutcome.SUCCESS)
   }
 
-  @Test
+  @TestTemplate
   internal fun `Groovy sources JAR can be generated`(@GradleProject gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("sourcesJar"))
 

@@ -20,7 +20,7 @@ import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.BasicFileAttributes
 import kotlin.reflect.jvm.kotlinFunction
 
-class ResourceGradleProjectProviderExtension : ParameterResolver, AfterTestExecutionCallback {
+internal class ResourceGradleProjectProviderExtension(private val gradleVersion: String?) : ParameterResolver, AfterTestExecutionCallback {
 
   companion object {
     private val LOGGER = KotlinLogging.logger { }
@@ -47,6 +47,9 @@ class ResourceGradleProjectProviderExtension : ParameterResolver, AfterTestExecu
     val temporaryPath: Path = loadGradleProject(context)
     store.put(context, temporaryPath)
     runner.withProjectDir(temporaryPath.toFile())
+    if (gradleVersion != null) {
+      runner.withGradleVersion(gradleVersion)
+    }
 
     return runner
   }
