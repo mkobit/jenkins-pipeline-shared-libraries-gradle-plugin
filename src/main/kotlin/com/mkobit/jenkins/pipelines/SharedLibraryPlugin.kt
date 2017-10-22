@@ -213,7 +213,6 @@ open class SharedLibraryPlugin @Inject constructor(
         jenkinsPluginHpisAndJpis,
         jenkinsTestLibrariesRuntimeOnly
       )
-
     }
 
     jenkinsPlugins.incoming.afterResolve {
