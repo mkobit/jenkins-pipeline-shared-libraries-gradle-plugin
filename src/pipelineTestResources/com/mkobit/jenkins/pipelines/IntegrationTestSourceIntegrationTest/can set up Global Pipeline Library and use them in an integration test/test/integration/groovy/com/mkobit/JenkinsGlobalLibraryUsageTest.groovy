@@ -3,6 +3,7 @@ package com.mkobit
 import jenkins.plugins.git.GitSCMSource
 import org.jenkinsci.plugins.workflow.libs.GlobalLibraries
 import org.jenkinsci.plugins.workflow.libs.LibraryConfiguration
+import org.jenkinsci.plugins.workflow.libs.LibraryRetriever
 import org.jenkinsci.plugins.workflow.libs.SCMSourceRetriever
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition
 import org.jenkinsci.plugins.workflow.job.WorkflowJob
@@ -21,7 +22,7 @@ class JenkinsGlobalLibraryUsageTest {
     rule.timeout = 30
     final libraryPath = System.getProperty('user.dir')
     println("Using Git library path at $libraryPath")
-    final SCMSourceRetriever retriever = new SCMSourceRetriever(
+    final LibraryRetriever retriever = new SCMSourceRetriever(
       new GitSCMSource(
         null,
         libraryPath,
