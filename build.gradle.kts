@@ -186,7 +186,7 @@ tasks {
   }
 
   "wrapper"(Wrapper::class) {
-    gradleVersion = "4.3-rc-2"
+    gradleVersion = "4.3-rc-3"
     distributionType = Wrapper.DistributionType.ALL
   }
 
