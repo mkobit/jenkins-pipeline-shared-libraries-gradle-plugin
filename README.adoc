@@ -10,10 +10,13 @@
 :circle-ci-status-badge: image:{uri-build-status-image}["CircleCI", link="https://circleci.com/gh/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/tree/master"]
 :uri-version-badge-image: https://img.shields.io/badge/Gradle%20Plugin-{latest-version}-blue.svg
 :uri-gradle-plugin-portal: https://plugins.gradle.org/plugin/com.mkobit.jenkins.pipelines.shared-library
+:uri-zenhub-badge: https://raw.githubusercontent.com/ZenHubIO/support/master/zenhub-badge.png
 :version-badge: image:{uri-version-badge-image}["Plugin Version", link="{uri-gradle-plugin-portal}"]
+:zenhub-badge: image:{uri-zenhub-badge}["ZenHub Badge", link="https://www.zenhub.com/"]
 
 {circle-ci-status-badge}
 {version-badge}
+{zenhub-badge}
 
 NOTE: This documentation is for the `HEAD` of the repository.
       To see documentation at a specific version see the link:{uri-github-releases}[GitHub Releases page]
