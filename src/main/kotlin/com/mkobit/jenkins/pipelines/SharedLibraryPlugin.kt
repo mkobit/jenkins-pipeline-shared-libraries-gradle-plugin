@@ -1,5 +1,6 @@
 package com.mkobit.jenkins.pipelines
 
+import com.mkobit.jenkins.pipelines.codegen.GenerateJenkinsTestClassesPlugin
 import mu.KotlinLogging
 import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
@@ -77,29 +78,32 @@ open class SharedLibraryPlugin @Inject constructor(
   }
 
   override fun apply(project: Project) {
-    project.pluginManager.apply(GroovyPlugin::class.java)
-    setupJenkinsRepository(project.repositories)
-    val (main, test, integrationTest) = project.withConvention(JavaPluginConvention::class) { setupJava(this) }
-    val sharedLibraryExtension = setupSharedLibraryExtension(project)
-    setupIntegrationTestTask(project.tasks, main, integrationTest)
-    setupDocumentationTasks(project.tasks, main)
-    setupConfigurationsAndDependencyManagement(
-      project.configurations,
-      project.dependencies,
-      main,
-      test,
-      integrationTest
-    )
-    project.afterEvaluate {
-      addGroovyDependency(
-        project.dependencies,
-        sharedLibraryExtension,
-        main
+    project.run {
+      pluginManager.apply(GroovyPlugin::class.java)
+      setupJenkinsRepository(repositories)
+      val (main, test, integrationTest) = withConvention(JavaPluginConvention::class) { setupJava(this) }
+      val sharedLibraryExtension = setupSharedLibraryExtension(this)
+      setupIntegrationTestTask(tasks, main, integrationTest)
+      setupDocumentationTasks(tasks, main)
+      setupConfigurationsAndDependencyManagement(
+        configurations,
+        dependencies,
+        main,
+        test,
+        integrationTest
       )
-      addDependenciesFromExtension(
-        project.dependencies,
-        sharedLibraryExtension
-      )
+      pluginManager.apply(GenerateJenkinsTestClassesPlugin::class.java)
+      afterEvaluate {
+        addGroovyDependency(
+          dependencies,
+          sharedLibraryExtension,
+          main
+        )
+        addDependenciesFromExtension(
+          dependencies,
+          sharedLibraryExtension
+        )
+      }
     }
   }
 

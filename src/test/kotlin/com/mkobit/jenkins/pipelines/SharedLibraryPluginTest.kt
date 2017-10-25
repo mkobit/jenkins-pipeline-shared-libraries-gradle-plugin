@@ -1,5 +1,6 @@
 package com.mkobit.jenkins.pipelines
 
+import com.mkobit.jenkins.pipelines.codegen.GenerateJenkinsTestClassesPlugin
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Condition
 import org.assertj.core.condition.AllOf.allOf
@@ -35,6 +36,13 @@ internal class SharedLibraryPluginTest {
     assertThat(project.pluginManager).satisfies {
       assertThat(it.hasPlugin("groovy")).isTrue()
     }
+  }
+
+  @Test
+  internal fun `GenerateJenkinsTestClassesPlugin is applied`() {
+    assertThat(project.plugins.hasPlugin(GenerateJenkinsTestClassesPlugin::class.java))
+      .withFailMessage("Expected ${GenerateJenkinsTestClassesPlugin::class.qualifiedName} to be applied")
+      .isTrue()
   }
 
   @Test
