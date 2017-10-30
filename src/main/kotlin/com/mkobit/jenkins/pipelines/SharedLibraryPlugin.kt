@@ -262,13 +262,13 @@ open class SharedLibraryPlugin @Inject constructor(
 
   private fun setupJenkinsRepository(repositoryHandler: RepositoryHandler) {
     logger.debug { "Adding repository named $JENKINS_REPOSITORY_NAME with URL $JENKINS_REPOSITORY_URL" }
-    val maven = repositoryHandler.maven(url = JENKINS_REPOSITORY_URL)
-    maven.name = JENKINS_REPOSITORY_NAME
-    // TODO: report bug to kotlin-dsl / Kotlin. Below causes issues when trying to run tests in IntelliJ
-//    repositoryHandler.maven {
-//      name = JENKINS_REPOSITORY_NAME
-//      setUrl(JENKINS_REPOSITORY_URL)
-//    }
+//    val maven = repositoryHandler.maven(url = JENKINS_REPOSITORY_URL)
+//    maven.name = JENKINS_REPOSITORY_NAME
+    // Issue with running tests in IntelliJ with this - see https://github.com/gradle/kotlin-dsl/issues/581
+    repositoryHandler.maven {
+      name = JENKINS_REPOSITORY_NAME
+      setUrl(JENKINS_REPOSITORY_URL)
+    }
   }
 
   private fun setupJava(

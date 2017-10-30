@@ -11,6 +11,7 @@ import org.gradle.api.artifacts.ExternalModuleDependency
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
 import org.gradle.api.internal.HasConvention
 import org.gradle.api.internal.project.ProjectInternal
+import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.GroovySourceSet
 import org.gradle.jvm.tasks.Jar
@@ -244,6 +245,15 @@ internal class SharedLibraryPluginTest {
     assertThat((integrationTest as org.gradle.api.tasks.testing.Test).systemProperties).hasEntrySatisfying("buildDirectory") {
       assertThat(it).isEqualTo(project.buildDir.absolutePath)
     }
+  }
+
+  @Test
+  internal fun `integrationTest task is in the verification group and has a description`() {
+    val integrationTest = project.tasks.getByName("integrationTest")
+
+    assertThat(integrationTest).isNotNull().isInstanceOf(org.gradle.api.tasks.testing.Test::class.java)
+    assertThat(integrationTest.group).isEqualTo(JavaBasePlugin.VERIFICATION_GROUP)
+    assertThat(integrationTest.description).isNotNull()
   }
 
   @Test
