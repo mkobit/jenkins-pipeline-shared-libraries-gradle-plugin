@@ -24,7 +24,7 @@ buildscript {
 }
 
 plugins {
-  id("com.gradle.build-scan") version "1.10"
+  id("com.gradle.build-scan") version "1.10.1"
   `kotlin-dsl`
   `java-library`
   `java-gradle-plugin`
@@ -186,7 +186,7 @@ tasks {
   }
 
   "wrapper"(Wrapper::class) {
-    gradleVersion = "4.3-rc-3"
+    gradleVersion = "4.3"
     distributionType = Wrapper.DistributionType.ALL
   }
 
