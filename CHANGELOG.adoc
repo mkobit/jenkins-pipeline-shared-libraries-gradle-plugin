@@ -24,7 +24,13 @@ For each release, a subsection should be added for each of the following if they
 
 == UNRELEASED (yyyy/mm/dd)
 
-Runs on Gradle 4.3.
+Built and tested on Gradle 4.3.
+
+=== Added
+
+* Generated classes for integration tests in the `com.mkobit.jenkins.pipelines.codegen` package namespace.
+  The first generated class is the `LocalLibraryRetriever` which can be used as a `LibraryRetriever` for fast feedback in integration tests.
+  See the integration tests or example library for how to use the generated classes.
 
 === Changed
 
