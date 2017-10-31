@@ -18,6 +18,7 @@ import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.BasicFileAttributes
+import java.util.Optional
 import kotlin.reflect.jvm.kotlinFunction
 
 internal class ResourceGradleProjectProviderExtension(private val gradleVersion: String?) : ParameterResolver, AfterTestExecutionCallback {
@@ -94,13 +95,16 @@ internal class ResourceGradleProjectProviderExtension(private val gradleVersion:
   }
 
   private fun createTempDirectory(context: ExtensionContext): Path {
-    val tempDirName: String = when {
-      context.testMethod.isPresent -> context.testMethod.get().name
-      context.testClass.isPresent -> context.testClass.get().name
-      else -> context.displayName
-    }
+    fun sanitizePrefix(name: String): String = name.replace(" ", "_")
 
-    return Files.createTempDirectory(tempDirName)
+    val tempDirPrefix: String = context.testMethod
+      .map { it.name }
+      .or { context.testClass.map { it.name } }
+      .or { Optional.of(context.displayName) }
+      .map { sanitizePrefix(it) }
+      .orElseGet { "default_prefix" }
+
+    return Files.createTempDirectory(tempDirPrefix)
   }
 
   private class RecursiveCopyVisitor(val from: Path, val to: Path) : SimpleFileVisitor<Path>() {
@@ -143,3 +147,9 @@ internal class ResourceGradleProjectProviderExtension(private val gradleVersion:
     }
   }
 }
+
+private fun <T> Optional<T>.or(supplier: () -> Optional<T>): Optional<T> = if (isPresent) {
+    this
+  } else {
+    supplier()
+  }
