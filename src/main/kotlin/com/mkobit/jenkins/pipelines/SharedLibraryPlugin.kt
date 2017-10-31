@@ -1,6 +1,6 @@
 package com.mkobit.jenkins.pipelines
 
-import com.mkobit.jenkins.pipelines.codegen.GenerateJenkinsTestClassesPlugin
+import com.mkobit.jenkins.pipelines.codegen.GenerateGroovyFile
 import mu.KotlinLogging
 import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
@@ -25,7 +25,6 @@ import org.gradle.kotlin.dsl.get
 import org.gradle.kotlin.dsl.getValue // this is actually used, see https://github.com/gradle/kotlin-dsl/issues/564
 import org.gradle.kotlin.dsl.getting
 import org.gradle.kotlin.dsl.invoke
-import org.gradle.kotlin.dsl.maven
 import org.gradle.kotlin.dsl.withConvention
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import javax.inject.Inject
@@ -35,7 +34,7 @@ open class SharedLibraryPlugin @Inject constructor(
 ) : Plugin<Project> {
 
   companion object {
-    private val logger = KotlinLogging.logger {}
+    private val LOGGER = KotlinLogging.logger {}
     /**
      * Name of the [org.gradle.api.artifacts.repositories.ArtifactRepository] that is added to the [RepositoryHandler].
      */
@@ -63,6 +62,8 @@ open class SharedLibraryPlugin @Inject constructor(
     private val DEFAULT_WORKFLOW_SCM_STEP_PLUGIN_VERSION = "2.6"
     private val DEFAULT_WORKFLOW_SUPPORT_PLUGIN_VERSION = "2.15"
 
+    private val CODEGEN_PACKAGE_NAMESPACE = "com.mkobit.jenkins.pipelines.codegen"
+
     // This configuration is used for an initial resolution to get the required dependencies
     private val JENKINS_PLUGINS_CONFIGURATION = "jenkinsPlugins"
 
@@ -82,7 +83,7 @@ open class SharedLibraryPlugin @Inject constructor(
     project.run {
       pluginManager.apply(GroovyPlugin::class.java)
       setupJenkinsRepository(repositories)
-      val (main, test, integrationTest) = withConvention(JavaPluginConvention::class) { setupJava(this) }
+      val (main, test, integrationTest) = withConvention(JavaPluginConvention::class) { setupJava(this, tasks) }
       val sharedLibraryExtension = setupSharedLibraryExtension(this)
       setupIntegrationTestTask(tasks, main, integrationTest)
       setupDocumentationTasks(tasks, main)
@@ -93,7 +94,6 @@ open class SharedLibraryPlugin @Inject constructor(
         test,
         integrationTest
       )
-      pluginManager.apply(GenerateJenkinsTestClassesPlugin::class.java)
       afterEvaluate {
         addGroovyDependency(
           dependencies,
@@ -253,7 +253,7 @@ open class SharedLibraryPlugin @Inject constructor(
     sharedLibrary: SharedLibraryExtension,
     main: SourceSet
   ) {
-    logger.debug { "Adding ${sharedLibrary.groovyDependency()} to ${main.implementationConfigurationName}" }
+    LOGGER.debug { "Adding ${sharedLibrary.groovyDependency()} to ${main.implementationConfigurationName}" }
     dependencies.add(
       main.implementationConfigurationName,
       sharedLibrary.groovyDependency()
@@ -261,7 +261,7 @@ open class SharedLibraryPlugin @Inject constructor(
   }
 
   private fun setupJenkinsRepository(repositoryHandler: RepositoryHandler) {
-    logger.debug { "Adding repository named $JENKINS_REPOSITORY_NAME with URL $JENKINS_REPOSITORY_URL" }
+    LOGGER.debug { "Adding repository named $JENKINS_REPOSITORY_NAME with URL $JENKINS_REPOSITORY_URL" }
 //    val maven = repositoryHandler.maven(url = JENKINS_REPOSITORY_URL)
 //    maven.name = JENKINS_REPOSITORY_NAME
     // Issue with running tests in IntelliJ with this - see https://github.com/gradle/kotlin-dsl/issues/581
@@ -272,7 +272,8 @@ open class SharedLibraryPlugin @Inject constructor(
   }
 
   private fun setupJava(
-    javaPluginConvention: JavaPluginConvention
+    javaPluginConvention: JavaPluginConvention,
+    tasks: TaskContainer
   ): Triple<SourceSet, SourceSet, SourceSet> {
     javaPluginConvention.sourceCompatibility = JavaVersion.VERSION_1_8
     javaPluginConvention.targetCompatibility = JavaVersion.VERSION_1_8
@@ -287,11 +288,82 @@ open class SharedLibraryPlugin @Inject constructor(
       withConvention(GroovySourceSet::class) { groovy.setSrcDirs(listOf("$unitTestDirectory/groovy")) }
       resources.setSrcDirs(listOf("$unitTestDirectory/resources"))
     }
+    val generatedIntegrationSources = projectLayout.buildDirectory.dir("generated-src/integrationTest")
     val integrationTest by javaPluginConvention.sourceSets.creating {
       val integrationTestDirectory = "$TEST_ROOT_PATH/integration"
       java.setSrcDirs(listOf("$integrationTestDirectory/java"))
-      withConvention(GroovySourceSet::class) { groovy.setSrcDirs(listOf("$integrationTestDirectory/groovy")) }
+      withConvention(GroovySourceSet::class) {
+        groovy.setSrcDirs(listOf("$integrationTestDirectory/groovy", generatedIntegrationSources))
+      }
       resources.setSrcDirs(listOf("$integrationTestDirectory/resources"))
+      val generateLocalLibraryRetriever by tasks.creating(GenerateGroovyFile::class) {
+        group = LifecycleBasePlugin.VERIFICATION_GROUP
+        description = "Generates a LibraryRetriever implementation for easier writing of integration tests"
+        packageNamespace = CODEGEN_PACKAGE_NAMESPACE
+        srcDir.set(generatedIntegrationSources)
+        imports = listOf(
+          "hudson.FilePath",
+          "hudson.model.Job",
+          "hudson.model.Run",
+          "hudson.model.TaskListener",
+          "java.nio.file.Path",
+          "java.nio.file.Paths",
+          "javax.annotation.Generated",
+          "javax.annotation.Nonnull",
+          "org.jenkinsci.plugins.workflow.libs.LibraryRetriever"
+        )
+        className = "LocalLibraryRetriever"
+        content = """
+          @Generated(value = ['Shared Library Plugin'])
+          final class LocalLibraryRetriever extends LibraryRetriever {
+
+            private final Path localPath
+
+            LocalLibraryRetriever() {
+              this(Paths.get(System.getProperty('user.dir')))
+            }
+
+            LocalLibraryRetriever(final Path path) {
+              localPath = Objects.requireNonNull(path)
+            }
+
+            @Override
+            void retrieve(
+                @Nonnull final String name,
+                @Nonnull final String version,
+                @Nonnull final boolean changelog,
+                @Nonnull final FilePath target,
+                @Nonnull final Run<? extends Job, ? extends Run> run,
+                @Nonnull final TaskListener listener
+            ) throws Exception {
+              doRetrieve(target, listener)
+            }
+
+            @Override
+            void retrieve(
+                @Nonnull final String name,
+                @Nonnull final String version,
+                @Nonnull final FilePath target,
+                @Nonnull final Run<? extends Job, ? extends Run> run,
+                @Nonnull final TaskListener listener
+            ) throws Exception {
+              doRetrieve(target, listener)
+            }
+  
+            private void doRetrieve(
+              final FilePath target,
+              final TaskListener listener
+            ) {
+              listener.logger.format('Creating to filepath at %s', localPath)
+              final FilePath localFilePath = new FilePath(localPath.toFile())
+              listener.logger.format('Copying from local path %s to workspace path %s', localPath, target)
+              // Copied from SCMSourceRetriever
+              localFilePath.copyRecursiveTo('src/**/*.groovy,vars/*.groovy,vars/*.txt,resources/', null, target)
+            }
+          }
+        """.trimIndent()
+      }
+        tasks[getCompileTaskName("groovy")].dependsOn(generateLocalLibraryRetriever)
     }
 
     return Triple(main, test, integrationTest)

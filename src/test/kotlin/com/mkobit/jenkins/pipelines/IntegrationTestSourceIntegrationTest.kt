@@ -124,14 +124,13 @@ internal class IntegrationTestSourceIntegrationTest {
       it.commit().setMessage("Commit all the files").setAuthor("Mr. Manager", "mrmanager@example.com").call()
     }
 
-    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf( "integrationTest", "-d"))
+    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf( "integrationTest", "-i"))
 
     val task = buildResult.task(":integrationTest")
-    assertThat(task?.outcome)
+    assertThat(task)
       .describedAs("integrationTest task outcome")
       .withFailMessage("Build output: ${buildResult.output}")
-      .isNotNull()
-      .isEqualTo(TaskOutcome.SUCCESS)
+      .isSuccess
   }
 
   @NotImplementedYet
@@ -188,6 +187,13 @@ internal class IntegrationTestSourceIntegrationTest {
     assertThat(buildResult)
       .hasTaskAtPath(":test")
       .hasTaskAtPath(":integrationTest")
+  }
+
+  @TestTemplate
+  internal fun `can use generated Groovy sources in integration tests`(@GradleProject gradleRunner: GradleRunner) {
+    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("check", "-i"))
+    assertThat(buildResult)
+      .hasTaskSuccessAtPath(":compileIntegrationTestGroovy")
   }
 
   @NotImplementedYet
