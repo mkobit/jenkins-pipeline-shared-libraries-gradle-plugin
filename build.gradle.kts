@@ -29,7 +29,7 @@ plugins {
   `java-library`
   `java-gradle-plugin`
   id("com.gradle.plugin-publish") version "0.9.9"
-  id("com.github.ben-manes.versions") version "0.15.0"
+  id("com.github.ben-manes.versions") version "0.17.0"
   // Only used for local publishing for testing
   `maven-publish`
 }
