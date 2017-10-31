@@ -11,7 +11,7 @@ import org.junit.Test
 class ImportClassesCompilationTest {
 
   @Test
-  void canAccessClass() {
+  void canAccessClasses() {
     Assert.assertNotNull(GlobalLibraries.class)
     Assert.assertNotNull(LibraryConfiguration.class)
     Assert.assertNotNull(SCMSourceRetriever.class)

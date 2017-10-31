@@ -6,7 +6,6 @@ import org.assertj.core.api.Assertions.assertThat
 import com.mkobit.gradle.test.assertj.GradleAssertions.assertThat
 import org.assertj.core.api.Assertions.allOf
 import org.assertj.core.api.Assertions.not
-import org.eclipse.jgit.api.Git
 import org.gradle.api.artifacts.Configuration
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
@@ -119,12 +118,7 @@ internal class IntegrationTestSourceIntegrationTest {
 
   @TestTemplate
   internal fun `can set up Global Pipeline Library and use them in an integration test`(@GradleProject gradleRunner: GradleRunner) {
-    Git.init().setDirectory(gradleRunner.projectDir).call().use {
-      it.add().addFilepattern(".").call()
-      it.commit().setMessage("Commit all the files").setAuthor("Mr. Manager", "mrmanager@example.com").call()
-    }
-
-    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf( "integrationTest", "-i"))
+    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("integrationTest", "-i"))
 
     val task = buildResult.task(":integrationTest")
     assertThat(task)

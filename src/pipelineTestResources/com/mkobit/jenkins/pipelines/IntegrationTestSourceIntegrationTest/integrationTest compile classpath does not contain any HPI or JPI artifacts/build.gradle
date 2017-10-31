@@ -11,7 +11,6 @@ final configuration = configurations.getByName(sourceSets.getByName('integration
 tasks.create('showResolvedArtifacts') {
   doFirst {
     configuration.resolvedConfiguration.resolvedArtifacts.each {
-      it.
       println("Resolved Artifact: ${it.moduleVersion}@${it.extension}")
     }
   }

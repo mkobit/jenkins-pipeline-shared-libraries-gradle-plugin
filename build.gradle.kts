@@ -116,7 +116,6 @@ dependencies {
   testImplementation("com.mkobit.gradle.test:assertj-gradle:0.2.0")
   testImplementation("com.google.guava:guava:23.0")
   testImplementation("org.assertj:assertj-core:3.8.0")
-  testImplementation("org.eclipse.jgit:org.eclipse.jgit.junit:4.8.0.201706111038-r")
   testImplementation("com.nhaarman:mockito-kotlin:1.5.0")
   junitTestImplementationArtifacts.values.forEach {
     testImplementation(it)
