@@ -40,7 +40,7 @@ apply {
   from("gradle/junit5.gradle.kts")
 }
 
-version = "0.3.0"
+version = "0.3.1"
 group = "com.mkobit.jenkins.pipelines"
 description = "Gradle plugins for Jenkins Shared libraries usage"
 

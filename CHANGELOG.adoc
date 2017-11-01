@@ -22,6 +22,12 @@ For each release, a subsection should be added for each of the following if they
 * `Fixed` for any bug fixes.
 * `Security` in case of vulnerabilities.
 
+== 0.3.1 (2017/10/31)
+
+=== Fixed
+
+* Issue where build can only be ran with a clean workspace
+
 == 0.3.0 (2017/10/31)
 
 Built and tested on Gradle 4.3.

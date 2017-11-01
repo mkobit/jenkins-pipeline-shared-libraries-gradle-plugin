@@ -93,7 +93,7 @@ internal class IntegrationTestSourceIntegrationTest {
 
   @TestTemplate
   internal fun `can use @JenkinsRule in integration tests`(@GradleProject gradleRunner: GradleRunner) {
-    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf( "integrationTest", "-i"))
+    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("integrationTest", "-i"))
 
     val task = buildResult.task(":integrationTest")
     assertThat(task?.outcome)
@@ -124,6 +124,28 @@ internal class IntegrationTestSourceIntegrationTest {
       .describedAs("integrationTest task outcome")
       .withFailMessage("Build output: ${buildResult.output}")
       .isSuccess
+  }
+
+  @TestTemplate
+  internal fun `run integrationTest repeatedly then tasks are up-to-date`(@GradleProject gradleRunner: GradleRunner) {
+    // Exclude classes to not test main source compilation
+    gradleRunner.buildWith(arguments = listOf("integrationTest", "-x", "classes", "-i")).let { buildResult ->
+      assertThat(buildResult)
+        .tasksWithOutcomeSatisfy(TaskOutcome.SUCCESS) {
+          assertThat(it).isNotEmpty
+        }.tasksWithOutcomeSatisfy(TaskOutcome.UP_TO_DATE) {
+          assertThat(it).isEmpty()
+        }
+    }
+
+    gradleRunner.buildWith(arguments = listOf("integrationTest", "-x", "classes", "-i")).let { buildResult ->
+      assertThat(buildResult)
+        .tasksWithOutcomeSatisfy(TaskOutcome.SUCCESS) {
+          assertThat(it).isEmpty()
+        }.tasksWithOutcomeSatisfy(TaskOutcome.UP_TO_DATE) {
+          assertThat(it).isNotEmpty
+        }
+    }
   }
 
   @NotImplementedYet

@@ -33,6 +33,8 @@ open class GenerateJavaFile @Inject constructor(
   @get:OutputDirectory
   val srcDir: DirectoryProperty = projectLayout.directoryProperty()
 
+  // Used to give Gradle information about output content
+  @Suppress("UNUSED")
   @get:OutputFile
   val destination: Provider<RegularFile> = srcDir.let { dir ->
     dir.file(javaFile.map {
@@ -47,8 +49,8 @@ open class GenerateJavaFile @Inject constructor(
   @TaskAction
   fun createFile() {
     val java = javaFile.get()
-    val destinationPath = destination.get().asFile.toPath()
-    LOGGER.info { "Generating Java file at $destinationPath for class ${java.typeSpec.name} in package ${java.packageName}" }
-    java.writeTo(destinationPath)
+    val srcDirPath = srcDir.get().asFile.toPath()
+    LOGGER.info { "Generating Java file at $ for class ${java.typeSpec.name} in package ${java.packageName} to $srcDirPath" }
+    java.writeTo(srcDirPath)
   }
 }
