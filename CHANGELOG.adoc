@@ -43,6 +43,7 @@ Built and tested on Gradle 4.3.
 
 * The helper methods from `PluginDependencySpec` for adding dependencies from different groups.
   `cloudbees()`, `workflow()`, `jvnet()`, `jenkinsCi()`, and `blueocean()` have all been removed.
+* `git-plugin` no longer included
 
 == 0.2.0 (2017/10/04)
 

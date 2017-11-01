@@ -3,7 +3,6 @@ package com.mkobit.jenkins.pipelines
 import org.gradle.api.provider.Property
 
 class PluginDependencySpec(
-  private val gitPluginVersionState: Property<String>,
   private val workflowApiPluginVersionState: Property<String>,
   private val workflowBasicStepsPluginVersionState: Property<String>,
   private val workflowCpsPluginVersionState: Property<String>,
@@ -24,10 +23,6 @@ class PluginDependencySpec(
   fun dependency(group: String, name: String, version: String) {
     additionalDependencies.add(PluginDependency(group, name, version))
   }
-
-  var gitPluginVersion: String
-    get() = gitPluginVersionState.get()
-    set(value) = gitPluginVersionState.set(value)
 
   var workflowApiPluginVersion: String
     get() = workflowApiPluginVersionState.get()
@@ -73,7 +68,6 @@ class PluginDependencySpec(
     get() = workflowSupportPluginVersionState.get()
     set(value) = workflowSupportPluginVersionState.set(value)
 
-  private fun gitPluginDependency() = "org.jenkins-ci.plugins:git:$gitPluginVersion"
   private fun workflowApiPluginDependency() = "org.jenkins-ci.plugins.workflow:workflow-api:$workflowApiPluginVersion"
   private fun workflowBasicStepsPluginDependency() = "org.jenkins-ci.plugins.workflow:workflow-basic-steps:$workflowBasicStepsPluginVersion"
   private fun workflowCpsPluginDependency() = "org.jenkins-ci.plugins.workflow:workflow-cps:$workflowCpsPluginVersion"
@@ -87,7 +81,6 @@ class PluginDependencySpec(
 
   fun pluginDependencies(): List<PluginDependency> {
     val workflowPluginDependencies: List<PluginDependency> = listOf(
-        gitPluginDependency(),
         workflowApiPluginDependency(),
         workflowBasicStepsPluginDependency(),
         workflowCpsPluginDependency(),

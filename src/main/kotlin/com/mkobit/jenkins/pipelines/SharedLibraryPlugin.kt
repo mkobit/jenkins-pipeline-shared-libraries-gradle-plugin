@@ -50,7 +50,6 @@ open class SharedLibraryPlugin @Inject constructor(
     private val DEFAULT_GROOVY_VERSION = "2.4.11"
     private val DEFAULT_CORE_VERSION = "2.73.2"
     private val DEFAULT_TEST_HARNESS_VERSION = "2.31"
-    private val DEFAULT_GIT_PLUGIN_VERSION = "3.5.1"
     private val DEFAULT_WORKFLOW_API_PLUGIN_VERSION = "2.22"
     private val DEFAULT_WORKFLOW_BASIC_STEPS_PLUGIN_VERSION = "2.6"
     private val DEFAULT_WORKFLOW_CPS_PLUGIN_VERSION = "2.40"
@@ -311,7 +310,6 @@ open class SharedLibraryPlugin @Inject constructor(
     val coreVersion = project.initializedProperty(DEFAULT_CORE_VERSION)
     val pipelineTestUnitVersion = project.initializedProperty(DEFAULT_JENKINS_PIPELINE_UNIT_VERSION)
     val testHarnessVersion = project.initializedProperty(DEFAULT_TEST_HARNESS_VERSION)
-    val gitPluginVersion = project.initializedProperty(DEFAULT_GIT_PLUGIN_VERSION)
     // TODO: find a better DSL for managing these dependencies, possibly by using aggregator plugin because we are still missing some
     val workflowApiPluginVersion = project.initializedProperty(DEFAULT_WORKFLOW_API_PLUGIN_VERSION)
     val workflowBasicStepsPluginVersion = project.initializedProperty(
@@ -331,7 +329,6 @@ open class SharedLibraryPlugin @Inject constructor(
       DEFAULT_WORKFLOW_SUPPORT_PLUGIN_VERSION)
 
     val pluginDependencySpec = PluginDependencySpec(
-      gitPluginVersion,
       workflowApiPluginVersion,
       workflowBasicStepsPluginVersion,
       workflowCpsPluginVersion,
