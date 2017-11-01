@@ -6,7 +6,6 @@ import org.assertj.core.api.Assertions.assertThat
 import com.mkobit.gradle.test.assertj.GradleAssertions.assertThat
 import org.assertj.core.api.Assertions.allOf
 import org.assertj.core.api.Assertions.not
-import org.eclipse.jgit.api.Git
 import org.gradle.api.artifacts.Configuration
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
@@ -38,7 +37,6 @@ internal class IntegrationTestSourceIntegrationTest {
   }
 
   @TestTemplate
-//  internal fun `no HPI artifacts exist in integrationTest compile classpath`(@GradleProject gradleRunner: GradleRunner) {
   internal fun `integrationTest compile classpath does not contain any HPI or JPI artifacts`(@GradleProject gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("--quiet", "showResolvedArtifacts"))
 
@@ -119,19 +117,13 @@ internal class IntegrationTestSourceIntegrationTest {
 
   @TestTemplate
   internal fun `can set up Global Pipeline Library and use them in an integration test`(@GradleProject gradleRunner: GradleRunner) {
-    Git.init().setDirectory(gradleRunner.projectDir).call().use {
-      it.add().addFilepattern(".").call()
-      it.commit().setMessage("Commit all the files").setAuthor("Mr. Manager", "mrmanager@example.com").call()
-    }
-
-    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf( "integrationTest", "-d"))
+    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("integrationTest", "-i"))
 
     val task = buildResult.task(":integrationTest")
-    assertThat(task?.outcome)
+    assertThat(task)
       .describedAs("integrationTest task outcome")
       .withFailMessage("Build output: ${buildResult.output}")
-      .isNotNull()
-      .isEqualTo(TaskOutcome.SUCCESS)
+      .isSuccess
   }
 
   @NotImplementedYet
@@ -188,6 +180,13 @@ internal class IntegrationTestSourceIntegrationTest {
     assertThat(buildResult)
       .hasTaskAtPath(":test")
       .hasTaskAtPath(":integrationTest")
+  }
+
+  @TestTemplate
+  internal fun `can use generated Groovy sources in integration tests`(@GradleProject gradleRunner: GradleRunner) {
+    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("check", "-i"))
+    assertThat(buildResult)
+      .hasTaskSuccessAtPath(":compileIntegrationTestGroovy")
   }
 
   @NotImplementedYet

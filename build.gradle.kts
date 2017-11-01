@@ -29,7 +29,7 @@ plugins {
   `java-library`
   `java-gradle-plugin`
   id("com.gradle.plugin-publish") version "0.9.9"
-  id("com.github.ben-manes.versions") version "0.15.0"
+  id("com.github.ben-manes.versions") version "0.17.0"
   // Only used for local publishing for testing
   `maven-publish`
 }
@@ -108,15 +108,14 @@ val SourceSet.kotlin: SourceDirectorySet
   get() = withConvention(KotlinSourceSet::class) { kotlin }
 
 dependencies {
-  // Switch all these to api and implementation when https://discuss.gradle.org/t/com-gradle-plugin-publish-does-not-respect-new-java-library-configurations/24041 is resolved
   api(gradleApi())
+  api("com.squareup", "javapoet", "1.9.0")
   implementation("io.github.microutils:kotlin-logging:1.4.6")
   testImplementation(kotlin("reflect", embeddedKotlinVersion))
   testImplementation("com.mkobit.gradle.test:gradle-test-kotlin-extensions:0.1.0")
   testImplementation("com.mkobit.gradle.test:assertj-gradle:0.2.0")
   testImplementation("com.google.guava:guava:23.0")
   testImplementation("org.assertj:assertj-core:3.8.0")
-  testImplementation("org.eclipse.jgit:org.eclipse.jgit.junit:4.8.0.201706111038-r")
   testImplementation("com.nhaarman:mockito-kotlin:1.5.0")
   junitTestImplementationArtifacts.values.forEach {
     testImplementation(it)

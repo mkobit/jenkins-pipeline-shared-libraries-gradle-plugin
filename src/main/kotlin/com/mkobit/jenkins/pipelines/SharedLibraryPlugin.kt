@@ -1,5 +1,6 @@
 package com.mkobit.jenkins.pipelines
 
+import com.mkobit.jenkins.pipelines.codegen.GenerateJavaFile
 import mu.KotlinLogging
 import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
@@ -33,7 +34,7 @@ open class SharedLibraryPlugin @Inject constructor(
 ) : Plugin<Project> {
 
   companion object {
-    private val logger = KotlinLogging.logger {}
+    private val LOGGER = KotlinLogging.logger {}
     /**
      * Name of the [org.gradle.api.artifacts.repositories.ArtifactRepository] that is added to the [RepositoryHandler].
      */
@@ -49,7 +50,6 @@ open class SharedLibraryPlugin @Inject constructor(
     private val DEFAULT_GROOVY_VERSION = "2.4.11"
     private val DEFAULT_CORE_VERSION = "2.73.2"
     private val DEFAULT_TEST_HARNESS_VERSION = "2.31"
-    private val DEFAULT_GIT_PLUGIN_VERSION = "3.5.1"
     private val DEFAULT_WORKFLOW_API_PLUGIN_VERSION = "2.22"
     private val DEFAULT_WORKFLOW_BASIC_STEPS_PLUGIN_VERSION = "2.6"
     private val DEFAULT_WORKFLOW_CPS_PLUGIN_VERSION = "2.40"
@@ -77,29 +77,31 @@ open class SharedLibraryPlugin @Inject constructor(
   }
 
   override fun apply(project: Project) {
-    project.pluginManager.apply(GroovyPlugin::class.java)
-    setupJenkinsRepository(project.repositories)
-    val (main, test, integrationTest) = project.withConvention(JavaPluginConvention::class) { setupJava(this) }
-    val sharedLibraryExtension = setupSharedLibraryExtension(project)
-    setupIntegrationTestTask(project.tasks, main, integrationTest)
-    setupDocumentationTasks(project.tasks, main)
-    setupConfigurationsAndDependencyManagement(
-      project.configurations,
-      project.dependencies,
-      main,
-      test,
-      integrationTest
-    )
-    project.afterEvaluate {
-      addGroovyDependency(
-        project.dependencies,
-        sharedLibraryExtension,
-        main
+    project.run {
+      pluginManager.apply(GroovyPlugin::class.java)
+      setupJenkinsRepository(repositories)
+      val (main, test, integrationTest) = withConvention(JavaPluginConvention::class) { setupJava(this, tasks) }
+      val sharedLibraryExtension = setupSharedLibraryExtension(this)
+      setupIntegrationTestTask(tasks, main, integrationTest)
+      setupDocumentationTasks(tasks, main)
+      setupConfigurationsAndDependencyManagement(
+        configurations,
+        dependencies,
+        main,
+        test,
+        integrationTest
       )
-      addDependenciesFromExtension(
-        project.dependencies,
-        sharedLibraryExtension
-      )
+      afterEvaluate {
+        addGroovyDependency(
+          dependencies,
+          sharedLibraryExtension,
+          main
+        )
+        addDependenciesFromExtension(
+          dependencies,
+          sharedLibraryExtension
+        )
+      }
     }
   }
 
@@ -248,7 +250,7 @@ open class SharedLibraryPlugin @Inject constructor(
     sharedLibrary: SharedLibraryExtension,
     main: SourceSet
   ) {
-    logger.debug { "Adding ${sharedLibrary.groovyDependency()} to ${main.implementationConfigurationName}" }
+    LOGGER.debug { "Adding ${sharedLibrary.groovyDependency()} to ${main.implementationConfigurationName}" }
     dependencies.add(
       main.implementationConfigurationName,
       sharedLibrary.groovyDependency()
@@ -256,7 +258,10 @@ open class SharedLibraryPlugin @Inject constructor(
   }
 
   private fun setupJenkinsRepository(repositoryHandler: RepositoryHandler) {
-    logger.debug { "Adding repository named $JENKINS_REPOSITORY_NAME with URL $JENKINS_REPOSITORY_URL" }
+    LOGGER.debug { "Adding repository named $JENKINS_REPOSITORY_NAME with URL $JENKINS_REPOSITORY_URL" }
+//    val maven = repositoryHandler.maven(url = JENKINS_REPOSITORY_URL)
+//    maven.name = JENKINS_REPOSITORY_NAME
+    // Issue with running tests in IntelliJ with this - see https://github.com/gradle/kotlin-dsl/issues/581
     repositoryHandler.maven {
       name = JENKINS_REPOSITORY_NAME
       setUrl(JENKINS_REPOSITORY_URL)
@@ -264,7 +269,8 @@ open class SharedLibraryPlugin @Inject constructor(
   }
 
   private fun setupJava(
-    javaPluginConvention: JavaPluginConvention
+    javaPluginConvention: JavaPluginConvention,
+    tasks: TaskContainer
   ): Triple<SourceSet, SourceSet, SourceSet> {
     javaPluginConvention.sourceCompatibility = JavaVersion.VERSION_1_8
     javaPluginConvention.targetCompatibility = JavaVersion.VERSION_1_8
@@ -279,11 +285,21 @@ open class SharedLibraryPlugin @Inject constructor(
       withConvention(GroovySourceSet::class) { groovy.setSrcDirs(listOf("$unitTestDirectory/groovy")) }
       resources.setSrcDirs(listOf("$unitTestDirectory/resources"))
     }
+    val generatedIntegrationSources = projectLayout.buildDirectory.dir("generated-src/integrationTest")
     val integrationTest by javaPluginConvention.sourceSets.creating {
       val integrationTestDirectory = "$TEST_ROOT_PATH/integration"
       java.setSrcDirs(listOf("$integrationTestDirectory/java"))
-      withConvention(GroovySourceSet::class) { groovy.setSrcDirs(listOf("$integrationTestDirectory/groovy")) }
+      withConvention(GroovySourceSet::class) {
+        groovy.setSrcDirs(listOf("$integrationTestDirectory/groovy", generatedIntegrationSources))
+      }
       resources.setSrcDirs(listOf("$integrationTestDirectory/resources"))
+      val generateLocalLibraryRetriever by tasks.creating(GenerateJavaFile::class) {
+        group = LifecycleBasePlugin.VERIFICATION_GROUP
+        description = "Generates a LibraryRetriever implementation for easier writing of integration tests"
+        srcDir.set(generatedIntegrationSources)
+        javaFile.set(localLibraryAdder())
+      }
+        tasks[getCompileTaskName("groovy")].dependsOn(generateLocalLibraryRetriever)
     }
 
     return Triple(main, test, integrationTest)
@@ -294,7 +310,6 @@ open class SharedLibraryPlugin @Inject constructor(
     val coreVersion = project.initializedProperty(DEFAULT_CORE_VERSION)
     val pipelineTestUnitVersion = project.initializedProperty(DEFAULT_JENKINS_PIPELINE_UNIT_VERSION)
     val testHarnessVersion = project.initializedProperty(DEFAULT_TEST_HARNESS_VERSION)
-    val gitPluginVersion = project.initializedProperty(DEFAULT_GIT_PLUGIN_VERSION)
     // TODO: find a better DSL for managing these dependencies, possibly by using aggregator plugin because we are still missing some
     val workflowApiPluginVersion = project.initializedProperty(DEFAULT_WORKFLOW_API_PLUGIN_VERSION)
     val workflowBasicStepsPluginVersion = project.initializedProperty(
@@ -314,7 +329,6 @@ open class SharedLibraryPlugin @Inject constructor(
       DEFAULT_WORKFLOW_SUPPORT_PLUGIN_VERSION)
 
     val pluginDependencySpec = PluginDependencySpec(
-      gitPluginVersion,
       workflowApiPluginVersion,
       workflowBasicStepsPluginVersion,
       workflowCpsPluginVersion,

@@ -20,7 +20,6 @@ internal class PluginDependencySpecTest {
   private lateinit var pluginDependencySpec: PluginDependencySpec
 
   companion object {
-    private val INITIAL_GIT_PLUGIN_VERSION_VERSION = "4.0"
     private val INITIAL_WORKFLOW_API_PLUGIN_VERSION = "5.0"
     private val INITIAL_WORKFLOW_BASIC_STEPS_PLUGIN_VERSION = "6.0"
     private val INITIAL_WORKFLOW_CPS_PLUGIN_VERSION = "7.0"
@@ -37,7 +36,6 @@ internal class PluginDependencySpecTest {
   internal fun setUp() {
     val project = ProjectBuilder.builder().build()
     pluginDependencySpec = PluginDependencySpec(
-      project.initializedProperty(INITIAL_GIT_PLUGIN_VERSION_VERSION),
       project.initializedProperty(INITIAL_WORKFLOW_API_PLUGIN_VERSION),
       project.initializedProperty(INITIAL_WORKFLOW_BASIC_STEPS_PLUGIN_VERSION),
       project.initializedProperty(INITIAL_WORKFLOW_CPS_PLUGIN_VERSION),
@@ -54,9 +52,6 @@ internal class PluginDependencySpecTest {
   @Test
   internal fun `default versions can be retrieved`() {
     softlyAssert {
-      assertThat(pluginDependencySpec.gitPluginVersion).isEqualTo(
-        INITIAL_GIT_PLUGIN_VERSION_VERSION
-      )
       assertThat(pluginDependencySpec.workflowApiPluginVersion).isEqualTo(
         INITIAL_WORKFLOW_API_PLUGIN_VERSION
       )
@@ -88,13 +83,6 @@ internal class PluginDependencySpecTest {
         INITIAL_WORKFLOW_SUPPORT_PLUGIN_VERSION
       )
     }
-  }
-
-  @Test
-  internal fun `can set Git Plugin version`() {
-    pluginDependencySpec.gitPluginVersion = "newGitVersion"
-
-    assertThat(pluginDependencySpec.gitPluginVersion).isEqualTo("newGitVersion")
   }
 
   @Test
@@ -191,7 +179,6 @@ internal class PluginDependencySpecTest {
     return Stream.of(
       // TODO: should we include scm-api?
 //      Arguments.of("SCM API Plugin", "scm-api"),
-      Arguments.of("Git Plugin", "git", INITIAL_GIT_PLUGIN_VERSION_VERSION),
       Arguments.of("Workflow API Plugin", "workflow-api", INITIAL_WORKFLOW_API_PLUGIN_VERSION),
       Arguments.of("Workflow Basic Steps Plugin", "workflow-basic-steps", INITIAL_WORKFLOW_BASIC_STEPS_PLUGIN_VERSION),
       Arguments.of("Workflow CPS Plugin", "workflow-cps", INITIAL_WORKFLOW_CPS_PLUGIN_VERSION),

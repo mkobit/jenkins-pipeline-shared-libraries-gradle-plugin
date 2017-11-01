@@ -12,11 +12,10 @@ dependencies {
 
 sharedLibrary {
   groovyVersion = "2.4.12"
-  coreVersion = "2.73"
-  pipelineTestUnitVersion = "1.1"
-  testHarnessVersion = "2.24"
+  coreVersion = "2.86"
+  testHarnessVersion = "2.32"
   pluginDependencies {
-    workflowCpsGlobalLibraryPluginVersion = "2.8"
-    dependency("io.jenkins.blueocean", "blueocean-web", "1.2.4")
+    workflowCpsGlobalLibraryPluginVersion = "2.9"
+    dependency("io.jenkins.blueocean", "blueocean-web", "1.3.0")
   }
 }
