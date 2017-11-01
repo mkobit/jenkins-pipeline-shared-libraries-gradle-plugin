@@ -58,10 +58,12 @@ internal fun localLibraryAdder(): JavaFile {
     ).superclass(ClassName.get("org.jenkinsci.plugins.workflow.libs", "LibraryRetriever"))
     .addMethod(
       MethodSpec.constructorBuilder()
+        .addModifiers(Modifier.PUBLIC)
         .addStatement("this(\$T.get(\$T.getProperty(\"user.dir\")))", Paths::class.java, System::class.java)
         .build()
     ).addMethod(
       MethodSpec.constructorBuilder()
+        .addModifiers(Modifier.PUBLIC)
         .addParameter(Path::class.java, "path", Modifier.FINAL)
         .addStatement("localPath = \$T.requireNonNull(path)", Objects::class.java)
         .build()

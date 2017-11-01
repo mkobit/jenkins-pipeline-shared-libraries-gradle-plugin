@@ -205,7 +205,15 @@ internal class IntegrationTestSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `can use generated Groovy sources in integration tests`(@GradleProject gradleRunner: GradleRunner) {
+  internal fun `generated sources can be used in Java integration tests`(@GradleProject gradleRunner: GradleRunner) {
+    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("check", "-i"))
+    assertThat(buildResult)
+      .hasTaskSuccessAtPath(":compileIntegrationTestGroovy")
+  }
+
+
+  @TestTemplate
+  internal fun `generated sources can be used in Groovy integration tests`(@GradleProject gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("check", "-i"))
     assertThat(buildResult)
       .hasTaskSuccessAtPath(":compileIntegrationTestGroovy")
