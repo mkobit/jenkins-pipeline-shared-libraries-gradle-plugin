@@ -31,7 +31,11 @@ It offers the ability to:
 * Integration test using the link:{uri-jenkins-test-harness}[_Jenkins Test Harness_]
 * Code completion in IDE
 
-== Using this plugin
+== Example Consumer
+
+See the link:{uri-consumer-example}[example] for a simple example of how to consume this plugin.
+
+== 5 minute onboarding
 
 . Consume plugin from Gradle plugin portal (using whatever version you choose)
 +
@@ -87,11 +91,10 @@ class LibHelper {
 ----
 package com.mkobit
 
-import jenkins.plugins.git.GitSCMSource
+import com.mkobit.jenkins.pipelines.codegen.LocalLibraryRetriever
 import org.jenkinsci.plugins.workflow.libs.GlobalLibraries
 import org.jenkinsci.plugins.workflow.libs.LibraryConfiguration
 import org.jenkinsci.plugins.workflow.libs.LibraryRetriever
-import org.jenkinsci.plugins.workflow.libs.SCMSourceRetriever
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition
 import org.jenkinsci.plugins.workflow.job.WorkflowJob
 import org.junit.Before
@@ -99,34 +102,19 @@ import org.junit.Rule
 import org.junit.Test
 import org.jvnet.hudson.test.JenkinsRule
 
-
 class JenkinsGlobalLibraryUsageTest {
 
   @Rule
   public JenkinsRule rule = new JenkinsRule()
 
   @Before
-  void configureGlobalGitLibraries() {
+  void configureGlobalLibraries() {
     rule.timeout = 30
-    final libraryPath = System.getProperty('user.dir')
-    println("Using Git library path at $libraryPath")
-    final LibraryRetriever retriever = new SCMSourceRetriever(
-      new GitSCMSource(
-        null,
-        libraryPath,
-        '',
-        'local-source-code',
-        // Fetch everything - if this is not used builds fail on Jenkins for some reason
-        '*:refs/remotes/origin/*',
-        '*',
-        '',
-        true
-      )
-    )
+    final LibraryRetriever retriever = new LocalLibraryRetriever()
     final LibraryConfiguration localLibrary =
-      new LibraryConfiguration('pipelineUtilities', retriever)
+      new LibraryConfiguration('testLibrary', retriever)
     localLibrary.implicit = true
-    localLibrary.defaultVersion = 'git rev-parse HEAD'.execute().text.trim()
+    localLibrary.defaultVersion = 'unused'
     localLibrary.allowVersionOverride = false
     GlobalLibraries.get().setLibraries(Collections.singletonList(localLibrary))
   }
@@ -157,7 +145,7 @@ See the code for full details, but here is an example of what you can configure:
 ----
 sharedLibrary {
   groovyVersion = "2.4.12"
-  coreVersion = "2.73"
+  coreVersion = "2.86"
   testHarnessVersion = "2.24"
   pluginDependencies {
     workflowCpsGlobalLibraryPluginVersion = "2.8"
@@ -165,7 +153,3 @@ sharedLibrary {
   }
 }
 ----
-
-== Example Consumer
-
-See the link:{uri-consumer-example}[example] for an example of consuming this plugin.
