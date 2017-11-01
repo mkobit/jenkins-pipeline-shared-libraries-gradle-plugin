@@ -22,7 +22,7 @@ For each release, a subsection should be added for each of the following if they
 * `Fixed` for any bug fixes.
 * `Security` in case of vulnerabilities.
 
-== UNRELEASED (yyyy/mm/dd)
+== 0.3.0 (2017/10/31)
 
 Built and tested on Gradle 4.3.
 
