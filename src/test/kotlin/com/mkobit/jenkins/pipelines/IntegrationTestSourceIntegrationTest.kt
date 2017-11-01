@@ -37,7 +37,6 @@ internal class IntegrationTestSourceIntegrationTest {
   }
 
   @TestTemplate
-//  internal fun `no HPI artifacts exist in integrationTest compile classpath`(@GradleProject gradleRunner: GradleRunner) {
   internal fun `integrationTest compile classpath does not contain any HPI or JPI artifacts`(@GradleProject gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("--quiet", "showResolvedArtifacts"))
 
