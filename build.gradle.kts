@@ -101,6 +101,39 @@ repositories {
   jcenter()
 }
 
+configurations {
+  // This is very similar to the dependency resolution used in the plugin implementation.
+  // It is mainly used to get IDEA autocompletion and for use it caching dependencies in Circle CI
+  // These are used for code completion in the pipelineTestResources to more easily facilitate writing tests
+  // against the libraries that are used.
+  val pipelineTestResources by java.sourceSets.getting
+
+  val resourcesCompileOnly = get(pipelineTestResources.compileOnlyConfigurationName)
+  val jenkinsPlugins by creating {
+    incoming.afterResolve {
+      val resolvedArtifacts = resolvedConfiguration.resolvedArtifacts
+      resolvedArtifacts
+        .filter { it.extension in setOf("hpi", "jpi") }
+        .map { "${it.moduleVersion}@jar" } // Use the published JAR libraries for each plugin
+        .forEach { project.dependencies.add(resourcesCompileOnly.name, it) }
+      // Include all of the additional JAR dependencies from the transitive dependencies of the plugin
+      resolvedArtifacts
+        .filter { it.extension == "jar" }
+        .map { "${it.moduleVersion}@jar" } // TODO: might not need this
+        .forEach { project.dependencies.add(resourcesCompileOnly.name, it) }
+    }
+  }
+  resourcesCompileOnly.extendsFrom(jenkinsPlugins)
+  configurations.all {
+    incoming.beforeResolve {
+      if (hierarchy.contains(resourcesCompileOnly)) {
+        // Trigger the dependency seeding
+        jenkinsPlugins.resolve()
+      }
+    }
+  }
+}
+
 dependencies {
   api(gradleApi())
   api("com.squareup", "javapoet", "1.9.0")
@@ -124,31 +157,25 @@ dependencies {
   pipelineTestResources.compileOnlyConfigurationName("com.lesfurets:jenkins-pipeline-unit:1.1")
   pipelineTestResources.compileOnlyConfigurationName("org.jenkins-ci.main:jenkins-test-harness:2.31")
   pipelineTestResources.compileOnlyConfigurationName("org.codehaus.groovy:groovy:2.4.11")
-  // TODO: have to figure out a better way to manage these dependencies (and transitives)
-  // TODO: figure out why failing in IntelliJ
-//  val jenkinsPluginDependencies = listOf(
-//    "org.jenkins-ci.plugins:git:3.5.1",
-//    "org.jenkins-ci.plugins.workflow:workflow-api:2.22",
-//    "org.jenkins-ci.plugins.workflow:workflow-basic-steps:2.6",
-//    "org.jenkins-ci.plugins.workflow:workflow-cps:2.40",
-//    "org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:2.9",
-//    "org.jenkins-ci.plugins.workflow:workflow-durable-task-step:2.15",
-//    "org.jenkins-ci.plugins.workflow:workflow-job:2.14.1",
-//    "org.jenkins-ci.plugins.workflow:workflow-multibranch:2.16",
-//    "org.jenkins-ci.plugins.workflow:workflow-scm-step:2.6",
-//    "org.jenkins-ci.plugins.workflow:workflow-step-api:2.13",
-//    "org.jenkins-ci.plugins.workflow:workflow-support:2.15"
-//  )
-//  jenkinsPluginDependencies.forEach {
-//    pipelineTestResources.compileOnlyConfigurationName(it) {
-//      artifact {
-//        name = this@compileOnlyConfigurationName.name
-//        extension = "jar"
-//      }
-//      isTransitive = true
-//    }
-//  }
-  pipelineTestResources.compileOnlyConfigurationName("org.jenkins-ci.main:jenkins-core:2.73.2") {
+  val jenkinsPluginDependencies = listOf(
+    "org.jenkins-ci.plugins:git:3.5.1",
+    "org.jenkins-ci.plugins.workflow:workflow-api:2.22",
+    "org.jenkins-ci.plugins.workflow:workflow-basic-steps:2.6",
+    "org.jenkins-ci.plugins.workflow:workflow-cps:2.40",
+    "org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:2.9",
+    "org.jenkins-ci.plugins.workflow:workflow-durable-task-step:2.15",
+    "org.jenkins-ci.plugins.workflow:workflow-job:2.14.1",
+    "org.jenkins-ci.plugins.workflow:workflow-multibranch:2.16",
+    "org.jenkins-ci.plugins.workflow:workflow-scm-step:2.6",
+    "org.jenkins-ci.plugins.workflow:workflow-step-api:2.13",
+    "org.jenkins-ci.plugins.workflow:workflow-support:2.15"
+  )
+  jenkinsPluginDependencies.forEach {
+    "jenkinsPlugins"(it) {
+      isTransitive = true
+    }
+  }
+  "jenkinsPlugins"("org.jenkins-ci.main:jenkins-core:2.73.2") {
     isTransitive = false
   }
 }
