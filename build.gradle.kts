@@ -1,3 +1,5 @@
+import buildsrc.DependencyInfo
+import buildsrc.ProjectInfo
 import com.gradle.publish.PluginConfig
 import com.gradle.publish.PublishPlugin
 import org.gradle.api.internal.HasConvention
@@ -19,7 +21,7 @@ buildscript {
   dependencies {
     // TODO: load from properties or script plugin
     classpath("org.junit.platform:junit-platform-gradle-plugin:1.0.1")
-    classpath("org.jetbrains.dokka:dokka-gradle-plugin:${dokkaVersion}")
+    classpath("org.jetbrains.dokka:dokka-gradle-plugin:$dokkaVersion")
   }
 }
 
@@ -37,7 +39,6 @@ plugins {
 apply {
   plugin("org.junit.platform.gradle.plugin")
   plugin("org.jetbrains.dokka")
-  from("gradle/junit5.gradle.kts")
 }
 
 version = "0.3.2"
@@ -53,6 +54,9 @@ val gitCommitSha: String by lazy {
     it.toString(Charsets.UTF_8.name()).trim()
   }
 }
+
+val SourceSet.kotlin: SourceDirectorySet
+  get() = withConvention(KotlinSourceSet::class) { kotlin }
 
 buildScan {
   fun env(key: String): String? = System.getenv(key)
@@ -71,16 +75,9 @@ buildScan {
     env("CIRCLE_COMPARE_URL")?.let { link("Diff", it) }
     env("CIRCLE_REPOSITORY_URL")?.let { value("Repository", it) }
     env("CIRCLE_PR_NUMBER")?.let { value("Pull Request Number", it) }
-    link("Repository", "https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin")
+    link("Repository", ProjectInfo.projectUrl)
   }
 }
-
-val kotlinVersion: String = project.property("kotlinVersion") as String
-// Below not working for some reason
-//val kotlinVersion: String by project.properties
-val junitPlatformVersion: String by rootProject.extra
-val junitTestImplementationArtifacts: Map<String, Map<String, String>> by rootProject.extra
-val junitTestRuntimeOnlyArtifacts: Map<String, Map<String, String>> by rootProject.extra
 
 java {
   sourceCompatibility = JavaVersion.VERSION_1_8
@@ -100,27 +97,57 @@ java {
 }
 
 repositories {
-  jcenter()
   maven(url = "https://repo.jenkins-ci.org/public/")
+  jcenter()
 }
 
-val SourceSet.kotlin: SourceDirectorySet
-  get() = withConvention(KotlinSourceSet::class) { kotlin }
+configurations {
+  // This is very similar to the dependency resolution used in the plugin implementation.
+  // It is mainly used to get IDEA autocompletion and for use it caching dependencies in Circle CI
+  // These are used for code completion in the pipelineTestResources to more easily facilitate writing tests
+  // against the libraries that are used.
+  val pipelineTestResources by java.sourceSets.getting
+
+  val resourcesCompileOnly = get(pipelineTestResources.compileOnlyConfigurationName)
+  val jenkinsPlugins by creating {
+    incoming.afterResolve {
+      val resolvedArtifacts = resolvedConfiguration.resolvedArtifacts
+      resolvedArtifacts
+        .filter { it.extension in setOf("hpi", "jpi") }
+        .map { "${it.moduleVersion}@jar" } // Use the published JAR libraries for each plugin
+        .forEach { project.dependencies.add(resourcesCompileOnly.name, it) }
+      // Include all of the additional JAR dependencies from the transitive dependencies of the plugin
+      resolvedArtifacts
+        .filter { it.extension == "jar" }
+        .map { "${it.moduleVersion}@jar" } // TODO: might not need this
+        .forEach { project.dependencies.add(resourcesCompileOnly.name, it) }
+    }
+  }
+  resourcesCompileOnly.extendsFrom(jenkinsPlugins)
+  configurations.all {
+    incoming.beforeResolve {
+      if (hierarchy.contains(resourcesCompileOnly)) {
+        // Trigger the dependency seeding
+        jenkinsPlugins.resolve()
+      }
+    }
+  }
+}
 
 dependencies {
   api(gradleApi())
   api("com.squareup", "javapoet", "1.9.0")
   implementation("io.github.microutils:kotlin-logging:1.4.6")
-  testImplementation(kotlin("reflect", embeddedKotlinVersion))
+  testImplementation(kotlin("reflect"))
   testImplementation("com.mkobit.gradle.test:gradle-test-kotlin-extensions:0.1.0")
   testImplementation("com.mkobit.gradle.test:assertj-gradle:0.2.0")
   testImplementation("com.google.guava:guava:23.0")
   testImplementation("org.assertj:assertj-core:3.8.0")
   testImplementation("com.nhaarman:mockito-kotlin:1.5.0")
-  junitTestImplementationArtifacts.values.forEach {
+  DependencyInfo.junitTestImplementationArtifacts.forEach {
     testImplementation(it)
   }
-  junitTestRuntimeOnlyArtifacts.values.forEach {
+  DependencyInfo.junitTestRuntimeOnlyArtifacts.forEach {
     testRuntimeOnly(it)
   }
 
@@ -130,37 +157,31 @@ dependencies {
   pipelineTestResources.compileOnlyConfigurationName("com.lesfurets:jenkins-pipeline-unit:1.1")
   pipelineTestResources.compileOnlyConfigurationName("org.jenkins-ci.main:jenkins-test-harness:2.31")
   pipelineTestResources.compileOnlyConfigurationName("org.codehaus.groovy:groovy:2.4.11")
-  // TODO: have to figure out a better way to manage these dependencies (and transitives)
-  // TODO: figure out why failing in IntelliJ
-//  val jenkinsPluginDependencies = listOf(
-//    "org.jenkins-ci.plugins:git:3.5.1",
-//    "org.jenkins-ci.plugins.workflow:workflow-api:2.22",
-//    "org.jenkins-ci.plugins.workflow:workflow-basic-steps:2.6",
-//    "org.jenkins-ci.plugins.workflow:workflow-cps:2.40",
-//    "org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:2.9",
-//    "org.jenkins-ci.plugins.workflow:workflow-durable-task-step:2.15",
-//    "org.jenkins-ci.plugins.workflow:workflow-job:2.14.1",
-//    "org.jenkins-ci.plugins.workflow:workflow-multibranch:2.16",
-//    "org.jenkins-ci.plugins.workflow:workflow-scm-step:2.6",
-//    "org.jenkins-ci.plugins.workflow:workflow-step-api:2.13",
-//    "org.jenkins-ci.plugins.workflow:workflow-support:2.15"
-//  )
-//  jenkinsPluginDependencies.forEach {
-//    pipelineTestResources.compileOnlyConfigurationName(it) {
-//      artifact {
-//        name = this@compileOnlyConfigurationName.name
-//        extension = "jar"
-//      }
-//      isTransitive = true
-//    }
-//  }
-  pipelineTestResources.compileOnlyConfigurationName("org.jenkins-ci.main:jenkins-core:2.73.2") {
+  val jenkinsPluginDependencies = listOf(
+    "org.jenkins-ci.plugins:git:3.5.1",
+    "org.jenkins-ci.plugins.workflow:workflow-api:2.22",
+    "org.jenkins-ci.plugins.workflow:workflow-basic-steps:2.6",
+    "org.jenkins-ci.plugins.workflow:workflow-cps:2.40",
+    "org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:2.9",
+    "org.jenkins-ci.plugins.workflow:workflow-durable-task-step:2.15",
+    "org.jenkins-ci.plugins.workflow:workflow-job:2.14.1",
+    "org.jenkins-ci.plugins.workflow:workflow-multibranch:2.16",
+    "org.jenkins-ci.plugins.workflow:workflow-scm-step:2.6",
+    "org.jenkins-ci.plugins.workflow:workflow-step-api:2.13",
+    "org.jenkins-ci.plugins.workflow:workflow-support:2.15"
+  )
+  jenkinsPluginDependencies.forEach {
+    "jenkinsPlugins"(it) {
+      isTransitive = true
+    }
+  }
+  "jenkinsPlugins"("org.jenkins-ci.main:jenkins-core:2.73.2") {
     isTransitive = false
   }
 }
 
 extensions.getByType(JUnitPlatformExtension::class.java).apply {
-  platformVersion = junitPlatformVersion
+  platformVersion = DependencyInfo.junitPlatformVersion
   filters {
     engines {
       include("junit-jupiter")
@@ -171,7 +192,16 @@ extensions.getByType(JUnitPlatformExtension::class.java).apply {
 }
 
 tasks {
+  "wrapper"(Wrapper::class) {
+    gradleVersion = "4.3"
+    distributionType = Wrapper.DistributionType.ALL
+  }
+
   withType<Jar> {
+    from(project.projectDir) {
+      include("LICENSE.txt")
+      into("META-INF")
+    }
     manifest {
       attributes(mapOf(
         "Build-Revision" to gitCommitSha,
@@ -180,13 +210,15 @@ tasks {
     }
   }
 
-  withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "1.8"
+  withType<Javadoc> {
+    options {
+      header = project.name
+      encoding = "UTF-8"
+    }
   }
 
-  "wrapper"(Wrapper::class) {
-    gradleVersion = "4.3"
-    distributionType = Wrapper.DistributionType.ALL
+  withType<KotlinCompile> {
+    kotlinOptions.jvmTarget = "1.8"
   }
 
   "downloadDependencies" {
@@ -361,10 +393,10 @@ gradlePlugin {
 }
 
 pluginBundle {
-  vcsUrl = "https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin"
+  vcsUrl = ProjectInfo.projectUrl
   description = "Configures and sets up a Gradle project for development and testing of a Jenkins Pipeline shared library (https://jenkins.io/doc/book/pipeline/shared-libraries/)"
   tags = listOf("jenkins", "pipeline", "shared library", "global library")
-  website = "https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin"
+  website = ProjectInfo.projectUrl
 
   plugins(delegateClosureOf<NamedDomainObjectContainer<PluginConfig>> {
     invoke {
