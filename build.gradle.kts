@@ -1,3 +1,5 @@
+import buildsrc.DependencyInfo
+import buildsrc.ProjectInfo
 import com.gradle.publish.PluginConfig
 import com.gradle.publish.PublishPlugin
 import org.gradle.api.internal.HasConvention
@@ -19,7 +21,7 @@ buildscript {
   dependencies {
     // TODO: load from properties or script plugin
     classpath("org.junit.platform:junit-platform-gradle-plugin:1.0.1")
-    classpath("org.jetbrains.dokka:dokka-gradle-plugin:${dokkaVersion}")
+    classpath("org.jetbrains.dokka:dokka-gradle-plugin:$dokkaVersion")
   }
 }
 
@@ -37,7 +39,6 @@ plugins {
 apply {
   plugin("org.junit.platform.gradle.plugin")
   plugin("org.jetbrains.dokka")
-  from("gradle/junit5.gradle.kts")
 }
 
 version = "0.3.2"
@@ -53,6 +54,9 @@ val gitCommitSha: String by lazy {
     it.toString(Charsets.UTF_8.name()).trim()
   }
 }
+
+val SourceSet.kotlin: SourceDirectorySet
+  get() = withConvention(KotlinSourceSet::class) { kotlin }
 
 buildScan {
   fun env(key: String): String? = System.getenv(key)
@@ -71,16 +75,9 @@ buildScan {
     env("CIRCLE_COMPARE_URL")?.let { link("Diff", it) }
     env("CIRCLE_REPOSITORY_URL")?.let { value("Repository", it) }
     env("CIRCLE_PR_NUMBER")?.let { value("Pull Request Number", it) }
-    link("Repository", "https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin")
+    link("Repository", ProjectInfo.projectUrl)
   }
 }
-
-val kotlinVersion: String = project.property("kotlinVersion") as String
-// Below not working for some reason
-//val kotlinVersion: String by project.properties
-val junitPlatformVersion: String by rootProject.extra
-val junitTestImplementationArtifacts: Map<String, Map<String, String>> by rootProject.extra
-val junitTestRuntimeOnlyArtifacts: Map<String, Map<String, String>> by rootProject.extra
 
 java {
   sourceCompatibility = JavaVersion.VERSION_1_8
@@ -104,23 +101,20 @@ repositories {
   maven(url = "https://repo.jenkins-ci.org/public/")
 }
 
-val SourceSet.kotlin: SourceDirectorySet
-  get() = withConvention(KotlinSourceSet::class) { kotlin }
-
 dependencies {
   api(gradleApi())
   api("com.squareup", "javapoet", "1.9.0")
   implementation("io.github.microutils:kotlin-logging:1.4.6")
-  testImplementation(kotlin("reflect", embeddedKotlinVersion))
+  testImplementation(kotlin("reflect"))
   testImplementation("com.mkobit.gradle.test:gradle-test-kotlin-extensions:0.1.0")
   testImplementation("com.mkobit.gradle.test:assertj-gradle:0.2.0")
   testImplementation("com.google.guava:guava:23.0")
   testImplementation("org.assertj:assertj-core:3.8.0")
   testImplementation("com.nhaarman:mockito-kotlin:1.5.0")
-  junitTestImplementationArtifacts.values.forEach {
+  DependencyInfo.junitTestImplementationArtifacts.forEach {
     testImplementation(it)
   }
-  junitTestRuntimeOnlyArtifacts.values.forEach {
+  DependencyInfo.junitTestRuntimeOnlyArtifacts.forEach {
     testRuntimeOnly(it)
   }
 
@@ -160,7 +154,7 @@ dependencies {
 }
 
 extensions.getByType(JUnitPlatformExtension::class.java).apply {
-  platformVersion = junitPlatformVersion
+  platformVersion = DependencyInfo.junitPlatformVersion
   filters {
     engines {
       include("junit-jupiter")
@@ -171,7 +165,16 @@ extensions.getByType(JUnitPlatformExtension::class.java).apply {
 }
 
 tasks {
+  "wrapper"(Wrapper::class) {
+    gradleVersion = "4.3"
+    distributionType = Wrapper.DistributionType.ALL
+  }
+
   withType<Jar> {
+    from(project.projectDir) {
+      include("LICENSE.txt")
+      into("META-INF")
+    }
     manifest {
       attributes(mapOf(
         "Build-Revision" to gitCommitSha,
@@ -180,13 +183,15 @@ tasks {
     }
   }
 
-  withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "1.8"
+  withType<Javadoc> {
+    options {
+      header = project.name
+      encoding = "UTF-8"
+    }
   }
 
-  "wrapper"(Wrapper::class) {
-    gradleVersion = "4.3"
-    distributionType = Wrapper.DistributionType.ALL
+  withType<KotlinCompile> {
+    kotlinOptions.jvmTarget = "1.8"
   }
 
   "downloadDependencies" {
@@ -361,10 +366,10 @@ gradlePlugin {
 }
 
 pluginBundle {
-  vcsUrl = "https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin"
+  vcsUrl = ProjectInfo.projectUrl
   description = "Configures and sets up a Gradle project for development and testing of a Jenkins Pipeline shared library (https://jenkins.io/doc/book/pipeline/shared-libraries/)"
   tags = listOf("jenkins", "pipeline", "shared library", "global library")
-  website = "https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin"
+  website = ProjectInfo.projectUrl
 
   plugins(delegateClosureOf<NamedDomainObjectContainer<PluginConfig>> {
     invoke {
