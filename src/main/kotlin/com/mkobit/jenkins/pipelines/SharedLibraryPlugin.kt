@@ -235,9 +235,9 @@ open class SharedLibraryPlugin @Inject constructor(
         .forEach { dependencies.add(jenkinsPluginLibraries.name, it) }
     }
 
-    configurations.forEach { config ->
-      config.incoming.beforeResolve {
-        if (config.hierarchy.contains(jenkinsPluginHpisAndJpis) || config.hierarchy.contains(jenkinsPluginLibraries)) {
+    configurations.all {
+      incoming.beforeResolve {
+        if (hierarchy.contains(jenkinsPluginHpisAndJpis) || hierarchy.contains(jenkinsPluginLibraries)) {
           // Trigger the dependency seeding
           jenkinsPlugins.resolve()
         }
