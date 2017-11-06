@@ -8,41 +8,49 @@ jobs:
           # Disable Kotlin compiler daemon - https://discuss.kotlinlang.org/t/solved-disable-kotlin-compiler-process-keepalive/2622
           GRADLE_OPTS: -Dkotlin.compiler.execution.strategy="in-process"
 
-    working_directory: ~/jenkins-pipeline-shared-libraries-gradle-plugin
+    working_directory: ~/build-working-directory
     steps:
       - checkout
-
+      - run:
+          command: |
+            mkdir -p build
+            find build.gradle.kts gradle buildSrc/src buildSrc/build.gradle.kts -type f -exec sha256sum '{}' \; | tee build/circle-ci-key.txt
       - restore_cache:
           keys:
-          - home-cache-{{ checksum "build.gradle.kts" }}-{{ checksum "gradle.properties" }}-{{ checksum "gradle/junit5.gradle.kts" }}
-          - build-cache-{{ checksum "build.gradle.kts" }}-{{ checksum "gradle.properties" }}-{{ checksum "gradle/junit5.gradle.kts" }}
-
+            - v1-home-cache-{{ checksum "build/circle-ci-key.txt" }}
+            - v1-home-cache-
+      - restore_cache:
+          keys:
+            - v1-build-cache-{{ .Branch }}
+            - v1-build-cache-
       - run:
           command: |
             java -XshowSettings:vm -XX:+PrintCommandLineFlags -version
             java -XshowSettings:vm -XX:+PrintCommandLineFlags -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -version
             javac -version
           name: Show Java Version
-
       - run:
           command: ./gradlew downloadDependencies --max-workers 1 --info --stacktrace
           name: Download Dependencies
-
       - save_cache:
           paths:
             - ~/.gradle
-          key: home-cache-{{ checksum "build.gradle.kts" }}-{{ checksum "gradle.properties" }}-{{ checksum "gradle/junit5.gradle.kts" }}
-
+          key: v1-home-cache-{{ checksum "build/circle-ci-key.txt" }}-{{ epoch }}
       - run:
           command: ./gradlew build --max-workers 1 --info --stacktrace --scan
           name: Gradle Build
-
+      - save_cache:
+          # Integration tests pull in additional Jenkins dependencies like .jpi and .hpi, those are great to cache
+          paths:
+            - ~/.gradle
+          key: v1-home-cache-{{ checksum "build/circle-ci-key.txt" }}-{{ epoch }}
       - store_test_results:
-          path: ~/jenkins-pipeline-shared-libraries-gradle-plugin/build/test-results/
-
+          path: ~/build-working-directory/build/test-results/
       - save_cache:
           paths:
-            - ~/jenkins-pipeline-shared-libraries-gradle-plugin/.gradle
-          key: build-cache-{{ checksum "build.gradle.kts" }}-{{ checksum "gradle.properties" }}-{{ checksum "gradle/junit5.gradle.kts" }}
-
+            - ~/build-working-directory/.gradle
+            - ~/build-working-directory/build
+            - ~/build-working-directory/buildSrc/.gradle
+            - ~/build-working-directory/buildSrc/build
+          key: v1-build-cache-{{ .Branch }}-{{ .BuildNum }}
 

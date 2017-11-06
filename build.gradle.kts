@@ -97,8 +97,8 @@ java {
 }
 
 repositories {
-  jcenter()
   maven(url = "https://repo.jenkins-ci.org/public/")
+  jcenter()
 }
 
 dependencies {
