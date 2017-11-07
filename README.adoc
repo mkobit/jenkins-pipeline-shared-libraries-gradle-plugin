@@ -1,13 +1,14 @@
 = Jenkins Pipeline Shared Library Gradle Plugin
 :toc:
 :latest-version: 0.3.2
-:uri-github-releases: https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/releases
+:github-repo-id: jenkins-pipeline-shared-libraries-gradle-plugin
+:uri-github-releases: https://github.com/mkobit/{github-repo-id}/releases
 :uri-jenkins-test-harness: https://github.com/jenkinsci/jenkins-test-harness.git
 :uri-jenkins-shared-library-docs: https://jenkins.io/doc/book/pipeline/shared-libraries/
 :uri-jenkins-pipeline-unit: https://github.com/lesfurets/JenkinsPipelineUnit
 :uri-consumer-example: https://github.com/mkobit/jenkins-pipeline-shared-library-example
-:uri-build-status-image: https://circleci.com/gh/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/tree/master.svg?style=svg
-:circle-ci-status-badge: image:{uri-build-status-image}["CircleCI", link="https://circleci.com/gh/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/tree/master"]
+:uri-build-status-image: https://circleci.com/gh/mkobit/{github-repo-id}/tree/master.svg?style=svg
+:circle-ci-status-badge: image:{uri-build-status-image}["CircleCI", link="https://circleci.com/gh/mkobit/{github-repo-id}/tree/master"]
 :uri-version-badge-image: https://img.shields.io/badge/Gradle%20Plugin-{latest-version}-blue.svg
 :uri-gradle-plugin-portal: https://plugins.gradle.org/plugin/com.mkobit.jenkins.pipelines.shared-library
 :uri-zenhub-badge: https://raw.githubusercontent.com/ZenHubIO/support/master/zenhub-badge.png
@@ -45,7 +46,7 @@ plugins {
   id("com.mkobit.jenkins.pipelines.shared-library") version "{latest-version}"
 }
 ----
-. Set up test dependencies (like JUnit or Spock)
+. Set up preferred test dependencies (like JUnit or Spock)
 +
 [source, groovy]
 ----
@@ -55,14 +56,6 @@ repositories {
 
 dependencies {
   testImplementation(group: 'junit', name: 'junit', version: '4.12')
-}
-----
-. (Optional) Add dependency to use Jenkins Pipeline Unit for use in unit tests
-+
-[source, kotlin]
-----
-sharedLibrary {
-  pipelineTestUnitVersion = "1.1"
 }
 ----
 . Write some shared library code
@@ -84,7 +77,7 @@ class LibHelper {
 }
 
 ----
-. Write test utilizing `JenkinsRule` that sets up the shared library
+. Write integration tests utilizing `JenkinsRule` that sets up the shared library
 +
 .test/integration/groovy/com/mkobit/JenkinsGlobalLibraryUsageTest.groovy
 [source, groovy]
@@ -122,11 +115,11 @@ class JenkinsGlobalLibraryUsageTest {
   @Test
   void testingMyLibrary() {
     final CpsFlowDefinition flow = new CpsFlowDefinition('''
-import com.mkobit.LibHelper
+        import com.mkobit.LibHelper
 
-final libHelper = new LibHelper(this)
-libHelper.sayHelloTo('mkobit')
-    ''', true)
+        final libHelper = new LibHelper(this)
+        libHelper.sayHelloTo('mkobit')
+    '''.stripIndent(), true)
     final WorkflowJob workflowJob = rule.createProject(WorkflowJob, 'project')
     workflowJob.definition = flow
     rule.buildAndAssertSuccess(workflowJob)

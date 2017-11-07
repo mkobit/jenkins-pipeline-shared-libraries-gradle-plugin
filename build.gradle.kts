@@ -158,7 +158,6 @@ dependencies {
   pipelineTestResources.compileOnlyConfigurationName("org.jenkins-ci.main:jenkins-test-harness:2.31")
   pipelineTestResources.compileOnlyConfigurationName("org.codehaus.groovy:groovy:2.4.11")
   val jenkinsPluginDependencies = listOf(
-    "org.jenkins-ci.plugins:git:3.5.1",
     "org.jenkins-ci.plugins.workflow:workflow-api:2.22",
     "org.jenkins-ci.plugins.workflow:workflow-basic-steps:2.6",
     "org.jenkins-ci.plugins.workflow:workflow-cps:2.40",
@@ -171,9 +170,7 @@ dependencies {
     "org.jenkins-ci.plugins.workflow:workflow-support:2.15"
   )
   jenkinsPluginDependencies.forEach {
-    "jenkinsPlugins"(it) {
-      isTransitive = true
-    }
+    "jenkinsPlugins"(it)
   }
   "jenkinsPlugins"("org.jenkins-ci.main:jenkins-core:2.73.2") {
     isTransitive = false
