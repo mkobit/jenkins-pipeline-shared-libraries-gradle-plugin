@@ -103,7 +103,7 @@ internal fun localLibraryAdder(): JavaFile {
         .addException(IOException::class.java)
         .addException(InterruptedException::class.java)
         .addStatement("final FilePath localFilePath = new FilePath(localPath.toFile())")
-        .addStatement("listener.getLogger().format(\$S, localPath, target)", "Copying from local path %s to workspace path %s")
+        .addStatement("listener.getLogger().format(\$S, localPath, target)", "Copying from local path %s to workspace path %s${System.lineSeparator()}")
         .addComment("Exclusion filter copied from SCMSourceRetriever")
         .addStatement("localFilePath.copyRecursiveTo(${'$'}S, null, target)", "src/**/*.groovy,vars/*.groovy,vars/*.txt,resources/")
         .build()

@@ -22,17 +22,23 @@ For each release, a subsection should be added for each of the following if they
 * `Fixed` for any bug fixes.
 * `Security` in case of vulnerabilities.
 
+== UNRELEASED
+
+=== Fixed
+
+* Generated library retriever First step from pipeline execution no longer not log on same line as generated library retriever
+
 == 0.3.2 (2017/10/31)
 
 === Fixed
 
-* Constructor visibility in generated library retriever
+* Constructor visibility in generated library retriever should be `public`
 
 == 0.3.1 (2017/10/31)
 
 === Fixed
 
-* Issue where build can only be ran with a clean workspace
+* Build fails when ran in a non-clean workspace
 
 == 0.3.0 (2017/10/31)
 
