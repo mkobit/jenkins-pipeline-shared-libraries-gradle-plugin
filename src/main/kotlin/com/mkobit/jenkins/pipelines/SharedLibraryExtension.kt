@@ -28,10 +28,18 @@ open class SharedLibraryExtension(
     get() = coreVersionState.get()
     set(value) = coreVersionState.set(value)
 
+  /**
+   * Version of the [JenkinsPipelineUnit](https://github.com/jenkinsci/JenkinsPipelineUnit) library to use
+   * in unit tests.
+   */
   var pipelineTestUnitVersion: String
     get() = pipelineTestUnitVersionState.get()
     set(value) = pipelineTestUnitVersionState.set(value)
 
+  /**
+   * Version of the [jenkins-test-harness](https://github.com/jenkinsci/jenkins-test-harness) library to use in
+   * integration tests.
+   */
   var testHarnessVersion: String
     get() = testHarnessVersionState.get()
     set(value) = testHarnessVersionState.set(value)

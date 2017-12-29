@@ -3,6 +3,7 @@ package testsupport
 import com.google.common.io.Resources
 import mu.KotlinLogging
 import org.gradle.testkit.runner.GradleRunner
+import org.gradle.util.GradleVersion
 import org.junit.jupiter.api.extension.AfterTestExecutionCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.ParameterContext
@@ -21,7 +22,7 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.util.Optional
 import kotlin.reflect.jvm.kotlinFunction
 
-internal class ResourceGradleProjectProviderExtension(private val gradleVersion: String?) : ParameterResolver, AfterTestExecutionCallback {
+internal class ResourceGradleProjectProviderExtension(private val gradleVersion: GradleVersion) : ParameterResolver, AfterTestExecutionCallback {
 
   companion object {
     private val LOGGER = KotlinLogging.logger { }
@@ -43,16 +44,13 @@ internal class ResourceGradleProjectProviderExtension(private val gradleVersion:
     if (executable is Constructor<*>) {
       throw IllegalArgumentException("Cannot resolve parameter for constructor $executable")
     }
-    val runner = GradleRunner.create()
     val store = getStore(context)
     val temporaryPath: Path = loadGradleProject(context)
     store.put(context, temporaryPath)
-    runner.withProjectDir(temporaryPath.toFile())
-    if (gradleVersion != null) {
-      runner.withGradleVersion(gradleVersion)
+    return GradleRunner.create().apply {
+      withProjectDir(temporaryPath.toFile())
+      withGradleVersion(gradleVersion.version)
     }
-
-    return runner
   }
 
   override fun afterTestExecution(context: ExtensionContext) {

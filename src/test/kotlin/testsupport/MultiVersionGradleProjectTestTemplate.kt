@@ -11,38 +11,61 @@ import java.util.stream.Stream
 
 @ExtendWith(MultiVersionGradleProjectTestTemplate::class)
 @Target(AnnotationTarget.CLASS)
-annotation class GradleVersions(val versions: Array<String> = emptyArray())
+annotation class MultiGradleVersion(
+  val versions: Array<String> = arrayOf()
+)
 
 internal class MultiVersionGradleProjectTestTemplate : TestTemplateInvocationContextProvider {
+
+  companion object {
+    private val currentGradleVersion: GradleVersion by lazy {
+      GradleVersion.current()
+    }
+    private val DEFAULT_VERSIONS: List<GradleProjectInvocationContext> by lazy {
+      listOf(
+        GradleProjectInvocationContext(GradleVersion.version("4.3")),
+        GradleProjectInvocationContext(GradleVersion.version("4.4")),
+        GradleProjectInvocationContext(currentGradleVersion, "${currentGradleVersion.version} (current)")
+      )
+    }
+
+  }
+
   override fun provideTestTemplateInvocationContexts(context: ExtensionContext): Stream<TestTemplateInvocationContext> {
     return context.testClass
-      .flatMap { clazz -> AnnotationSupport.findAnnotation(clazz, GradleVersions::class.java) }
+      .flatMap { clazz -> AnnotationSupport.findAnnotation(clazz, MultiGradleVersion::class.java) }
       .map { gradleVersions -> gradleVersions.versions }
-      .map { versions -> versions.map { GradleProjectInvocationContext.ForVersion(it) } }
-      .map { contexts -> contexts + listOf(GradleProjectInvocationContext.CurrentVersion) }
+      .map { versions -> versions.map { GradleProjectInvocationContext(GradleVersion.version(it)) } }
+      .map { contexts -> contexts.orDefault() }
       .map { it.toSet() }
       .map { it.stream() }
       .orElseThrow { Exception("Don't think this should happen") }
       .map { it as TestTemplateInvocationContext } // Why is this cast needed for Kotlin?
   }
 
+  private fun List<GradleProjectInvocationContext>.orDefault(): List<GradleProjectInvocationContext> =
+    if (isNotEmpty()) {
+      this
+    } else {
+      DEFAULT_VERSIONS
+    }
+
   // better handle @NotImplemented cases
   override fun supportsTestTemplate(context: ExtensionContext): Boolean = context.testClass
-      .map { clazz ->  AnnotationSupport.findAnnotation(clazz, GradleVersions::class.java) }
+      .map { clazz ->  AnnotationSupport.findAnnotation(clazz, MultiGradleVersion::class.java) }
       .isPresent
 }
 
-private sealed class GradleProjectInvocationContext(
-  private val displayVersion: String,
-  private val version: String?
+private data class GradleProjectInvocationContext(
+  val version: GradleVersion,
+  private val overrideDisplayVersion: String? = null
 ) : TestTemplateInvocationContext {
 
+  private val displayName: String
+    get() = overrideDisplayVersion ?: version.version
+
   // TODO: improve this
-  override fun getDisplayName(invocationIndex: Int): String = "Gradle version: $displayVersion"
+  override fun getDisplayName(invocationIndex: Int): String = "Gradle version: $displayName"
 
   override fun getAdditionalExtensions(): List<Extension> = listOf(ResourceGradleProjectProviderExtension(version))
-
-  object CurrentVersion : GradleProjectInvocationContext("current [${GradleVersion.current().version}]", null)
-
-  class ForVersion(version: String) : GradleProjectInvocationContext("[$version]", version)
 }

@@ -137,7 +137,7 @@ configurations {
 dependencies {
   api(gradleApi())
   api("com.squareup", "javapoet", "1.9.0")
-  implementation("io.github.microutils:kotlin-logging:1.4.6")
+  implementation("io.github.microutils:kotlin-logging:1.4.8")
   testImplementation(kotlin("reflect"))
   testImplementation("com.mkobit.gradle.test:gradle-test-kotlin-extensions:0.1.0")
   testImplementation("com.mkobit.gradle.test:assertj-gradle:0.2.0")
@@ -190,7 +190,7 @@ extensions.getByType(JUnitPlatformExtension::class.java).apply {
 
 tasks {
   "wrapper"(Wrapper::class) {
-    gradleVersion = "4.3"
+    gradleVersion = "4.4.1"
     distributionType = Wrapper.DistributionType.ALL
   }
 
@@ -282,6 +282,7 @@ tasks {
   remove(getByName("javadoc"))
   val dokka by getting(DokkaTask::class) {
     dependsOn(main.classesTaskName)
+    jdkVersion = 8
     outputFormat = "html"
     outputDirectory = "$buildDir/javadoc"
     sourceDirs = main.kotlin.srcDirs
