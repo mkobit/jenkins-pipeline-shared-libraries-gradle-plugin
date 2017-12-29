@@ -24,6 +24,11 @@ For each release, a subsection should be added for each of the following if they
 
 == UNRELEASED
 
+=== Changed
+
+* Upgraded to Gradle 4.4.1
+* Upgraded to Kotlin 1.2.10
+
 === Fixed
 
 * Generated library retriever First step from pipeline execution no longer not log on same line as generated library retriever

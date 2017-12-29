@@ -190,7 +190,7 @@ extensions.getByType(JUnitPlatformExtension::class.java).apply {
 
 tasks {
   "wrapper"(Wrapper::class) {
-    gradleVersion = "4.3"
+    gradleVersion = "4.4.1"
     distributionType = Wrapper.DistributionType.ALL
   }
 
@@ -282,6 +282,7 @@ tasks {
   remove(getByName("javadoc"))
   val dokka by getting(DokkaTask::class) {
     dependsOn(main.classesTaskName)
+    jdkVersion = 8
     outputFormat = "html"
     outputDirectory = "$buildDir/javadoc"
     sourceDirs = main.kotlin.srcDirs

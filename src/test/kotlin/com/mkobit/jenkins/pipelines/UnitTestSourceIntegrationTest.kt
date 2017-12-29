@@ -7,11 +7,11 @@ import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.api.TestTemplate
 import testsupport.GradleProject
-import testsupport.GradleVersions
+import testsupport.MultiGradleVersion
 import testsupport.Integration
 
 @Integration
-@GradleVersions
+@MultiGradleVersion
 internal class UnitTestSourceIntegrationTest {
 
   @TestTemplate
