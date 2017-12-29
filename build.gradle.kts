@@ -12,7 +12,7 @@ import org.junit.platform.console.options.Details
 import java.io.ByteArrayOutputStream
 
 plugins {
-  id("com.gradle.build-scan") version "1.10.1"
+  id("com.gradle.build-scan") version "1.11"
   `kotlin-dsl`
   `java-library`
   `java-gradle-plugin`
@@ -23,6 +23,7 @@ plugins {
   id("org.junit.platform.gradle.plugin") version "1.0.1"
   // Only used for local publishing for testing
   `maven-publish`
+ id("buildsrc.jenkins-rebaseline")
 }
 
 version = "0.3.2"
