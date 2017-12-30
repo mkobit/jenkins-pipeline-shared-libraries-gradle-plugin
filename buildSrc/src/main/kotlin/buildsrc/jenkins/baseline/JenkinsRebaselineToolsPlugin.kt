@@ -20,7 +20,7 @@ open class JenkinsRebaselineToolsPlugin : Plugin<Project> {
       val stableDownloadDirectory = layout.buildDirectory.dir(splitBySeparator("updateCenter", "stable"))
       val downloadLatestCoreVersion by tasks.creating(DownloadFile::class) {
         baseUrl.set("https://updates.jenkins.io/")
-        downloadPath.set("stable/update-center.actual.json")
+        downloadPath.set("stable/latestCore.txt")
         destination.set(stableDownloadDirectory.map { it.file("latestCore.txt") })
         upToDateDuration.set(defaultUpToDateDownloadDuration)
       }
