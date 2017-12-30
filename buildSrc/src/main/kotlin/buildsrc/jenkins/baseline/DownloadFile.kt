@@ -44,6 +44,7 @@ open class DownloadFile @Inject constructor(
           Instant.ofEpochMilli(destinationFile.lastModified()),
           Instant.now()
         )
+        logger.debug("Time between now and update is $between, allowable duration is $it")
         it > between
       }.getOrElse(false)
     }
