@@ -19,7 +19,6 @@ open class JenkinsRebaselineToolsPlugin : Plugin<Project> {
 
   companion object {
     private val defaultUpToDateDownloadDuration = Duration.ofDays(1L)
-    private val gavRegex = Regex("""^.*:.*:([\d\\.]*)${'$'}""")
   }
   override fun apply(target: Project) {
     target.run {
@@ -47,7 +46,7 @@ open class JenkinsRebaselineToolsPlugin : Plugin<Project> {
       val ltsVersion: Provider<String> = downloadLatestCoreVersion.destination.map { it.asFile.readText().trim() }
       val testHarnessManifest = downloadJenkinsTestHarnessManifest.destination.map { xmlMapper.readTree(it.asFile) }
 
-      val updateSharedLibraryPlugin by tasks.creating(ReplaceTextInFile::class) {
+      val updateSharedLibraryPluginVersions by tasks.creating(ReplaceTextInFile::class) {
         group = "Development"
         description = "Updates the values in SharedLibraryPlugin.kt to the latest LTS and versions from the update center"
         dependsOn(downloadLatestCoreVersion, downloadUpdateCenterJson, downloadJenkinsTestHarnessManifest)
