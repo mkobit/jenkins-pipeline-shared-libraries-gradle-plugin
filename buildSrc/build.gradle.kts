@@ -9,6 +9,7 @@ repositories {
 
 dependencies {
   implementation("com.fasterxml.jackson.core:jackson-core:2.9.3")
+  implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.9.0")
   implementation("com.squareup.retrofit2:converter-jackson:2.3.0")
   implementation("com.squareup.retrofit2:retrofit:2.3.0")
 }

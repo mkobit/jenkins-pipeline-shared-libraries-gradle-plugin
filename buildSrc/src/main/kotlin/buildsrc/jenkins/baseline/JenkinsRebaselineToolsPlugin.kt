@@ -2,6 +2,7 @@ package buildsrc.jenkins.baseline
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.dataformat.xml.XmlMapper
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.provider.Provider
@@ -11,6 +12,11 @@ import java.io.File
 import java.time.Duration
 
 open class JenkinsRebaselineToolsPlugin : Plugin<Project> {
+
+  private val xmlMapper: XmlMapper by lazy { XmlMapper() }
+
+  private val objectMapper: ObjectMapper by lazy { ObjectMapper() }
+
   companion object {
     private val defaultUpToDateDownloadDuration = Duration.ofDays(1L)
     private val gavRegex = Regex("""^.*:.*:([\d\\.]*)${'$'}""")
@@ -30,20 +36,27 @@ open class JenkinsRebaselineToolsPlugin : Plugin<Project> {
         destination.set(stableDownloadDirectory.map { it.file("update-center.actual.json") })
         upToDateDuration.set(defaultUpToDateDownloadDuration)
       }
+      val downloadJenkinsTestHarnessManifest by tasks.creating(DownloadFile::class) {
+        baseUrl.set("https://repo.jenkins-ci.org/public/")
+        downloadPath.set("org/jenkins-ci/main/jenkins-test-harness/maven-metadata.xml ")
+        destination.set(stableDownloadDirectory.map { it.file("jenkins-test-harness-maven-metadata.xml") })
+        upToDateDuration.set(defaultUpToDateDownloadDuration)
+      }
 
-      val updateCenter: Provider<JsonNode> = downloadUpdateCenterJson.destination.map { ObjectMapper().readTree(it.asFile) }
+      val updateCenter: Provider<JsonNode> = downloadUpdateCenterJson.destination.map { objectMapper.readTree(it.asFile) }
       val ltsVersion: Provider<String> = downloadLatestCoreVersion.destination.map { it.asFile.readText().trim() }
+      val testHarnessManifest = downloadJenkinsTestHarnessManifest.destination.map { xmlMapper.readTree(it.asFile) }
 
       val updateSharedLibraryPlugin by tasks.creating(ReplaceTextInFile::class) {
         group = "Development"
         description = "Updates the values in SharedLibraryPlugin.kt to the latest LTS and versions from the update center"
-        dependsOn(downloadLatestCoreVersion, downloadUpdateCenterJson)
+        dependsOn(downloadLatestCoreVersion, downloadUpdateCenterJson, downloadJenkinsTestHarnessManifest)
         targetFile.set(layout.projectDirectory.file(splitBySeparator("src", "main", "kotlin", "com", "mkobit", "jenkins", "pipelines", "SharedLibraryPlugin.kt")))
         replacements.run {
           // groovy version
-//          add(ltsVersion.map { constantReplacement("DEFAULT_GROOVY_VERSION", it) })
+//          add(coreGroovyVersion.map { constantReplacement("DEFAULT_GROOVY_VERSION", it) })
           add(ltsVersion.map { constantReplacement("DEFAULT_CORE_VERSION", it) })
-//          add(ltsVersion.map { constantReplacement("DEFAULT_TEST_HARNESS_VERSION", it) })
+          add(testHarnessManifest.map { constantReplacement("DEFAULT_TEST_HARNESS_VERSION", latestVersionFromManifest(it)) })
           add(updateCenter.map { constantReplacement("DEFAULT_WORKFLOW_API_PLUGIN_VERSION", versionForPlugin(it, "workflow-api")) })
           add(updateCenter.map { constantReplacement("DEFAULT_WORKFLOW_BASIC_STEPS_PLUGIN_VERSION", versionForPlugin(it, "workflow-basic-steps")) })
           add(updateCenter.map { constantReplacement("DEFAULT_WORKFLOW_CPS_PLUGIN_VERSION", versionForPlugin(it, "workflow-cps")) })
@@ -63,6 +76,9 @@ open class JenkinsRebaselineToolsPlugin : Plugin<Project> {
     return jsonNode.get("plugins").get(pluginId).get("version").textValue()
   }
 
+  private fun latestVersionFromManifest(jsonNode: JsonNode): String {
+    return jsonNode.get("versioning").get("latest").textValue()
+  }
 
   private fun constantReplacement(name: String, newVersion: String): Replacement {
     return Replacement(
