@@ -13,7 +13,6 @@ import org.junit.platform.gradle.plugin.JUnitPlatformExtension
 import java.io.ByteArrayOutputStream
 
 buildscript {
-  val dokkaVersion = "0.9.15"
   repositories {
     mavenCentral()
     jcenter()
@@ -21,7 +20,6 @@ buildscript {
   dependencies {
     // TODO: load from properties or script plugin
     classpath("org.junit.platform:junit-platform-gradle-plugin:1.0.1")
-    classpath("org.jetbrains.dokka:dokka-gradle-plugin:$dokkaVersion")
   }
 }
 
@@ -32,13 +30,13 @@ plugins {
   `java-gradle-plugin`
   id("com.gradle.plugin-publish") version "0.9.9"
   id("com.github.ben-manes.versions") version "0.17.0"
+  id("org.jetbrains.dokka") version "0.9.15"
   // Only used for local publishing for testing
   `maven-publish`
 }
 
 apply {
   plugin("org.junit.platform.gradle.plugin")
-  plugin("org.jetbrains.dokka")
 }
 
 version = "0.3.2"
