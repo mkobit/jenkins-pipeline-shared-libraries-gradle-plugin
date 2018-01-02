@@ -68,6 +68,12 @@ open class JenkinsRebaselineToolsPlugin : Plugin<Project> {
           add(updateCenter.map { constantReplacement("DEFAULT_WORKFLOW_SUPPORT_PLUGIN_VERSION", versionForPlugin(it, "workflow-support")) })
         }
       }
+
+      val runRebaseline by tasks.creating {
+        group = "Development"
+        description = "Executes tasks to rebaseline project"
+        dependsOn(updateSharedLibraryPluginVersions)
+      }
     }
   }
 
