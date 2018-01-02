@@ -1,9 +1,7 @@
 pluginManagement {
   it.resolutionStrategy {
     it.eachPlugin {
-      if (it.requested.id.id.startsWith('org.jetbrains.kotlin')) {
-        it.useVersion("${kotlinVersion}")
-      } else if (it.requested.id.id == 'org.jetbrains.dokka') {
+      if (it.requested.id.id == 'org.jetbrains.dokka') {
         it.useModule("org.jetbrains.dokka:dokka-gradle-plugin:${it.requested.version}")
       } else if (it.requested.id.id == 'org.junit.platform.gradle.plugin') {
         it.useModule("org.junit.platform:junit-platform-gradle-plugin:${it.requested.version}")
