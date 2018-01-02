@@ -31,7 +31,7 @@ jobs:
             javac -version
           name: Show Java Version
       - run:
-          command: ./gradlew downloadDependencies --max-workers 1 --info --stacktrace
+          command: ./gradlew downloadDependencies --max-workers 1 --stacktrace
           name: Download Dependencies
       - save_cache:
           paths:
