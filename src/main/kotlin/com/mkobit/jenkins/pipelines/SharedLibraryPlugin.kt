@@ -294,7 +294,6 @@ open class SharedLibraryPlugin @Inject constructor(
       }
       resources.setSrcDirs(listOf("$integrationTestDirectory/resources"))
       val generateLocalLibraryRetriever by tasks.creating(GenerateJavaFile::class) {
-        group = LifecycleBasePlugin.VERIFICATION_GROUP
         description = "Generates a LibraryRetriever implementation for easier writing of integration tests"
         srcDir.set(generatedIntegrationSources)
         javaFile.set(localLibraryAdder())

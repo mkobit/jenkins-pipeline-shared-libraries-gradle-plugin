@@ -1,5 +1,6 @@
 package com.mkobit.jenkins.pipelines
 
+import com.mkobit.jenkins.pipelines.codegen.GenerateJavaFile
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Condition
 import org.assertj.core.condition.AllOf.allOf
@@ -312,6 +313,19 @@ internal class SharedLibraryPluginTest {
     assertThat(configuration.extendsFrom.map { it.name })
       .isNotEmpty
       .contains("jenkinsTestLibrariesRuntimeOnly", "jenkinsPluginHpisAndJpis")
+  }
+
+  @Test
+  internal fun `code generation tasks do not have a group`() {
+    val generationTasks = project.tasks.withType(GenerateJavaFile::class.java)
+
+    assertThat(generationTasks)
+      .isNotEmpty
+      .allSatisfy {
+        assertThat(it.group)
+          .`as`("Group is not set")
+          .isNull()
+      }
   }
 
   @NotImplementedYet
