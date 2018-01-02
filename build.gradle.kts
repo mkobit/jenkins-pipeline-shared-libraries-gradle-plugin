@@ -224,7 +224,7 @@ tasks {
 
   "junitPlatformTest"(JavaExec::class) {
     systemProperty("com.mkobit.gradle.test.testkit.runner.DefaultRunnerConfigurer.stacktrace", "full-stacktrace")
-    jvmArgs("-XshowSettings:vm", "-XX:+PrintGCTimeStamps", "-XX:+UseG1GC", "-Xmx1g", "-Xms512m")
+    jvmArgs("-XshowSettings:vm", "-XX:+PrintGCTimeStamps", "-XX:+UseG1GC", "-Xmx3g", "-Xms1g")
   }
 
   val circleCiScriptDestination = file("$buildDir/circle/circleci")
