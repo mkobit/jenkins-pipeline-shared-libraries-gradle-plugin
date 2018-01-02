@@ -61,11 +61,11 @@ private data class GradleProjectInvocationContext(
   private val overrideDisplayVersion: String? = null
 ) : TestTemplateInvocationContext {
 
-  private val displayName: String
+  private val displayVersion: String
     get() = overrideDisplayVersion ?: version.version
 
   // TODO: improve this
-  override fun getDisplayName(invocationIndex: Int): String = "Gradle version: $displayName"
+  override fun getDisplayName(invocationIndex: Int): String = "Gradle version: $displayVersion"
 
   override fun getAdditionalExtensions(): List<Extension> = listOf(ResourceGradleProjectProviderExtension(version))
 }
