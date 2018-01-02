@@ -9,9 +9,9 @@ pluginManagement {
     }
   }
   repositories {
+    jcenter()
     gradlePluginPortal()
     mavenCentral()
-    jcenter()
   }
 }
 
