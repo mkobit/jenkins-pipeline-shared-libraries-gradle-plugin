@@ -40,6 +40,10 @@ jobs:
       - run:
           command: ./gradlew build --max-workers 1 --info --stacktrace --scan
           name: Gradle Build
+      - run:
+          command: ./gradlew --status
+          name: Show Daemon Status
+          when: on_fail
       - save_cache:
           # Integration tests pull in additional Jenkins dependencies like .jpi and .hpi, those are great to cache
           paths:
