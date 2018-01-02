@@ -1,0 +1,17 @@
+= Contributing
+:toc:
+
+== Re-baseline default versions
+
+Tools have been added to the `buildSrc` to automate some aspects of source code modification/generation.
+Some cases for this are:
+
+* Latest Core LTS
+* Latest published plugins
+* Groovy version bundled in Core
+
+`./gradlew runRebaseline` will execute all re-baseline tasks.
+
+== Testing
+
+`./gradlew build` will run all tests.

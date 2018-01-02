@@ -28,6 +28,46 @@ For each release, a subsection should be added for each of the following if they
 
 * Upgraded to Gradle 4.4.1
 * Upgraded to Kotlin 1.2.10
+* Updated default versions:
++
+[cols="3*",options="header"]
+|===
+|Component
+|From
+|TO
+
+|Core
+|2.73.2
+|2.89,2
+
+|Test Harness
+|2.31
+|2.33
+
+|Workflow API Plugin
+|2.22
+|2.24
+
+|Workflow CPS Plugin
+|2.40
+|2.42
+
+|Workflow Durable Task Step Plugin
+|2.15
+|2.17
+
+|Workflow Job Plugin
+|2.14.1
+|2.16
+
+|Workflow Step API Plugin
+|2.13
+|2.14
+
+|Workflow Support Plugin
+|2.15
+|2.16
+|===
 
 === Fixed
 
