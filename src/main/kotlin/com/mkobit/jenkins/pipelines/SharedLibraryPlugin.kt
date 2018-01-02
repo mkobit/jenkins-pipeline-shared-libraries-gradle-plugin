@@ -57,8 +57,8 @@ open class SharedLibraryPlugin @Inject constructor(
     private val DEFAULT_WORKFLOW_GLOBAL_CPS_LIBRARY_PLUGIN_VERSION = "2.9"
     private val DEFAULT_WORKFLOW_JOB_PLUGIN_VERSION = "2.16"
     private val DEFAULT_WORKFLOW_MULTIBRANCH_PLUGIN_VERSION = "2.16"
-    private val DEFAULT_WORKFLOW_STEP_API_PLUGIN_VERSION = "2.6"
-    private val DEFAULT_WORKFLOW_SCM_STEP_PLUGIN_VERSION = "2.14"
+    private val DEFAULT_WORKFLOW_STEP_API_PLUGIN_VERSION = "2.14"
+    private val DEFAULT_WORKFLOW_SCM_STEP_PLUGIN_VERSION = "2.6"
     private val DEFAULT_WORKFLOW_SUPPORT_PLUGIN_VERSION = "2.16"
 
     // This configuration is used for an initial resolution to get the required dependencies

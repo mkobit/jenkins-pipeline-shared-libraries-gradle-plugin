@@ -143,24 +143,24 @@ dependencies {
   // against the libraries that are used.
   val pipelineTestResources by java.sourceSets.getting
   pipelineTestResources.compileOnlyConfigurationName("com.lesfurets:jenkins-pipeline-unit:1.1")
-  pipelineTestResources.compileOnlyConfigurationName("org.jenkins-ci.main:jenkins-test-harness:2.31")
+  pipelineTestResources.compileOnlyConfigurationName("org.jenkins-ci.main:jenkins-test-harness:2.33")
   pipelineTestResources.compileOnlyConfigurationName("org.codehaus.groovy:groovy:2.4.11")
   val jenkinsPluginDependencies = listOf(
-    "org.jenkins-ci.plugins.workflow:workflow-api:2.22",
+    "org.jenkins-ci.plugins.workflow:workflow-api:2.24",
     "org.jenkins-ci.plugins.workflow:workflow-basic-steps:2.6",
-    "org.jenkins-ci.plugins.workflow:workflow-cps:2.40",
+    "org.jenkins-ci.plugins.workflow:workflow-cps:2.42",
     "org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:2.9",
-    "org.jenkins-ci.plugins.workflow:workflow-durable-task-step:2.15",
-    "org.jenkins-ci.plugins.workflow:workflow-job:2.14.1",
+    "org.jenkins-ci.plugins.workflow:workflow-durable-task-step:2.17",
+    "org.jenkins-ci.plugins.workflow:workflow-job:2.16",
     "org.jenkins-ci.plugins.workflow:workflow-multibranch:2.16",
     "org.jenkins-ci.plugins.workflow:workflow-scm-step:2.6",
-    "org.jenkins-ci.plugins.workflow:workflow-step-api:2.13",
-    "org.jenkins-ci.plugins.workflow:workflow-support:2.15"
+    "org.jenkins-ci.plugins.workflow:workflow-step-api:2.14",
+    "org.jenkins-ci.plugins.workflow:workflow-support:2.16"
   )
   jenkinsPluginDependencies.forEach {
     "jenkinsPlugins"(it)
   }
-  "jenkinsPlugins"("org.jenkins-ci.main:jenkins-core:2.73.2") {
+  "jenkinsPlugins"("org.jenkins-ci.main:jenkins-core:2.89.2") {
     isTransitive = false
   }
 }
