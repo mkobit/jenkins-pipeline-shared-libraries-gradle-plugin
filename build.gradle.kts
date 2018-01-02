@@ -9,19 +9,7 @@ import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.preprocessor.mkdirsOrFail
 import org.junit.platform.console.options.Details
-import org.junit.platform.gradle.plugin.JUnitPlatformExtension
 import java.io.ByteArrayOutputStream
-
-buildscript {
-  repositories {
-    mavenCentral()
-    jcenter()
-  }
-  dependencies {
-    // TODO: load from properties or script plugin
-    classpath("org.junit.platform:junit-platform-gradle-plugin:1.0.1")
-  }
-}
 
 plugins {
   id("com.gradle.build-scan") version "1.10.1"
@@ -31,12 +19,10 @@ plugins {
   id("com.gradle.plugin-publish") version "0.9.9"
   id("com.github.ben-manes.versions") version "0.17.0"
   id("org.jetbrains.dokka") version "0.9.15"
+  // TODO: load version from shared location
+  id("org.junit.platform.gradle.plugin") version "1.0.1"
   // Only used for local publishing for testing
   `maven-publish`
-}
-
-apply {
-  plugin("org.junit.platform.gradle.plugin")
 }
 
 version = "0.3.2"
@@ -178,7 +164,7 @@ dependencies {
   }
 }
 
-extensions.getByType(JUnitPlatformExtension::class.java).apply {
+junitPlatform {
   platformVersion = DependencyInfo.junitPlatformVersion
   filters {
     engines {
