@@ -6,7 +6,8 @@ object DependencyInfo {
   val junitPlatformGradlePluginVersion: String = "1.0.1" 
   val junitJupiterVersion: String = "5.0.1" 
   val junitVintageVersion: String = "4.12.1" 
-  val junit5Log4jVersion: String = "2.9.1"
+  val junit5Log4jVersion: String = "2.10.0"
+  val slf4jVersion: String = "1.7.25"
 
   val junitPlatformGradlePlugin = mapOf("group" to "org.junit.platform", "name" to "junit-platform-gradle-plugin", "version" to junitGradlePluginVersion)
   val junitPlatformRunner = mapOf("group" to "org.junit.platform", "name" to "junit-platform-runner", "version" to junitPlatformVersion)
