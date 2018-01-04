@@ -4,9 +4,9 @@ jobs:
     docker:
       - image: circleci/openjdk:8-jdk
         environment:
-          JAVA_OPTS: -XX:+UseG1GC -Xmx1024m -Xms512m
+          JAVA_OPTS: -XX:+UseG1GC
           # Disable Kotlin compiler daemon - https://discuss.kotlinlang.org/t/solved-disable-kotlin-compiler-process-keepalive/2622
-          GRADLE_OPTS: -Dkotlin.compiler.execution.strategy="in-process"
+          GRADLE_OPTS: -Xmx512m -Xms256m -Dkotlin.compiler.execution.strategy="in-process"
 
     working_directory: ~/build-working-directory
     steps:
