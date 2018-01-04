@@ -31,14 +31,14 @@ jobs:
             javac -version
           name: Show Java Version
       - run:
-          command: ./gradlew downloadDependencies --max-workers 1 --stacktrace
+          command: ./gradlew downloadDependencies --max-workers 2 --stacktrace
           name: Download Dependencies
       - save_cache:
           paths:
             - ~/.gradle
           key: v1-home-cache-{{ checksum "build/circle-ci-key.txt" }}-{{ epoch }}
       - run:
-          command: ./gradlew build --max-workers 1 --info --stacktrace --scan
+          command: ./gradlew build --max-workers 2 --info --stacktrace --scan
           name: Gradle Build
       - run:
           command: ./gradlew --status
