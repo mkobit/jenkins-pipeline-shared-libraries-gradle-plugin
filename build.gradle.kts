@@ -224,6 +224,10 @@ tasks {
 
   "junitPlatformTest"(JavaExec::class) {
     systemProperty("com.mkobit.gradle.test.testkit.runner.DefaultRunnerConfigurer.stacktrace", "full-stacktrace")
+    findProperty("gradleTestVersions")?.let {
+      // Will rerun some tests unfortunately using this method, but helps with CI
+      systemProperty("testsupport.ForGradleVersions.versions", it)
+    }
     jvmArgs("-XshowSettings:vm", "-XX:+PrintGCTimeStamps", "-XX:+UseG1GC", "-Xmx512m", "-Xms256m")
   }
 

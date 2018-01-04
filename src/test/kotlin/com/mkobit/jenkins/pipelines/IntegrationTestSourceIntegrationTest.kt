@@ -17,8 +17,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import testsupport.GradleProject
-import testsupport.MultiGradleVersion
-import testsupport.Integration
+import testsupport.ForGradleVersions
 import testsupport.IntelliJSupport
 import testsupport.NotImplementedYet
 import testsupport.SampleCandidate
@@ -27,8 +26,7 @@ import testsupport.softlyAssert
 import java.util.stream.Stream
 import org.junit.jupiter.params.provider.Arguments.of as arguments
 
-@Integration
-@MultiGradleVersion
+@ForGradleVersions
 internal class IntegrationTestSourceIntegrationTest {
 
   @TestTemplate
