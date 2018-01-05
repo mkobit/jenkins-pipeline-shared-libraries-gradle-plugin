@@ -38,7 +38,7 @@ See the link:{uri-consumer-example}[example] for a simple example of how to cons
 
 == 5 minute onboarding
 
-. Consume plugin from Gradle plugin portal (using whatever version you choose)
+. Consume plugin from Gradle plugin portal
 +
 [source, kotlin, subs="attributes+"]
 ----
@@ -46,7 +46,7 @@ plugins {
   id("com.mkobit.jenkins.pipelines.shared-library") version "{latest-version}"
 }
 ----
-. Set up preferred test dependencies (like JUnit or Spock)
+. Set up preferred test dependencies (for example, JUnit or Spock)
 +
 [source, groovy]
 ----
@@ -60,7 +60,7 @@ dependencies {
 ----
 . Write some shared library code
 +
-.src/com/mkobit/LibHelper.groovy
+.Library class - `src/com/mkobit/LibHelper.groovy`
 [source, groovy]
 ----
 package com.mkobit
@@ -75,8 +75,16 @@ class LibHelper {
     script.echo("LibHelper says hello to $name!")
   }
 }
-
 ----
++
+.Global variable - `vars/myGlobal.groovy
+[source, groovy]
+----
+def call() {
+  echo 'Hello from myGlobal'
+}
+----
+
 . Write integration tests utilizing `JenkinsRule` that sets up the shared library
 +
 .test/integration/groovy/com/mkobit/JenkinsGlobalLibraryUsageTest.groovy
@@ -90,6 +98,7 @@ import org.jenkinsci.plugins.workflow.libs.LibraryConfiguration
 import org.jenkinsci.plugins.workflow.libs.LibraryRetriever
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition
 import org.jenkinsci.plugins.workflow.job.WorkflowJob
+import org.jenkinsci.plugins.workflow.job.WorkflowRun
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -114,15 +123,28 @@ class JenkinsGlobalLibraryUsageTest {
 
   @Test
   void testingMyLibrary() {
-    final CpsFlowDefinition flow = new CpsFlowDefinition('''
+    CpsFlowDefinition flow = new CpsFlowDefinition('''
         import com.mkobit.LibHelper
 
         final libHelper = new LibHelper(this)
         libHelper.sayHelloTo('mkobit')
     '''.stripIndent(), true)
-    final WorkflowJob workflowJob = rule.createProject(WorkflowJob, 'project')
+    WorkflowJob workflowJob = rule.createProject(WorkflowJob, 'project')
     workflowJob.definition = flow
     rule.buildAndAssertSuccess(workflowJob)
+  }
+
+  @Test
+  void testingMyGlobalVar() {
+    CpsFlowDefinition flow = new CpsFlowDefinition('''
+        import myGlobal
+
+        myGlobal()
+    '''.stripIndent(), true)
+    WorkflowJob workflowJob = rule.createProject(WorkflowJob, 'project')
+    workflowJob.definition = flow
+    WorkflowRun result = rule.buildAndAssertSuccess(workflowJob)
+    rule.assertLogContains('Hello from myGlobal', result)
   }
 }
 ----
