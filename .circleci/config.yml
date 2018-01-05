@@ -1,57 +1,98 @@
+java-8-defaults: &java-8-defaults
+  working_directory: ~/build-working-directory
+  docker:
+    - image: circleci/openjdk:8-jdk
+      environment:
+        JAVA_OPTS: -XX:+UseG1GC
+        # Disable Kotlin compiler daemon - https://discuss.kotlinlang.org/t/solved-disable-kotlin-compiler-process-keepalive/2622
+        GRADLE_OPTS: -Xmx512m -Xms256m -Dkotlin.compiler.execution.strategy="in-process"
+
+shared-steps:
+  generate-cache-key: &generate-cache-key
+    run:
+      command: |
+        mkdir -p build
+        find settings.gradle build.gradle.kts gradle buildSrc/src buildSrc/build.gradle.kts -type f -exec sha256sum '{}' \; | tee build/circle-ci-key.txt
+      name: Generate cache key
+  restore-home-cache: &restore-home-cache
+    restore_cache:
+      keys:
+        - v1-home-cache-{{ checksum "build/circle-ci-key.txt" }}
+        - v1-home-cache-
+  save-home-cache: &save-home-cache
+    save_cache:
+      paths:
+        - ~/.gradle
+      key: v1-home-cache-{{ checksum "build/circle-ci-key.txt" }}-{{ epoch }}
+      when: always
+  show-java-info: &show-java-info
+    run:
+      command: |
+        java -XshowSettings:vm -XX:+PrintCommandLineFlags -version
+        java -XshowSettings:vm -XX:+PrintCommandLineFlags -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -version
+        javac -version
+      name: Show Java Version
+  junit-platform-test-results: &junit-platform-test-results
+    store_test_results:
+      path: ~/build-working-directory/build/test-results/
+
 version: 2
 jobs:
-  build:
-    docker:
-      - image: circleci/openjdk:8-jdk
-        environment:
-          JAVA_OPTS: -XX:+UseG1GC -Xmx1024m -Xms512m
-          # Disable Kotlin compiler daemon - https://discuss.kotlinlang.org/t/solved-disable-kotlin-compiler-process-keepalive/2622
-          GRADLE_OPTS: -Dkotlin.compiler.execution.strategy="in-process"
-
-    working_directory: ~/build-working-directory
+  check:
+    <<: *java-8-defaults
     steps:
       - checkout
+      - *generate-cache-key
+      - *restore-home-cache
       - run:
-          command: |
-            mkdir -p build
-            find settings.gradle build.gradle.kts gradle buildSrc/src buildSrc/build.gradle.kts -type f -exec sha256sum '{}' \; | tee build/circle-ci-key.txt
-          name: Generate cache key
-      - restore_cache:
-          keys:
-            - v1-home-cache-{{ checksum "build/circle-ci-key.txt" }}
-            - v1-home-cache-
-      - restore_cache:
-          keys:
-            - v1-build-cache-{{ .Branch }}
-            - v1-build-cache-
+          command: ./gradlew downloadDependencies --max-workers 2 --stacktrace
+          name: Cache Build Dependencies
+      - *save-home-cache
       - run:
-          command: |
-            java -XshowSettings:vm -XX:+PrintCommandLineFlags -version
-            java -XshowSettings:vm -XX:+PrintCommandLineFlags -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -version
-            javac -version
-          name: Show Java Version
-      - run:
-          command: ./gradlew downloadDependencies --max-workers 1 --info --stacktrace
-          name: Download Dependencies
-      - save_cache:
+          command: ./gradlew junitPlatformTest -PgradleTestVersions=current --max-workers 2 --stacktrace  --scan
+          name: Test With Current Gradle Wrapper Version
+      - *junit-platform-test-results
+      - *save-home-cache
+      - persist_to_workspace:
+          root: ~/build-working-directory
           paths:
-            - ~/.gradle
-          key: v1-home-cache-{{ checksum "build/circle-ci-key.txt" }}-{{ epoch }}
-      - run:
-          command: ./gradlew build --max-workers 1 --info --stacktrace --scan
-          name: Gradle Build
-      - save_cache:
-          # Integration tests pull in additional Jenkins dependencies like .jpi and .hpi, those are great to cache
-          paths:
-            - ~/.gradle
-          key: v1-home-cache-{{ checksum "build/circle-ci-key.txt" }}-{{ epoch }}
-      - store_test_results:
-          path: ~/build-working-directory/build/test-results/
-      - save_cache:
-          paths:
-            - ~/build-working-directory/.gradle
-            - ~/build-working-directory/build
-            - ~/build-working-directory/buildSrc/.gradle
-            - ~/build-working-directory/buildSrc/build
-          key: v1-build-cache-{{ .Branch }}-{{ .BuildNum }}
+            - .gradle/*
+            - build/*
+            - buildSrc/.gradle/*
+            - buildSrc/build/*
 
+  test-gradle-4.3:
+    <<: *java-8-defaults
+    steps:
+      - checkout
+      - *generate-cache-key
+      - *restore-home-cache
+      - attach_workspace:
+          at: ~/build-working-directory
+      - run:
+          command: ./gradlew junitPlatformTest -PgradleTestVersions=4.3 --max-workers 2 --stacktrace
+          name: Test With Gradle 4.3
+      - *junit-platform-test-results
+  test-gradle-4.4:
+    <<: *java-8-defaults
+    steps:
+      - checkout
+      - *generate-cache-key
+      - *restore-home-cache
+      - attach_workspace:
+          at: ~/build-working-directory
+      - run:
+          command: ./gradlew junitPlatformTest -PgradleTestVersions=4.4 --max-workers 2 --stacktrace
+          name: Test With Gradle 4.4
+      - *junit-platform-test-results
+workflows:
+  version: 2
+  build:
+    jobs:
+      - check
+      - test-gradle-4.3:
+          requires:
+            - check
+      - test-gradle-4.4:
+          requires:
+            - check

@@ -13,7 +13,7 @@ annotation class NotImplementedYet
 
 @Tag("integration")
 @ExtendWith(TestExecutionLogger::class)
-annotation class Integration
+internal annotation class Integration
 
 @Tag("intellij-support")
 @Target(
