@@ -42,7 +42,7 @@ jobs:
       - *generate-cache-key
       - *restore-home-cache
       - run:
-          command: ./gradlew assemble testClasses --max-worker 2 --stacktrace --scan
+          command: ./gradlew assemble testClasses --max-workers 2 --stacktrace --scan
           name: Compile
       - run:
           command: ./gradlew downloadDependencies --max-workers 2 --stacktrace
