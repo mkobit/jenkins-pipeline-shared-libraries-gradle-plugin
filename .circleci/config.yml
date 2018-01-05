@@ -27,11 +27,14 @@ shared-steps:
       when: always
   show-java-info: &show-java-info
     run:
-    command: |
-      java -XshowSettings:vm -XX:+PrintCommandLineFlags -version
-      java -XshowSettings:vm -XX:+PrintCommandLineFlags -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -version
-      javac -version
-    name: Show Java Version
+      command: |
+        java -XshowSettings:vm -XX:+PrintCommandLineFlags -version
+        java -XshowSettings:vm -XX:+PrintCommandLineFlags -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -version
+        javac -version
+      name: Show Java Version
+  junit-platform-test-results: &junit-platform-test-results
+    store_test_results:
+      path: ~/build-working-directory/build/test-results/
 
 version: 2
 jobs:
@@ -48,6 +51,7 @@ jobs:
       - run:
           command: ./gradlew junitPlatformTest -PgradleTestVersions=current --max-workers 2 --stacktrace  --scan
           name: Test With Current Gradle Wrapper Version
+      - *junit-platform-test-results
       - *save-home-cache
       - persist_to_workspace:
           root: ~/build-working-directory
@@ -68,6 +72,7 @@ jobs:
       - run:
           command: ./gradlew junitPlatformTest -PgradleTestVersions=4.3 --max-workers 2 --stacktrace
           name: Test With Gradle 4.3
+      - *junit-platform-test-results
   test-gradle-4.4:
     <<: *java-8-defaults
     steps:
@@ -79,7 +84,7 @@ jobs:
       - run:
           command: ./gradlew junitPlatformTest -PgradleTestVersions=4.4 --max-workers 2 --stacktrace
           name: Test With Gradle 4.4
-
+      - *junit-platform-test-results
 workflows:
   version: 2
   build:
