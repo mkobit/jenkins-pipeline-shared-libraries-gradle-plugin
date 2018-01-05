@@ -239,13 +239,15 @@ tasks {
     outputs.file(circleCiScriptDestination)
     doFirst { circleCiScriptDestination.parentFile.mkdirsOrFail() }
     commandLine("curl", "--fail", "-L", downloadUrl, "-o", circleCiScriptDestination)
-    doLast { project.exec { commandLine("chmod", "+x", circleCiScriptDestination) } }
+    doLast {
+      project.exec { commandLine("chmod", "+x", circleCiScriptDestination) }
+      // Hack: replace -it with -i to work in non TTY - https://discuss.circleci.com/t/allow-for-using-circle-ci-tooling-without-a-tty/15501/4
+      project.exec { commandLine("sed", "--in-place", "--", "s/run -it/run -i/g", circleCiScriptDestination) }
+    }
   }
 
   val checkCircleConfig by creating(Exec::class) {
     description = "Checks that the Circle configuration is valid"
-    // Disabled until https://discuss.circleci.com/t/allow-for-using-circle-ci-tooling-without-a-tty/15501
-    enabled = false
     dependsOn(downloadCircleCiScript)
     val circleConfig = file(".circleci/config.yml")
     executable(circleCiScriptDestination)
@@ -254,7 +256,7 @@ tasks {
 
   val circleCiBuild by creating(Exec::class) {
     description = "Runs a build using the local Circle CI configuration"
-    // Disabled until https://discuss.circleci.com/t/allow-for-using-circle-ci-tooling-without-a-tty/15501
+    // Fails with workflows - https://discuss.circleci.com/t/command-line-support-for-workflows/14510
     enabled = false
     dependsOn(downloadCircleCiScript)
     executable(circleCiScriptDestination)
