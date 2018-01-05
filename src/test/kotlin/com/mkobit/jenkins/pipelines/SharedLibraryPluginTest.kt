@@ -50,7 +50,9 @@ internal class SharedLibraryPluginTest {
       assertThat(mavenArtifactRepository.url)
         .hasAuthority("repo.jenkins-ci.org")
         .hasScheme("https")
-      assertThat(mavenArtifactRepository.name).isEqualTo(SharedLibraryPlugin.JENKINS_REPOSITORY_NAME)
+      assertThat(mavenArtifactRepository.name)
+        .`as`("Has name \"JenkinsPublic\"")
+        .isEqualTo("JenkinsPublic")
     }
   }
 
