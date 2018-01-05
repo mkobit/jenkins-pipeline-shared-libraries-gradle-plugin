@@ -1,6 +1,8 @@
 package testsupport
 
 import com.google.common.io.Resources
+import com.mkobit.gradle.test.kotlin.testkit.runner.projectDirPath
+import com.mkobit.gradle.test.kotlin.testkit.runner.stacktrace
 import mu.KotlinLogging
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.util.GradleVersion
@@ -48,8 +50,10 @@ internal class ResourceGradleProjectProviderExtension(private val gradleVersion:
     val temporaryPath: Path = loadGradleProject(context)
     store.put(context, temporaryPath)
     return GradleRunner.create().apply {
-      withProjectDir(temporaryPath.toFile())
+      projectDirPath = temporaryPath
+      stacktrace = true
       withGradleVersion(gradleVersion.version)
+      withPluginClasspath()
     }
   }
 
