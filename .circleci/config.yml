@@ -90,7 +90,7 @@ jobs:
           name: Test With Gradle 4.4
 
 workflows:
-  version: '2'
+  version: 2
   build:
     jobs:
       - assemble
