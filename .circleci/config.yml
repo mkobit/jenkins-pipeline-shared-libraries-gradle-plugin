@@ -35,18 +35,19 @@ shared-steps:
 
 version: 2
 jobs:
-  assemble:
+  check:
     <<: *java-8-defaults
     steps:
       - checkout
       - *generate-cache-key
       - *restore-home-cache
       - run:
-          command: ./gradlew assemble testClasses --max-workers 2 --stacktrace --scan
-          name: Compile
-      - run:
           command: ./gradlew downloadDependencies --max-workers 2 --stacktrace
           name: Cache Build Dependencies
+      - *save-home-cache
+      - run:
+          command: ./gradlew junitPlatformTest -PgradleTestVersions=current --max-workers 2 --stacktrace  --scan
+          name: Test With Current Gradle Wrapper Version
       - *save-home-cache
       - persist_to_workspace:
           root: ~/build-working-directory
@@ -55,17 +56,7 @@ jobs:
             - build/*
             - buildSrc/.gradle/*
             - buildSrc/build/*
-  test-gradle-current:
-      <<: *java-8-defaults
-      steps:
-        - checkout
-        - *generate-cache-key
-        - *restore-home-cache
-        - attach_workspace:
-            at: ~/build-working-directory
-        - run:
-            command: ./gradlew junitPlatformTest -PgradleTestVersions=current --max-workers 2 --stacktrace
-            name: Test With Current Gradle Wrapper Version
+
   test-gradle-4.3:
     <<: *java-8-defaults
     steps:
@@ -93,15 +84,10 @@ workflows:
   version: 2
   build:
     jobs:
-      - assemble
-      - test-gradle-current:
-          requires:
-            - assemble
+      - check
       - test-gradle-4.3:
           requires:
-            - assemble
-            - test-gradle-current
+            - check
       - test-gradle-4.4:
           requires:
-            - assemble
-            - test-gradle-current
+            - check
