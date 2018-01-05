@@ -1,6 +1,7 @@
 package com.mkobit.jenkins.pipelines
 
 import com.mkobit.gradle.test.kotlin.testkit.runner.arguments
+import com.mkobit.gradle.test.assertj.GradleAssertions.assertThat
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
@@ -21,11 +22,9 @@ class MainSourceIntegrationTest {
       build()
     }
 
-    val task = buildResult.task(":compileGroovy")
-    assertThat(task?.outcome)
-      .describedAs("compileGroovy task outcome")
-      .isNotNull()
-      .isEqualTo(TaskOutcome.SUCCESS)
+    assertThat(buildResult)
+      .withFailMessage("Build output: ${buildResult.output}")
+      .hasTaskSuccessAtPath(":compileGroovy")
   }
 
   @TestTemplate
@@ -35,12 +34,33 @@ class MainSourceIntegrationTest {
       build()
     }
 
-    val task = buildResult.task(":test")
-    assertThat(task?.outcome)
-      .describedAs("test task outcome")
+    assertThat(buildResult)
       .withFailMessage("Build output: ${buildResult.output}")
-      .isNotNull()
-      .isEqualTo(TaskOutcome.SUCCESS)
+      .hasTaskSuccessAtPath(":test")
+  }
+
+  @TestTemplate
+  internal fun `compilation fails for invalid Groovy code in src`(@GradleProject gradleRunner: GradleRunner) {
+    val buildResult: BuildResult = gradleRunner.run {
+      arguments("compileGroovy")
+      buildAndFail()
+    }
+
+    assertThat(buildResult)
+      .withFailMessage("Build output: %s", buildResult.output)
+      .hasTaskFailedAtPath(":compileGroovy")
+  }
+
+  @TestTemplate
+  internal fun `compilation fails for invalid Groovy code in vars`(@GradleProject gradleRunner: GradleRunner) {
+    val buildResult: BuildResult = gradleRunner.run {
+      arguments("compileGroovy")
+      buildAndFail()
+    }
+
+    assertThat(buildResult)
+      .withFailMessage("Build output: %s", buildResult.output)
+      .hasTaskFailedAtPath(":compileGroovy")
   }
 
   @NotImplementedYet
