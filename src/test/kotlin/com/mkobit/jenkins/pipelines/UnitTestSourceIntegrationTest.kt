@@ -1,13 +1,13 @@
 package com.mkobit.jenkins.pipelines
 
 import com.mkobit.gradle.test.assertj.GradleAssertions.assertThat
-import com.mkobit.gradle.test.testkit.runner.buildWith
+import com.mkobit.gradle.test.kotlin.testkit.runner.buildWith
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.api.TestTemplate
-import testsupport.GradleProject
 import testsupport.ForGradleVersions
+import testsupport.GradleProject
 
 @ForGradleVersions
 internal class UnitTestSourceIntegrationTest {

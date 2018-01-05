@@ -1,6 +1,6 @@
 package com.mkobit.jenkins.pipelines
 
-import com.mkobit.gradle.test.testkit.runner.buildWith
+import com.mkobit.gradle.test.kotlin.testkit.runner.buildWith
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner

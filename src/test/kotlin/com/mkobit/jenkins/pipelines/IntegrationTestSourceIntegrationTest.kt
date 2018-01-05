@@ -1,9 +1,9 @@
 package com.mkobit.jenkins.pipelines
 
-import com.mkobit.gradle.test.testkit.runner.buildWith
 import org.assertj.core.api.Assertions.anyOf
 import org.assertj.core.api.Assertions.assertThat
 import com.mkobit.gradle.test.assertj.GradleAssertions.assertThat
+import com.mkobit.gradle.test.kotlin.testkit.runner.buildWith
 import org.assertj.core.api.Assertions.allOf
 import org.assertj.core.api.Assertions.not
 import org.gradle.api.artifacts.Configuration
