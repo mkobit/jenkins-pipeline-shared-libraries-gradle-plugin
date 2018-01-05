@@ -62,6 +62,10 @@ internal class MultiVersionGradleProjectTestTemplate : TestTemplateInvocationCon
             LOGGER.info { "System property supplied default $value to use all/default versions $DEFAULT_VERSIONS" }
             DEFAULT_VERSIONS
           }
+          "current" -> {
+            LOGGER.info { "System property supplied $value so running only against current version $CURRENT_GRADLE_VERSION" }
+            listOf(CURRENT_GRADLE_VERSION)
+          }
           else -> {
             LOGGER.fine { "Determining versions from system property value $value" }
             value.split(";")
