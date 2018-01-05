@@ -8,12 +8,10 @@ import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestTemplate
 import testsupport.GradleProject
-import testsupport.MultiGradleVersion
-import testsupport.Integration
+import testsupport.ForGradleVersions
 import testsupport.NotImplementedYet
 
-@Integration
-@MultiGradleVersion
+@ForGradleVersions
 class MainSourceIntegrationTest {
 
   @TestTemplate
