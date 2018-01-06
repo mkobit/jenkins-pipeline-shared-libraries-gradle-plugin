@@ -7,6 +7,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ConfigurationContainer
+import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.ExternalModuleDependency
 import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.artifacts.dsl.RepositoryHandler
@@ -182,14 +183,17 @@ open class SharedLibraryPlugin @Inject constructor(
     val configurationAction: Configuration.() -> Unit = {
       isCanBeResolved = true
       isVisible = false
+      isCanBeConsumed = false
     }
 
     // TODO: Come up with a better way to collect all the transitive dependencies and HPI/JAR versions of each plugin.
     // Also, forcing dependencies through the extensions does not feel right and is not that intuitive.
-    // Instead, it would probably make sense to introduce configurations that users can add additional configuratoin and dependencies to.
+    // Instead, it would probably make sense to introduce configurations that users can add additional configuration and dependencies to.
     val jenkinsPlugins by configurations.creating {
       isCanBeResolved = true
     }
+
+    val jenkinsLibrariesMainCompileOnly by configurations.creating
     val jenkinsPluginHpisAndJpis by configurations.creating(configurationAction)
     val jenkinsPluginLibraries by configurations.creating(configurationAction)
     val jenkinsCoreLibraries by configurations.creating(configurationAction)
@@ -198,6 +202,7 @@ open class SharedLibraryPlugin @Inject constructor(
     val jenkinsPipelineUnitTestLibraries by configurations.creating(configurationAction)
 
     configurations {
+      main.compileOnlyConfigurationName().extendsFrom(jenkinsLibrariesMainCompileOnly)
       test.implementationConfigurationName().extendsFrom(jenkinsPipelineUnitTestLibraries)
 
       integrationTest.implementationConfigurationName().run {
@@ -222,22 +227,28 @@ open class SharedLibraryPlugin @Inject constructor(
       resolvedArtifacts
         .filter { it.extension in setOf("hpi", "jpi") }
         .map { "${it.moduleVersion}@${it.extension}" }
-        .forEach { dependencies.add(jenkinsPluginHpisAndJpis.name, it) }
+        .forEach { dependencies.add(jenkinsPluginHpisAndJpis, it) }
       // Map each included HPI to that plugin's JAR for usage in compilation of tests
       resolvedArtifacts
         .filter { it.extension in setOf("hpi", "jpi") }
         .map { "${it.moduleVersion}@jar" } // Use the published JAR libraries for each plugin
-        .forEach { dependencies.add(jenkinsPluginLibraries.name, it) }
+        .forEach { dependencies.add(jenkinsPluginLibraries, it) }
       // Include all of the additional JAR dependencies from the transitive dependencies of the plugin
       resolvedArtifacts
         .filter { it.extension == "jar" }
         .map { "${it.moduleVersion}@jar" } // TODO: might not need this
-        .forEach { dependencies.add(jenkinsPluginLibraries.name, it) }
+        .forEach { dependencies.add(jenkinsPluginLibraries, it) }
+      // For @NonCPS add the
+      resolvedArtifacts
+        .filter { it.moduleVersion.id.group == "com.cloudbees" && it.moduleVersion.id.name == "groovy-cps" }
+        .forEach { dependencies.add(jenkinsLibrariesMainCompileOnly, it.moduleVersion.toString()) }
     }
 
     configurations.all {
       incoming.beforeResolve {
-        if (hierarchy.contains(jenkinsPluginHpisAndJpis) || hierarchy.contains(jenkinsPluginLibraries)) {
+        if (hierarchy.contains(jenkinsPluginHpisAndJpis)
+          || hierarchy.contains(jenkinsPluginLibraries)
+          || hierarchy.contains(jenkinsLibrariesMainCompileOnly)) {
           // Trigger the dependency seeding
           jenkinsPlugins.resolve()
         }
@@ -349,6 +360,9 @@ open class SharedLibraryPlugin @Inject constructor(
       pluginDependencySpec
     )
   }
+
+  private fun DependencyHandler.add(configuration: Configuration, dependencyNotation: Any): Dependency =
+    add(configuration.name, dependencyNotation)
 
   private fun DependencyHandler.createExternal(
     dependencyNotation: Any,

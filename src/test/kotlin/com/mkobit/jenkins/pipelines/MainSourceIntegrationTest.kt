@@ -59,19 +59,7 @@ class MainSourceIntegrationTest {
     }
 
     assertThat(buildResult)
-      .withFailMessage("Build output: %s", buildResult.output)
       .hasTaskFailedAtPath(":compileGroovy")
-  }
-
-  @TestTemplate
-  internal fun `@NonCPS can be used in source code`(@GradleProject gradleRunner: GradleRunner) {
-    val buildResult: BuildResult = gradleRunner.buildWith(arguments = listOf("compileGroovy"))
-
-    val task = buildResult.task(":compileGroovy")
-    assertThat(task?.outcome)
-      .describedAs("compileGroovy task outcome")
-      .isNotNull()
-      .isEqualTo(TaskOutcome.SUCCESS)
   }
 
   @NotImplementedYet
