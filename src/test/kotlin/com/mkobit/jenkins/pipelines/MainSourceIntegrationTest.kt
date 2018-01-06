@@ -23,7 +23,7 @@ class MainSourceIntegrationTest {
     }
 
     assertThat(buildResult)
-      .withFailMessage("Build output: ${buildResult.output}")
+      .withFailMessage("Build output: %s", buildResult.output)
       .hasTaskSuccessAtPath(":compileGroovy")
   }
 
@@ -35,7 +35,7 @@ class MainSourceIntegrationTest {
     }
 
     assertThat(buildResult)
-      .withFailMessage("Build output: ${buildResult.output}")
+      .withFailMessage("Build output: %s", buildResult.output)
       .hasTaskSuccessAtPath(":test")
   }
 

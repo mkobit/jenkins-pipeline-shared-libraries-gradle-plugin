@@ -111,7 +111,7 @@ internal class IntegrationTestSourceIntegrationTest {
 
     assertThat(buildResult)
       .describedAs("integrationTestCompileGroovy task outcome")
-      .withFailMessage("Build output: ${buildResult.output}")
+      .withFailMessage("Build output: %s", buildResult.output)
       .hasTaskSuccessAtPath(":compileIntegrationTestGroovy")
   }
 
@@ -124,7 +124,7 @@ internal class IntegrationTestSourceIntegrationTest {
     }
 
     assertThat(buildResult)
-      .withFailMessage("Build output: ${buildResult.output}")
+      .withFailMessage("Build output: %s", buildResult.output)
       .hasTaskSuccessAtPath(":integrationTest")
   }
 
@@ -137,7 +137,7 @@ internal class IntegrationTestSourceIntegrationTest {
     }
 
     assertThat(buildResult)
-      .withFailMessage("Build output: ${buildResult.output}")
+      .withFailMessage("Build output: %s", buildResult.output)
       .hasTaskSuccessAtPath(":integrationTest")
   }
 
@@ -150,7 +150,7 @@ internal class IntegrationTestSourceIntegrationTest {
     }
 
     assertThat(buildResult)
-      .withFailMessage("Build output: ${buildResult.output}")
+      .withFailMessage("Build output: %s", buildResult.output)
       .hasTaskSuccessAtPath(":integrationTest")
   }
 
