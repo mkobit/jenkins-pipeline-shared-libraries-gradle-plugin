@@ -17,13 +17,13 @@ shared-steps:
   restore-home-cache: &restore-home-cache
     restore_cache:
       keys:
-        - v1-home-cache-{{ checksum "build/circle-ci-key.txt" }}
-        - v1-home-cache-
+        - v2-home-cache-{{ checksum "build/circle-ci-key.txt" }}
+        - v2-home-cache-
   save-home-cache: &save-home-cache
     save_cache:
       paths:
         - ~/.gradle
-      key: v1-home-cache-{{ checksum "build/circle-ci-key.txt" }}-{{ epoch }}
+      key: v2-home-cache-{{ checksum "build/circle-ci-key.txt" }}-{{ epoch }}
       when: always
   show-java-info: &show-java-info
     run:
@@ -45,11 +45,7 @@ jobs:
       - *generate-cache-key
       - *restore-home-cache
       - run:
-          command: ./gradlew downloadDependencies --max-workers 2 --stacktrace
-          name: Cache Build Dependencies
-      - *save-home-cache
-      - run:
-          command: ./gradlew junitPlatformTest -PgradleTestVersions=current --max-workers 2 --stacktrace  --scan
+          command: ./gradlew build -PgradleTestVersions=current --max-workers 2 --stacktrace  --scan
           name: Test With Current Gradle Wrapper Version
       - *junit-platform-test-results
       - *save-home-cache
@@ -70,7 +66,7 @@ jobs:
       - attach_workspace:
           at: ~/build-working-directory
       - run:
-          command: ./gradlew junitPlatformTest -PgradleTestVersions=4.3 --max-workers 2 --stacktrace
+          command: ./gradlew build -PgradleTestVersions=4.3 --max-workers 2 --stacktrace
           name: Test With Gradle 4.3
       - *junit-platform-test-results
   test-gradle-4.4:
@@ -82,7 +78,7 @@ jobs:
       - attach_workspace:
           at: ~/build-working-directory
       - run:
-          command: ./gradlew junitPlatformTest -PgradleTestVersions=4.4 --max-workers 2 --stacktrace
+          command: ./gradlew build -PgradleTestVersions=4.4 --max-workers 2 --stacktrace
           name: Test With Gradle 4.4
       - *junit-platform-test-results
 workflows:
