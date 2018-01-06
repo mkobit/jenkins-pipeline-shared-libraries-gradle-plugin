@@ -45,11 +45,7 @@ jobs:
       - *generate-cache-key
       - *restore-home-cache
       - run:
-          command: ./gradlew downloadDependencies --max-workers 2 --stacktrace
-          name: Cache Build Dependencies
-      - *save-home-cache
-      - run:
-          command: ./gradlew junitPlatformTest -PgradleTestVersions=current --max-workers 2 --stacktrace  --scan
+          command: ./gradlew build -PgradleTestVersions=current --max-workers 2 --stacktrace  --scan
           name: Test With Current Gradle Wrapper Version
       - *junit-platform-test-results
       - *save-home-cache

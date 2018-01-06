@@ -206,22 +206,6 @@ tasks {
     kotlinOptions.jvmTarget = "1.8"
   }
 
-  "downloadDependencies" {
-    val downloadedDependenciesIndex = file("$buildDir/downloadedDependencies.txt")
-    description = "Downloads dependencies for caching and usage on Circle CI"
-    configurations.filter { it.isCanBeResolved }.forEach { inputs.files(it) }
-    outputs.file(downloadedDependenciesIndex)
-    doFirst {
-      val fileNames = configurations.filter { it.isCanBeResolved }.flatMap {
-        logger.info("Resolving configuration named ${it.name}")
-        it.resolve()
-      }.map {
-        it.name
-      }.joinToString(separator = System.lineSeparator())
-      downloadedDependenciesIndex.bufferedWriter().use { it.write(fileNames) }
-    }
-  }
-
   "junitPlatformTest"(JavaExec::class) {
     systemProperty("com.mkobit.gradle.test.testkit.runner.DefaultRunnerConfigurer.stacktrace", "full-stacktrace")
     findProperty("gradleTestVersions")?.let {
