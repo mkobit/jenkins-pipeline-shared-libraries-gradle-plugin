@@ -73,11 +73,11 @@ internal class ResourceGradleProjectProviderExtension(private val gradleVersion:
 
   private fun loadGradleProject(context: ExtensionContext): Path {
     val rootResourceDirectoryName = context.let {
-      val testMethod: Method = context.testMethod.orElseThrow { ParameterResolutionException("No test method") }
+      val testMethod: Method = context.requiredTestMethod
       val resourcePathToMethod = testMethod.kotlinFunction!!.name
-      val testClass: Class<*> = context.testClass.orElseThrow { ParameterResolutionException("No test class") }
+      val testClass: Class<*> = context.requiredTestClass
       val resourcePathToClass = testClass.kotlin.qualifiedName!!.replace(".", "/")
-      "$resourcePathToClass/$resourcePathToMethod"
+      "$resourcePathToClass${File.separator}$resourcePathToMethod"
     }
     LOGGER.debug { "Loading Gradle project resources from classpath at $rootResourceDirectoryName" }
     return Resources.getResource(rootResourceDirectoryName).let {

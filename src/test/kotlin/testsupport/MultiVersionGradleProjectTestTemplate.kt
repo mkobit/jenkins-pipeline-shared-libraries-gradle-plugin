@@ -59,11 +59,11 @@ internal class MultiVersionGradleProjectTestTemplate : TestTemplateInvocationCon
       System.getProperty(VERSIONS_PROPERTY_KEY)?.let { value ->
         return@let when (value) {
           "all", "default" -> {
-            LOGGER.info { "System property supplied default $value to use all/default versions $DEFAULT_VERSIONS" }
+            LOGGER.fine { "System property supplied default $value to use all/default versions $DEFAULT_VERSIONS" }
             DEFAULT_VERSIONS
           }
           "current" -> {
-            LOGGER.info { "System property supplied $value so running only against current version $CURRENT_GRADLE_VERSION" }
+            LOGGER.fine { "System property supplied $value so running only against current version $CURRENT_GRADLE_VERSION" }
             listOf(CURRENT_GRADLE_VERSION)
           }
           else -> {
