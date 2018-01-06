@@ -24,6 +24,10 @@ For each release, a subsection should be added for each of the following if they
 
 == UNRELEASED
 
+=== Added
+
+* Support for `@NonCPS` in library definition
+
 === Changed
 
 * Upgraded to Gradle 4.4.1

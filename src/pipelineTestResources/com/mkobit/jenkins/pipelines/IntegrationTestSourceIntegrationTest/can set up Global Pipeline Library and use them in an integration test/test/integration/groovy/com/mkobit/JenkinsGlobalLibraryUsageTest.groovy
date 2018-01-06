@@ -1,6 +1,7 @@
 package com.mkobit
 
 import com.mkobit.jenkins.pipelines.codegen.LocalLibraryRetriever
+import org.jenkinsci.plugins.workflow.job.WorkflowRun
 import org.jenkinsci.plugins.workflow.libs.GlobalLibraries
 import org.jenkinsci.plugins.workflow.libs.LibraryConfiguration
 import org.jenkinsci.plugins.workflow.libs.LibraryRetriever
@@ -30,14 +31,28 @@ class JenkinsGlobalLibraryUsageTest {
 
   @Test
   void testingMyLibrary() {
-    final CpsFlowDefinition flow = new CpsFlowDefinition('''
-import com.mkobit.LibHelper
-
-final libHelper = new LibHelper(this)
-libHelper.sayHelloTo('mkobit')
-    ''', true)
-    final WorkflowJob workflowJob = rule.createProject(WorkflowJob, 'project')
+    CpsFlowDefinition flow = new CpsFlowDefinition('''
+      import com.mkobit.LibHelper
+      
+      final libHelper = new LibHelper(this)
+      libHelper.sayHelloTo('mkobit')
+    '''.stripIndent(), true)
+    WorkflowJob workflowJob = rule.createProject(WorkflowJob, 'project')
     workflowJob.definition = flow
     rule.buildAndAssertSuccess(workflowJob)
+  }
+
+  @Test
+  void testingNonCpsMethod() {
+    CpsFlowDefinition flow = new CpsFlowDefinition('''
+      import com.mkobit.LibHelper
+      
+      final libHelper = new LibHelper(this)
+      echo "Numbers: ${libHelper.increment([1,2])}"
+    '''.stripIndent(), true)
+    WorkflowJob workflowJob = rule.createProject(WorkflowJob, 'project')
+    workflowJob.definition = flow
+    WorkflowRun workflowRun = rule.buildAndAssertSuccess(workflowJob)
+    rule.assertLogContains('Numbers: [2, 3]', workflowRun)
   }
 }
