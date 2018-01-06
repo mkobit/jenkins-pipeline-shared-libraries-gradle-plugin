@@ -24,6 +24,8 @@ For each release, a subsection should be added for each of the following if they
 
 == UNRELEASED
 
+== 0.4.0 (2018/01/06)
+
 === Added
 
 * Support for `@NonCPS` in library definition
