@@ -23,7 +23,7 @@ shared-steps:
     save_cache:
       paths:
         - ~/.gradle
-      key: v2-home-cache-{{ checksum "build/circle-ci-key.txt" }}-{{ epoch }}
+      key: v2-home-cache-{{ checksum "build/circle-ci-key.txt" }}
       when: always
   show-java-info: &show-java-info
     run:
