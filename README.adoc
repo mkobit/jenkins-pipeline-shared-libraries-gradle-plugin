@@ -77,7 +77,7 @@ class LibHelper {
 }
 ----
 +
-.Global variable - `vars/myGlobal.groovy
+.Global variable - `vars/myGlobal.groovy`
 [source, groovy]
 ----
 def call() {
