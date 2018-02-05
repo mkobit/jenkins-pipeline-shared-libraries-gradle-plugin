@@ -18,7 +18,7 @@ plugins {
   `java-gradle-plugin`
   id("com.gradle.plugin-publish") version "0.9.9"
   id("com.github.ben-manes.versions") version "0.17.0"
-  id("org.jetbrains.dokka") version "0.9.15"
+  id("org.jetbrains.dokka") version "0.9.16-eap-3"
   // TODO: load version from shared location
   id("org.junit.platform.gradle.plugin") version "1.0.1"
   // Only used for local publishing for testing
@@ -178,7 +178,7 @@ junitPlatform {
 
 tasks {
   "wrapper"(Wrapper::class) {
-    gradleVersion = "4.4.1"
+    gradleVersion = "4.5.1"
     distributionType = Wrapper.DistributionType.ALL
   }
 

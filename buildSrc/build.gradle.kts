@@ -1,6 +1,7 @@
 plugins {
   `kotlin-dsl`
   `java-gradle-plugin`
+  id("com.github.ben-manes.versions") version "0.17.0"
 }
 
 repositories {

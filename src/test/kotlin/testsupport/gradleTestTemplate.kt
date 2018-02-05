@@ -51,10 +51,11 @@ internal class MultiVersionGradleProjectTestTemplate : TestTemplateInvocationCon
     private val CURRENT_GRADLE_VERSION: GradleVersion by lazy {
       GradleVersion.current()
     }
-    private val DEFAULT_VERSIONS: List<GradleVersion> by lazy {
-      listOf(
+    private val DEFAULT_VERSIONS: Set<GradleVersion> by lazy {
+      setOf(
         GradleVersion.version("4.3"),
         GradleVersion.version("4.4"),
+        GradleVersion.version("4.5"),
         CURRENT_GRADLE_VERSION
       )
     }
@@ -79,7 +80,7 @@ internal class MultiVersionGradleProjectTestTemplate : TestTemplateInvocationCon
    * 3. Default versions at [DEFAULT_VERSIONS]
    */
   private fun determineVersionsToExecute(gradleVersions: Collection<GradleVersion>): Collection<GradleVersion> {
-    val versionsFromSystemProperty: List<GradleVersion> by lazy {
+    val versionsFromSystemProperty: Collection<GradleVersion> by lazy {
       System.getProperty(VERSIONS_PROPERTY_KEY)?.let { value ->
         return@let when (value) {
           "all", "default" -> {
@@ -96,7 +97,7 @@ internal class MultiVersionGradleProjectTestTemplate : TestTemplateInvocationCon
               .map(GradleVersion::version)
           }
         }
-      } ?: emptyList()
+      } ?: emptySet()
     }
 
     return when {
