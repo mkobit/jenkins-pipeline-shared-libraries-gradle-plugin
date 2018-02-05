@@ -77,8 +77,8 @@ open class SharedLibraryPlugin @Inject constructor(
     private val TEST_LIBRARY_RUNTIME_ONLY_CONFIGURATION = "jenkinsTestLibrariesRuntimeOnly"
   }
 
-  override fun apply(project: Project) {
-    project.run {
+  override fun apply(target: Project) {
+    target.run {
       pluginManager.apply(GroovyPlugin::class.java)
       setupJenkinsRepository(repositories)
       val (main, test, integrationTest) = withConvention(JavaPluginConvention::class) { setupJava(this, tasks) }
