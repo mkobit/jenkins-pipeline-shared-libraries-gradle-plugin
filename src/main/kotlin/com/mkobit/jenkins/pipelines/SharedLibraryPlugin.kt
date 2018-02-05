@@ -39,42 +39,42 @@ open class SharedLibraryPlugin @Inject constructor(
     /**
      * Name of the [org.gradle.api.artifacts.repositories.ArtifactRepository] that is added to the [RepositoryHandler].
      */
-    val JENKINS_REPOSITORY_NAME = "JenkinsPublic"
+    const val JENKINS_REPOSITORY_NAME = "JenkinsPublic"
     /**
      * URL of the [org.gradle.api.artifacts.repositories.ArtifactRepository] that is added to the [RepositoryHandler].
      * @see JENKINS_REPOSITORY_NAME
      */
-    val JENKINS_REPOSITORY_URL = "https://repo.jenkins-ci.org/public/"
-    private val SHARED_LIBRARY_EXTENSION_NAME = "sharedLibrary"
-    private val TEST_ROOT_PATH = "test"
-    private val DEFAULT_JENKINS_PIPELINE_UNIT_VERSION = "1.1"
-    private val DEFAULT_GROOVY_VERSION = "2.4.11"
-    private val DEFAULT_CORE_VERSION = "2.89.2"
-    private val DEFAULT_TEST_HARNESS_VERSION = "2.33"
-    private val DEFAULT_WORKFLOW_API_PLUGIN_VERSION = "2.24"
-    private val DEFAULT_WORKFLOW_BASIC_STEPS_PLUGIN_VERSION = "2.6"
-    private val DEFAULT_WORKFLOW_CPS_PLUGIN_VERSION = "2.42"
-    private val DEFAULT_WORKFLOW_DURABLE_TASK_STEP_PLUGIN_VERSION = "2.17"
-    private val DEFAULT_WORKFLOW_GLOBAL_CPS_LIBRARY_PLUGIN_VERSION = "2.9"
-    private val DEFAULT_WORKFLOW_JOB_PLUGIN_VERSION = "2.16"
-    private val DEFAULT_WORKFLOW_MULTIBRANCH_PLUGIN_VERSION = "2.16"
-    private val DEFAULT_WORKFLOW_STEP_API_PLUGIN_VERSION = "2.14"
-    private val DEFAULT_WORKFLOW_SCM_STEP_PLUGIN_VERSION = "2.6"
-    private val DEFAULT_WORKFLOW_SUPPORT_PLUGIN_VERSION = "2.16"
+    const val JENKINS_REPOSITORY_URL = "https://repo.jenkins-ci.org/public/"
+    private const val SHARED_LIBRARY_EXTENSION_NAME = "sharedLibrary"
+    private const val TEST_ROOT_PATH = "test"
+    private const val DEFAULT_JENKINS_PIPELINE_UNIT_VERSION = "1.1"
+    private const val DEFAULT_GROOVY_VERSION = "2.4.11"
+    private const val DEFAULT_CORE_VERSION = "2.89.2"
+    private const val DEFAULT_TEST_HARNESS_VERSION = "2.33"
+    private const val DEFAULT_WORKFLOW_API_PLUGIN_VERSION = "2.24"
+    private const val DEFAULT_WORKFLOW_BASIC_STEPS_PLUGIN_VERSION = "2.6"
+    private const val DEFAULT_WORKFLOW_CPS_PLUGIN_VERSION = "2.42"
+    private const val DEFAULT_WORKFLOW_DURABLE_TASK_STEP_PLUGIN_VERSION = "2.17"
+    private const val DEFAULT_WORKFLOW_GLOBAL_CPS_LIBRARY_PLUGIN_VERSION = "2.9"
+    private const val DEFAULT_WORKFLOW_JOB_PLUGIN_VERSION = "2.16"
+    private const val DEFAULT_WORKFLOW_MULTIBRANCH_PLUGIN_VERSION = "2.16"
+    private const val DEFAULT_WORKFLOW_STEP_API_PLUGIN_VERSION = "2.14"
+    private const val DEFAULT_WORKFLOW_SCM_STEP_PLUGIN_VERSION = "2.6"
+    private const val DEFAULT_WORKFLOW_SUPPORT_PLUGIN_VERSION = "2.16"
 
     // This configuration is used for an initial resolution to get the required dependencies
-    private val JENKINS_PLUGINS_CONFIGURATION = "jenkinsPlugins"
+    private const val JENKINS_PLUGINS_CONFIGURATION = "jenkinsPlugins"
 
     // These are internal configurations used in the compilation and runtime
-    private val UNIT_TESTING_LIBRARY_CONFIGURATION = "jenkinsPipelineUnitTestLibraries"
+    private const val UNIT_TESTING_LIBRARY_CONFIGURATION = "jenkinsPipelineUnitTestLibraries"
     // These are both unused because we use the kotlin-dsl to create and set them up right now.
     @Suppress("UNUSED")
     private val PLUGIN_HPI_JPI_CONFIGURATION = "jenkinsPluginHpisAndJpis"
     @Suppress("UNUSED")
     private val PLUGIN_LIBRARY_CONFIGURATION = "jenkinsPluginLibraries"
-    private val CORE_LIBRARY_CONFIGURATION = "jenkinsCoreLibraries"
-    private val TEST_LIBRARY_CONFIGURATION = "jenkinsTestLibraries"
-    private val TEST_LIBRARY_RUNTIME_ONLY_CONFIGURATION = "jenkinsTestLibrariesRuntimeOnly"
+    private const val CORE_LIBRARY_CONFIGURATION = "jenkinsCoreLibraries"
+    private const val TEST_LIBRARY_CONFIGURATION = "jenkinsTestLibraries"
+    private const val TEST_LIBRARY_RUNTIME_ONLY_CONFIGURATION = "jenkinsTestLibrariesRuntimeOnly"
   }
 
   override fun apply(target: Project) {
