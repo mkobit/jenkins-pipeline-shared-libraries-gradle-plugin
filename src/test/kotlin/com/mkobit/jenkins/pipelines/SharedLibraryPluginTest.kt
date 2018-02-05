@@ -34,9 +34,17 @@ internal class SharedLibraryPluginTest {
 
   @Test
   internal fun `Groovy plugin is applied`() {
-    assertThat(project.pluginManager).satisfies {
-      assertThat(it.hasPlugin("groovy")).isTrue()
-    }
+    assertThat(project.pluginManager.hasPlugin("groovy"))
+      .describedAs("'groovy' plugin applied")
+      .isTrue()
+  }
+
+  @NotImplementedYet
+  @Test
+  internal fun `JenkinsIntegrationPlugin is applied`() {
+    assertThat(project.plugins.hasPlugin(JenkinsIntegrationPlugin::class.java))
+      .describedAs("${JenkinsIntegrationPlugin::class.simpleName} is applied")
+      .isTrue()
   }
 
   @Test
@@ -346,15 +354,6 @@ internal class SharedLibraryPluginTest {
   internal fun `integrationTestPipelineResources directory is a source set and available on integrationRuntimeOnly classpath`() {
   }
 
-  @NotImplementedYet
-  @Test
-  internal fun `task exists to download the GDSL`() {
-  }
-
-  @NotImplementedYet
-  @Test
-  internal fun `task exists to determine plugins from a specific Jenkins instance`() {
-  }
 
   // Internal function needed here to trigger evaluation
   private fun Project.evaluate() {

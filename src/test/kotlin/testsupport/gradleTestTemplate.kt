@@ -38,7 +38,7 @@ annotation class GradleProject
 @ExtendWith(MultiVersionGradleProjectTestTemplate::class)
 @Target(AnnotationTarget.CLASS)
 annotation class ForGradleVersions(
-  val versions: Array<String> = arrayOf()
+  val versions: Array<String> = []
 )
 
 internal class MultiVersionGradleProjectTestTemplate : TestTemplateInvocationContextProvider {

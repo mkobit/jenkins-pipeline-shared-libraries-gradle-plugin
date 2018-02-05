@@ -227,6 +227,7 @@ internal class IntegrationTestSourceIntegrationTest {
   @NotImplementedYet
   @ParameterizedTest(name = "'{1}'")
   @MethodSource("stepTests")
+  @Suppress("UNUSED_PARAMETER")
   internal fun `can use step`(stepName: String, stepBody: String) {
   }
 
