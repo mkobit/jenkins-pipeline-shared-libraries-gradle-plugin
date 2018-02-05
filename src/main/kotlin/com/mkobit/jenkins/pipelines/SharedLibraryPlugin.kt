@@ -80,6 +80,7 @@ open class SharedLibraryPlugin @Inject constructor(
   override fun apply(target: Project) {
     target.run {
       pluginManager.apply(GroovyPlugin::class.java)
+      pluginManager.apply(JenkinsIntegrationPlugin::class.java)
       setupJenkinsRepository(repositories)
       val (main, test, integrationTest) = withConvention(JavaPluginConvention::class) { setupJava(this, tasks) }
       val sharedLibraryExtension = setupSharedLibraryExtension(this)

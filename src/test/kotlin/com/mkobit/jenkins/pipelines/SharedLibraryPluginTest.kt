@@ -39,7 +39,6 @@ internal class SharedLibraryPluginTest {
       .isTrue()
   }
 
-  @NotImplementedYet
   @Test
   internal fun `JenkinsIntegrationPlugin is applied`() {
     assertThat(project.plugins.hasPlugin(JenkinsIntegrationPlugin::class.java))
