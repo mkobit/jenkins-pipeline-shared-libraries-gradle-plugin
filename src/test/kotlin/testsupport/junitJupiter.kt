@@ -22,10 +22,6 @@ internal annotation class Integration
 )
 annotation class IntelliJSupport
 
-@Tag("possible-sample")
-@ExtendWith(TestExecutionLogger::class)
-annotation class SampleCandidate
-
 class TestExecutionLogger : BeforeTestExecutionCallback, AfterTestExecutionCallback {
 
   companion object {
