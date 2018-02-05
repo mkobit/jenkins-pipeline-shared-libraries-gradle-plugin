@@ -224,22 +224,6 @@ internal class IntegrationTestSourceIntegrationTest {
     }.doesNotThrowAnyException()
   }
 
-  @NotImplementedYet
-  @ParameterizedTest(name = "'{1}'")
-  @MethodSource("stepTests")
-  @Suppress("UNUSED_PARAMETER")
-  internal fun `can use step`(stepName: String, stepBody: String) {
-  }
-
-  @Suppress("UNUSED")
-  private fun stepTests(): Stream<Arguments> {
-    return Stream.of(
-      argumentsOf("stage", "stage('example stage') {}"),
-      argumentsOf("sh", """sh('echo "hello"')"""),
-      argumentsOf("node", "node {}")
-    )
-  }
-
   @TestTemplate
   internal fun `"check" lifecycle task executes "integrationTest"`(@GradleProject gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.run {
