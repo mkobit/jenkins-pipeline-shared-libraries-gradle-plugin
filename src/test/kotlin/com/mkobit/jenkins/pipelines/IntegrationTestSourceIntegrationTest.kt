@@ -261,16 +261,6 @@ internal class IntegrationTestSourceIntegrationTest {
 
   @NotImplementedYet
   @Test
-  internal fun `integration tests are executed when build lifecycle task is executed`() {
-  }
-
-  @NotImplementedYet
-  @Test
-  internal fun `failing integration tests fail build tasks`() {
-  }
-
-  @NotImplementedYet
-  @Test
   internal fun `integration test output for Jenkins Test Harness is in the build directory`() {
   }
 
