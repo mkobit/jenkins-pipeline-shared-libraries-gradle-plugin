@@ -124,8 +124,8 @@ configurations {
 
 dependencies {
   api(gradleApi())
-  api("com.squareup", "javapoet", "1.9.0")
-  implementation("io.github.microutils:kotlin-logging:1.4.8")
+  api("com.squareup", "javapoet", "1.10.0")
+  implementation("io.github.microutils:kotlin-logging:1.5.3")
   testImplementation(kotlin("reflect"))
   testImplementation("com.mkobit.gradle.test:gradle-test-kotlin-extensions:0.2.1")
   testImplementation("com.mkobit.gradle.test:assertj-gradle:0.2.0")
