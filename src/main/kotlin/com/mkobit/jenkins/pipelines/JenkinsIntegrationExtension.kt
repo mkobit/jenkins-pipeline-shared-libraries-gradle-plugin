@@ -9,5 +9,5 @@ import java.net.URI
  */
 open class JenkinsIntegrationExtension(
   var instanceUri: URI?,
-  var credentials: Property<out Credentials>
+  var credentials: Property<Credentials>
 )
