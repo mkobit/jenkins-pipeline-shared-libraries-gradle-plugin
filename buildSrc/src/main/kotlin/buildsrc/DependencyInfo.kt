@@ -1,13 +1,13 @@
 package buildsrc
 
 object DependencyInfo {
-  val junitGradlePluginVersion: String = "1.0.3"
-  val junitPlatformVersion: String = "1.0.3"
-  val junitPlatformGradlePluginVersion: String = "1.0.3"
-  val junitJupiterVersion: String = "5.0.3"
-  val junitVintageVersion: String = "4.12.3"
-  val junit5Log4jVersion: String = "2.10.0"
-  val slf4jVersion: String = "1.7.25"
+  const val junitGradlePluginVersion: String = "1.0.3"
+  const val junitPlatformVersion: String = "1.0.3"
+  const val junitPlatformGradlePluginVersion: String = "1.0.3"
+  const val junitJupiterVersion: String = "5.0.3"
+  const val junitVintageVersion: String = "4.12.3"
+  const val junit5Log4jVersion: String = "2.10.0"
+  const val slf4jVersion: String = "1.7.25"
 
   val junitPlatformGradlePlugin = mapOf("group" to "org.junit.platform", "name" to "junit-platform-gradle-plugin", "version" to junitGradlePluginVersion)
   val junitPlatformRunner = mapOf("group" to "org.junit.platform", "name" to "junit-platform-runner", "version" to junitPlatformVersion)

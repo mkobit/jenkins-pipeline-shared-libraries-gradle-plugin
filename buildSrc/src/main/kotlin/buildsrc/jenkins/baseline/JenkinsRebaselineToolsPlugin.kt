@@ -19,7 +19,7 @@ open class JenkinsRebaselineToolsPlugin : Plugin<Project> {
 
   companion object {
     private val defaultUpToDateDownloadDuration = Duration.ofDays(1L)
-    private val TASK_GROUP = "Development"
+    private const val TASK_GROUP = "Development"
   }
   override fun apply(target: Project) {
     target.run {
