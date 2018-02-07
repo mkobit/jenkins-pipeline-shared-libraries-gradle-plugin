@@ -365,6 +365,10 @@ gradlePlugin {
       id = sharedLibraryPluginId
       implementationClass = "com.mkobit.jenkins.pipelines.SharedLibraryPlugin"
     }
+    "jenkinsIntegration" {
+      id =  "com.mkobit.jenkins.pipelines.jenkins-integration"
+      implementationClass = "com.mkobit.jenkins.pipelines.JenkinsIntegrationPlugin"
+    }
   }
 }
 

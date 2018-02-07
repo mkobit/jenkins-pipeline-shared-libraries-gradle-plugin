@@ -1,5 +1,6 @@
 package com.mkobit.jenkins.pipelines
 
+import com.mkobit.jenkins.pipelines.auth.AnonymousCredentials
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.api.Project
 import org.gradle.testfixtures.ProjectBuilder
@@ -17,13 +18,26 @@ internal class JenkinsIntegrationPluginTest {
     project.pluginManager.apply(JenkinsIntegrationPlugin::class.java)
   }
 
-  @NotImplementedYet
   @Test
-  internal fun `jenkinsIntegration is created`() {
+  internal fun `jenkinsIntegration extension is created`() {
     val extension = project.extensions.findByName("jenkinsIntegration")
     assertThat(extension)
       .isNotNull()
       .isInstanceOf(JenkinsIntegrationExtension::class.java)
+  }
+
+  @Test
+  internal fun `integration extension has default values`() {
+    val extension = project.extensions.findByType(JenkinsIntegrationExtension::class.java)
+    assertThat(extension).isNotNull()
+    assertThat(extension!!).satisfies {
+      assertThat(it.instanceUri)
+        .describedAs("Instance URI is null")
+        .isNull()
+      assertThat(it.credentials.get())
+        .describedAs("Anonymous credentials are the default")
+        .isSameAs(AnonymousCredentials)
+    }
   }
 
   @NotImplementedYet
