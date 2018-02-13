@@ -34,7 +34,7 @@ It offers the ability to:
 
 == Example Consumer
 
-See the link:{uri-consumer-example}[example] for a simple example of how to consume this plugin.
+See the link:{uri-consumer-example}[example repository] for a demonstration of using this plugin.
 
 == 5 minute onboarding
 
@@ -85,9 +85,9 @@ def call() {
 }
 ----
 
-. Write integration tests utilizing `JenkinsRule` that sets up the shared library
+. Write integration tests by utilizing a local `JenkinsRule` and setting up the shared library
 +
-.test/integration/groovy/com/mkobit/JenkinsGlobalLibraryUsageTest.groovy
+.Integration tests - `test/integration/groovy/com/mkobit/JenkinsGlobalLibraryUsageTest.groovy`
 [source, groovy]
 ----
 package com.mkobit
@@ -131,7 +131,8 @@ class JenkinsGlobalLibraryUsageTest {
     '''.stripIndent(), true)
     WorkflowJob workflowJob = rule.createProject(WorkflowJob, 'project')
     workflowJob.definition = flow
-    rule.buildAndAssertSuccess(workflowJob)
+    WorkflowRun result = rule.buildAndAssertSuccess(workflowJob)
+    rule.assertLogContains('LibHelper says hello to mkobit!', result)
   }
 
   @Test
