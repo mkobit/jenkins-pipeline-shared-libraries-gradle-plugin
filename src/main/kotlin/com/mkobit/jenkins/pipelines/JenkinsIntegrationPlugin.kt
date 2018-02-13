@@ -1,7 +1,7 @@
 package com.mkobit.jenkins.pipelines
 
-import com.mkobit.jenkins.pipelines.auth.AnonymousCredentials
-import com.mkobit.jenkins.pipelines.auth.Credentials
+import com.mkobit.jenkins.pipelines.http.AnonymousAuthentication
+import com.mkobit.jenkins.pipelines.http.Authentication
 import mu.KotlinLogging
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -18,7 +18,7 @@ internal open class JenkinsIntegrationPlugin : Plugin<Project> {
         EXTENSION_NAME,
         JenkinsIntegrationExtension::class.java,
         null,
-        objects.property<Credentials>().apply { set(AnonymousCredentials) }
+        objects.property<Authentication>().apply { set(AnonymousAuthentication) }
       )
     }
   }

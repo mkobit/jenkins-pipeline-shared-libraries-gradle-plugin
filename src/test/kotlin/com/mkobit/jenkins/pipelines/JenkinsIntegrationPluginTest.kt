@@ -1,7 +1,7 @@
 package com.mkobit.jenkins.pipelines
 
-import com.mkobit.jenkins.pipelines.auth.AnonymousCredentials
-import com.mkobit.jenkins.pipelines.auth.UsernamePasswordCredentials
+import com.mkobit.jenkins.pipelines.http.AnonymousAuthentication
+import com.mkobit.jenkins.pipelines.http.BasicAuthentication
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.api.Project
 import org.gradle.testfixtures.ProjectBuilder
@@ -36,13 +36,13 @@ internal class JenkinsIntegrationPluginTest {
         .isNull()
       assertThat(it.credentials.get())
         .describedAs("Anonymous credentials are the default")
-        .isSameAs(AnonymousCredentials)
+        .isSameAs(AnonymousAuthentication)
     }
   }
 
   @Test
   internal fun `can specify alternate credential providers in extension`() {
-    val basicAuth = UsernamePasswordCredentials("username", "password")
+    val basicAuth = BasicAuthentication("username", "password")
     val extension = project.extensions.findByType(JenkinsIntegrationExtension::class.java)
     assertThat(extension).isNotNull()
     extension!!.credentials.set(project.provider { basicAuth })

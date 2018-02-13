@@ -126,7 +126,10 @@ dependencies {
   api(gradleApi())
   api("com.squareup", "javapoet", "1.10.0")
   implementation("io.github.microutils:kotlin-logging:1.5.3")
+  implementation(DependencyInfo.okHttpClient)
+
   testImplementation(kotlin("reflect"))
+  testImplementation(DependencyInfo.okHttpMockServer)
   testImplementation("com.mkobit.gradle.test:gradle-test-kotlin-extensions:0.2.1")
   testImplementation("com.mkobit.gradle.test:assertj-gradle:0.2.0")
   testImplementation("com.google.guava:guava:24.0-jre")
