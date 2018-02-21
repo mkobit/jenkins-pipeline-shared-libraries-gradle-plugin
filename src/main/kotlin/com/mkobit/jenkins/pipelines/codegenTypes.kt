@@ -17,7 +17,7 @@ import java.util.Objects
 import javax.annotation.Generated
 import javax.lang.model.element.Modifier
 
-private val codegenPackage = "com.mkobit.jenkins.pipelines.codegen"
+private const val codegenPackage = "com.mkobit.jenkins.pipelines.codegen"
 
 private val generatedAnnotationSpec: AnnotationSpec = AnnotationSpec.builder(Generated::class.java).addMember("value", "{ \$S }", "Shared Library Plugin").build()
 

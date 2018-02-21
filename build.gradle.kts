@@ -126,11 +126,14 @@ dependencies {
   api(gradleApi())
   api("com.squareup", "javapoet", "1.10.0")
   implementation("io.github.microutils:kotlin-logging:1.5.3")
+  implementation(DependencyInfo.okHttpClient)
+
   testImplementation(kotlin("reflect"))
+  testImplementation(DependencyInfo.okHttpMockServer)
   testImplementation("com.mkobit.gradle.test:gradle-test-kotlin-extensions:0.2.1")
   testImplementation("com.mkobit.gradle.test:assertj-gradle:0.2.0")
-  testImplementation("com.google.guava:guava:23.0")
-  testImplementation("org.assertj:assertj-core:3.8.0")
+  testImplementation("com.google.guava:guava:24.0-jre")
+  testImplementation("org.assertj:assertj-core:3.9.0")
   testImplementation("com.nhaarman:mockito-kotlin:1.5.0")
   DependencyInfo.junitTestImplementationArtifacts.forEach {
     testImplementation(it)
@@ -364,6 +367,10 @@ gradlePlugin {
     "sharedLibrary" {
       id = sharedLibraryPluginId
       implementationClass = "com.mkobit.jenkins.pipelines.SharedLibraryPlugin"
+    }
+    "jenkinsIntegration" {
+      id =  "com.mkobit.jenkins.pipelines.jenkins-integration"
+      implementationClass = "com.mkobit.jenkins.pipelines.JenkinsIntegrationPlugin"
     }
   }
 }

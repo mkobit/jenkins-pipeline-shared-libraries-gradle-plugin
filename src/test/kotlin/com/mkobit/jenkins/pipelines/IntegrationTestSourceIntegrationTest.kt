@@ -15,17 +15,12 @@ import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestTemplate
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.Arguments
-import org.junit.jupiter.params.provider.MethodSource
 import testsupport.GradleProject
 import testsupport.ForGradleVersions
 import testsupport.IntelliJSupport
 import testsupport.NotImplementedYet
-import testsupport.SampleCandidate
 import testsupport.condition
 import testsupport.softlyAssert
-import java.util.stream.Stream
 import org.junit.jupiter.params.provider.Arguments.of as argumentsOf
 
 @ForGradleVersions
@@ -224,21 +219,6 @@ internal class IntegrationTestSourceIntegrationTest {
     }.doesNotThrowAnyException()
   }
 
-  @NotImplementedYet
-  @ParameterizedTest(name = "'{1}'")
-  @MethodSource("stepTests")
-  internal fun `can use step`(stepName: String, stepBody: String) {
-  }
-
-  @Suppress("UNUSED")
-  private fun stepTests(): Stream<Arguments> {
-    return Stream.of(
-      argumentsOf("stage", "stage('example stage') {}"),
-      argumentsOf("sh", """sh('echo "hello"')"""),
-      argumentsOf("node", "node {}")
-    )
-  }
-
   @TestTemplate
   internal fun `"check" lifecycle task executes "integrationTest"`(@GradleProject gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.run {
@@ -276,16 +256,6 @@ internal class IntegrationTestSourceIntegrationTest {
 
   @NotImplementedYet
   @Test
-  internal fun `integration tests are executed when build lifecycle task is executed`() {
-  }
-
-  @NotImplementedYet
-  @Test
-  internal fun `failing integration tests fail build tasks`() {
-  }
-
-  @NotImplementedYet
-  @Test
   internal fun `integration test output for Jenkins Test Harness is in the build directory`() {
   }
 
@@ -299,18 +269,5 @@ internal class IntegrationTestSourceIntegrationTest {
   @NotImplementedYet
   @Test
   internal fun `can use declared plugin dependencies in integration test`() {
-  }
-
-  // TODO: figure out better way to split out sample-like tests
-  @NotImplementedYet
-  @SampleCandidate
-  @Test
-  internal fun `can use parameterized pipeline build`() {
-  }
-
-  @NotImplementedYet
-  @SampleCandidate
-  @Test
-  internal fun `can use Spock testing library`() {
   }
 }
