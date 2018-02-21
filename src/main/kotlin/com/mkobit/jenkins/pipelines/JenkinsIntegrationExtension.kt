@@ -7,9 +7,9 @@ import java.net.URI
 /**
  * Targets a specific Jenkins instance for integration.
  * @param instanceUri the URI of the Jenkins instance to target for integration.
- * @param credentials the authentication provider
+ * @param authentication the authentication provider
  */
 open class JenkinsIntegrationExtension(
   var instanceUri: URI?,
-  var credentials: Property<Authentication>
+  var authentication: Property<Authentication>
 )

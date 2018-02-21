@@ -34,8 +34,8 @@ internal class JenkinsIntegrationPluginTest {
       assertThat(it.instanceUri)
         .describedAs("Instance URI is null")
         .isNull()
-      assertThat(it.credentials.get())
-        .describedAs("Anonymous credentials are the default")
+      assertThat(it.authentication.get())
+        .describedAs("Anonymous authentication are the default")
         .isSameAs(AnonymousAuthentication)
     }
   }
@@ -45,7 +45,7 @@ internal class JenkinsIntegrationPluginTest {
     val basicAuth = BasicAuthentication("username", "password")
     val extension = project.extensions.findByType(JenkinsIntegrationExtension::class.java)
     assertThat(extension).isNotNull()
-    extension!!.credentials.set(project.provider { basicAuth })
-    assertThat(extension.credentials.get()).isEqualTo(basicAuth)
+    extension!!.authentication.set(project.provider { basicAuth })
+    assertThat(extension.authentication.get()).isEqualTo(basicAuth)
   }
 }
