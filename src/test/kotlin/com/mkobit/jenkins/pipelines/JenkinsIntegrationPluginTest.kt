@@ -31,11 +31,11 @@ internal class JenkinsIntegrationPluginTest {
     val extension = project.extensions.findByType(JenkinsIntegrationExtension::class.java)
     assertThat(extension).isNotNull()
     assertThat(extension!!).satisfies {
-      assertThat(it.instanceUri)
-        .describedAs("Instance URI is null")
+      assertThat(it.baseUrl)
+        .describedAs("Instance URL is null")
         .isNull()
       assertThat(it.authentication.get())
-        .describedAs("Anonymous authentication are the default")
+        .describedAs("Anonymous authentication is the default")
         .isSameAs(AnonymousAuthentication)
     }
   }

@@ -1,5 +1,8 @@
-package com.mkobit.jenkins.pipelines.http
+package com.mkobit.jenkins.pipelines.http.internal
 
+import com.mkobit.jenkins.pipelines.http.AnonymousAuthentication
+import com.mkobit.jenkins.pipelines.http.ApiTokenAuthentication
+import com.mkobit.jenkins.pipelines.http.BasicAuthentication
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.assertj.core.api.Assertions.assertThat
