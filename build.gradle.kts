@@ -16,7 +16,7 @@ plugins {
   `kotlin-dsl`
   `java-library`
   `java-gradle-plugin`
-  id("com.gradle.plugin-publish") version "0.9.9"
+  id("com.gradle.plugin-publish") version "0.9.10"
   id("com.github.ben-manes.versions") version "0.17.0"
   id("org.jetbrains.dokka") version "0.9.16-eap-3"
   // TODO: load version from shared location
