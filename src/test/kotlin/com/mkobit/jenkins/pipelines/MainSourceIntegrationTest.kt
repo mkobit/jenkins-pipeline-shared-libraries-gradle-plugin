@@ -1,7 +1,8 @@
 package com.mkobit.jenkins.pipelines
 
-import com.mkobit.gradle.test.kotlin.testkit.runner.arguments
 import com.mkobit.gradle.test.assertj.GradleAssertions.assertThat
+import com.mkobit.gradle.test.kotlin.testkit.runner.build
+import com.mkobit.gradle.test.kotlin.testkit.runner.buildAndFail
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
@@ -17,10 +18,7 @@ class MainSourceIntegrationTest {
 
   @TestTemplate
   internal fun `main Groovy code is compiled`(@GradleProject gradleRunner: GradleRunner) {
-    val buildResult: BuildResult = gradleRunner.run {
-      arguments("compileGroovy")
-      build()
-    }
+    val buildResult: BuildResult = gradleRunner.build("compileGroovy")
 
     assertThat(buildResult)
       .withFailMessage("Build output: %s", buildResult.output)
@@ -29,10 +27,7 @@ class MainSourceIntegrationTest {
 
   @TestTemplate
   internal fun `can unit test code in src`(@GradleProject gradleRunner: GradleRunner) {
-    val buildResult: BuildResult = gradleRunner.run {
-      arguments("test")
-      build()
-    }
+    val buildResult: BuildResult = gradleRunner.build("test")
 
     assertThat(buildResult)
       .withFailMessage("Build output: %s", buildResult.output)
@@ -41,10 +36,7 @@ class MainSourceIntegrationTest {
 
   @TestTemplate
   internal fun `compilation fails for invalid Groovy code in src`(@GradleProject gradleRunner: GradleRunner) {
-    val buildResult: BuildResult = gradleRunner.run {
-      arguments("compileGroovy")
-      buildAndFail()
-    }
+    val buildResult: BuildResult = gradleRunner.buildAndFail("compileGroovy")
 
     assertThat(buildResult)
       .withFailMessage("Build output: %s", buildResult.output)
@@ -53,10 +45,7 @@ class MainSourceIntegrationTest {
 
   @TestTemplate
   internal fun `compilation fails for invalid Groovy code in vars`(@GradleProject gradleRunner: GradleRunner) {
-    val buildResult: BuildResult = gradleRunner.run {
-      arguments("compileGroovy")
-      buildAndFail()
-    }
+    val buildResult: BuildResult = gradleRunner.buildAndFail("compileGroovy")
 
     assertThat(buildResult)
       .hasTaskFailedAtPath(":compileGroovy")
@@ -79,10 +68,7 @@ class MainSourceIntegrationTest {
 
   @TestTemplate
   internal fun `Groovydoc JAR can be generated`(@GradleProject gradleRunner: GradleRunner) {
-    val buildResult: BuildResult = gradleRunner.run {
-      arguments("groovydocJar")
-      build()
-    }
+    val buildResult: BuildResult = gradleRunner.build("groovydocJar")
 
     val task = buildResult.task(":groovydocJar")
     assertThat(task?.outcome)
@@ -93,10 +79,7 @@ class MainSourceIntegrationTest {
 
   @TestTemplate
   internal fun `Groovy sources JAR can be generated`(@GradleProject gradleRunner: GradleRunner) {
-    val buildResult: BuildResult = gradleRunner.run {
-      arguments("sourcesJar")
-      build()
-    }
+    val buildResult: BuildResult = gradleRunner.build("sourcesJar")
 
     val task = buildResult.task(":sourcesJar")
     assertThat(task?.outcome)

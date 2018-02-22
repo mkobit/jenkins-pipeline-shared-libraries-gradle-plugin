@@ -1,8 +1,7 @@
 package com.mkobit.jenkins.pipelines
 
 import com.mkobit.gradle.test.assertj.GradleAssertions.assertThat
-import com.mkobit.gradle.test.kotlin.testkit.runner.arguments
-import com.mkobit.gradle.test.kotlin.testkit.runner.buildWith
+import com.mkobit.gradle.test.kotlin.testkit.runner.build
 import com.mkobit.gradle.test.kotlin.testkit.runner.info
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
@@ -16,11 +15,9 @@ internal class UnitTestSourceIntegrationTest {
 
   @TestTemplate
   internal fun `can write unit tests using JenkinsPipelineUnit`(@GradleProject gradleRunner: GradleRunner) {
-    val buildResult: BuildResult = gradleRunner.run {
-      arguments("test")
+    val buildResult: BuildResult = gradleRunner.apply {
       info = true
-      build()
-    }
+    }.build("test")
 
     assertThat(buildResult)
       .hasTaskAtPathWithOutcome(":test", TaskOutcome.SUCCESS)
@@ -28,11 +25,9 @@ internal class UnitTestSourceIntegrationTest {
 
   @TestTemplate
   internal fun `integrationTest task is not executed when test is executed`(@GradleProject gradleRunner: GradleRunner) {
-    val buildResult: BuildResult = gradleRunner.run {
-      arguments("test")
+    val buildResult: BuildResult = gradleRunner.apply {
       info = true
-      build()
-    }
+    }.build("test")
 
     assertThat(buildResult)
       .doesNotHaveTaskAtPath(":integrationTest")
