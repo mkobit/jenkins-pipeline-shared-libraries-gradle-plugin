@@ -1,6 +1,7 @@
 package com.mkobit.jenkins.pipelines
 
 import com.mkobit.jenkins.pipelines.http.Authentication
+import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
 import java.net.URL
 
@@ -10,6 +11,7 @@ import java.net.URL
  * @param authentication the authentication provider
  */
 open class JenkinsIntegrationExtension(
-  var baseUrl: URL?,
-  var authentication: Property<Authentication>
+  val baseUrl: Property<URL>,
+  val authentication: Property<Authentication>,
+  val downloadDirectory: DirectoryProperty
 )

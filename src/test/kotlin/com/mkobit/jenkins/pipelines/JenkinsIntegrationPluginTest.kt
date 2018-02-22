@@ -31,9 +31,9 @@ internal class JenkinsIntegrationPluginTest {
     val extension = project.extensions.findByType(JenkinsIntegrationExtension::class.java)
     assertThat(extension).isNotNull()
     assertThat(extension!!).satisfies {
-      assertThat(it.baseUrl)
-        .describedAs("Instance URL is null")
-        .isNull()
+      assertThat(it.baseUrl.isPresent)
+        .describedAs("Instance URL is absent")
+        .isFalse()
       assertThat(it.authentication.get())
         .describedAs("Anonymous authentication is the default")
         .isSameAs(AnonymousAuthentication)
@@ -47,5 +47,12 @@ internal class JenkinsIntegrationPluginTest {
     assertThat(extension).isNotNull()
     extension!!.authentication.set(project.provider { basicAuth })
     assertThat(extension.authentication.get()).isEqualTo(basicAuth)
+  }
+
+  @Test
+  internal fun `download GDSL task exists`() {
+    assertThat(project.tasks.findByPath(":downloadGdslFromInstance"))
+      .describedAs("Download GDSL task exists")
+      .isNotNull()
   }
 }
