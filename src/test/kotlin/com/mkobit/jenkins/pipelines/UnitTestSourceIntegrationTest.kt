@@ -14,7 +14,7 @@ import testsupport.GradleProject
 internal class UnitTestSourceIntegrationTest {
 
   @TestTemplate
-  internal fun `can write unit tests using JenkinsPipelineUnit`(@GradleProject gradleRunner: GradleRunner) {
+  internal fun `can write unit tests using JenkinsPipelineUnit`(@GradleProject(["projects", "jenkins-pipeline-unit"]) gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.apply {
       info = true
     }.build("test")
@@ -24,7 +24,7 @@ internal class UnitTestSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `integrationTest task is not executed when test is executed`(@GradleProject gradleRunner: GradleRunner) {
+  internal fun `integrationTest task is not executed when test is executed`(@GradleProject(["projects", "only-plugins-block"]) gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.apply {
       info = true
     }.build("test")
