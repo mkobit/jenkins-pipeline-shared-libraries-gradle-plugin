@@ -3,10 +3,10 @@ package com.mkobit
 import org.junit.Assert
 import org.junit.Test
 
-class UpToDateExecutionTest {
+class DumbIntegrationTest {
 
   @Test
-  void canUseJenkins() {
+  void dumbAssertion() {
     Assert.assertTrue('success story!', true)
   }
 }
