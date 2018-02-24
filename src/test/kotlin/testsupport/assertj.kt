@@ -5,7 +5,6 @@ import com.mkobit.gradle.test.assertj.testkit.BuildResultAssert
 import org.assertj.core.api.Condition
 import org.assertj.core.api.SoftAssertions
 import org.gradle.testkit.runner.BuildResult
-import java.util.function.Consumer
 import java.util.function.Predicate
 
 /**

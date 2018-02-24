@@ -17,6 +17,7 @@ import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.GroovySourceSet
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.TaskContainer
+import org.gradle.api.tasks.compile.GroovyCompile
 import org.gradle.api.tasks.javadoc.Groovydoc
 import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.tasks.Jar
@@ -27,6 +28,7 @@ import org.gradle.kotlin.dsl.getValue // this is actually used, see https://gith
 import org.gradle.kotlin.dsl.getting
 import org.gradle.kotlin.dsl.invoke
 import org.gradle.kotlin.dsl.withConvention
+import org.gradle.kotlin.dsl.withType
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import javax.inject.Inject
 
@@ -75,6 +77,9 @@ open class SharedLibraryPlugin @Inject constructor(
     private const val CORE_LIBRARY_CONFIGURATION = "jenkinsCoreLibraries"
     private const val TEST_LIBRARY_CONFIGURATION = "jenkinsTestLibraries"
     private const val TEST_LIBRARY_RUNTIME_ONLY_CONFIGURATION = "jenkinsTestLibrariesRuntimeOnly"
+
+    private const val IVY_CONFIGURATION = "globalLibraryIvy"
+    private const val IVY_COORDINATES = "org.apache.ivy:ivy:2.4.0"
   }
 
   override fun apply(target: Project) {
@@ -93,6 +98,7 @@ open class SharedLibraryPlugin @Inject constructor(
         test,
         integrationTest
       )
+      setupIvyGrabSupport(dependencies, configurations, tasks)
       afterEvaluate {
         addGroovyDependency(
           dependencies,
@@ -103,6 +109,26 @@ open class SharedLibraryPlugin @Inject constructor(
           dependencies,
           sharedLibraryExtension
         )
+      }
+    }
+  }
+
+  private fun setupIvyGrabSupport(
+    dependencies: DependencyHandler,
+    configurations: ConfigurationContainer,
+    tasks: TaskContainer
+  ) {
+    val ivy = configurations.create(IVY_CONFIGURATION) {
+      isVisible = false
+      isCanBeConsumed = false
+    }
+    dependencies.add(ivy, IVY_COORDINATES)
+    tasks.withType<GroovyCompile> {
+      groovyClasspath += ivy
+    }
+    tasks {
+      "test"(Test::class) {
+        classpath += ivy
       }
     }
   }

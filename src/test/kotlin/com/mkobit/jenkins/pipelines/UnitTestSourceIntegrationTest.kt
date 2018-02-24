@@ -6,6 +6,7 @@ import com.mkobit.gradle.test.kotlin.testkit.runner.info
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.TestTemplate
 import testsupport.ForGradleVersions
 import testsupport.GradleProject
@@ -32,5 +33,11 @@ internal class UnitTestSourceIntegrationTest {
     assertThat(buildResult)
       .doesNotHaveTaskAtPath(":integrationTest")
       .hasTaskAtPath(":test")
+  }
+
+  @Disabled("@Grab does not seem to be working with tests in Gradle. See https://stackoverflow.com/questions/16471096/any-alternative-to-grabconfig and https://stackoverflow.com/questions/4611230/no-suitable-classloader-found-for-grab")
+  @TestTemplate
+  internal fun `@Grab in source can be unit tested`(@GradleProject(["projects", "source-with-@grab"]) gradleRunner: GradleRunner) {
+    gradleRunner.build("test")
   }
 }
