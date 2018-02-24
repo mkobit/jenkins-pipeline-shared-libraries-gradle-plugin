@@ -3,10 +3,8 @@ package com.mkobit.jenkins.pipelines
 import com.mkobit.gradle.test.assertj.GradleAssertions.assertThat
 import com.mkobit.gradle.test.kotlin.testkit.runner.build
 import com.mkobit.gradle.test.kotlin.testkit.runner.buildAndFail
-import org.assertj.core.api.Assertions.assertThat
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
-import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestTemplate
 import testsupport.ForGradleVersions
@@ -56,35 +54,24 @@ class MainSourceIntegrationTest {
   internal fun `cannot add dependencies for compilation or execution`() {
   }
 
-  @NotImplementedYet
-  @Test
-  internal fun `@Grab in library source is supported for trusted libraries`() {
-  }
-
-  @NotImplementedYet
-  @Test
-  internal fun `@Grab not supported for untrusted libraries`() {
+  @TestTemplate
+  internal fun `@Grab can be used in source code compilation`(@GradleProject(["projects", "source-with-@grab"]) gradleRunner: GradleRunner) {
+    gradleRunner.build("compileGroovy")
   }
 
   @TestTemplate
   internal fun `Groovydoc JAR can be generated`(@GradleProject(["projects", "basic-groovy-library"]) gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.build("groovydocJar")
 
-    val task = buildResult.task(":groovydocJar")
-    assertThat(task?.outcome)
-      .describedAs("groovydocJar task outcome")
-      .isNotNull()
-      .isEqualTo(TaskOutcome.SUCCESS)
+    assertThat(buildResult)
+      .hasTaskSuccessAtPath(":groovydocJar")
   }
 
   @TestTemplate
   internal fun `Groovy sources JAR can be generated`(@GradleProject(["projects", "basic-groovy-library"]) gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.build("sourcesJar")
 
-    val task = buildResult.task(":sourcesJar")
-    assertThat(task?.outcome)
-      .describedAs("groovydocJar task outcome")
-      .isNotNull()
-      .isEqualTo(TaskOutcome.SUCCESS)
+    assertThat(buildResult)
+      .hasTaskSuccessAtPath(":sourcesJar")
   }
 }

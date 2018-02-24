@@ -2,7 +2,6 @@ package com.mkobit.jenkins.pipelines
 
 import com.mkobit.gradle.test.assertj.GradleAssertions.assertThat
 import com.mkobit.gradle.test.kotlin.testkit.runner.build
-import com.mkobit.gradle.test.kotlin.testkit.runner.excludedTasks
 import com.mkobit.gradle.test.kotlin.testkit.runner.info
 import org.assertj.core.api.Assertions.allOf
 import org.assertj.core.api.Assertions.anyOf
@@ -211,6 +210,11 @@ internal class IntegrationTestSourceIntegrationTest {
 
     assertThat(buildResult)
       .hasTaskSuccessAtPath(":compileIntegrationTestGroovy")
+  }
+
+  @TestTemplate
+  internal fun `@Grab in source library can be integration tested`(@GradleProject(["projects", "source-with-@grab"]) gradleRunner: GradleRunner) {
+    gradleRunner.build("integrationTest")
   }
 
   @NotImplementedYet
