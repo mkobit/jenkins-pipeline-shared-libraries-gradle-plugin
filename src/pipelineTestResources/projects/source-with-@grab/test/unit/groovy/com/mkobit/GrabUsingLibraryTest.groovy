@@ -6,7 +6,7 @@ import org.junit.Test
 class GrabUsingLibraryTest {
 
   @Test
-  void checkAddition() {
+  void checkIsPrime() {
     Assert.assertTrue(GrabUsingLibrary.isPrime(5))
   }
 }

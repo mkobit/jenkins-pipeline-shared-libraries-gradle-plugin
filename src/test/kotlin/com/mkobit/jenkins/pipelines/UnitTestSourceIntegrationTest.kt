@@ -37,7 +37,16 @@ internal class UnitTestSourceIntegrationTest {
 
   @Disabled("@Grab does not seem to be working with tests in Gradle. See https://stackoverflow.com/questions/16471096/any-alternative-to-grabconfig and https://stackoverflow.com/questions/4611230/no-suitable-classloader-found-for-grab")
   @TestTemplate
-  internal fun `@Grab in source can be unit tested`(@GradleProject(["projects", "source-with-@grab"]) gradleRunner: GradleRunner) {
-    gradleRunner.build("test")
+  internal fun `can test @Grab using source can be unit tested normally`(@GradleProject(["projects", "source-with-@grab"]) gradleRunner: GradleRunner) {
+    val buildResult = gradleRunner.build("test", "--tests", "*GrabUsingLibraryTest*")
+    assertThat(buildResult)
+      .hasTaskSuccessAtPath(":test")
+  }
+
+  @TestTemplate
+  internal fun `can run tests that do not use the source code used by @Grab`(@GradleProject(["projects", "source-with-@grab"]) gradleRunner: GradleRunner) {
+    val buildResult = gradleRunner.build("test", "--tests", "*NonGrabUsingTest*")
+    assertThat(buildResult)
+      .hasTaskSuccessAtPath(":test")
   }
 }
