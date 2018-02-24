@@ -64,7 +64,12 @@ internal class MultiVersionGradleProjectTestTemplate : TestTemplateInvocationCon
     return context.testClass
       .flatMap { clazz -> AnnotationSupport.findAnnotation(clazz, ForGradleVersions::class.java) }
       .map { gradleVersions -> gradleVersions.versions }
-      .map { versions -> versions.map(GradleVersion::version) }
+      .map { versions ->
+        when {
+          versions.size == 1 && versions.first().toLowerCase() == "current" -> listOf(CURRENT_GRADLE_VERSION)
+          else ->  versions.map(GradleVersion::version)
+        }
+      }
       .map { gradleVersions -> determineVersionsToExecute(gradleVersions) }
       .map { gradleVersions -> gradleVersions.map(::GradleProjectInvocationContext) }
       .map { it.stream().distinct() }
@@ -100,9 +105,16 @@ internal class MultiVersionGradleProjectTestTemplate : TestTemplateInvocationCon
     }
 
     return when {
-      gradleVersions.isNotEmpty() -> versionsFromSystemProperty.intersect(gradleVersions).also {
+      // If a version is specified on both the annotation and the system property, we should only include tests
+      // that are in the intersection of the two. For example, '4.4' specified in annotation and '4.3' in the
+      // System property, we should not run the test because the annotation should be "more specific".
+      // TODO: I'm pretty sure this implementation wrong, so should come back to this
+      gradleVersions.isNotEmpty() -> versionsFromSystemProperty.intersect(gradleVersions).let {
         if (it.isEmpty()) {
           LOGGER.fine { "No intersection between annotated versions and system property versions" }
+          gradleVersions
+        } else {
+          it
         }
       }
       versionsFromSystemProperty.isNotEmpty() -> {

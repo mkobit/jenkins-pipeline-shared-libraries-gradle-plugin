@@ -9,7 +9,7 @@ import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.property
-import java.net.URI
+import java.net.URL
 
 internal open class JenkinsIntegrationPlugin : Plugin<Project> {
   companion object {
@@ -21,12 +21,13 @@ internal open class JenkinsIntegrationPlugin : Plugin<Project> {
       val integrationExtension = extensions.create(
         EXTENSION_NAME,
         JenkinsIntegrationExtension::class.java,
-        objects.property<URI>(),
+        objects.property<URL>(),
         objects.property<Authentication>().apply { set(AnonymousAuthentication) },
         layout.directoryProperty(layout.buildDirectory.dir("jenkinsIntegrationDownloads"))
       )
 
-      tasks.create("downloadGdslFromInstance") {
+      tasks.create("downloadGdslFromJenkins") {
+        description = "Downloads the Jenkins Pipeline from th instance GDSL"
         inputs.property("url", integrationExtension.baseUrl)
         outputs.file(integrationExtension.downloadDirectory.file("idea.gdsl"))
         outputs.upToDateWhen { false }
