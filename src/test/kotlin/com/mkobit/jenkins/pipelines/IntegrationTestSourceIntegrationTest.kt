@@ -28,15 +28,15 @@ import org.junit.jupiter.params.provider.Arguments.of as argumentsOf
 internal class IntegrationTestSourceIntegrationTest {
 
   @TestTemplate
-  internal fun `can execute dependencies task`(@GradleProject gradleRunner: GradleRunner) {
+  internal fun `can execute dependencies task`(@GradleProject(["projects", "only-plugins-block"]) gradleRunner: GradleRunner) {
     assertThatCode {
       gradleRunner.build("dependencies")
     }.doesNotThrowAnyException()
   }
 
   @TestTemplate
-  internal fun `integrationTest compile classpath does not contain any HPI or JPI artifacts`(@GradleProject gradleRunner: GradleRunner) {
-    val buildResult: BuildResult = gradleRunner.build("--quiet", "showResolvedArtifacts")
+  internal fun `integrationTest compile classpath does not contain any HPI or JPI artifacts`(@GradleProject(["projects", "show-configuration-states"]) gradleRunner: GradleRunner) {
+    val buildResult: BuildResult = gradleRunner.build("--quiet", "showResolvedIntegrationTestCompileClasspathArtifacts")
 
     softlyAssert {
       assertThat(buildResult.output.trim().split(System.lineSeparator())).isNotEmpty.allSatisfy {
@@ -49,8 +49,8 @@ internal class IntegrationTestSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `integrationTest runtimeOnly configuration contains only HPI, JPI, and WAR artifacts`(@GradleProject gradleRunner: GradleRunner) {
-    val buildResult: BuildResult = gradleRunner.build("--quiet", "showResolvedArtifacts")
+  internal fun `integrationTest runtimeOnly configuration contains only HPI, JPI, and WAR artifacts`(@GradleProject(["projects", "show-configuration-states"]) gradleRunner: GradleRunner) {
+    val buildResult: BuildResult = gradleRunner.build("--quiet", "showResolvedIntegrationTestRuntimeOnlyArtifacts")
 
     softlyAssert(buildResult) {
       outputSatisfies {
@@ -69,8 +69,8 @@ internal class IntegrationTestSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `JenkinsPipelineUnit is not available in the integrationTest classpath`(@GradleProject gradleRunner: GradleRunner) {
-    val buildResult: BuildResult = gradleRunner.build("--quiet", "showResolvedArtifacts")
+  internal fun `JenkinsPipelineUnit is not available in the integrationTest compile classpath`(@GradleProject(["projects", "show-configuration-states"]) gradleRunner: GradleRunner) {
+    val buildResult: BuildResult = gradleRunner.build("--quiet", "showResolvedIntegrationTestCompileClasspathArtifacts")
 
     softlyAssert(buildResult) {
       outputSatisfies {
@@ -86,7 +86,7 @@ internal class IntegrationTestSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `can compile integration test sources that use Jenkins libraries`(@GradleProject gradleRunner: GradleRunner) {
+  internal fun `can compile integration test sources that use Jenkins libraries`(@GradleProject(["projects", "import-jenkins-classes"]) gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.apply {
       info = true
     }.build("compileIntegrationTestGroovy")
@@ -98,7 +98,7 @@ internal class IntegrationTestSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `can use @JenkinsRule in integration tests`(@GradleProject gradleRunner: GradleRunner) {
+  internal fun `can use @JenkinsRule in integration tests`(@GradleProject(["projects", "basic-JenkinsRule-usage"]) gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.apply {
       info = true
     }.build("integrationTest")
@@ -109,7 +109,7 @@ internal class IntegrationTestSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `WorkflowJob can be created and executed in integration tests`(@GradleProject gradleRunner: GradleRunner) {
+  internal fun `WorkflowJob can be created and executed in integration tests`(@GradleProject(["projects", "basic-WorkflowJob-usage"]) gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.apply {
       info = true
     }.build("integrationTest")
@@ -120,7 +120,7 @@ internal class IntegrationTestSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `can set up Global Pipeline Library and use them in an integration test`(@GradleProject gradleRunner: GradleRunner) {
+  internal fun `can set up Global Pipeline Library and use them in an integration test`(@GradleProject(["projects", "global-library-with-generated-test-source"]) gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.apply {
       info = true
     }.build("integrationTest")
@@ -131,10 +131,8 @@ internal class IntegrationTestSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `run integrationTest repeatedly then tasks are up-to-date`(@GradleProject gradleRunner: GradleRunner) {
-    // Exclude classes to not test main source compilation
+  fun `run integrationTest repeatedly then tasks are up-to-date`(@GradleProject(["projects", "basic-groovy-library"]) gradleRunner: GradleRunner) {
     gradleRunner.apply {
-      excludedTasks = listOf("classes")
       info = true
     }
 
@@ -166,7 +164,7 @@ internal class IntegrationTestSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `no configurations are resolved if no build tasks are executed`(@GradleProject gradleRunner: GradleRunner) {
+  internal fun `no configurations are resolved if no build tasks are executed`(@GradleProject(["projects", "show-configuration-states"]) gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.build("--quiet", "printConfigurationStates")
 
 
@@ -178,7 +176,7 @@ internal class IntegrationTestSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `Groovy DSL extension configuration`(@GradleProject gradleRunner: GradleRunner) {
+  internal fun `Groovy DSL extension configuration`(@GradleProject(["projects", "gradle-configuration-groovy"]) gradleRunner: GradleRunner) {
     assertThatCode {
       gradleRunner.apply {
         info = true
@@ -188,7 +186,7 @@ internal class IntegrationTestSourceIntegrationTest {
 
   @Disabled("This example works in a local Gradle project, but not with Gradle Test Kit. See https://github.com/gradle/kotlin-dsl/issues/492")
   @TestTemplate
-  fun `Kotlin DSL extension configuration`(@GradleProject gradleRunner: GradleRunner) {
+  fun `Kotlin DSL extension configuration`(@GradleProject(["projects", "gradle-configuration-kotlin"]) gradleRunner: GradleRunner) {
     assertThatCode {
       gradleRunner.apply {
         info = true
@@ -197,7 +195,7 @@ internal class IntegrationTestSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `"check" lifecycle task executes "integrationTest"`(@GradleProject gradleRunner: GradleRunner) {
+  internal fun `"check" lifecycle task executes "integrationTest"`(@GradleProject(["projects", "only-plugins-block"]) gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.build("check")
 
     assertThat(buildResult)
@@ -206,18 +204,7 @@ internal class IntegrationTestSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `generated sources can be used in Java integration tests`(@GradleProject gradleRunner: GradleRunner) {
-    val buildResult: BuildResult = gradleRunner.apply {
-      info = true
-    }.build("check")
-
-    assertThat(buildResult)
-      .hasTaskSuccessAtPath(":compileIntegrationTestGroovy")
-  }
-
-
-  @TestTemplate
-  internal fun `generated sources can be used in Groovy integration tests`(@GradleProject gradleRunner: GradleRunner) {
+  internal fun `generated sources can be used in Java and Groovy integration tests`(@GradleProject(["projects", "generated-sources-usage"]) gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.apply {
       info = true
     }.build("check")

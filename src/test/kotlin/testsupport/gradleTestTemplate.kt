@@ -32,7 +32,7 @@ import java.util.stream.Stream
 import kotlin.reflect.jvm.kotlinFunction
 
 @Target(AnnotationTarget.VALUE_PARAMETER)
-annotation class GradleProject
+annotation class GradleProject(val resourcePath: Array<String> = [])
 
 @Integration
 @ExtendWith(MultiVersionGradleProjectTestTemplate::class)
@@ -53,7 +53,6 @@ internal class MultiVersionGradleProjectTestTemplate : TestTemplateInvocationCon
     }
     private val DEFAULT_VERSIONS: Set<GradleVersion> by lazy {
       setOf(
-        GradleVersion.version("4.3"),
         GradleVersion.version("4.4"),
         GradleVersion.version("4.5"),
         CURRENT_GRADLE_VERSION
@@ -65,7 +64,12 @@ internal class MultiVersionGradleProjectTestTemplate : TestTemplateInvocationCon
     return context.testClass
       .flatMap { clazz -> AnnotationSupport.findAnnotation(clazz, ForGradleVersions::class.java) }
       .map { gradleVersions -> gradleVersions.versions }
-      .map { versions -> versions.map(GradleVersion::version) }
+      .map { versions ->
+        when {
+          versions.size == 1 && versions.first().toLowerCase() == "current" -> listOf(CURRENT_GRADLE_VERSION)
+          else ->  versions.map(GradleVersion::version)
+        }
+      }
       .map { gradleVersions -> determineVersionsToExecute(gradleVersions) }
       .map { gradleVersions -> gradleVersions.map(::GradleProjectInvocationContext) }
       .map { it.stream().distinct() }
@@ -101,17 +105,24 @@ internal class MultiVersionGradleProjectTestTemplate : TestTemplateInvocationCon
     }
 
     return when {
-      gradleVersions.isNotEmpty() -> versionsFromSystemProperty.intersect(gradleVersions).also {
+      // If a version is specified on both the annotation and the system property, we should only include tests
+      // that are in the intersection of the two. For example, '4.4' specified in annotation and '4.3' in the
+      // System property, we should not run the test because the annotation should be "more specific".
+      // TODO: I'm pretty sure this implementation wrong, so should come back to this
+      gradleVersions.isNotEmpty() -> versionsFromSystemProperty.intersect(gradleVersions).let {
         if (it.isEmpty()) {
-          LOGGER.info { "No intersection between annotated versions and system property versions" }
+          LOGGER.fine { "No intersection between annotated versions and system property versions" }
+          gradleVersions
+        } else {
+          it
         }
       }
       versionsFromSystemProperty.isNotEmpty() -> {
-        LOGGER.info { "Using System property provided versions $versionsFromSystemProperty" }
+        LOGGER.fine { "Using System property provided versions $versionsFromSystemProperty" }
         versionsFromSystemProperty
       }
       else -> {
-        LOGGER.info { "No versions specified in code or by system properties so using default $DEFAULT_VERSIONS" }
+        LOGGER.fine { "No versions specified in code or by system properties so using default $DEFAULT_VERSIONS" }
         DEFAULT_VERSIONS
       }
     }
@@ -159,7 +170,7 @@ private class ResourceGradleProjectProviderExtension(private val gradleVersion: 
       throw IllegalArgumentException("Cannot resolve parameter for constructor $executable")
     }
     val store = getStore(context)
-    val temporaryPath: Path = loadGradleProject(context)
+    val temporaryPath: Path = loadGradleProject(parameterContext, context)
     store.put(context, temporaryPath)
     return GradleRunner.create().apply {
       projectDirPath = temporaryPath
@@ -183,15 +194,22 @@ private class ResourceGradleProjectProviderExtension(private val gradleVersion: 
       ResourceGradleProjectProviderExtension::class.java, context))
   }
 
-  private fun loadGradleProject(context: ExtensionContext): Path {
-    val rootResourceDirectoryName = context.let {
-      val testMethod: Method = context.requiredTestMethod
-      val resourcePathToMethod = testMethod.kotlinFunction!!.name
-      val testClass: Class<*> = context.requiredTestClass
-      val resourcePathToClass = testClass.kotlin.qualifiedName!!.replace(".", "/")
-      "$resourcePathToClass${File.separator}$resourcePathToMethod"
-    }
-    LOGGER.debug { "Loading Gradle project resources from classpath at $rootResourceDirectoryName" }
+  private fun loadGradleProject(parameterContext: ParameterContext, context: ExtensionContext): Path {
+    val rootResourceDirectoryName = AnnotationSupport.findAnnotation(parameterContext.parameter, GradleProject::class.java)
+      .map(GradleProject::resourcePath)
+      .flatMap {
+        when {
+          it.isNotEmpty() -> Optional.of(it.joinToString(File.separator))
+          else -> Optional.empty()
+        }
+      }.orElseGet {
+        val testMethod: Method = context.requiredTestMethod
+        val resourcePathToMethod = testMethod.kotlinFunction!!.name
+        val testClass: Class<*> = context.requiredTestClass
+        val resourcePathToClass = testClass.kotlin.qualifiedName!!.replace(".", "/")
+        "$resourcePathToClass${File.separator}$resourcePathToMethod"
+      }
+    LOGGER.debug { "Loading Gradle project resources from classpath at $rootResourceDirectoryName for test ${context.uniqueId}" }
     return Resources.getResource(rootResourceDirectoryName).let {
       // This probably won't work for JAR or other protocols, so don't even try
       if (it.protocol != "file") {

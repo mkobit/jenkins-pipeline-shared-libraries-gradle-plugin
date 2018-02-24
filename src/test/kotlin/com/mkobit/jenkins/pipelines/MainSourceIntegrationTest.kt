@@ -17,7 +17,7 @@ import testsupport.NotImplementedYet
 class MainSourceIntegrationTest {
 
   @TestTemplate
-  internal fun `main Groovy code is compiled`(@GradleProject gradleRunner: GradleRunner) {
+  internal fun `main Groovy code is compiled`(@GradleProject(["projects", "basic-groovy-library"]) gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.build("compileGroovy")
 
     assertThat(buildResult)
@@ -26,7 +26,7 @@ class MainSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `can unit test code in src`(@GradleProject gradleRunner: GradleRunner) {
+  internal fun `can unit test code in src`(@GradleProject(["projects", "basic-groovy-library"]) gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.build("test")
 
     assertThat(buildResult)
@@ -35,7 +35,7 @@ class MainSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `compilation fails for invalid Groovy code in src`(@GradleProject gradleRunner: GradleRunner) {
+  internal fun `compilation fails for invalid Groovy code in src`(@GradleProject(["projects", "invalid-src-groovy"]) gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.buildAndFail("compileGroovy")
 
     assertThat(buildResult)
@@ -44,7 +44,7 @@ class MainSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `compilation fails for invalid Groovy code in vars`(@GradleProject gradleRunner: GradleRunner) {
+  internal fun `compilation fails for invalid Groovy code in vars`(@GradleProject(["projects", "invalid-vars-groovy"]) gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.buildAndFail("compileGroovy")
 
     assertThat(buildResult)
@@ -67,7 +67,7 @@ class MainSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `Groovydoc JAR can be generated`(@GradleProject gradleRunner: GradleRunner) {
+  internal fun `Groovydoc JAR can be generated`(@GradleProject(["projects", "basic-groovy-library"]) gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.build("groovydocJar")
 
     val task = buildResult.task(":groovydocJar")
@@ -78,7 +78,7 @@ class MainSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `Groovy sources JAR can be generated`(@GradleProject gradleRunner: GradleRunner) {
+  internal fun `Groovy sources JAR can be generated`(@GradleProject(["projects", "basic-groovy-library"]) gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.build("sourcesJar")
 
     val task = buildResult.task(":sourcesJar")
