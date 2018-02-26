@@ -71,9 +71,9 @@ open class SharedLibraryPlugin @Inject constructor(
     private const val UNIT_TESTING_LIBRARY_CONFIGURATION = "jenkinsPipelineUnitTestLibraries"
     // These are both unused because we use the kotlin-dsl to create and set them up right now.
     @Suppress("UNUSED")
-    private val PLUGIN_HPI_JPI_CONFIGURATION = "jenkinsPluginHpisAndJpis"
+    private const val PLUGIN_HPI_JPI_CONFIGURATION = "jenkinsPluginHpisAndJpis"
     @Suppress("UNUSED")
-    private val PLUGIN_LIBRARY_CONFIGURATION = "jenkinsPluginLibraries"
+    private const val PLUGIN_LIBRARY_CONFIGURATION = "jenkinsPluginLibraries"
     private const val CORE_LIBRARY_CONFIGURATION = "jenkinsCoreLibraries"
     private const val TEST_LIBRARY_CONFIGURATION = "jenkinsTestLibraries"
     private const val TEST_LIBRARY_RUNTIME_ONLY_CONFIGURATION = "jenkinsTestLibrariesRuntimeOnly"
