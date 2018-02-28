@@ -1,16 +1,1 @@
-pluginManagement {
-  it.resolutionStrategy {
-    it.eachPlugin {
-      if (it.requested.id.id == 'org.junit.platform.gradle.plugin') {
-        it.useModule("org.junit.platform:junit-platform-gradle-plugin:${it.requested.version}")
-      }
-    }
-  }
-  repositories {
-    jcenter()
-    gradlePluginPortal()
-    mavenCentral()
-  }
-}
-
 rootProject.name = 'jenkins-pipeline-shared-libraries-gradle-plugin'

@@ -8,7 +8,6 @@ import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.preprocessor.mkdirsOrFail
-import org.junit.platform.console.options.Details
 import java.io.ByteArrayOutputStream
 
 plugins {
@@ -20,7 +19,6 @@ plugins {
   id("com.github.ben-manes.versions") version "0.17.0"
   id("org.jetbrains.dokka") version "0.9.16"
   // TODO: load version from shared location
-  id("org.junit.platform.gradle.plugin") version "1.0.1"
   // Only used for local publishing for testing
   `maven-publish`
  id("buildsrc.jenkins-rebaseline")
@@ -168,20 +166,9 @@ dependencies {
   }
 }
 
-junitPlatform {
-  platformVersion = DependencyInfo.junitPlatformVersion
-  filters {
-    engines {
-      include("junit-jupiter")
-    }
-  }
-  logManager = "org.apache.logging.log4j.jul.LogManager"
-  details = Details.TREE
-}
-
 tasks {
   "wrapper"(Wrapper::class) {
-    gradleVersion = "4.5.1"
+    gradleVersion = "4.6"
     distributionType = Wrapper.DistributionType.ALL
   }
 
@@ -209,12 +196,17 @@ tasks {
     kotlinOptions.jvmTarget = "1.8"
   }
 
-  "junitPlatformTest"(JavaExec::class) {
+  "test"(Test::class) {
+    useJUnitPlatform()
+    systemProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager")
     findProperty("gradleTestVersions")?.let {
       // Will rerun some tests unfortunately using this method, but helps with CI
       systemProperty("testsupport.ForGradleVersions.versions", it)
     }
     jvmArgs("-XshowSettings:vm", "-XX:+PrintGCTimeStamps", "-XX:+UseG1GC", "-Xmx512m", "-Xms256m")
+    testLogging {
+      events("passed", "skipped", "failed")
+    }
   }
 
   val circleCiScriptDestination = file("$buildDir/circle/circleci")
