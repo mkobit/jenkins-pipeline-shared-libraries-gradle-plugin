@@ -12,7 +12,7 @@ shared-steps:
     run:
       command: |
         mkdir -p build
-        find settings.gradle build.gradle.kts gradle buildSrc/src buildSrc/build.gradle.kts -type f -exec sha256sum '{}' \; | tee build/circle-ci-key.txt
+        find settings.gradle.kts build.gradle.kts gradle buildSrc/src buildSrc/build.gradle.kts -type f -exec sha256sum '{}' \; | tee build/circle-ci-key.txt
       name: Generate cache key
   restore-home-cache: &restore-home-cache
     restore_cache:

@@ -12,7 +12,6 @@ import java.util.logging.Logger
 annotation class NotImplementedYet
 
 @Tag("integration")
-@ExtendWith(TestExecutionLogger::class)
 internal annotation class Integration
 
 @Tag("intellij-support")
@@ -21,19 +20,3 @@ internal annotation class Integration
   AnnotationTarget.FUNCTION
 )
 annotation class IntelliJSupport
-
-class TestExecutionLogger : BeforeTestExecutionCallback, AfterTestExecutionCallback {
-
-  companion object {
-    // java.util.Logger used for JUnit
-    private val LOGGER = Logger.getLogger(TestExecutionLogger::class.qualifiedName)
-  }
-
-  override fun beforeTestExecution(context: ExtensionContext) {
-    LOGGER.info { "Before test: ${context.uniqueId}" }
-  }
-
-  override fun afterTestExecution(context: ExtensionContext) {
-    LOGGER.info { "After test: ${context.uniqueId}" }
-  }
-}

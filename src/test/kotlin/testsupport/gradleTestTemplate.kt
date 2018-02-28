@@ -55,6 +55,7 @@ internal class MultiVersionGradleProjectTestTemplate : TestTemplateInvocationCon
       setOf(
         GradleVersion.version("4.4"),
         GradleVersion.version("4.5"),
+        GradleVersion.version("4.6"),
         CURRENT_GRADLE_VERSION
       )
     }
@@ -71,7 +72,7 @@ internal class MultiVersionGradleProjectTestTemplate : TestTemplateInvocationCon
         }
       }
       .map { gradleVersions -> determineVersionsToExecute(gradleVersions) }
-      .map { gradleVersions -> gradleVersions.map(::GradleProjectInvocationContext) }
+      .map { gradleVersions -> gradleVersions.map { GradleProjectInvocationContext(context.displayName, it) } }
       .map { it.stream().distinct() }
       .orElseThrow { Exception("Don't think this should happen, as default values should be found") }
       .map { it as TestTemplateInvocationContext } // Needed because of https://github.com/junit-team/junit5/issues/1226
@@ -135,14 +136,16 @@ internal class MultiVersionGradleProjectTestTemplate : TestTemplateInvocationCon
 }
 
 data class GradleProjectInvocationContext(
-  val version: GradleVersion
+  private val contextDisplay: String,
+  private val version: GradleVersion
 ) : TestTemplateInvocationContext {
 
-  override fun getDisplayName(invocationIndex: Int): String = "Gradle version: " + if (version == GradleVersion.current()) {
-    "(compiled with) ${version.version}"
-  } else {
-    version.version
-  }
+  override fun getDisplayName(invocationIndex: Int): String  = "[Gradle " +
+    if (version == GradleVersion.current()) {
+      "${version.version} (current)"
+    } else {
+      version.version
+    } + "] ⇒ $contextDisplay"
 
   override fun getAdditionalExtensions(): List<Extension> = listOf(ResourceGradleProjectProviderExtension(version))
 }
