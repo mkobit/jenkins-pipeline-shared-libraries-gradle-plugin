@@ -26,12 +26,12 @@ internal class JenkinsIntegrationPluginFunctionalTest {
 
   @TestTemplate
   internal fun `can retrieve the GDSL`(@GradleProject(["projects", "only-plugins-block"]) gradleRunner: GradleRunner, server: MockWebServer) {
-    server.enqueue(MockResponse().setBody(loadResource("jenkins-data/http/gdsl.txt")))
+    server.enqueue(MockResponse().setBody(loadResource("jenkins-data/http/200.gdsl.txt")))
     server.start()
 
     gradleRunner.setupBaseUrl(server)
 
-    val result = gradleRunner.build("downloadGdslFromJenkins")
+    val result = gradleRunner.build("retrieveJenkinsGdsl")
 
     assertThat(result.projectDir.resolve(downloadDirectory.resolve("idea.gdsl")))
       .isRegularFile()
@@ -44,7 +44,7 @@ internal class JenkinsIntegrationPluginFunctionalTest {
 
     gradleRunner.setupBaseUrl(server)
 
-    gradleRunner.buildAndFail("downloadGdslFromJenkins")
+    gradleRunner.buildAndFail("retrieveJenkinsGdsl")
   }
 
   @NotImplementedYet

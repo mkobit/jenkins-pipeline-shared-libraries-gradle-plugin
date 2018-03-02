@@ -51,7 +51,7 @@ internal class JenkinsIntegrationPluginTest {
 
   @Test
   internal fun `download GDSL task exists`() {
-    assertThat(project.tasks.findByPath(":downloadGdslFromJenkins"))
+    assertThat(project.tasks.findByPath(":retrieveJenkinsGdsl"))
       .describedAs("Download GDSL task exists")
       .isNotNull()
   }

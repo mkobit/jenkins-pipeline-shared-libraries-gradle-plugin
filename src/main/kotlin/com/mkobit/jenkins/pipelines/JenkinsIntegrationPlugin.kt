@@ -26,7 +26,7 @@ internal open class JenkinsIntegrationPlugin : Plugin<Project> {
         layout.directoryProperty(layout.buildDirectory.dir("jenkinsIntegrationDownloads"))
       )
 
-      tasks.create("downloadGdslFromJenkins") {
+      tasks.create("retrieveJenkinsGdsl") {
         description = "Downloads the Jenkins Pipeline from th instance GDSL"
         inputs.property("url", integrationExtension.baseUrl)
         outputs.file(integrationExtension.downloadDirectory.file("idea.gdsl"))
