@@ -205,7 +205,7 @@ tasks {
     }
     jvmArgs("-XshowSettings:vm", "-XX:+PrintGCTimeStamps", "-XX:+UseG1GC", "-Xmx512m", "-Xms256m")
     testLogging {
-      events("passed", "skipped", "failed")
+      events("skipped", "failed")
     }
   }
 
