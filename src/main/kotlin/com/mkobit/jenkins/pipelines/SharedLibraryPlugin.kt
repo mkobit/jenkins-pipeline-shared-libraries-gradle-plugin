@@ -88,7 +88,8 @@ open class SharedLibraryPlugin @Inject constructor(
       pluginManager.apply(JenkinsIntegrationPlugin::class.java)
       setupJenkinsRepository(repositories)
       val (main, test, integrationTest) = withConvention(JavaPluginConvention::class) { setupJava(this, tasks) }
-      val sharedLibraryExtension = setupSharedLibraryExtension(this)
+      val sharedLibraryExtension: SharedLibraryExtension = setupSharedLibraryExtension(this)
+      val jenkinsPlugins = setupJenkinsPluginsDependencies(configurations, dependencies, sharedLibraryExtension)
       setupIntegrationTestTask(tasks, main, integrationTest)
       setupDocumentationTasks(tasks, main)
       setupConfigurationsAndDependencyManagement(
@@ -96,7 +97,8 @@ open class SharedLibraryPlugin @Inject constructor(
         dependencies,
         main,
         test,
-        integrationTest
+        integrationTest,
+        jenkinsPlugins
       )
       setupIvyGrabSupport(dependencies, configurations, tasks)
       addGroovyDependency(
@@ -111,6 +113,29 @@ open class SharedLibraryPlugin @Inject constructor(
         sharedLibraryExtension
       )
     }
+  }
+
+  private fun setupJenkinsPluginsDependencies(
+    configurations: ConfigurationContainer,
+    dependencies: DependencyHandler,
+    sharedLibraryExtension: SharedLibraryExtension
+  ): Configuration {
+    configurations {
+      JENKINS_PLUGINS_CONFIGURATION {
+        isCanBeResolved = true
+        isVisible = false
+        isCanBeConsumed = false
+        withDependencies {
+          LOGGER.debug { "Adding plugin dependencies from ${SharedLibraryExtension::class.java.canonicalName} to configuration ${this@JENKINS_PLUGINS_CONFIGURATION.name}" }
+          // TODO: remove pluginDependencies().pluginDependencies() confusing method calls
+          sharedLibraryExtension.pluginDependencies()
+            .pluginDependencies()
+            .map { dependencies.createExternal(it.asStringNotation()) }
+            .forEach { dependencies.add(this@JENKINS_PLUGINS_CONFIGURATION, it) }
+        }
+      }
+    }
+    return configurations[JENKINS_PLUGINS_CONFIGURATION]
   }
 
   private fun setupIvyGrabSupport(
@@ -152,15 +177,6 @@ open class SharedLibraryPlugin @Inject constructor(
       CORE_LIBRARY_CONFIGURATION {
         withDependencies {
           dependencies.add(this@CORE_LIBRARY_CONFIGURATION, sharedLibraryExtension.coreDependency())
-        }
-      }
-      JENKINS_PLUGINS_CONFIGURATION {
-        withDependencies {
-          // TODO: remove pluginDependencies().pluginDependencies() confusing method calls
-          sharedLibraryExtension.pluginDependencies()
-            .pluginDependencies()
-            .map { dependencies.createExternal(it.asStringNotation()) }
-            .forEach { dependencies.add(this@JENKINS_PLUGINS_CONFIGURATION, it) }
         }
       }
       UNIT_TESTING_LIBRARY_CONFIGURATION {
@@ -212,19 +228,13 @@ open class SharedLibraryPlugin @Inject constructor(
     dependencies: DependencyHandler,
     main: SourceSet,
     test: SourceSet,
-    integrationTest: SourceSet
+    integrationTest: SourceSet,
+    jenkinsPlugins: Configuration
   ) {
     val configurationAction: Configuration.() -> Unit = {
       isCanBeResolved = true
       isVisible = false
       isCanBeConsumed = false
-    }
-
-    // TODO: Come up with a better way to collect all the transitive dependencies and HPI/JAR versions of each plugin.
-    // Also, forcing dependencies through the extensions does not feel right and is not that intuitive.
-    // Instead, it would probably make sense to introduce configurations that users can add additional configuration and dependencies to.
-    val jenkinsPlugins by configurations.creating {
-      isCanBeResolved = true
     }
 
     val jenkinsLibrariesMainCompileOnly by configurations.creating
