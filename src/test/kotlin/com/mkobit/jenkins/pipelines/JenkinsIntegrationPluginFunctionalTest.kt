@@ -153,9 +153,32 @@ internal class JenkinsIntegrationPluginFunctionalTest {
       .outputDoesNotContain("hunter2")
   }
 
+  @TestTemplate
+  internal fun `can retrieve the Jenkins version`(@GradleProject(["projects", "only-plugins-block"]) gradleRunner: GradleRunner, server: MockWebServer) {
+    val version = "2.89.4"
+    server.enqueue(MockResponse().apply {
+      setResponseCode(401)
+      setHeader("X-Hudson", "1.395")
+      setHeader("X-Jenkins", version)
+      setHeader("X-Jenkins-Session","4d661237")
+      setHeader("X-Hudson-CLI-Port","40877")
+      setHeader("X-Jenkins-CLI-Port","40877")
+      setHeader("X-Jenkins-CLI2-Port", "40877")
+      setHeader("X-You-Are-Authenticated-As", "anonymous")
+    })
+    server.start()
+
+    gradleRunner.setupIntegrationExtension(server, BasicAuthentication("mkobit", "hunter2"))
+
+    val result = gradleRunner.build("retrieveJenkinsVersion")
+    assertThat(result.projectDir.resolve(downloadDirectory.resolve("core-version.txt")))
+      .isRegularFile()
+      .hasContent(version)
+  }
+
   @NotImplementedYet
   @TestTemplate
-  internal fun `can retrieve the Jenkins version`(@GradleProject gradleRunner: GradleRunner) {
+  internal fun `a useful error message is displayed when the the Jenkins version cannot be retrieved`(@GradleProject gradleRunner: GradleRunner) {
   }
 
   @NotImplementedYet

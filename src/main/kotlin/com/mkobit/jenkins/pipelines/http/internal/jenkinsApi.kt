@@ -85,3 +85,17 @@ fun retrievePluginManagerData(baseUrl: HttpUrl, authentication: Authentication):
 
   return client.newCall(request).execute()
 }
+
+@Throws(IOException::class)
+fun connect(baseUrl: HttpUrl, authentication: Authentication): Response {
+  val client = newSinglePoolClient(baseUrl, authentication)
+
+  val gdslUrl = baseUrl.newBuilder()
+    .build()
+
+  val request = Request.Builder()
+    .url(gdslUrl)
+    .head()
+    .build()
+  return client.newCall(request).execute()
+}

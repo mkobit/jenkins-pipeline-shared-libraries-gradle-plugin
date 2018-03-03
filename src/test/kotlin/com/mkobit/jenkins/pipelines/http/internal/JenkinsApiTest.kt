@@ -20,6 +20,7 @@ internal class JenkinsApiTest {
 
     downloadGdsl(server.url("jenkins"), AnonymousAuthentication)
     val request = server.takeRequest()
+    assertThat(request.method).isEqualTo("GET")
     assertThat(request.path).endsWith("pipeline-syntax/gdsl")
   }
 
@@ -30,10 +31,22 @@ internal class JenkinsApiTest {
 
     retrievePluginManagerData(server.url("jenkins"), AnonymousAuthentication)
     val request = server.takeRequest()
+    assertThat(request.method).isEqualTo("GET")
     assertThat(request.requestUrl).satisfies {
       assertThat(it.pathSegments()).containsExactly("jenkins", "pluginManager", "api", "json")
       assertThat(it.queryParameter("depth")).isEqualTo("2")
     }
+  }
+
+  @Test
+  internal fun `head request against base URL`(server: MockWebServer) {
+    server.enqueue(MockResponse())
+    server.start()
+
+    connect(server.url("jenkins"), AnonymousAuthentication)
+    val request = server.takeRequest()
+    assertThat(request.requestUrl.pathSegments()).containsExactly("jenkins")
+    assertThat(request.method).isEqualTo("HEAD")
   }
 
   @Test
