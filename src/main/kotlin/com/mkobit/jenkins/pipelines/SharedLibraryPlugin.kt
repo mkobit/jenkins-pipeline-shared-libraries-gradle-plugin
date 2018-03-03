@@ -90,28 +90,45 @@ open class SharedLibraryPlugin @Inject constructor(
       val (main, test, integrationTest) = withConvention(JavaPluginConvention::class) { setupJava(this, tasks) }
       val sharedLibraryExtension: SharedLibraryExtension = setupSharedLibraryExtension(this)
       val jenkinsPlugins = setupJenkinsPluginsDependencies(configurations, dependencies, sharedLibraryExtension)
+      val groovy = setupGroovyConfiguration(configurations, dependencies, sharedLibraryExtension)
+      setupMain(main, jenkinsPlugins, configurations, dependencies, groovy)
       setupIntegrationTestTask(tasks, main, integrationTest)
       setupDocumentationTasks(tasks, main)
       setupConfigurationsAndDependencyManagement(
         configurations,
         dependencies,
-        main,
         test,
         integrationTest,
-        jenkinsPlugins
+        jenkinsPlugins,
+        groovy
       )
       setupIvyGrabSupport(dependencies, configurations, tasks)
-      addGroovyDependency(
-        configurations,
-        dependencies,
-        sharedLibraryExtension,
-        main
-      )
       addDependenciesFromExtension(
         configurations,
         dependencies,
         sharedLibraryExtension
       )
+    }
+  }
+
+  private fun setupMain(
+    main: SourceSet,
+    jenkinsPlugins: Configuration,
+    configurations: ConfigurationContainer,
+    dependencies: DependencyHandler,
+    groovy: Configuration
+  ) {
+    configurations {
+      val jenkinsLibrariesMainCompileOnly by creating {
+        withDependencies {
+          // For @NonCPS in source code, need to add a CloudBees Groovy CPS dependency
+          jenkinsPlugins.resolvedConfiguration.resolvedArtifacts
+            .filter { it.moduleVersion.id.group == "com.cloudbees" && it.moduleVersion.id.name == "groovy-cps" }
+            .forEach { dependencies.add(this@creating, it.moduleVersion.toString()) }
+        }
+      }
+      main.compileOnlyConfigurationName().extendsFrom(jenkinsLibrariesMainCompileOnly)
+      main.implementationConfigurationName().extendsFrom(groovy)
     }
   }
 
@@ -226,10 +243,10 @@ open class SharedLibraryPlugin @Inject constructor(
   private fun setupConfigurationsAndDependencyManagement(
     configurations: ConfigurationContainer,
     dependencies: DependencyHandler,
-    main: SourceSet,
     test: SourceSet,
     integrationTest: SourceSet,
-    jenkinsPlugins: Configuration
+    jenkinsPlugins: Configuration,
+    groovy: Configuration
   ) {
     val configurationAction: Configuration.() -> Unit = {
       isCanBeResolved = true
@@ -237,7 +254,6 @@ open class SharedLibraryPlugin @Inject constructor(
       isCanBeConsumed = false
     }
 
-    val jenkinsLibrariesMainCompileOnly by configurations.creating
     val jenkinsPluginHpisAndJpis by configurations.creating(configurationAction)
     val jenkinsPluginLibraries by configurations.creating(configurationAction)
     val jenkinsCoreLibraries by configurations.creating(configurationAction)
@@ -246,12 +262,11 @@ open class SharedLibraryPlugin @Inject constructor(
     val jenkinsPipelineUnitTestLibraries by configurations.creating(configurationAction)
 
     configurations {
-      main.compileOnlyConfigurationName().extendsFrom(jenkinsLibrariesMainCompileOnly)
-      test.implementationConfigurationName().extendsFrom(jenkinsPipelineUnitTestLibraries)
+      test.implementationConfigurationName().extendsFrom(jenkinsPipelineUnitTestLibraries, groovy)
 
       integrationTest.implementationConfigurationName().run {
         extendsFrom(
-          getByName(main.implementationConfigurationName),
+          groovy,
           getByName(test.implementationConfigurationName),
           jenkinsCoreLibraries,
           jenkinsPluginLibraries,
@@ -282,17 +297,13 @@ open class SharedLibraryPlugin @Inject constructor(
         .filter { it.extension == "jar" }
         .map { "${it.moduleVersion}@jar" } // TODO: might not need this
         .forEach { dependencies.add(jenkinsPluginLibraries, it) }
-      // For @NonCPS add the
-      resolvedArtifacts
-        .filter { it.moduleVersion.id.group == "com.cloudbees" && it.moduleVersion.id.name == "groovy-cps" }
-        .forEach { dependencies.add(jenkinsLibrariesMainCompileOnly, it.moduleVersion.toString()) }
     }
 
     configurations.all {
       incoming.beforeResolve {
         if (hierarchy.contains(jenkinsPluginHpisAndJpis)
           || hierarchy.contains(jenkinsPluginLibraries)
-          || hierarchy.contains(jenkinsLibrariesMainCompileOnly)) {
+        ) {
           // Trigger the dependency seeding
           jenkinsPlugins.resolve()
         }
@@ -300,20 +311,20 @@ open class SharedLibraryPlugin @Inject constructor(
     }
   }
 
-  private fun addGroovyDependency(
+  private fun setupGroovyConfiguration(
     configurations: ConfigurationContainer,
     dependencies: DependencyHandler,
-    sharedLibrary: SharedLibraryExtension,
-    main: SourceSet
-  ) {
-    configurations {
-      main.implementationConfigurationName {
-        withDependencies {
-          LOGGER.debug { "Adding ${sharedLibrary.groovyDependency()} to ${main.implementationConfigurationName}" }
-          dependencies.add(this@implementationConfigurationName, sharedLibrary.groovyDependency())
-        }
+    sharedLibrary: SharedLibraryExtension
+  ): Configuration {
+    val sharedLibraryGroovy by configurations.creating {
+      isCanBeConsumed = false
+      isVisible = false
+      withDependencies {
+        LOGGER.debug { "Adding ${sharedLibrary.groovyDependency()} to ${this@creating.name}" }
+        dependencies.add(this@creating, sharedLibrary.groovyDependency())
       }
     }
+    return sharedLibraryGroovy
   }
 
   private fun setupJenkinsRepository(repositoryHandler: RepositoryHandler) {
