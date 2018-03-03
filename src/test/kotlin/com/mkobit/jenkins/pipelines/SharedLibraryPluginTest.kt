@@ -109,6 +109,7 @@ internal class SharedLibraryPluginTest {
     assertThat(main.java.srcDirs).isEmpty()
   }
 
+  @Disabled("Dependency addition moved into execution phase (configuration resolution)")
   @Test
   internal fun `default Groovy dependency is added to implementation configuration`() {
     val implementation = project.configurations.getByName("implementation")
@@ -126,6 +127,7 @@ internal class SharedLibraryPluginTest {
     assertThat(implementation.dependencies).haveExactly(1, allOf(group, name, version))
   }
 
+  @Disabled("Dependency addition moved into execution phase (configuration resolution)")
   @Test
   internal fun `can configure Groovy dependency version`() {
     val groovyVersion = "2.5.0"
@@ -145,7 +147,6 @@ internal class SharedLibraryPluginTest {
     val implementation = project.configurations.getByName("implementation")
     assertThat(implementation.dependencies).haveExactly(1, allOf(group, name, version))
   }
-
 
   @DisplayName("JenkinsPipelineUnit default version is 1.1")
   @Test

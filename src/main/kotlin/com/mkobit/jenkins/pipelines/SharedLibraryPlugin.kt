@@ -99,17 +99,17 @@ open class SharedLibraryPlugin @Inject constructor(
         integrationTest
       )
       setupIvyGrabSupport(dependencies, configurations, tasks)
-      afterEvaluate {
-        addGroovyDependency(
-          dependencies,
-          sharedLibraryExtension,
-          main
-        )
-        addDependenciesFromExtension(
-          dependencies,
-          sharedLibraryExtension
-        )
-      }
+      addGroovyDependency(
+        configurations,
+        dependencies,
+        sharedLibraryExtension,
+        main
+      )
+      addDependenciesFromExtension(
+        configurations,
+        dependencies,
+        sharedLibraryExtension
+      )
     }
   }
 
@@ -134,34 +134,41 @@ open class SharedLibraryPlugin @Inject constructor(
   }
 
   private fun addDependenciesFromExtension(
+    configurations: ConfigurationContainer,
     dependencies: DependencyHandler,
     sharedLibraryExtension: SharedLibraryExtension
   ) {
-    dependencies.add(
-      TEST_LIBRARY_CONFIGURATION,
-      sharedLibraryExtension.testHarnessDependency()
-    )
-
-    dependencies.add(
-      TEST_LIBRARY_RUNTIME_ONLY_CONFIGURATION,
-      "${sharedLibraryExtension.jenkinsWar()}@war"
-    )
-
-    dependencies.add(
-      CORE_LIBRARY_CONFIGURATION,
-      sharedLibraryExtension.coreDependency()
-    )
-
-    // TODO: remove pluginDependencies().pluginDependencies() confusing method calls
-    sharedLibraryExtension.pluginDependencies()
-      .pluginDependencies()
-      .map { dependencies.createExternal(it.asStringNotation()) }
-      .forEach { dependencies.add(JENKINS_PLUGINS_CONFIGURATION, it) }
-
-    dependencies.add(
-      UNIT_TESTING_LIBRARY_CONFIGURATION,
-      sharedLibraryExtension.pipelineUnitDependency()
-    )
+    configurations {
+      TEST_LIBRARY_CONFIGURATION {
+        withDependencies {
+          dependencies.add(this@TEST_LIBRARY_CONFIGURATION, sharedLibraryExtension.testHarnessDependency())
+        }
+      }
+      TEST_LIBRARY_RUNTIME_ONLY_CONFIGURATION {
+        withDependencies {
+          dependencies.add(this@TEST_LIBRARY_RUNTIME_ONLY_CONFIGURATION, "${sharedLibraryExtension.jenkinsWar()}@war")
+        }
+      }
+      CORE_LIBRARY_CONFIGURATION {
+        withDependencies {
+          dependencies.add(this@CORE_LIBRARY_CONFIGURATION, sharedLibraryExtension.coreDependency())
+        }
+      }
+      JENKINS_PLUGINS_CONFIGURATION {
+        withDependencies {
+          // TODO: remove pluginDependencies().pluginDependencies() confusing method calls
+          sharedLibraryExtension.pluginDependencies()
+            .pluginDependencies()
+            .map { dependencies.createExternal(it.asStringNotation()) }
+            .forEach { dependencies.add(this@JENKINS_PLUGINS_CONFIGURATION, it) }
+        }
+      }
+      UNIT_TESTING_LIBRARY_CONFIGURATION {
+        withDependencies {
+          dependencies.add(this@UNIT_TESTING_LIBRARY_CONFIGURATION, sharedLibraryExtension.pipelineUnitDependency())
+        }
+      }
+    }
   }
 
   private fun setupDocumentationTasks(tasks: TaskContainer, main: SourceSet) {
@@ -284,15 +291,19 @@ open class SharedLibraryPlugin @Inject constructor(
   }
 
   private fun addGroovyDependency(
+    configurations: ConfigurationContainer,
     dependencies: DependencyHandler,
     sharedLibrary: SharedLibraryExtension,
     main: SourceSet
   ) {
-    LOGGER.debug { "Adding ${sharedLibrary.groovyDependency()} to ${main.implementationConfigurationName}" }
-    dependencies.add(
-      main.implementationConfigurationName,
-      sharedLibrary.groovyDependency()
-    )
+    configurations {
+      main.implementationConfigurationName {
+        withDependencies {
+          LOGGER.debug { "Adding ${sharedLibrary.groovyDependency()} to ${main.implementationConfigurationName}" }
+          dependencies.add(this@implementationConfigurationName, sharedLibrary.groovyDependency())
+        }
+      }
+    }
   }
 
   private fun setupJenkinsRepository(repositoryHandler: RepositoryHandler) {
