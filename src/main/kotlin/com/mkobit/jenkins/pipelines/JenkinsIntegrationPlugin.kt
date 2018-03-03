@@ -2,6 +2,7 @@ package com.mkobit.jenkins.pipelines
 
 import com.mkobit.jenkins.pipelines.http.AnonymousAuthentication
 import com.mkobit.jenkins.pipelines.http.Authentication
+import com.mkobit.jenkins.pipelines.http.internal.connect
 import com.mkobit.jenkins.pipelines.http.internal.downloadGdsl
 import com.mkobit.jenkins.pipelines.http.internal.retrievePluginManagerData
 import mu.KotlinLogging
@@ -38,6 +39,10 @@ internal open class JenkinsIntegrationPlugin : Plugin<Project> {
 
         "retrieveJenkinsPluginData" {
           setupRetrieveJenkinsPluginData(integration, this)
+        }
+
+        "retrieveJenkinsVersion" {
+          setupRetrieveJenkinsVersion(integration, this)
         }
       }
     }
@@ -101,6 +106,28 @@ internal open class JenkinsIntegrationPlugin : Plugin<Project> {
             .get()
             .asFile
             .writeBytes(response.body()!!.bytes())
+        }
+      }
+    }
+  }
+
+  private fun setupRetrieveJenkinsVersion(integration: JenkinsIntegrationExtension, task: Task) {
+    task.apply {
+      description = "Retrieves the version from the Jenkins instance"
+      inputs.property("url", integration.baseUrl)
+      outputs.file(integration.downloadDirectory.file("core-version.txt"))
+      outputs.upToDateWhen { false }
+      doLast {
+        connect(HttpUrl.get(
+          integration.baseUrl.get())!!,
+          integration.authentication.getOrElse(AnonymousAuthentication)
+        ).use { response ->
+          val version = response.header("X-Jenkins") ?: throw GradleException("Could not retrieve Jenkins version ${response.statusLineAsMessage}")
+          integration.downloadDirectory
+            .file("core-version.txt")
+            .get()
+            .asFile
+            .writeText(version)
         }
       }
     }
