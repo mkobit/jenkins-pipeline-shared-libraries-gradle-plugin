@@ -92,6 +92,7 @@ open class SharedLibraryPlugin @Inject constructor(
       val jenkinsPlugins = setupJenkinsPluginsDependencies(configurations, dependencies, sharedLibraryExtension)
       val groovy = setupGroovyConfiguration(configurations, dependencies, sharedLibraryExtension)
       setupMain(main, jenkinsPlugins, configurations, dependencies, groovy)
+      setupUnitTest(test, jenkinsPlugins, configurations, dependencies, groovy, sharedLibraryExtension)
       setupIntegrationTestTask(tasks, main, integrationTest)
       setupDocumentationTasks(tasks, main)
       setupConfigurationsAndDependencyManagement(
@@ -129,6 +130,26 @@ open class SharedLibraryPlugin @Inject constructor(
       }
       main.compileOnlyConfigurationName().extendsFrom(jenkinsLibrariesMainCompileOnly)
       main.implementationConfigurationName().extendsFrom(groovy)
+    }
+  }
+
+  private fun setupUnitTest(
+    test: SourceSet,
+    jenkinsPlugins: Configuration,
+    configurations: ConfigurationContainer,
+    dependencies: DependencyHandler,
+    groovy: Configuration,
+    sharedLibraryExtension: SharedLibraryExtension
+  ) {
+    configurations {
+      val configuration = UNIT_TESTING_LIBRARY_CONFIGURATION {
+        defaultJenkinsConfiguration()
+        withDependencies {
+          LOGGER.debug { "Adding JenkinsPipelineUnit dependency to configuration${this@UNIT_TESTING_LIBRARY_CONFIGURATION.name}" }
+          dependencies.add(this@UNIT_TESTING_LIBRARY_CONFIGURATION, sharedLibraryExtension.pipelineUnitDependency())
+        }
+      }
+      test.implementationConfigurationName().extendsFrom(configuration, groovy)
     }
   }
 
@@ -196,11 +217,6 @@ open class SharedLibraryPlugin @Inject constructor(
           dependencies.add(this@CORE_LIBRARY_CONFIGURATION, sharedLibraryExtension.coreDependency())
         }
       }
-      UNIT_TESTING_LIBRARY_CONFIGURATION {
-        withDependencies {
-          dependencies.add(this@UNIT_TESTING_LIBRARY_CONFIGURATION, sharedLibraryExtension.pipelineUnitDependency())
-        }
-      }
     }
   }
 
@@ -259,11 +275,8 @@ open class SharedLibraryPlugin @Inject constructor(
     val jenkinsCoreLibraries by configurations.creating(configurationAction)
     val jenkinsTestLibraries by configurations.creating(configurationAction)
     val jenkinsTestLibrariesRuntimeOnly by configurations.creating(configurationAction)
-    val jenkinsPipelineUnitTestLibraries by configurations.creating(configurationAction)
 
     configurations {
-      test.implementationConfigurationName().extendsFrom(jenkinsPipelineUnitTestLibraries, groovy)
-
       integrationTest.implementationConfigurationName().run {
         extendsFrom(
           groovy,
@@ -418,6 +431,12 @@ open class SharedLibraryPlugin @Inject constructor(
       testHarnessVersion,
       pluginDependencySpec
     )
+  }
+
+  private fun Configuration.defaultJenkinsConfiguration() {
+    isCanBeResolved = true
+    isVisible = false
+    isCanBeConsumed = false
   }
 
   private fun DependencyHandler.add(configuration: Configuration, dependencyNotation: Any): Dependency =

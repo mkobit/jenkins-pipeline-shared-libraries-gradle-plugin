@@ -148,6 +148,7 @@ internal class SharedLibraryPluginTest {
     assertThat(implementation.dependencies).haveExactly(1, allOf(group, name, version))
   }
 
+  @Disabled("Dependency addition moved into execution phase (configuration resolution)")
   @DisplayName("JenkinsPipelineUnit default version is 1.1")
   @Test
   internal fun `JenkinsPipelineUnit default version is 1_1`() {
