@@ -87,6 +87,7 @@ open class SharedLibraryPlugin @Inject constructor(
 
   override fun apply(target: Project) {
     target.run {
+      // Ordering of calls here matters
       pluginManager.apply(GroovyPlugin::class.java)
       pluginManager.apply(JenkinsIntegrationPlugin::class.java)
       setupJenkinsRepository()
@@ -109,6 +110,9 @@ open class SharedLibraryPlugin @Inject constructor(
     java.targetCompatibility = JavaVersion.VERSION_1_8
   }
 
+  /**
+   * Sets up the `main` source set.
+   */
   private fun Project.setupMain() {
     val main = java.sourceSets.main.apply {
       java.setSrcDirs(emptyList<String>())
@@ -131,6 +135,9 @@ open class SharedLibraryPlugin @Inject constructor(
     }
   }
 
+  /**
+   * Sets up the `test` source set.
+   */
   private fun Project.setupUnitTest() {
     val dependencyHandler = dependencies
     val test = java.sourceSets.test.apply {
@@ -151,6 +158,10 @@ open class SharedLibraryPlugin @Inject constructor(
     }
   }
 
+  /**
+   * Creates and sets up the [JENKINS_PLUGINS_CONFIGURATION] configuration to map dependencies from the
+   * [SharedLibraryExtension].
+   */
   private fun Project.setupJenkinsPluginsDependencies() {
     val dependencyHandler = dependencies
     configurations {
@@ -168,15 +179,18 @@ open class SharedLibraryPlugin @Inject constructor(
     }
   }
 
+  /**
+   * Sets up support for using `@Grab` in `main` source and `test`
+   */
   private fun Project.setupIvyGrabSupport() {
     val ivy = configurations.create(IVY_CONFIGURATION) {
       defaultJenkinsConfigurationSetup()
     }
     dependencies.add(ivy, IVY_COORDINATES)
-    tasks.withType<GroovyCompile> {
-      groovyClasspath += ivy
-    }
     tasks {
+      withType<GroovyCompile> {
+        groovyClasspath += ivy
+      }
       "test"(Test::class) {
         classpath += ivy
       }
@@ -203,7 +217,9 @@ open class SharedLibraryPlugin @Inject constructor(
       }
     }
   }
-
+  /**
+   * Sets up Groovydoc JAR and source JAR tasks.
+   */
   private fun Project.setupDocumentationTasks() {
     tasks {
       "sourcesJar"(Jar::class) {
@@ -212,7 +228,7 @@ open class SharedLibraryPlugin @Inject constructor(
         from(java.sourceSets.main.allSource)
       }
       "groovydocJar"(Jar::class) {
-        val groovydoc = tasks.getByName(GroovyPlugin.GROOVYDOC_TASK_NAME) as Groovydoc
+        val groovydoc = GroovyPlugin.GROOVYDOC_TASK_NAME(Groovydoc::class)
         dependsOn(groovydoc)
         description = "Assemble the Groovydoc JAR"
         classifier = "javadoc"
@@ -220,6 +236,9 @@ open class SharedLibraryPlugin @Inject constructor(
     }
   }
 
+  /**
+   * Creates and sets up the `integrationTest` source set.
+   */
   private fun Project.setupIntegrationTest() {
     val generatedIntegrationSources = projectLayout.buildDirectory.dir("generated-src/integrationTest")
     java.sourceSets {
@@ -313,11 +332,10 @@ open class SharedLibraryPlugin @Inject constructor(
         }
       }
     }
-
   }
 
   /**
-   * Creates and sets up a configuraiton for the Groovy dependency.
+   * Creates and sets up a configuration for the Groovy dependency.
    */
   private fun Project.setupGroovyConfiguration() {
     val dependencyHandler = dependencies
@@ -332,17 +350,20 @@ open class SharedLibraryPlugin @Inject constructor(
     }
   }
 
+  /**
+   * Creates and sets up a repository for [JENKINS_REPOSITORY_URL].
+   */
   private fun Project.setupJenkinsRepository() {
     LOGGER.debug { "Adding repository named $JENKINS_REPOSITORY_NAME with URL $JENKINS_REPOSITORY_URL" }
-//    val maven = repositoryHandler.maven(url = JENKINS_REPOSITORY_URL)
-//    maven.name = JENKINS_REPOSITORY_NAME
-    // Issue with running tests in IntelliJ with this - see https://github.com/gradle/kotlin-dsl/issues/581
     repositories.maven {
       name = JENKINS_REPOSITORY_NAME
       setUrl(JENKINS_REPOSITORY_URL)
     }
   }
 
+  /**
+   * Creates the [SharedLibraryExtension] with the default versions.
+   */
   private fun Project.createSharedLibraryExtension() {
     val groovyVersion = initializedProperty(DEFAULT_GROOVY_VERSION)
     val coreVersion = initializedProperty(DEFAULT_CORE_VERSION)
@@ -387,42 +408,80 @@ open class SharedLibraryPlugin @Inject constructor(
     )
   }
 
+  /**
+   * Default setup for configurations related to this plugin.
+   */
   private fun Configuration.defaultJenkinsConfigurationSetup() {
     isCanBeResolved = true
     isVisible = false
     isCanBeConsumed = false
   }
 
+  /**
+   * Gets the configuration with name [JENKINS_PLUGINS_CONFIGURATION].
+   */
   private val NamedDomainObjectContainerScope<Configuration>.jenkinsPlugins
     get() = getByName(JENKINS_PLUGINS_CONFIGURATION)
 
+  /**
+   * Gets the configuration with name [JENKINS_PLUGINS_CONFIGURATION].
+   */
   private val ConfigurationContainer.jenkinsPlugins: Configuration
     get() = getByName(JENKINS_PLUGINS_CONFIGURATION)
 
+  /**
+   * Gets the configuration with name [GROOVY_CONFIGURATION].
+   */
   private val NamedDomainObjectContainerScope<Configuration>.sharedLibraryGroovy
     get() = getByName(GROOVY_CONFIGURATION)
 
+  /**
+   * Gets the configuration with name [GROOVY_CONFIGURATION].
+   */
   private val ConfigurationContainer.sharedLibraryGroovy: Configuration
     get() = getByName(GROOVY_CONFIGURATION)
-  
+
+  /**
+   * Gets the extension of type [SharedLibraryExtension].
+   */
   private val ExtensionContainer.sharedLibraryExtension: SharedLibraryExtension
     get() = getByType(SharedLibraryExtension::class.java)
 
+  /**
+   * Gets the [JavaPluginConvention].
+   */
   private val Project.java: JavaPluginConvention
     get() = withConvention(JavaPluginConvention::class) { this }
 
+  /**
+   * Gets the source set with name "main".
+   */
   private val SourceSetContainer.main: SourceSet
     get() = getByName("main")
 
+  /**
+   * Gets the source set with name "test".
+   */
   private val SourceSetContainer.test: SourceSet
     get() = getByName("test")
 
-  private val SourceSet.groovy: SourceDirectorySet
-    get() = withConvention(GroovySourceSet::class) { groovy }
-
+  /**
+   * Gets the source set with name "integrationTest".
+   */
   private val SourceSetContainer.integrationTest: SourceSet
     get() = getByName("integrationTest")
 
+  /**
+   * Gets the Groovy source for source set.
+   */
+  private val SourceSet.groovy: SourceDirectorySet
+    get() = withConvention(GroovySourceSet::class) { groovy }
+
+  /**
+   * Adds a dependency to the given configuration.
+   * @param configuration the configuration
+   * @param dependencyNotation the dependency notation
+   */
   private fun DependencyHandler.add(configuration: Configuration, dependencyNotation: Any): Dependency =
     add(configuration.name, dependencyNotation)
 
