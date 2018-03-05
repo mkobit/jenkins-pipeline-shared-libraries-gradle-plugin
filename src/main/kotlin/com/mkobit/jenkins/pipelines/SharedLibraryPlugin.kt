@@ -90,7 +90,7 @@ open class SharedLibraryPlugin @Inject constructor(
       pluginManager.apply(GroovyPlugin::class.java)
       pluginManager.apply(JenkinsIntegrationPlugin::class.java)
       setupJenkinsRepository()
-      withConvention(JavaPluginConvention::class) { setupJava(this, tasks) }
+      setupJavaDefaults()
       createSharedLibraryExtension()
       setupJenkinsPluginsDependencies()
       setupGroovyConfiguration()
@@ -104,7 +104,18 @@ open class SharedLibraryPlugin @Inject constructor(
     }
   }
 
+  private fun Project.setupJavaDefaults() {
+    java.sourceCompatibility = JavaVersion.VERSION_1_8
+    java.targetCompatibility = JavaVersion.VERSION_1_8
+  }
+
   private fun Project.setupMain() {
+    val main = java.sourceSets.main.apply {
+      java.setSrcDirs(emptyList<String>())
+      groovy.setSrcDirs(listOf("src", "vars"))
+      resources.setSrcDirs(listOf("resources"))
+    }
+
     val dependencyHandler = dependencies
     configurations {
       val jenkinsLibrariesMainCompileOnly= JENKINS_LIBRARIES_COMPILE_ONLY_CONFIGURATION {
@@ -115,13 +126,19 @@ open class SharedLibraryPlugin @Inject constructor(
             .forEach { dependencyHandler.add(this@JENKINS_LIBRARIES_COMPILE_ONLY_CONFIGURATION, it.moduleVersion.toString()) }
         }
       }
-      java.sourceSets.main.compileOnlyConfigurationName().extendsFrom(jenkinsLibrariesMainCompileOnly)
-      java.sourceSets.main.implementationConfigurationName().extendsFrom(sharedLibraryGroovy)
+      main.compileOnlyConfigurationName().extendsFrom(jenkinsLibrariesMainCompileOnly)
+      main.implementationConfigurationName().extendsFrom(sharedLibraryGroovy)
     }
   }
 
   private fun Project.setupUnitTest() {
     val dependencyHandler = dependencies
+    val test = java.sourceSets.test.apply {
+      val unitTestDirectory = "$TEST_ROOT_PATH/unit"
+      java.setSrcDirs(listOf("$unitTestDirectory/java"))
+      groovy.setSrcDirs(listOf("$unitTestDirectory/groovy"))
+      resources.setSrcDirs(listOf("$unitTestDirectory/resources"))
+    }
     configurations {
       val configuration = UNIT_TESTING_LIBRARY_CONFIGURATION {
         defaultJenkinsConfigurationSetup()
@@ -130,7 +147,7 @@ open class SharedLibraryPlugin @Inject constructor(
           dependencyHandler.add(this@UNIT_TESTING_LIBRARY_CONFIGURATION, extensions.sharedLibraryExtension.pipelineUnitDependency())
         }
       }
-      java.sourceSets.test.implementationConfigurationName().extendsFrom(configuration, sharedLibraryGroovy)
+      test.implementationConfigurationName().extendsFrom(configuration, sharedLibraryGroovy)
     }
   }
 
@@ -325,25 +342,6 @@ open class SharedLibraryPlugin @Inject constructor(
     repositories.maven {
       name = JENKINS_REPOSITORY_NAME
       setUrl(JENKINS_REPOSITORY_URL)
-    }
-  }
-
-  private fun setupJava(
-    javaPluginConvention: JavaPluginConvention,
-    tasks: TaskContainer
-  )  {
-    javaPluginConvention.sourceCompatibility = JavaVersion.VERSION_1_8
-    javaPluginConvention.targetCompatibility = JavaVersion.VERSION_1_8
-    val main by javaPluginConvention.sourceSets.getting {
-      java.setSrcDirs(emptyList<String>())
-      withConvention(GroovySourceSet::class) { groovy.setSrcDirs(listOf("src", "vars")) }
-      resources.setSrcDirs(listOf("resources"))
-    }
-    val test by javaPluginConvention.sourceSets.getting {
-      val unitTestDirectory = "$TEST_ROOT_PATH/unit"
-      java.setSrcDirs(listOf("$unitTestDirectory/java"))
-      withConvention(GroovySourceSet::class) { groovy.setSrcDirs(listOf("$unitTestDirectory/groovy")) }
-      resources.setSrcDirs(listOf("$unitTestDirectory/resources"))
     }
   }
 
