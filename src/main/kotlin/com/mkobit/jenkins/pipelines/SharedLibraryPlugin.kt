@@ -23,14 +23,9 @@ import org.gradle.api.tasks.compile.GroovyCompile
 import org.gradle.api.tasks.javadoc.Groovydoc
 import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.tasks.Jar
-import org.gradle.kotlin.dsl.creating
-import org.gradle.kotlin.dsl.exclude
-import org.gradle.kotlin.dsl.get
-import org.gradle.kotlin.dsl.getValue // this is actually used, see https://github.com/gradle/kotlin-dsl/issues/564
-import org.gradle.kotlin.dsl.getting
-import org.gradle.kotlin.dsl.invoke
-import org.gradle.kotlin.dsl.withConvention
-import org.gradle.kotlin.dsl.withType
+// @formatter:off
+import org.gradle.kotlin.dsl.* // * import easiest to handle https://github.com/gradle/kotlin-dsl/issues/564
+// @formatter:on
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import javax.inject.Inject
 
