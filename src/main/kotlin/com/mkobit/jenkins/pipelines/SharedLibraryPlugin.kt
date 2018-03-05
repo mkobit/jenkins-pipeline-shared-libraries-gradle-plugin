@@ -12,6 +12,7 @@ import org.gradle.api.artifacts.ExternalModuleDependency
 import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.artifacts.dsl.RepositoryHandler
 import org.gradle.api.file.ProjectLayout
+import org.gradle.api.file.SourceDirectorySet
 import org.gradle.api.plugins.ExtensionContainer
 import org.gradle.api.plugins.GroovyPlugin
 import org.gradle.api.plugins.JavaPluginConvention
@@ -61,6 +62,9 @@ open class SharedLibraryPlugin @Inject constructor(
     private const val DEFAULT_WORKFLOW_SCM_STEP_PLUGIN_VERSION = "2.6"
     private const val DEFAULT_WORKFLOW_SUPPORT_PLUGIN_VERSION = "2.16"
 
+    private const val INTEGRATION_TEST_SOURCE_SET = "integrationTest"
+    private const val INTEGRATION_TEST_TASK = "integrationTest"
+
     // This configuration is used for an initial resolution to get the required dependencies
     private const val JENKINS_PLUGINS_CONFIGURATION = "jenkinsPlugins"
 
@@ -92,7 +96,7 @@ open class SharedLibraryPlugin @Inject constructor(
       setupGroovyConfiguration()
       setupMain()
       setupUnitTest()
-      setupIntegrationTestTask()
+      setupIntegrationTest()
       setupDocumentationTasks()
       setupConfigurationsAndDependencyManagement()
       setupIvyGrabSupport()
@@ -201,20 +205,38 @@ open class SharedLibraryPlugin @Inject constructor(
     }
   }
 
-  private fun Project.setupIntegrationTestTask() {
-    val integrationTest by tasks.creating(Test::class.java) {
-      dependsOn(java.sourceSets.main.classesTaskName)
-      mustRunAfter("test")
-      group = LifecycleBasePlugin.VERIFICATION_GROUP
-      description = "Runs tests with the jenkins-test-harness"
-      testClassesDirs = java.sourceSets.integrationTest.output.classesDirs
-      classpath = java.sourceSets.integrationTest.runtimeClasspath
-      // Set the build directory for Jenkins test harness.
-      // See https://issues.jenkins-ci.org/browse/JENKINS-26331
-      systemProperty("buildDirectory", projectLayout.buildDirectory.get().asFile.absolutePath)
-      shouldRunAfter("test")
+  private fun Project.setupIntegrationTest() {
+    val generatedIntegrationSources = projectLayout.buildDirectory.dir("generated-src/integrationTest")
+    java.sourceSets {
+      INTEGRATION_TEST_SOURCE_SET {
+        val integrationTestDirectory = "$TEST_ROOT_PATH/integration"
+        java.setSrcDirs(listOf("$integrationTestDirectory/java"))
+        groovy.setSrcDirs(listOf("$integrationTestDirectory/groovy", generatedIntegrationSources))
+        resources.setSrcDirs(listOf("$integrationTestDirectory/resources"))
+        val generateLocalLibraryRetriever by tasks.creating(GenerateJavaFile::class) {
+          description = "Generates a LibraryRetriever implementation for easier writing of integration tests"
+          srcDir.set(generatedIntegrationSources)
+          javaFile.set(localLibraryAdder())
+        }
+        tasks[getCompileTaskName("groovy")].dependsOn(generateLocalLibraryRetriever)
+      }
     }
-    tasks[LifecycleBasePlugin.CHECK_TASK_NAME].dependsOn(integrationTest)
+
+    tasks {
+      val integrationTest = INTEGRATION_TEST_TASK(Test::class) {
+        dependsOn(java.sourceSets.main.classesTaskName)
+        mustRunAfter("test")
+        group = LifecycleBasePlugin.VERIFICATION_GROUP
+        description = "Runs tests with the jenkins-test-harness"
+        testClassesDirs = java.sourceSets.integrationTest.output.classesDirs
+        classpath = java.sourceSets.integrationTest.runtimeClasspath
+        // Set the build directory for Jenkins test harness.
+        // See https://issues.jenkins-ci.org/browse/JENKINS-26331
+        systemProperty("buildDirectory", projectLayout.buildDirectory.get().asFile.absolutePath)
+        shouldRunAfter("test")
+      }
+      LifecycleBasePlugin.CHECK_TASK_NAME().dependsOn(integrationTest)
+    }
   }
 
   private fun Project.setupConfigurationsAndDependencyManagement() {
@@ -323,21 +345,6 @@ open class SharedLibraryPlugin @Inject constructor(
       withConvention(GroovySourceSet::class) { groovy.setSrcDirs(listOf("$unitTestDirectory/groovy")) }
       resources.setSrcDirs(listOf("$unitTestDirectory/resources"))
     }
-    val generatedIntegrationSources = projectLayout.buildDirectory.dir("generated-src/integrationTest")
-    val integrationTest by javaPluginConvention.sourceSets.creating {
-      val integrationTestDirectory = "$TEST_ROOT_PATH/integration"
-      java.setSrcDirs(listOf("$integrationTestDirectory/java"))
-      withConvention(GroovySourceSet::class) {
-        groovy.setSrcDirs(listOf("$integrationTestDirectory/groovy", generatedIntegrationSources))
-      }
-      resources.setSrcDirs(listOf("$integrationTestDirectory/resources"))
-      val generateLocalLibraryRetriever by tasks.creating(GenerateJavaFile::class) {
-        description = "Generates a LibraryRetriever implementation for easier writing of integration tests"
-        srcDir.set(generatedIntegrationSources)
-        javaFile.set(localLibraryAdder())
-      }
-        tasks[getCompileTaskName("groovy")].dependsOn(generateLocalLibraryRetriever)
-    }
   }
 
   private fun Project.createSharedLibraryExtension() {
@@ -414,8 +421,11 @@ open class SharedLibraryPlugin @Inject constructor(
   private val SourceSetContainer.test: SourceSet
     get() = getByName("test")
 
+  private val SourceSet.groovy: SourceDirectorySet
+    get() = withConvention(GroovySourceSet::class) { groovy }
+
   private val SourceSetContainer.integrationTest: SourceSet
-    get() = maybeCreate("integrationTest")
+    get() = getByName("integrationTest")
 
   private fun DependencyHandler.add(configuration: Configuration, dependencyNotation: Any): Dependency =
     add(configuration.name, dependencyNotation)
