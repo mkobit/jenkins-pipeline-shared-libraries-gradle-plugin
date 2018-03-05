@@ -81,7 +81,7 @@ open class SharedLibraryPlugin @Inject constructor(
     private const val JENKINS_LIBRARIES_COMPILE_ONLY_CONFIGURATION = "jenkinsLibrariesMainCompileOnly"
     private const val TEST_LIBRARY_RUNTIME_ONLY_CONFIGURATION = "jenkinsTestLibrariesRuntimeOnly"
 
-    private const val IVY_CONFIGURATION = "globalLibraryIvy"
+    private const val IVY_CONFIGURATION = "sharedLibraryIvy"
     private const val IVY_COORDINATES = "org.apache.ivy:ivy:2.4.0"
   }
 
