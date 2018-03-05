@@ -155,10 +155,8 @@ open class SharedLibraryPlugin @Inject constructor(
     val dependencyHandler = dependencies
     configurations {
       JENKINS_PLUGINS_CONFIGURATION {
-        isCanBeResolved = true
-        isVisible = false
-        isCanBeConsumed = false
         withDependencies {
+        defaultJenkinsConfigurationSetup()
           LOGGER.debug { "Adding plugin dependencies from ${SharedLibraryExtension::class.java.canonicalName} to configuration ${this@JENKINS_PLUGINS_CONFIGURATION.name}" }
           // TODO: remove pluginDependencies().pluginDependencies() confusing method calls
           extensions.sharedLibraryExtension.pluginDependencies()
