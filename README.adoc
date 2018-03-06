@@ -38,6 +38,8 @@ See the link:{uri-consumer-example}[example repository] for a demonstration of u
 
 == 5 minute onboarding
 
+NOTE: Requires at least Gradle 4.6
+
 . Consume plugin from Gradle plugin portal
 +
 [source, kotlin, subs="attributes+"]

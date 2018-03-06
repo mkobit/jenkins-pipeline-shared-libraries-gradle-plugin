@@ -26,7 +26,8 @@ For each release, a subsection should be added for each of the following if they
 
 === Removed
 
-* Support for Gradle 4.3
+* Support for Gradle 4.3, 4.4, and 4.5.
+  Only 4.6 is supported right now.
 
 == 0.4.0 (2018/01/06)
 
