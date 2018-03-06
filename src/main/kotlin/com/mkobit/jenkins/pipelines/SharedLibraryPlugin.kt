@@ -369,6 +369,9 @@ open class SharedLibraryPlugin @Inject constructor(
     repositories.maven {
       name = JENKINS_REPOSITORY_NAME
       setUrl(JENKINS_REPOSITORY_URL)
+      metadataSources {
+        mavenPom()
+      }
     }
   }
 
