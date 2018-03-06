@@ -49,4 +49,11 @@ internal class UnitTestSourceIntegrationTest {
     assertThat(buildResult)
       .hasTaskSuccessAtPath(":test")
   }
+
+  @TestTemplate
+  internal fun `can test library code that makes use of Jenkins core and plugin classes`(@GradleProject(["projects", "global-library-using-jenkins-plugin-classes"]) gradleRunner: GradleRunner) {
+    val buildResult = gradleRunner.build("test")
+    assertThat(buildResult)
+      .outputContains("com.mkobit.LibraryUsingJenkinsClassesTest > throws exception for null constructor STARTED")
+  }
 }

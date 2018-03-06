@@ -7,7 +7,6 @@ import org.gradle.testfixtures.ProjectBuilder
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
-import testsupport.NotImplementedYet
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 internal class SharedLibraryExtensionTest {
