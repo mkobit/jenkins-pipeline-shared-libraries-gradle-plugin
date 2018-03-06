@@ -17,22 +17,37 @@ import org.gradle.api.tasks.TaskAction
 import java.io.File
 import javax.inject.Inject
 
+/**
+ * Generates a Java file into the [srcDir].
+ */
 open class GenerateJavaFile @Inject constructor(
   projectLayout: ProjectLayout,
   objectFactory: ObjectFactory
 ) : DefaultTask() {
 
+  /**
+   * [JavaFile] to write.
+   */
   @get:Internal
   val javaFile: Property<JavaFile> = objectFactory.property(JavaFile::class.java)
 
+  /**
+   * The content of the [javaFile].
+   */
   // Used to detect when changes to the JavaFile
   @Suppress("UNUSED")
   @get:Input
   val content: Provider<String> = javaFile.map(JavaFile::toString)
 
+  /**
+   * The root directory to create the source file in.
+   */
   @get:OutputDirectory
   val srcDir: DirectoryProperty = projectLayout.directoryProperty()
 
+  /**
+   * The destination of the Java file.
+   */
   // Used to give Gradle information about output content
   @Suppress("UNUSED")
   @get:OutputFile
@@ -46,6 +61,9 @@ open class GenerateJavaFile @Inject constructor(
     private val LOGGER = KotlinLogging.logger {}
   }
 
+  /**
+   * Writes the [JavaFile] to the [srcDir].
+   */
   @TaskAction
   fun createFile() {
     val java = javaFile.get()

@@ -3,7 +3,9 @@ package com.mkobit.jenkins.pipelines
 import com.mkobit.jenkins.pipelines.codegen.GenerateJavaFile
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Condition
+import org.assertj.core.api.SoftAssertions
 import org.assertj.core.condition.AllOf.allOf
+import org.assertj.core.description.TextDescription
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Dependency
@@ -19,9 +21,13 @@ import org.gradle.testfixtures.ProjectBuilder
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.DynamicNode
+import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestFactory
 import testsupport.NotImplementedYet
 import java.util.function.Predicate
+import java.util.stream.Stream
 
 internal class SharedLibraryPluginTest {
   private lateinit var project: Project
@@ -53,14 +59,14 @@ internal class SharedLibraryPluginTest {
       .isInstanceOf(MavenArtifactRepository::class.java)
       .isNotNull()
     assertThat(repository as MavenArtifactRepository)
-    .satisfies { mavenArtifactRepository ->
-      assertThat(mavenArtifactRepository.url)
-        .hasAuthority("repo.jenkins-ci.org")
-        .hasScheme("https")
-      assertThat(mavenArtifactRepository.name)
-        .`as`("Has name \"JenkinsPublic\"")
-        .isEqualTo("JenkinsPublic")
-    }
+      .satisfies { mavenArtifactRepository ->
+        assertThat(mavenArtifactRepository.url)
+          .hasAuthority("repo.jenkins-ci.org")
+          .hasScheme("https")
+        assertThat(mavenArtifactRepository.name)
+          .`as`("Has name \"JenkinsPublic\"")
+          .isEqualTo("JenkinsPublic")
+      }
   }
 
   @Test
@@ -109,22 +115,12 @@ internal class SharedLibraryPluginTest {
     assertThat(main.java.srcDirs).isEmpty()
   }
 
-  @Disabled("Dependency addition moved into execution phase (configuration resolution)")
   @Test
-  internal fun `default Groovy dependency is added to implementation configuration`() {
+  internal fun `main implementation configuration extends from Shared Library Groovy configuration`() {
     val implementation = project.configurations.getByName("implementation")
-    project.evaluate()
 
-    val group = Condition<Dependency>(Predicate {
-      it.group == "org.codehaus.groovy"
-    }, "org.codehaus.groovy")
-    val name = Condition<Dependency>(Predicate {
-      it.name == "groovy"
-    }, "groovy")
-    val version = Condition<Dependency>(Predicate {
-      it.version == "2.4.11"
-    }, "2.4.11")
-    assertThat(implementation.dependencies).haveExactly(1, allOf(group, name, version))
+    assertThat(implementation.extendsFrom.map { it.name })
+      .contains("sharedLibraryGroovy")
   }
 
   @Disabled("Dependency addition moved into execution phase (configuration resolution)")
@@ -169,6 +165,7 @@ internal class SharedLibraryPluginTest {
     assertThat(implementation.incoming.dependencies).haveExactly(1, allOf(group, name, version))
   }
 
+  @Disabled("Dependency addition moved into execution phase (configuration resolution)")
   @Test
   internal fun `Jenkins Test Harness is available in Jenkins test libraries configuration`() {
     project.evaluate()
@@ -181,6 +178,7 @@ internal class SharedLibraryPluginTest {
     }, "jenkins-test-harness")
 
     val configuration = project.configurations.getByName("jenkinsTestLibraries")
+    assertThat(configuration.description).isNotEmpty()
     assertThat(configuration.incoming.dependencies).haveExactly(1, allOf(group, name))
   }
 
@@ -276,36 +274,33 @@ internal class SharedLibraryPluginTest {
       .isInstanceOf(Jar::class.java)
   }
 
-  @Test
-  internal fun `configuration exists for Jenkins plugins HPI and JPI dependencies`() {
-    val config = project.configurations.getByName("jenkinsPluginHpisAndJpis")
-    assertThat(config)
-      .isNotNull
-    assertThat(config.isVisible).isFalse()
-  }
+  @TestFactory
+  internal fun `configuration setup `(): Stream<DynamicNode> {
+    val configurations = mapOf(
+      "jenkinsPlugins" to "Jenkins Plugins",
+      "jenkinsPipelineUnitTestLibraries" to "Jenkins Pipeline Unit dependencies",
+      "jenkinsPluginHpisAndJpis" to "Jenkins plugins HPI and JPI dependencies",
+      "jenkinsPluginLibraries" to "Jenkins plugins JAR dependencies",
+      "jenkinsCoreLibraries" to "Jenkins core dependencies",
+      "jenkinsTestLibraries" to "Jenkins test dependencies",
+      "sharedLibraryGroovy" to "Shared Library Groovy",
+      "sharedLibraryIvy" to "Ivy (@Grab support)"
+    )
 
-  @Test
-  internal fun `configuration exists for Jenkins plugins JAR dependencies`() {
-    val config = project.configurations.getByName("jenkinsPluginLibraries")
-    assertThat(config)
-      .isNotNull
-    assertThat(config.isVisible).isFalse()
-  }
-
-  @Test
-  internal fun `configuration exists for Jenkins core dependencies`() {
-    val config = project.configurations.getByName("jenkinsCoreLibraries")
-    assertThat(config)
-      .isNotNull
-    assertThat(config.isVisible).isFalse()
-  }
-
-  @Test
-  internal fun `configuration exists for Jenkins test dependencies`() {
-    val config = project.configurations.getByName("jenkinsTestLibraries")
-    assertThat(config)
-      .isNotNull
-    assertThat(config.isVisible).isFalse()
+    return configurations.entries.stream()
+      .map { (key, value) ->
+        DynamicTest.dynamicTest("for $value has a description and is not visible") {
+          val configuration = project.configurations.getByName(key)
+          SoftAssertions.assertSoftly {
+            val description = TextDescription("Configuration '%s'", key)
+            assertThat(configuration)
+              .describedAs(description)
+              .isNotNull
+            assertThat(configuration.description).describedAs(description).isNotEmpty()
+            assertThat(configuration.isVisible).describedAs(description).isFalse()
+          }
+        }
+      }
   }
 
   @Test
@@ -314,13 +309,15 @@ internal class SharedLibraryPluginTest {
 
     assertThat(configuration.extendsFrom.map { it.name })
       .isNotEmpty
-      .contains("jenkinsPluginLibraries", "jenkinsCoreLibraries", "jenkinsTestLibraries")
+      .contains("jenkinsPluginLibraries", "jenkinsCoreLibraries", "jenkinsTestLibraries", "sharedLibraryGroovy")
+      .doesNotContain("jenkinsTestLibrariesRuntimeOnly", "jenkinsPluginHpisAndJpis")
   }
 
   @Test
   internal fun `integrationTestRuntimeOnly extends configurations for Jenkins test and plugin runtime`() {
     val configuration = project.configurations.getByName("integrationTestRuntimeOnly")
 
+    assertThat(configuration.description).isNotEmpty()
     assertThat(configuration.extendsFrom.map { it.name })
       .isNotEmpty
       .contains("jenkinsTestLibrariesRuntimeOnly", "jenkinsPluginHpisAndJpis")
