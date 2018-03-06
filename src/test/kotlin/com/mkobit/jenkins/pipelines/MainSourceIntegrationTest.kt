@@ -74,4 +74,9 @@ class MainSourceIntegrationTest {
     assertThat(buildResult)
       .hasTaskSuccessAtPath(":sourcesJar")
   }
+
+  @TestTemplate
+  internal fun `can use Jenkins core and plugin classes in main library code`(@GradleProject(["projects", "global-library-using-jenkins-plugin-classes"]) gradleRunner: GradleRunner) {
+    gradleRunner.build("compileGroovy")
+  }
 }

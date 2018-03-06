@@ -213,6 +213,14 @@ internal class IntegrationTestSourceIntegrationTest {
   }
 
   @TestTemplate
+  internal fun `can integration test library code that makes use of Jenkins core and plugin classes`(@GradleProject(["projects", "global-library-using-jenkins-plugin-classes"]) gradleRunner: GradleRunner) {
+    val buildResult = gradleRunner.build("integrationTest")
+    assertThat(buildResult)
+      .outputContains("com.mkobit.LibraryUsingJenkinsClassesIntegrationTest > can use Jenkins core classes STARTED")
+      .outputContains("com.mkobit.LibraryUsingJenkinsClassesIntegrationTest > can use plugin classes STARTED")
+  }
+
+  @TestTemplate
   internal fun `@Grab in source library can be integration tested`(@GradleProject(["projects", "source-with-@grab"]) gradleRunner: GradleRunner) {
     gradleRunner.build("integrationTest")
   }

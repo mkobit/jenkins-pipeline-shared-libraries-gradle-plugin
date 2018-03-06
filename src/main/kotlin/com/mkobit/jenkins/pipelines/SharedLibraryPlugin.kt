@@ -7,7 +7,6 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.Dependency
-import org.gradle.api.artifacts.ExternalModuleDependency
 import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.artifacts.dsl.RepositoryHandler
 import org.gradle.api.file.ProjectLayout
@@ -73,7 +72,6 @@ open class SharedLibraryPlugin @Inject constructor(
     private const val PLUGIN_LIBRARY_CONFIGURATION = "jenkinsPluginLibraries"
     private const val CORE_LIBRARY_CONFIGURATION = "jenkinsCoreLibraries"
     private const val TEST_LIBRARY_CONFIGURATION = "jenkinsTestLibraries"
-    private const val JENKINS_LIBRARIES_COMPILE_ONLY_CONFIGURATION = "jenkinsLibrariesMainCompileOnly"
     private const val TEST_LIBRARY_RUNTIME_ONLY_CONFIGURATION = "jenkinsTestLibrariesRuntimeOnly"
 
     private const val IVY_CONFIGURATION = "sharedLibraryIvy"
@@ -113,8 +111,10 @@ open class SharedLibraryPlugin @Inject constructor(
     }
 
     configurations {
-      main.compileOnlyConfigurationName().extendsFrom(jenkinsLibrariesMainCompileOnly)
-      main.implementationConfigurationName().extendsFrom(sharedLibraryGroovy)
+      main.implementationConfigurationName().extendsFrom(
+        sharedLibraryGroovy,
+        jenkinsCoreLibraries,
+        jenkinsPluginLibraries)
     }
   }
 
@@ -142,8 +142,10 @@ open class SharedLibraryPlugin @Inject constructor(
     }
   }
 
+  /**
+   * Sets up all configurations and dependencies.
+   */
   private fun Project.setupConfigurationsAndDependencies() {
-    setupJenkinsLibrariesCompileOnlyConfiguration()
     setupJenkinsPluginsDependencies()
     setupPluginHpiAndJpiDependencies()
     setupPluginLibraryDependencies()
@@ -151,21 +153,6 @@ open class SharedLibraryPlugin @Inject constructor(
     setupTestLibraryDependencies()
     setupTestLibraryRuntimeDependencies()
     setupGroovyConfiguration()
-  }
-
-  private fun Project.setupJenkinsLibrariesCompileOnlyConfiguration() {
-    val dependencyHandler = dependencies
-    configurations {
-      JENKINS_LIBRARIES_COMPILE_ONLY_CONFIGURATION {
-        description = "Dependencies needed for compilation of the main library source"
-        withDependencies {
-          // For @NonCPS in source code, need to add a CloudBees Groovy CPS dependency
-          jenkinsPlugins.resolvedConfiguration.resolvedArtifacts
-            .filter { it.moduleVersion.id.group == "com.cloudbees" && it.moduleVersion.id.name == "groovy-cps" }
-            .forEach { dependencyHandler.add(this@JENKINS_LIBRARIES_COMPILE_ONLY_CONFIGURATION, it.moduleVersion.toString()) }
-        }
-      }
-    }
   }
 
   /**
@@ -218,6 +205,14 @@ open class SharedLibraryPlugin @Inject constructor(
             .filter { it.extension in setOf("hpi", "jpi", "jar") }
             .map { "${it.moduleVersion}@jar" } // Use the published JAR libraries for each plugin
             .forEach { dependencyHandler.add(this@PLUGIN_LIBRARY_CONFIGURATION, it) }
+
+          // TODO: hack - total hack to get the stupid servlet API dependency on the classpath
+          // since I can't seem to pull it from the POM of Jenkins Core.
+          // see https://discuss.gradle.org/t/how-to-query-for-provided-scoped-dependencies-of-a-configuration/26131
+          // This probably won't work for older versions of Jenkins because of different servlet-api
+          // versions, but should work enough for now to enable usage of Jenkins core and plugin classes in the library
+          // source
+          dependencyHandler.add(this@PLUGIN_LIBRARY_CONFIGURATION, "javax.servlet:javax.servlet-api:3.1.0")
         }
       }
     }
@@ -440,12 +435,6 @@ open class SharedLibraryPlugin @Inject constructor(
     isVisible = false
     isCanBeConsumed = false
   }
-
-  /**
-   * Gets the configuration with name [JENKINS_LIBRARIES_COMPILE_ONLY_CONFIGURATION].
-   */
-  private val NamedDomainObjectContainerScope<Configuration>.jenkinsLibrariesMainCompileOnly
-    get() = maybeCreate(JENKINS_LIBRARIES_COMPILE_ONLY_CONFIGURATION)
 
   /**
    * Gets the configuration with name [JENKINS_PLUGINS_CONFIGURATION].
