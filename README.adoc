@@ -172,7 +172,9 @@ sharedLibrary {
 }
 ----
 
-== Gradle Configurations
+== Limitations/Restrictions
+
+=== Consuming the Gradle Configurations
 
 There are several configurations that are created to group the different types of Jenkins dependencies used in this plugin.
 It is not recommended that you consume/`extendsFrom` these configurations as they may be changed underneath.
