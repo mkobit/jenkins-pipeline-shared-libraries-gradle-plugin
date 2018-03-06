@@ -124,7 +124,7 @@ open class JenkinsRebaselineToolsPlugin : Plugin<Project> {
   * @param jsonNode the `maven-metadata.xml` file
   */
   private fun latestVersionFromManifest(jsonNode: JsonNode): String {
-    return jsonNode.get("versioning").get("latest").textValue()
+    return jsonNode.get("versioning").get("release").textValue()
   }
 
   /**
@@ -133,7 +133,7 @@ open class JenkinsRebaselineToolsPlugin : Plugin<Project> {
    */
   private fun pluginConstantReplacement(name: String, newVersion: String): Replacement {
     return Replacement(
-      Regex("""(^\s+private val $name = ")[\d\\.]+(")${'$'}"""),
+      Regex("""(^\s+private const val $name = ")[\d\\.]+(")${'$'}"""),
       { result -> "${result.groupValues[1]}$newVersion${result.groupValues[2]}"}
     )
   }
