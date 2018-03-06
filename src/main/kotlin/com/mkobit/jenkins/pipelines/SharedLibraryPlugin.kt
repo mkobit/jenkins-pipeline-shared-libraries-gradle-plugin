@@ -320,8 +320,6 @@ open class SharedLibraryPlugin @Inject constructor(
           jenkinsPluginLibraries,
           jenkinsTestLibraries
         )
-        // TODO: unneeded due to no longer extending the test implementation configuration
-        exclude(group = "com.lesfurets", module = "jenkins-pipeline-unit")
       }
 
       java.sourceSets.integrationTest.runtimeOnlyConfigurationName().extendsFrom(
@@ -455,9 +453,15 @@ open class SharedLibraryPlugin @Inject constructor(
   private val NamedDomainObjectContainerScope<Configuration>.jenkinsPluginHpisAndJpis
     get() = maybeCreate(PLUGIN_HPI_JPI_CONFIGURATION)
 
+  /**
+   * Gets the configuration with name [TEST_LIBRARY_CONFIGURATION].
+   */
   private val NamedDomainObjectContainerScope<Configuration>.jenkinsTestLibraries
     get() = maybeCreate(TEST_LIBRARY_CONFIGURATION)
 
+  /**
+   * Gets the configuration with name [TEST_LIBRARY_RUNTIME_ONLY_CONFIGURATION].
+   */
   private val NamedDomainObjectContainerScope<Configuration>.jenkinsTestLibrariesRuntimeOnly
     get() = maybeCreate(TEST_LIBRARY_RUNTIME_ONLY_CONFIGURATION)
 
