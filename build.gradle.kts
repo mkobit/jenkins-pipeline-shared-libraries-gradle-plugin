@@ -4,11 +4,13 @@ import com.gradle.publish.PluginConfig
 import com.gradle.publish.PublishPlugin
 import org.gradle.api.internal.HasConvention
 import org.gradle.jvm.tasks.Jar
+import org.jetbrains.dokka.DokkaConfiguration
 import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.preprocessor.mkdirsOrFail
 import java.io.ByteArrayOutputStream
+import java.net.URL
 
 plugins {
   id("com.gradle.build-scan") version "1.11"
@@ -258,6 +260,16 @@ tasks {
     outputFormat = "html"
     outputDirectory = "$buildDir/javadoc"
     sourceDirs = main.kotlin.srcDirs
+    // See https://github.com/Kotlin/dokka/issues/196
+    externalDocumentationLink(delegateClosureOf<DokkaConfiguration.ExternalDocumentationLink.Builder> {
+      url = URL("https://docs.gradle.org/current/javadoc/")
+    })
+    externalDocumentationLink(delegateClosureOf<DokkaConfiguration.ExternalDocumentationLink.Builder> {
+      url = URL("https://docs.oracle.com/javase/8/docs/api/")
+    })
+    externalDocumentationLink(delegateClosureOf<DokkaConfiguration.ExternalDocumentationLink.Builder> {
+      url = URL("https://square.github.io/javapoet/javadoc/javapoet/")
+    })
   }
 
   val javadocJar by creating(Jar::class) {
