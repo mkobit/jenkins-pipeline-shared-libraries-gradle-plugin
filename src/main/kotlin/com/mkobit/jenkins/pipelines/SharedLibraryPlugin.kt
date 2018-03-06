@@ -6,7 +6,6 @@ import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
-import org.gradle.api.artifacts.ConfigurationContainer
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.ExternalModuleDependency
 import org.gradle.api.artifacts.dsl.DependencyHandler
@@ -88,8 +87,13 @@ open class SharedLibraryPlugin @Inject constructor(
       pluginManager.apply(JenkinsIntegrationPlugin::class.java)
       setupJenkinsRepository()
       setupJavaDefaults()
-      createSharedLibraryExtension()
+      setupSharedLibraryExtension()
       setupJenkinsPluginsDependencies()
+      setupPluginHpiAndJpiDependencies()
+      setupPluginLibraryDependencies()
+      setupCoreLibraryDependencies()
+      setupTestLibraryDependencies()
+      setupTestLibraryRuntimeDependencies()
       setupGroovyConfiguration()
       setupMain()
       setupUnitTest()
@@ -176,6 +180,79 @@ open class SharedLibraryPlugin @Inject constructor(
     }
   }
 
+  private fun Project.setupPluginHpiAndJpiDependencies() {
+    val dependencyHandler = dependencies
+    configurations {
+      PLUGIN_HPI_JPI_CONFIGURATION {
+        defaultJenkinsConfigurationSetup()
+        description = "Jenkins plugin HPI and JPI dependencies needed at runtime"
+        withDependencies {
+          jenkinsPlugins.resolvedConfiguration.resolvedArtifacts
+            .filter { it.extension in setOf("hpi", "jpi") }
+            .map { "${it.moduleVersion}@${it.extension}" }
+            .forEach { dependencyHandler.add(this@PLUGIN_HPI_JPI_CONFIGURATION, it) }
+        }
+      }
+    }
+  }
+
+  private fun Project.setupPluginLibraryDependencies() {
+    val dependencyHandler = dependencies
+    configurations {
+      PLUGIN_LIBRARY_CONFIGURATION {
+        defaultJenkinsConfigurationSetup()
+        description = "Jenkins plugin JAR libraries"
+        withDependencies {
+          // Map each included HPI to that plugin's JAR for usage in compilation of tests and also
+          // include all of the additional JAR dependencies from the transitive dependencies of the plugin
+          jenkinsPlugins.resolvedConfiguration.resolvedArtifacts
+            .filter { it.extension in setOf("hpi", "jpi", "jar") }
+            .map { "${it.moduleVersion}@jar" } // Use the published JAR libraries for each plugin
+            .forEach { dependencyHandler.add(this@PLUGIN_LIBRARY_CONFIGURATION, it) }
+        }
+      }
+    }
+  }
+
+  private fun Project.setupCoreLibraryDependencies() {
+    val dependencyHandler = dependencies
+    configurations {
+      CORE_LIBRARY_CONFIGURATION {
+        defaultJenkinsConfigurationSetup()
+        description = "Jenkins core libraries and modules"
+        withDependencies {
+          dependencyHandler.add(this@CORE_LIBRARY_CONFIGURATION, extensions.sharedLibraryExtension.coreDependency())
+        }
+      }
+    }
+  }
+
+  private fun Project.setupTestLibraryDependencies() {
+    val dependencyHandler = dependencies
+    configurations {
+      TEST_LIBRARY_CONFIGURATION {
+        defaultJenkinsConfigurationSetup()
+        description = "Jenkins test harness and modules"
+        withDependencies {
+          dependencyHandler.add(this@TEST_LIBRARY_CONFIGURATION, extensions.sharedLibraryExtension.testHarnessDependency())
+        }
+      }
+    }
+  }
+
+  private fun Project.setupTestLibraryRuntimeDependencies() {
+    val dependencyHandler = dependencies
+    configurations {
+      TEST_LIBRARY_RUNTIME_ONLY_CONFIGURATION {
+        defaultJenkinsConfigurationSetup()
+        description = "Jenkins test runtime libraries"
+        withDependencies {
+          dependencyHandler.add(this@TEST_LIBRARY_RUNTIME_ONLY_CONFIGURATION, "${extensions.sharedLibraryExtension.jenkinsWar()}@war")
+        }
+      }
+    }
+  }
+
   /**
    * Sets up support for using `@Grab` in `main` source and `test`
    */
@@ -218,7 +295,6 @@ open class SharedLibraryPlugin @Inject constructor(
    * Creates and sets up the `integrationTest` source set.
    */
   private fun Project.setupIntegrationTest() {
-    val dependencyHandler = dependencies
     val generatedIntegrationSources = projectLayout.buildDirectory.dir("generated-src/integrationTest")
     java.sourceSets {
       INTEGRATION_TEST_SOURCE_SET {
@@ -237,49 +313,6 @@ open class SharedLibraryPlugin @Inject constructor(
     }
 
     configurations {
-      val jenkinsPluginHpisAndJpis = PLUGIN_HPI_JPI_CONFIGURATION {
-        defaultJenkinsConfigurationSetup()
-        description = "Jenkins plugin HPI and JPI dependencies needed at runtime"
-        withDependencies {
-          jenkinsPlugins.resolvedConfiguration.resolvedArtifacts
-            .filter { it.extension in setOf("hpi", "jpi") }
-            .map { "${it.moduleVersion}@${it.extension}" }
-            .forEach { dependencyHandler.add(this@PLUGIN_HPI_JPI_CONFIGURATION, it) }
-        }
-      }
-      val jenkinsPluginLibraries = PLUGIN_LIBRARY_CONFIGURATION {
-        defaultJenkinsConfigurationSetup()
-        description = "Jenkins plugin JAR libraries"
-        withDependencies {
-          // Map each included HPI to that plugin's JAR for usage in compilation of tests and also
-          // include all of the additional JAR dependencies from the transitive dependencies of the plugin
-          jenkinsPlugins.resolvedConfiguration.resolvedArtifacts
-            .filter { it.extension in setOf("hpi", "jpi", "jar") }
-            .map { "${it.moduleVersion}@jar" } // Use the published JAR libraries for each plugin
-            .forEach { dependencyHandler.add(this@PLUGIN_LIBRARY_CONFIGURATION, it) }
-        }
-      }
-      val jenkinsCoreLibraries = CORE_LIBRARY_CONFIGURATION {
-        defaultJenkinsConfigurationSetup()
-        description = "Jenkins core libraries and modules"
-        withDependencies {
-          dependencyHandler.add(this@CORE_LIBRARY_CONFIGURATION, extensions.sharedLibraryExtension.coreDependency())
-        }
-      }
-      val jenkinsTestLibraries = TEST_LIBRARY_CONFIGURATION {
-        defaultJenkinsConfigurationSetup()
-        description = "Jenkins test harness and modules"
-        withDependencies {
-          dependencyHandler.add(this@TEST_LIBRARY_CONFIGURATION, extensions.sharedLibraryExtension.testHarnessDependency())
-        }
-      }
-      val jenkinsTestLibrariesRuntimeOnly = TEST_LIBRARY_RUNTIME_ONLY_CONFIGURATION {
-        defaultJenkinsConfigurationSetup()
-        description = "Jenkins test runtime libraries"
-        withDependencies {
-          dependencyHandler.add(this@TEST_LIBRARY_RUNTIME_ONLY_CONFIGURATION, "${extensions.sharedLibraryExtension.jenkinsWar()}@war")
-        }
-      }
       java.sourceSets.integrationTest.implementationConfigurationName {
         extendsFrom(
           sharedLibraryGroovy,
@@ -287,6 +320,7 @@ open class SharedLibraryPlugin @Inject constructor(
           jenkinsPluginLibraries,
           jenkinsTestLibraries
         )
+        // TODO: unneeded due to no longer extending the test implementation configuration
         exclude(group = "com.lesfurets", module = "jenkins-pipeline-unit")
       }
 
@@ -344,7 +378,7 @@ open class SharedLibraryPlugin @Inject constructor(
   /**
    * Creates the [SharedLibraryExtension] with the default versions.
    */
-  private fun Project.createSharedLibraryExtension() {
+  private fun Project.setupSharedLibraryExtension() {
     val groovyVersion = initializedProperty(DEFAULT_GROOVY_VERSION)
     val coreVersion = initializedProperty(DEFAULT_CORE_VERSION)
     val pipelineTestUnitVersion = initializedProperty(DEFAULT_JENKINS_PIPELINE_UNIT_VERSION)
@@ -401,24 +435,36 @@ open class SharedLibraryPlugin @Inject constructor(
    * Gets the configuration with name [JENKINS_PLUGINS_CONFIGURATION].
    */
   private val NamedDomainObjectContainerScope<Configuration>.jenkinsPlugins
-    get() = getByName(JENKINS_PLUGINS_CONFIGURATION)
+    get() = maybeCreate(JENKINS_PLUGINS_CONFIGURATION)
 
   /**
-   * Gets the configuration with name [JENKINS_PLUGINS_CONFIGURATION].
+   * Gets the configuration with name [CORE_LIBRARY_CONFIGURATION].
    */
-  private val ConfigurationContainer.jenkinsPlugins: Configuration
-    get() = getByName(JENKINS_PLUGINS_CONFIGURATION)
+  private val NamedDomainObjectContainerScope<Configuration>.jenkinsCoreLibraries
+    get() = maybeCreate(CORE_LIBRARY_CONFIGURATION)
+
+  /**
+   * Gets the configuration with name [PLUGIN_LIBRARY_CONFIGURATION].
+   */
+  private val NamedDomainObjectContainerScope<Configuration>.jenkinsPluginLibraries
+    get() = maybeCreate(PLUGIN_LIBRARY_CONFIGURATION)
+
+  /**
+   * Gets the configuration with name [PLUGIN_HPI_JPI_CONFIGURATION].
+   */
+  private val NamedDomainObjectContainerScope<Configuration>.jenkinsPluginHpisAndJpis
+    get() = maybeCreate(PLUGIN_HPI_JPI_CONFIGURATION)
+
+  private val NamedDomainObjectContainerScope<Configuration>.jenkinsTestLibraries
+    get() = maybeCreate(TEST_LIBRARY_CONFIGURATION)
+
+  private val NamedDomainObjectContainerScope<Configuration>.jenkinsTestLibrariesRuntimeOnly
+    get() = maybeCreate(TEST_LIBRARY_RUNTIME_ONLY_CONFIGURATION)
 
   /**
    * Gets the configuration with name [GROOVY_CONFIGURATION].
    */
   private val NamedDomainObjectContainerScope<Configuration>.sharedLibraryGroovy
-    get() = getByName(GROOVY_CONFIGURATION)
-
-  /**
-   * Gets the configuration with name [GROOVY_CONFIGURATION].
-   */
-  private val ConfigurationContainer.sharedLibraryGroovy: Configuration
     get() = getByName(GROOVY_CONFIGURATION)
 
   /**
