@@ -173,8 +173,7 @@ open class SharedLibraryPlugin @Inject constructor(
           // TODO: remove pluginDependencies().pluginDependencies() confusing method calls
           extensions.sharedLibraryExtension.pluginDependencies()
             .pluginDependencies()
-            .map { dependencyHandler.createExternal(it.asStringNotation()) }
-            .forEach { dependencyHandler.add(this@JENKINS_PLUGINS_CONFIGURATION, it) }
+            .forEach { dependencyHandler.add(this@JENKINS_PLUGINS_CONFIGURATION, it.asStringNotation()) }
         }
       }
     }
@@ -514,10 +513,4 @@ open class SharedLibraryPlugin @Inject constructor(
    */
   private fun DependencyHandler.add(configuration: Configuration, dependencyNotation: Any): Dependency =
     add(configuration.name, dependencyNotation)
-
-  private fun DependencyHandler.createExternal(
-    dependencyNotation: Any,
-    configuration: ExternalModuleDependency.() -> Unit = {}
-  ): ExternalModuleDependency = (this.create(
-    dependencyNotation) as ExternalModuleDependency).apply(configuration)
 }
