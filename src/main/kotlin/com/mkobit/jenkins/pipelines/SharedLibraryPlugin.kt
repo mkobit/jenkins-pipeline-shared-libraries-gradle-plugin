@@ -88,13 +88,7 @@ open class SharedLibraryPlugin @Inject constructor(
       setupJenkinsRepository()
       setupJavaDefaults()
       setupSharedLibraryExtension()
-      setupJenkinsPluginsDependencies()
-      setupPluginHpiAndJpiDependencies()
-      setupPluginLibraryDependencies()
-      setupCoreLibraryDependencies()
-      setupTestLibraryDependencies()
-      setupTestLibraryRuntimeDependencies()
-      setupGroovyConfiguration()
+      setupConfigurationsAndDependencies()
       setupMain()
       setupUnitTest()
       setupIntegrationTest()
@@ -118,17 +112,7 @@ open class SharedLibraryPlugin @Inject constructor(
       resources.setSrcDirs(listOf("resources"))
     }
 
-    val dependencyHandler = dependencies
     configurations {
-      val jenkinsLibrariesMainCompileOnly= JENKINS_LIBRARIES_COMPILE_ONLY_CONFIGURATION {
-        description = "Dependencies needed for compilation of the main library source"
-        withDependencies {
-          // For @NonCPS in source code, need to add a CloudBees Groovy CPS dependency
-          jenkinsPlugins.resolvedConfiguration.resolvedArtifacts
-            .filter { it.moduleVersion.id.group == "com.cloudbees" && it.moduleVersion.id.name == "groovy-cps" }
-            .forEach { dependencyHandler.add(this@JENKINS_LIBRARIES_COMPILE_ONLY_CONFIGURATION, it.moduleVersion.toString()) }
-        }
-      }
       main.compileOnlyConfigurationName().extendsFrom(jenkinsLibrariesMainCompileOnly)
       main.implementationConfigurationName().extendsFrom(sharedLibraryGroovy)
     }
@@ -155,6 +139,32 @@ open class SharedLibraryPlugin @Inject constructor(
         }
       }
       test.implementationConfigurationName().extendsFrom(configuration, sharedLibraryGroovy)
+    }
+  }
+
+  private fun Project.setupConfigurationsAndDependencies() {
+    setupJenkinsLibrariesCompileOnlyConfiguration()
+    setupJenkinsPluginsDependencies()
+    setupPluginHpiAndJpiDependencies()
+    setupPluginLibraryDependencies()
+    setupCoreLibraryDependencies()
+    setupTestLibraryDependencies()
+    setupTestLibraryRuntimeDependencies()
+    setupGroovyConfiguration()
+  }
+
+  private fun Project.setupJenkinsLibrariesCompileOnlyConfiguration() {
+    val dependencyHandler = dependencies
+    configurations {
+      JENKINS_LIBRARIES_COMPILE_ONLY_CONFIGURATION {
+        description = "Dependencies needed for compilation of the main library source"
+        withDependencies {
+          // For @NonCPS in source code, need to add a CloudBees Groovy CPS dependency
+          jenkinsPlugins.resolvedConfiguration.resolvedArtifacts
+            .filter { it.moduleVersion.id.group == "com.cloudbees" && it.moduleVersion.id.name == "groovy-cps" }
+            .forEach { dependencyHandler.add(this@JENKINS_LIBRARIES_COMPILE_ONLY_CONFIGURATION, it.moduleVersion.toString()) }
+        }
+      }
     }
   }
 
@@ -430,6 +440,12 @@ open class SharedLibraryPlugin @Inject constructor(
     isVisible = false
     isCanBeConsumed = false
   }
+
+  /**
+   * Gets the configuration with name [JENKINS_LIBRARIES_COMPILE_ONLY_CONFIGURATION].
+   */
+  private val NamedDomainObjectContainerScope<Configuration>.jenkinsLibrariesMainCompileOnly
+    get() = maybeCreate(JENKINS_LIBRARIES_COMPILE_ONLY_CONFIGURATION)
 
   /**
    * Gets the configuration with name [JENKINS_PLUGINS_CONFIGURATION].
