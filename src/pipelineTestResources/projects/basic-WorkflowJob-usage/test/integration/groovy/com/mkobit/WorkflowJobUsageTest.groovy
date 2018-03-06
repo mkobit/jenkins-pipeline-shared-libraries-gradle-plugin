@@ -13,12 +13,12 @@ class WorkflowJobUsageTest {
   public JenkinsRule rule = new JenkinsRule()
 
   @Before
-  void configureRule() {
+  void 'setup JenkinsRule'() {
     rule.timeout = 30
   }
 
   @Test
-  void canUseJenkins() {
+  void 'can use JenkinsRule'() {
     final WorkflowJob project = rule.createProject(WorkflowJob)
     project.definition = new CpsFlowDefinition('echo "Hello ${env.JOB_NAME}"')
 

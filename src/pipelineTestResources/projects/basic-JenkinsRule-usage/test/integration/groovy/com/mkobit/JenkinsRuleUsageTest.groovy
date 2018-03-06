@@ -12,12 +12,12 @@ class JenkinsRuleUsageTest {
   public JenkinsRule rule = new JenkinsRule()
 
   @Before
-  void configureRule() {
+  void 'configure JenkinsRule'() {
     rule.timeout = 30
   }
 
   @Test
-  void canUseJenkins() {
+  void 'can use JenkinsRule'() {
     rule.createFreeStyleProject()
     Assert.assertEquals(1, rule.jenkins.allItems.size())
   }

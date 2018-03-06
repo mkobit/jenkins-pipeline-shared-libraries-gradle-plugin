@@ -18,7 +18,7 @@ class JenkinsGlobalLibraryUsageTest {
   public JenkinsRule rule = new JenkinsRule()
 
   @Before
-  void configureGlobalLibraries() {
+  void 'configure global library'() {
     rule.timeout = 30
     final LibraryRetriever retriever = new LocalLibraryRetriever()
     final LibraryConfiguration localLibrary =
@@ -30,7 +30,7 @@ class JenkinsGlobalLibraryUsageTest {
   }
 
   @Test
-  void testingMyLibrary() {
+  void 'normal method that uses a step'() {
     CpsFlowDefinition flow = new CpsFlowDefinition('''
       import com.mkobit.LibHelper
       
@@ -43,7 +43,7 @@ class JenkinsGlobalLibraryUsageTest {
   }
 
   @Test
-  void testingNonCpsMethod() {
+  void 'library imports and uses Jenkins core classes'() {
     CpsFlowDefinition flow = new CpsFlowDefinition('''
       import com.mkobit.LibHelper
       

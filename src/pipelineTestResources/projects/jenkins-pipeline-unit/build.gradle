@@ -13,3 +13,10 @@ dependencies {
 sharedLibrary {
   pipelineTestUnitVersion = '1.1'
 }
+
+tasks.withType(Test) {
+  testLogging {
+    exceptionFormat = 'full'
+    events('started')
+  }
+}
