@@ -73,13 +73,6 @@ internal class SharedLibraryExtensionTest {
     assertThat(sharedLibraryExtension.testHarnessVersion).isEqualTo("newTestHarnessVersion")
   }
 
-  @NotImplementedYet
-  @Test
-  internal fun `can set a URL to a target Jenkins instance`() {
-  }
-
-
-
   private fun softlyAssert(assertions: SoftAssertions.() -> Unit) {
     val softAssertions = SoftAssertions()
     softAssertions.assertions()

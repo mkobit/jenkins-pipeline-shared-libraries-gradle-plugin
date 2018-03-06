@@ -53,8 +53,6 @@ internal class MultiVersionGradleProjectTestTemplate : TestTemplateInvocationCon
     }
     private val DEFAULT_VERSIONS: Set<GradleVersion> by lazy {
       setOf(
-        GradleVersion.version("4.4"),
-        GradleVersion.version("4.5"),
         GradleVersion.version("4.6"),
         CURRENT_GRADLE_VERSION
       )
