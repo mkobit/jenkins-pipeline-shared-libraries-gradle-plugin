@@ -171,3 +171,10 @@ sharedLibrary {
   }
 }
 ----
+
+== Gradle Configurations
+
+There are several configurations that are created to group the different types of Jenkins dependencies used in this plugin.
+It is not recommended that you consume/`extendsFrom` these configurations as they may be changed underneath.
+It is instead recommended to use the configurations for each source set and make alterations to them (like link:https://docs.gradle.org/current/javadoc/org/gradle/api/tasks/SourceSet.html#getImplementationConfigurationName--[`sourceSets.integrationTest.implementationConfigurationName`] and link:https://docs.gradle.org/current/javadoc/org/gradle/api/tasks/SourceSet.html#getRuntimeOnlyConfigurationName--[`sourceSets.integrationTest.runtimeOnlyConfigurationName`]).
+If you have a specific use case please file an issue.
