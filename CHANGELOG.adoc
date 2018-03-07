@@ -104,7 +104,8 @@ WARNING: Unit testing code that uses `@Grab` does not seem to work.
 
 * Support for Gradle 4.3, 4.4, and 4.5.
   Only 4.6 is supported right now.
-
+* `integrationTest` source set configurations no longer extends from any `test` source set configurations.
+  You will now need to specify dependencies for both.
 
 == 0.4.0 (2018/01/06)
 
