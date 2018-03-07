@@ -163,7 +163,7 @@ open class SharedLibraryPlugin @Inject constructor(
     val dependencyHandler = dependencies
     configurations {
       JENKINS_PLUGINS_CONFIGURATION {
-        defaultJenkinsConfigurationSetup()
+        defaultJenkinsConfigurationSetup(canBeResolved = true)
         description = "Jenkins plugin dependencies"
         withDependencies {
           LOGGER.debug { "Adding plugin dependencies from ${SharedLibraryExtension::class.java.canonicalName} to configuration ${this@JENKINS_PLUGINS_CONFIGURATION.name}" }
@@ -262,7 +262,7 @@ open class SharedLibraryPlugin @Inject constructor(
    */
   private fun Project.setupIvyGrabSupport() {
     val ivy = configurations.create(IVY_CONFIGURATION) {
-      defaultJenkinsConfigurationSetup()
+      defaultJenkinsConfigurationSetup(canBeResolved = true)
       description = "Ivy configuration for @Grab support"
     }
     dependencies.add(ivy, IVY_COORDINATES)
@@ -430,8 +430,8 @@ open class SharedLibraryPlugin @Inject constructor(
   /**
    * Default setup for configurations related to this plugin.
    */
-  private fun Configuration.defaultJenkinsConfigurationSetup() {
-    isCanBeResolved = true
+  private fun Configuration.defaultJenkinsConfigurationSetup(canBeResolved: Boolean = false) {
+    isCanBeResolved = canBeResolved
     isVisible = false
     isCanBeConsumed = false
   }
