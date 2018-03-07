@@ -24,10 +24,87 @@ For each release, a subsection should be added for each of the following if they
 
 == UNRELEASED
 
+== 0.5.0 (2018/03/06)
+
+=== Added
+
+* New plugin to integrate with a specific Jenkins instance.
+  This will be built upon in the future to allow for auto-management of dependencies.
+  For now, a few tasks are added to download the GDSL, retrieve the plugin lists if you have appropriate permissions, and retrieve the core version.
+  These tasks are experimental until better support arrives.
++
+[source, groovy]
+----
+import java.net.URL
+import com.mkobit.jenkins.pipelines.http.BasicAuthentication
+
+jenkinsIntegration {
+  baseUrl = new URL('https://mycorp.jenkins.zone')
+  authentication = providers.provider { new BasicAuthentication(property('username'), property('password') }
+}
+----
++
+[source]
+----
+./gradlew retrieveJenkinsGdsl
+./gradlew retrieveJenkinsPluginData
+./gradlew retrieveJenkinsVersion
+----
+* Support for using Jenkins core and plugins in library source code
+* Support for `@Grab` in library source
++
+WARNING: Unit testing code that uses `@Grab` does not seem to work.
+         See link:https://stackoverflow.com/questions/4611230/no-suitable-classloader-found-for-grab[this StackOverflow question].
+         You can, however, still test other code that does not use `@Grab`
+
+=== Changed
+
+* Updated default versions:
++
+[cols="3*",options="header"]
+|===
+|Component
+|From
+|TO
+
+|Core
+|2.89.2
+|2.89.4
+
+|Test Harness
+|2.33
+|2.34
+
+|Workflow API Plugin
+|2.24
+|2.26
+
+|Workflow CPS Plugin
+|2.42
+|2.45
+
+|Workflow Durable Task Step Plugin
+|2.17
+|2.19
+
+|Workflow Job Plugin
+|2.16
+|2.17
+
+|Workflow Support Plugin
+|2.16
+|2.18
+|===
+
+=== Fixed
+
+* KDoc links to external documentation
+
 === Removed
 
 * Support for Gradle 4.3, 4.4, and 4.5.
   Only 4.6 is supported right now.
+
 
 == 0.4.0 (2018/01/06)
 
@@ -49,7 +126,7 @@ For each release, a subsection should be added for each of the following if they
 
 |Core
 |2.73.2
-|2.89,2
+|2.89.2
 
 |Test Harness
 |2.31
@@ -82,7 +159,7 @@ For each release, a subsection should be added for each of the following if they
 
 === Fixed
 
-* Generated library retriever First step from pipeline execution no longer not log on same line as generated library retriever
+* Generated library retriever no longer logs on the same line as the first step
 
 == 0.3.2 (2017/10/31)
 
