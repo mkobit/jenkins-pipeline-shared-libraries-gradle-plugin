@@ -30,9 +30,13 @@ NOTE: This documentation is for the `HEAD` of the repository.
 
 This plugin intends to help with development of link:{uri-jenkins-shared-library-docs}[_Shared Libraries_].
 
-It offers the ability to:
-
+.Features
+* Basic Groovy compilation to validate source code
 * Unit test using link:{uri-jenkins-pipeline-unit}[_Jenkins Pipeline Unit_]
+* Usage of plugin and Jenkins core classes in library
+* `@Grab` support for libraries (testing limited to `@JenkinsRule` style integration tests due to link:https://stackoverflow.com/questions/4611230/no-suitable-classloader-found-for-grab[an issue])
+* `@NonCPS` annotation can be used in main source code
+* Source code generation to assist with development (for example, `com.mkobit.jenkins.pipelines.codegen.LocalLibraryRetriever`)
 * Integration test using the link:{uri-jenkins-test-harness}[_Jenkins Test Harness_]
 * Code completion in IDE
 
@@ -166,7 +170,6 @@ See the code for full details, but here is an example of what you can configure:
 [source, kotlin]
 ----
 sharedLibrary {
-  groovyVersion = "2.4.12"
   coreVersion = "2.86"
   testHarnessVersion = "2.24"
   pluginDependencies {
