@@ -18,7 +18,10 @@ class PluginDependencySpec(
   private val additionalDependencies: MutableList<PluginDependency> = mutableListOf()
 
   /**
-   * Adds a jenkinsCi dependency with the specified
+   * Adds a dependency with the provided coordinates.
+   * @param group the group of the plugin artifact
+   * @param name the name of the plugin artifact
+   * @param version the version of the plugin to use
    */
   fun dependency(group: String, name: String, version: String) {
     additionalDependencies.add(PluginDependency(group, name, version))
