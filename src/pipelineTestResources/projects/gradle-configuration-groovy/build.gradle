@@ -11,7 +11,6 @@ dependencies {
 }
 
 sharedLibrary {
-  groovyVersion = "2.4.12"
   coreVersion = "2.86"
   testHarnessVersion = "2.32"
   pluginDependencies {

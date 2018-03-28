@@ -13,7 +13,6 @@ internal class SharedLibraryExtensionTest {
   private lateinit var sharedLibraryExtension: SharedLibraryExtension
 
   companion object {
-    private val INITIAL_GROOVY_VERSION = "1.0"
     private val INITIAL_CORE_VERSION = "2.0"
     private val INITIAL_PIPELINE_UNIT_VERSION = "3.0"
     private val INITIAL_TEST_HARNESS_VERSION = "4.0"
@@ -23,7 +22,6 @@ internal class SharedLibraryExtensionTest {
   internal fun setUp() {
     val project = ProjectBuilder.builder().build()
     sharedLibraryExtension = SharedLibraryExtension(
-      project.initializedProperty(INITIAL_GROOVY_VERSION),
       project.initializedProperty(INITIAL_CORE_VERSION),
       project.initializedProperty(INITIAL_PIPELINE_UNIT_VERSION),
       project.initializedProperty(INITIAL_TEST_HARNESS_VERSION),
@@ -34,7 +32,6 @@ internal class SharedLibraryExtensionTest {
   @Test
   internal fun `default versions can be retrieved`() {
     softlyAssert {
-      assertThat(sharedLibraryExtension.groovyVersion).isEqualTo(INITIAL_GROOVY_VERSION)
       assertThat(sharedLibraryExtension.coreVersion).isEqualTo(INITIAL_CORE_VERSION)
       assertThat(sharedLibraryExtension.testHarnessVersion).isEqualTo(
         INITIAL_TEST_HARNESS_VERSION)
@@ -42,13 +39,6 @@ internal class SharedLibraryExtensionTest {
         INITIAL_PIPELINE_UNIT_VERSION
       )
     }
-  }
-
-  @Test
-  internal fun `can set Groovy version`() {
-    sharedLibraryExtension.groovyVersion = "newGroovyVersion"
-
-    assertThat(sharedLibraryExtension.groovyVersion).isEqualTo("newGroovyVersion")
   }
 
   @Test

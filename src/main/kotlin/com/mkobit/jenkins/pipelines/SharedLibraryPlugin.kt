@@ -2,6 +2,7 @@ package com.mkobit.jenkins.pipelines
 
 import com.mkobit.jenkins.pipelines.codegen.GenerateJavaFile
 import mu.KotlinLogging
+import org.gradle.api.GradleException
 import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -45,7 +46,6 @@ open class SharedLibraryPlugin @Inject constructor(
     private const val SHARED_LIBRARY_EXTENSION_NAME = "sharedLibrary"
     private const val TEST_ROOT_PATH = "test"
     private const val DEFAULT_JENKINS_PIPELINE_UNIT_VERSION = "1.1"
-    private const val DEFAULT_GROOVY_VERSION = "2.4.11"
     private const val DEFAULT_CORE_VERSION = "2.89.4"
     private const val DEFAULT_TEST_HARNESS_VERSION = "2.34"
     private const val DEFAULT_WORKFLOW_API_PLUGIN_VERSION = "2.26"
@@ -222,7 +222,7 @@ open class SharedLibraryPlugin @Inject constructor(
     val dependencyHandler = dependencies
     configurations {
       CORE_LIBRARY_CONFIGURATION {
-        defaultJenkinsConfigurationSetup()
+        defaultJenkinsConfigurationSetup(canBeResolved = true)
         description = "Jenkins core libraries and modules"
         withDependencies {
           dependencyHandler.add(this@CORE_LIBRARY_CONFIGURATION, extensions.sharedLibraryExtension.coreDependency())
@@ -359,8 +359,11 @@ open class SharedLibraryPlugin @Inject constructor(
         defaultJenkinsConfigurationSetup()
         description = "Shared Library Groovy dependency"
         withDependencies {
-          LOGGER.debug { "Adding ${extensions.sharedLibraryExtension.groovyDependency()} to ${this@GROOVY_CONFIGURATION.name}" }
-          dependencyHandler.add(this@GROOVY_CONFIGURATION, extensions.sharedLibraryExtension.groovyDependency())
+          val groovyArtifact = jenkinsCoreLibraries.resolvedConfiguration.resolvedArtifacts.find {
+            it.moduleVersion.id.group == "org.codehaus.groovy"
+          } ?: throw GradleException("Could not find Groovy dependency as Jenkins core Library")
+          LOGGER.debug { "Adding ${groovyArtifact.moduleVersion} to ${this@GROOVY_CONFIGURATION.name}" }
+          dependencyHandler.add(this@GROOVY_CONFIGURATION, groovyArtifact.moduleVersion.id.toString())
         }
       }
     }
@@ -384,7 +387,6 @@ open class SharedLibraryPlugin @Inject constructor(
    * Creates the [SharedLibraryExtension] with the default versions.
    */
   private fun Project.setupSharedLibraryExtension() {
-    val groovyVersion = initializedProperty(DEFAULT_GROOVY_VERSION)
     val coreVersion = initializedProperty(DEFAULT_CORE_VERSION)
     val pipelineTestUnitVersion = initializedProperty(DEFAULT_JENKINS_PIPELINE_UNIT_VERSION)
     val testHarnessVersion = initializedProperty(DEFAULT_TEST_HARNESS_VERSION)
@@ -419,7 +421,6 @@ open class SharedLibraryPlugin @Inject constructor(
     extensions.create(
       SHARED_LIBRARY_EXTENSION_NAME,
       SharedLibraryExtension::class.java,
-      groovyVersion,
       coreVersion,
       pipelineTestUnitVersion,
       testHarnessVersion,

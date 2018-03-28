@@ -65,8 +65,6 @@ open class JenkinsRebaselineToolsPlugin : Plugin<Project> {
         dependsOn(downloadLatestCoreVersion, downloadUpdateCenterJson, downloadJenkinsTestHarnessManifest)
         targetFile.set(layout.projectDirectory.file(splitBySeparator("src", "main", "kotlin", "com", "mkobit", "jenkins", "pipelines", "SharedLibraryPlugin.kt")))
         replacements.run {
-          // groovy version
-//          add(coreGroovyVersion.map { pluginConstantReplacement("DEFAULT_GROOVY_VERSION", it) })
           add(ltsVersion.map { pluginConstantReplacement("DEFAULT_CORE_VERSION", it) })
           add(testHarnessVersion.map { pluginConstantReplacement("DEFAULT_TEST_HARNESS_VERSION", it) })
           add(workflowApiVersion.map { pluginConstantReplacement("DEFAULT_WORKFLOW_API_PLUGIN_VERSION", it) })
