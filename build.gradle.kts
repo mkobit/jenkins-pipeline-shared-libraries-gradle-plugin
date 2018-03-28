@@ -13,7 +13,7 @@ import java.io.ByteArrayOutputStream
 import java.net.URL
 
 plugins {
-  id("com.gradle.build-scan") version "1.11"
+  id("com.gradle.build-scan") version "1.13"
   `kotlin-dsl`
   `java-library`
   `java-gradle-plugin`
