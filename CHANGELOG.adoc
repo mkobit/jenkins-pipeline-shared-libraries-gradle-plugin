@@ -24,6 +24,10 @@ For each release, a subsection should be added for each of the following if they
 
 == UNRELEASED
 
+=== Changed
+
+* `javapoet`, `okhttp`, and `kotlin-logging` package version upgrades
+
 == 0.5.0 (2018/03/06)
 
 === Added
