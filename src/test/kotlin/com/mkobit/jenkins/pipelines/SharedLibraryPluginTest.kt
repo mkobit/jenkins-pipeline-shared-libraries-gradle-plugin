@@ -124,27 +124,6 @@ internal class SharedLibraryPluginTest {
   }
 
   @Disabled("Dependency addition moved into execution phase (configuration resolution)")
-  @Test
-  internal fun `can configure Groovy dependency version`() {
-    val groovyVersion = "2.5.0"
-    project.extensions.getByType(SharedLibraryExtension::class.java).groovyVersion = groovyVersion
-    project.evaluate()
-
-    val group = Condition<Dependency>(Predicate {
-      it.group == "org.codehaus.groovy"
-    }, "org.codehaus.groovy")
-    val name = Condition<Dependency>(Predicate {
-      it.name == "groovy"
-    }, "groovy")
-    val version = Condition<Dependency>(Predicate {
-      it.version == groovyVersion
-    }, groovyVersion)
-
-    val implementation = project.configurations.getByName("implementation")
-    assertThat(implementation.dependencies).haveExactly(1, allOf(group, name, version))
-  }
-
-  @Disabled("Dependency addition moved into execution phase (configuration resolution)")
   @DisplayName("JenkinsPipelineUnit default version is 1.1")
   @Test
   internal fun `JenkinsPipelineUnit default version is 1_1`() {
@@ -275,7 +254,7 @@ internal class SharedLibraryPluginTest {
   }
 
   @TestFactory
-  internal fun `configuration setup `(): Stream<DynamicNode> {
+  internal fun `configuration setup`(): Stream<DynamicNode> {
     val configurations = mapOf(
       "jenkinsPlugins" to "Jenkins Plugins",
       "jenkinsPipelineUnitTestLibraries" to "Jenkins Pipeline Unit dependencies",

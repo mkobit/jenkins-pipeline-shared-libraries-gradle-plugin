@@ -7,19 +7,11 @@ import org.gradle.api.provider.Property
  * Extension for the [SharedLibraryPlugin].
  */
 open class SharedLibraryExtension(
-  private val groovyVersionState: Property<String>,
   private val coreVersionState: Property<String>,
   private val pipelineTestUnitVersionState: Property<String>,
   private val testHarnessVersionState: Property<String>,
   private val pluginDependencySpec: PluginDependencySpec
 ) {
-
-  /**
-   * Groovy version.
-   */
-  var groovyVersion: String
-    get() = groovyVersionState.get()
-    set(value) = groovyVersionState.set(value)
 
   /**
    * Jenkins version.
@@ -45,7 +37,6 @@ open class SharedLibraryExtension(
     set(value) = testHarnessVersionState.set(value)
 
   fun coreDependency() = "org.jenkins-ci.main:jenkins-core:$coreVersion"
-  fun groovyDependency() = "org.codehaus.groovy:groovy:$groovyVersion"
   fun pipelineUnitDependency(): String = "com.lesfurets:jenkins-pipeline-unit:$pipelineTestUnitVersion"
   fun testHarnessDependency() = "org.jenkins-ci.main:jenkins-test-harness:$testHarnessVersion"
   // See https://issues.jenkins-ci.org/browse/JENKINS-24064 and 2.64 release notes about war-for-test not being needed in some cases
