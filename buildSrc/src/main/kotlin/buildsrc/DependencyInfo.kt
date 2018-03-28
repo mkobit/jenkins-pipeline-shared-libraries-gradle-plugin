@@ -1,19 +1,30 @@
 package buildsrc
 
 object DependencyInfo {
-  const val okHttpVersion: String = "3.9.1"
-  const val junitGradlePluginVersion: String = "1.1.0"
-  const val junitPlatformVersion: String = "1.1.0"
-  const val junitJupiterVersion: String = "5.1.0"
-  const val junit5Log4jVersion: String = "2.10.0"
-  const val slf4jVersion: String = "1.7.25"
+  const val javapoetVersion = "1.10.0"
+  const val okHttpVersion = "3.10.0"
+  const val junitGradlePluginVersion = "1.1.0"
+  const val junitPlatformVersion = "1.1.0"
+  const val junitJupiterVersion = "5.1.0"
+  const val junit5Log4jVersion = "2.11.0"
+  const val kotlinLoggingVersion = "1.5.4"
+  const val slf4jVersion = "1.7.25"
 
-  const val okHttpClient = "com.squareup.okhttp3:okhttp:$okHttpVersion"
-  const val okHttpMockServer = "com.squareup.okhttp3:mockwebserver:$okHttpVersion"
+  val okHttpClient = okHttp("okhttp")
+  val okHttpMockServer = okHttp("mockwebserver")
 
-  val junitPlatformRunner = mapOf("group" to "org.junit.platform", "name" to "junit-platform-runner", "version" to junitPlatformVersion)
-  val junitJupiterApi = mapOf("group" to "org.junit.jupiter", "name" to "junit-jupiter-api", "version" to junitJupiterVersion)
-  val junitJupiterParams = mapOf("group" to "org.junit.jupiter", "name" to "junit-jupiter-params", "version" to junitJupiterVersion)
+  const val assertJCore = "org.assertj:assertj-core:3.9.1"
+  const val guava = "com.google.guava:guava:24.1-jre"
+  const val javapoet = "com.squareup:javapoet:$javapoetVersion"
+  const val mockito = "org.mockito:mockito-core:2.17.0"
+  const val mockitoKotlin = "com.nhaarman:mockito-kotlin:1.5.0"
+  val junitPlatformRunner = junitPlatform("runner")
+  val junitJupiterApi = junitJupiter("api")
+  val junitJupiterEngine = junitJupiter("engine")
+  val junitJupiterParams = junitJupiter("params")
+  const val kotlinLogging = "io.github.microutils:kotlin-logging:$kotlinLoggingVersion"
+  val log4jCore = log4j("core")
+  val log4jJul = log4j("jul")
 
   val junitTestImplementationArtifacts = listOf(
       junitPlatformRunner,
@@ -21,9 +32,10 @@ object DependencyInfo {
       junitJupiterParams
   )
 
-  val junitJupiterEngine = mapOf("group" to "org.junit.jupiter", "name" to "junit-jupiter-engine", "version" to junitJupiterVersion)
-  val log4jCore = mapOf("group" to "org.apache.logging.log4j", "name" to "log4j-core", "version" to junit5Log4jVersion)
-  val log4jJul = mapOf("group" to "org.apache.logging.log4j", "name" to "log4j-jul", "version" to junit5Log4jVersion)
+  fun junitJupiter(module: String) = "org.junit.jupiter:junit-jupiter-$module:$junitJupiterVersion"
+  fun junitPlatform(module: String) = "org.junit.platform:junit-platform-$module:$junitPlatformVersion"
+  fun log4j(module: String) = "org.apache.logging.log4j:log4j-$module:$junit5Log4jVersion"
+  fun okHttp(module: String) = "com.squareup.okhttp3:$module:$okHttpVersion"
 
   val junitTestRuntimeOnlyArtifacts = listOf(
       junitJupiterEngine,

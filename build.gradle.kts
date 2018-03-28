@@ -124,17 +124,17 @@ configurations {
 
 dependencies {
   api(gradleApi())
-  api("com.squareup", "javapoet", "1.10.0")
-  implementation("io.github.microutils:kotlin-logging:1.5.3")
+  api(DependencyInfo.javapoet)
+  implementation(DependencyInfo.kotlinLogging)
   implementation(DependencyInfo.okHttpClient)
-
   testImplementation(kotlin("reflect"))
   testImplementation(DependencyInfo.okHttpMockServer)
   testImplementation("com.mkobit.gradle.test:gradle-test-kotlin-extensions:0.3.0")
   testImplementation("com.mkobit.gradle.test:assertj-gradle:0.2.0")
-  testImplementation("com.google.guava:guava:24.0-jre")
-  testImplementation("org.assertj:assertj-core:3.9.0")
-  testImplementation("com.nhaarman:mockito-kotlin:1.5.0")
+  testImplementation(DependencyInfo.guava)
+  testImplementation(DependencyInfo.assertJCore)
+  testImplementation(DependencyInfo.mockito)
+  testImplementation(DependencyInfo.mockitoKotlin)
   DependencyInfo.junitTestImplementationArtifacts.forEach {
     testImplementation(it)
   }
