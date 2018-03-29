@@ -1,21 +1,40 @@
 package com.mkobit.jenkins.pipelines
 
+import org.gradle.api.model.ObjectFactory
+import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
+import org.gradle.api.provider.Provider
+import org.gradle.kotlin.dsl.listProperty
+import javax.inject.Inject
 
-class PluginDependencySpec(
-  private val workflowApiPluginVersionState: Property<String>,
-  private val workflowBasicStepsPluginVersionState: Property<String>,
-  private val workflowCpsPluginVersionState: Property<String>,
-  private val workflowDurableTaskStepPluginVersionState: Property<String>,
-  private val workflowGlobalCpsLibraryPluginVersionState: Property<String>,
-  private val workflowJobPluginVersionState: Property<String>,
-  private val workflowMultibranchPluginVersionState: Property<String>,
-  private val workflowScmStepPluginVersionState: Property<String>,
-  private val workflowStepApiPluginVersionState: Property<String>,
-  private val workflowSupportPluginVersionState: Property<String>
+/**
+ * Specifies the Jenkins plugin dependencies to include.
+ * @property workflowApiPlugin
+ * @property workflowBasicStepsPlugin
+ * @property workflowCpsPlugin
+ * @property workflowDurableTaskStepPlugin
+ * @property workflowGlobalCpsLibraryPlugin shared pipeline libraries plugin version. See the [documentation]
+ * (https://plugins.jenkins.io/workflow-cps-global-lib)
+ * @property workflowJobPlugin
+ * @property workflowMultibranchPlugin
+ * @property workflowScmStepPlugin
+ * @property workflowStepApiPlugin
+ * @property workflowSupportPlugin
+ */
+open class PluginDependencySpec @Inject constructor(
+  val workflowApiPluginVersion: Property<String>,
+  val workflowBasicStepsPluginVersion: Property<String>,
+  val workflowCpsPluginVersion: Property<String>,
+  val workflowDurableTaskStepPluginVersion: Property<String>,
+  val workflowCpsGlobalLibraryPluginVersion: Property<String>,
+  val workflowJobPluginVersion: Property<String>,
+  val workflowMultibranchPluginVersion: Property<String>,
+  val workflowScmStepPluginVersion: Property<String>,
+  val workflowStepApiPluginVersion: Property<String>,
+  val workflowSupportPluginVersion: Property<String>,
+  private val objectFactory: ObjectFactory
 ) {
-
-  private val additionalDependencies: MutableList<PluginDependency> = mutableListOf()
+  private val additionalDependencies: ListProperty<PluginDependency> = objectFactory.listProperty()
 
   /**
    * Adds a dependency with the provided coordinates.
@@ -27,63 +46,21 @@ class PluginDependencySpec(
     additionalDependencies.add(PluginDependency(group, name, version))
   }
 
-  var workflowApiPluginVersion: String
-    get() = workflowApiPluginVersionState.get()
-    set(value) = workflowApiPluginVersionState.set(value)
+  private fun workflowApiPluginDependency(): Provider<String> = workflowApiPluginVersion.map { "org.jenkins-ci.plugins.workflow:workflow-api:$it" }
+  private fun workflowBasicStepsPluginDependency(): Provider<String> = workflowBasicStepsPluginVersion.map { "org.jenkins-ci.plugins.workflow:workflow-basic-steps:$it" }
+  private fun workflowCpsPluginDependency(): Provider<String> = workflowCpsPluginVersion.map { "org.jenkins-ci.plugins.workflow:workflow-cps:$it" }
+  private fun workflowDurableTaskStepPluginDependency(): Provider<String> = workflowDurableTaskStepPluginVersion.map { "org.jenkins-ci.plugins.workflow:workflow-durable-task-step:$it" }
+  private fun workflowGlobalCpsLibraryPluginDependency(): Provider<String> = workflowCpsGlobalLibraryPluginVersion.map { "org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:$it" }
+  private fun workflowJobPluginDependency(): Provider<String> = workflowJobPluginVersion.map { "org.jenkins-ci.plugins.workflow:workflow-job:$it" }
+  private fun workflowMultibranchPluginDependency(): Provider<String> = workflowMultibranchPluginVersion.map { "org.jenkins-ci.plugins.workflow:workflow-multibranch:$it" }
+  private fun workflowScmStepPluginDependency(): Provider<String> = workflowScmStepPluginVersion.map { "org.jenkins-ci.plugins.workflow:workflow-scm-step:$it" }
+  private fun workflowStepApiPluginDependency(): Provider<String> = workflowStepApiPluginVersion.map { "org.jenkins-ci.plugins.workflow:workflow-step-api:$it" }
+  private fun workflowSupportPluginDependency(): Provider<String> = workflowSupportPluginVersion.map { "org.jenkins-ci.plugins.workflow:workflow-support:$it" }
 
-  var workflowBasicStepsPluginVersion: String
-    get() = workflowBasicStepsPluginVersionState.get()
-    set(value) = workflowBasicStepsPluginVersionState.set(value)
-
-  var workflowCpsPluginVersion: String
-    get() = workflowCpsPluginVersionState.get()
-    set(value) = workflowCpsPluginVersionState.set(value)
-
-  /**
-   * Shared pipeline libraries version.
-   * @see <a href="https://plugins.jenkins.io/workflow-cps-global-lib"></a>
-   */
-  var workflowCpsGlobalLibraryPluginVersion: String
-    get() = workflowGlobalCpsLibraryPluginVersionState.get()
-    set(value) = workflowGlobalCpsLibraryPluginVersionState.set(value)
-
-  var workflowDurableTaskStepPluginVersion: String
-    get() = workflowDurableTaskStepPluginVersionState.get()
-    set(value) = workflowDurableTaskStepPluginVersionState.set(value)
-
-  var workflowJobPluginVersion: String
-    get() = workflowJobPluginVersionState.get()
-    set(value) = workflowJobPluginVersionState.set(value)
-
-  var workflowMultibranchPluginVersion: String
-    get() = workflowMultibranchPluginVersionState.get()
-    set(value) = workflowMultibranchPluginVersionState.set(value)
-
-  var workflowScmStepPluginVersion: String
-    get() = workflowScmStepPluginVersionState.get()
-    set(value) = workflowScmStepPluginVersionState.set(value)
-
-  var workflowStepApiPluginVersion: String
-    get() = workflowStepApiPluginVersionState.get()
-    set(value) = workflowStepApiPluginVersionState.set(value)
-
-  var workflowSupportPluginVersion: String
-    get() = workflowSupportPluginVersionState.get()
-    set(value) = workflowSupportPluginVersionState.set(value)
-
-  private fun workflowApiPluginDependency() = "org.jenkins-ci.plugins.workflow:workflow-api:$workflowApiPluginVersion"
-  private fun workflowBasicStepsPluginDependency() = "org.jenkins-ci.plugins.workflow:workflow-basic-steps:$workflowBasicStepsPluginVersion"
-  private fun workflowCpsPluginDependency() = "org.jenkins-ci.plugins.workflow:workflow-cps:$workflowCpsPluginVersion"
-  private fun workflowDurableTaskStepPluginDependency() = "org.jenkins-ci.plugins.workflow:workflow-durable-task-step:$workflowDurableTaskStepPluginVersion"
-  private fun workflowGlobalCpsLibraryPluginDependency() = "org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:$workflowCpsGlobalLibraryPluginVersion"
-  private fun workflowJobPluginDependency() = "org.jenkins-ci.plugins.workflow:workflow-job:$workflowJobPluginVersion"
-  private fun workflowMultibranchPluginDependency() = "org.jenkins-ci.plugins.workflow:workflow-multibranch:$workflowMultibranchPluginVersion"
-  private fun workflowScmStepPluginDependency() = "org.jenkins-ci.plugins.workflow:workflow-scm-step:$workflowScmStepPluginVersion"
-  private fun workflowStepApiPluginDependency() = "org.jenkins-ci.plugins.workflow:workflow-step-api:$workflowStepApiPluginVersion"
-  private fun workflowSupportPluginDependency() = "org.jenkins-ci.plugins.workflow:workflow-support:$workflowSupportPluginVersion"
-
-  fun pluginDependencies(): List<PluginDependency> {
-    val workflowPluginDependencies: List<PluginDependency> = listOf(
+  fun pluginDependencies(): ListProperty<PluginDependency> {
+    val dependencies: ListProperty<PluginDependency> = objectFactory.listProperty()
+    dependencies.addAll(additionalDependencies)
+    listOf(
         workflowApiPluginDependency(),
         workflowBasicStepsPluginDependency(),
         workflowCpsPluginDependency(),
@@ -94,8 +71,10 @@ class PluginDependencySpec(
         workflowScmStepPluginDependency(),
         workflowStepApiPluginDependency(),
         workflowSupportPluginDependency()
-    ).map { PluginDependency.fromString(it) }
+    ).map {
+      it.map { PluginDependency.fromString(it) }
+    }.forEach { dependencies.add(it) }
 
-    return additionalDependencies + workflowPluginDependencies
+    return dependencies
   }
 }

@@ -12,6 +12,7 @@ import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.artifacts.dsl.RepositoryHandler
 import org.gradle.api.file.ProjectLayout
 import org.gradle.api.file.SourceDirectorySet
+import org.gradle.api.model.ObjectFactory
 import org.gradle.api.plugins.ExtensionContainer
 import org.gradle.api.plugins.GroovyPlugin
 import org.gradle.api.plugins.JavaPluginConvention
@@ -29,7 +30,8 @@ import org.gradle.language.base.plugins.LifecycleBasePlugin
 import javax.inject.Inject
 
 open class SharedLibraryPlugin @Inject constructor(
-  private val projectLayout: ProjectLayout
+  private val projectLayout: ProjectLayout,
+  private val objectFactory: ObjectFactory
 ) : Plugin<Project> {
 
   companion object {
@@ -135,7 +137,7 @@ open class SharedLibraryPlugin @Inject constructor(
         defaultJenkinsConfigurationSetup()
         withDependencies {
           LOGGER.debug { "Adding JenkinsPipelineUnit dependency to configuration${this@UNIT_TESTING_LIBRARY_CONFIGURATION.name}" }
-          dependencyHandler.add(this@UNIT_TESTING_LIBRARY_CONFIGURATION, extensions.sharedLibraryExtension.pipelineUnitDependency())
+          dependencyHandler.add(this@UNIT_TESTING_LIBRARY_CONFIGURATION, extensions.sharedLibraryExtension.pipelineUnitDependency().get())
         }
       }
       test.implementationConfigurationName().extendsFrom(configuration, sharedLibraryGroovy)
@@ -170,6 +172,7 @@ open class SharedLibraryPlugin @Inject constructor(
           // TODO: remove pluginDependencies().pluginDependencies() confusing method calls
           extensions.sharedLibraryExtension.pluginDependencies()
             .pluginDependencies()
+            .get()
             .forEach { dependencyHandler.add(this@JENKINS_PLUGINS_CONFIGURATION, it.asStringNotation()) }
         }
       }
@@ -225,7 +228,7 @@ open class SharedLibraryPlugin @Inject constructor(
         defaultJenkinsConfigurationSetup(canBeResolved = true)
         description = "Jenkins core libraries and modules"
         withDependencies {
-          dependencyHandler.add(this@CORE_LIBRARY_CONFIGURATION, extensions.sharedLibraryExtension.coreDependency())
+          dependencyHandler.add(this@CORE_LIBRARY_CONFIGURATION, extensions.sharedLibraryExtension.coreDependency().get())
         }
       }
     }
@@ -238,7 +241,7 @@ open class SharedLibraryPlugin @Inject constructor(
         defaultJenkinsConfigurationSetup()
         description = "Jenkins test harness and modules"
         withDependencies {
-          dependencyHandler.add(this@TEST_LIBRARY_CONFIGURATION, extensions.sharedLibraryExtension.testHarnessDependency())
+          dependencyHandler.add(this@TEST_LIBRARY_CONFIGURATION, extensions.sharedLibraryExtension.testHarnessDependency().get())
         }
       }
     }
@@ -251,7 +254,7 @@ open class SharedLibraryPlugin @Inject constructor(
         defaultJenkinsConfigurationSetup()
         description = "Jenkins test runtime libraries"
         withDependencies {
-          dependencyHandler.add(this@TEST_LIBRARY_RUNTIME_ONLY_CONFIGURATION, "${extensions.sharedLibraryExtension.jenkinsWar()}@war")
+          dependencyHandler.add(this@TEST_LIBRARY_RUNTIME_ONLY_CONFIGURATION, "${extensions.sharedLibraryExtension.jenkinsWar().get()}@war")
         }
       }
     }
@@ -406,7 +409,7 @@ open class SharedLibraryPlugin @Inject constructor(
     val workflowScmStepPluginVersion = initializedProperty(DEFAULT_WORKFLOW_SCM_STEP_PLUGIN_VERSION)
     val workflowSupportPluginVersion = initializedProperty(DEFAULT_WORKFLOW_SUPPORT_PLUGIN_VERSION)
 
-    val pluginDependencySpec = PluginDependencySpec(
+    val pluginDependencySpec = objectFactory.newInstance(PluginDependencySpec::class.java,
       workflowApiPluginVersion,
       workflowBasicStepsPluginVersion,
       workflowCpsPluginVersion,
@@ -416,7 +419,8 @@ open class SharedLibraryPlugin @Inject constructor(
       workflowMultibranchPluginVersion,
       workflowScmStepPluginVersion,
       workflowStepApiPluginVersion,
-      workflowSupportPluginVersion
+      workflowSupportPluginVersion,
+      objectFactory
     )
     extensions.create(
       SHARED_LIBRARY_EXTENSION_NAME,

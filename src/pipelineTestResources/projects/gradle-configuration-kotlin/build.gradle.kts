@@ -11,10 +11,11 @@ dependencies {
 }
 
 sharedLibrary {
-  coreVersion = "2.86"
-  testHarnessVersion = "2.32"
+  coreVersion.set("2.86")
+  testHarnessVersion.set("2.32")
   pluginDependencies {
-    workflowCpsGlobalLibraryPluginVersion = "2.9"
+    workflowCpsGlobalLibraryPluginVersion.set("2.9")
+    workflowCpsPluginVersion.set("2.4")
     dependency("io.jenkins.blueocean", "blueocean-web", "1.3.0")
   }
 }
