@@ -27,6 +27,35 @@ For each release, a subsection should be added for each of the following if they
 === Changed
 
 * `javapoet`, `okhttp`, and `kotlin-logging` package version upgrades
+* *Breaking* - all exposed extension properties have been changed to the link:https://docs.gradle.org/current/javadoc/org/gradle/api/provider/Property.html[`Property`] API.
+  In Groovy, the existing DSL still works fine due to Gradle DSL decoration:
++
+[source, groovy]
+----
+sharedLibrary {
+  coreVersion = "2.86"
+  testHarnessVersion = "2.32"
+  pluginDependencies {
+    workflowCpsPluginVersion = "2.4"
+    workflowCpsGlobalLibraryPluginVersion = "2.9"
+    dependency("io.jenkins.blueocean", "blueocean-web", "1.3.0")
+  }
+}
+----
+However if using the Kotlin DSL, you will need to use `.set` until link:https://github.com/gradle/kotlin-dsl/issues/380[kotlin-dsl/380] is resolved.
++
+[source, kotlin]
+----
+sharedLibrary {
+  coreVersion.set("2.86")
+  testHarnessVersion.set("2.32")
+  pluginDependencies {
+    workflowCpsGlobalLibraryPluginVersion.set("2.9")
+    workflowCpsPluginVersion.set("2.4")
+    dependency("io.jenkins.blueocean", "blueocean-web", "1.3.0")
+  }
+}
+----
 
 == 0.5.0 (2018/03/06)
 

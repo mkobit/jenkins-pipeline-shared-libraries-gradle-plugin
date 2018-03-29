@@ -166,7 +166,7 @@ The `sharedLibrary` extension can be used to add additional plugin dependencies,
 As of right now, most of the `workflow`-type plugins are automatically added based on default or configured versions.
 See the code for full details, but here is an example of what you can configure:
 
-.build.gradle.kts
+.Groovy build script - `build.gradle`
 [source, kotlin]
 ----
 sharedLibrary {
@@ -178,6 +178,9 @@ sharedLibrary {
   }
 }
 ----
+
+NOTE: Due to link:https://github.com/gradle/kotlin-dsl/issues/380[kotlin-dsl/380], you will nee to use the `.set` methods instead of assignment.
+      For example, `coreVersion.set("2.86")` is required.
 
 == Limitations/Restrictions
 

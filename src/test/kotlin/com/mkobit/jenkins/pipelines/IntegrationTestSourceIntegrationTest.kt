@@ -175,7 +175,7 @@ internal class IntegrationTestSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `Groovy DSL extension configuration`(@GradleProject(["projects", "gradle-configuration-groovy"]) gradleRunner: GradleRunner) {
+  fun `Groovy DSL extension configuration`(@GradleProject(["projects", "gradle-configuration-groovy"]) gradleRunner: GradleRunner) {
     assertThatCode {
       gradleRunner.apply {
         info = true

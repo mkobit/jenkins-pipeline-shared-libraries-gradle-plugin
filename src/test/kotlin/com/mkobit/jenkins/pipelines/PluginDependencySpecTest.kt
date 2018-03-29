@@ -20,16 +20,16 @@ internal class PluginDependencySpecTest {
   private lateinit var pluginDependencySpec: PluginDependencySpec
 
   companion object {
-    private val INITIAL_WORKFLOW_API_PLUGIN_VERSION = "5.0"
-    private val INITIAL_WORKFLOW_BASIC_STEPS_PLUGIN_VERSION = "6.0"
-    private val INITIAL_WORKFLOW_CPS_PLUGIN_VERSION = "7.0"
-    private val INITIAL_WORKFLOW_DURABLE_TASK_STEP_PLUGIN_VERSION = "8.0"
-    private val INITIAL_GLOBAL_LIB_VERSION = "9.0"
-    private val INITIAL_WORKFLOW_JOB_PLUGIN_VERSION = "10.0"
-    private val INITIAL_WORKFLOW_MULTIBRANCH_PLUGIN_VERSION = "11.0"
-    private val INITIAL_WORKFLOW_SCM_STEP_PLUGIN_VERSION = "12.0"
-    private val INITIAL_WORKFLOW_STEP_API_PLUGIN_VERSION = "13.0"
-    private val INITIAL_WORKFLOW_SUPPORT_PLUGIN_VERSION = "14.0"
+    private const val INITIAL_WORKFLOW_API_PLUGIN_VERSION = "5.0"
+    private const val INITIAL_WORKFLOW_BASIC_STEPS_PLUGIN_VERSION = "6.0"
+    private const val INITIAL_WORKFLOW_CPS_PLUGIN_VERSION = "7.0"
+    private const val INITIAL_WORKFLOW_DURABLE_TASK_STEP_PLUGIN_VERSION = "8.0"
+    private const val INITIAL_WORKFLOW_CPS_GLOBAL_LIB_VERSION = "9.0"
+    private const val INITIAL_WORKFLOW_JOB_PLUGIN_VERSION = "10.0"
+    private const val INITIAL_WORKFLOW_MULTIBRANCH_PLUGIN_VERSION = "11.0"
+    private const val INITIAL_WORKFLOW_SCM_STEP_PLUGIN_VERSION = "12.0"
+    private const val INITIAL_WORKFLOW_STEP_API_PLUGIN_VERSION = "13.0"
+    private const val INITIAL_WORKFLOW_SUPPORT_PLUGIN_VERSION = "14.0"
   }
 
   @BeforeEach
@@ -40,46 +40,47 @@ internal class PluginDependencySpecTest {
       project.initializedProperty(INITIAL_WORKFLOW_BASIC_STEPS_PLUGIN_VERSION),
       project.initializedProperty(INITIAL_WORKFLOW_CPS_PLUGIN_VERSION),
       project.initializedProperty(INITIAL_WORKFLOW_DURABLE_TASK_STEP_PLUGIN_VERSION),
-      project.initializedProperty(INITIAL_GLOBAL_LIB_VERSION),
+      project.initializedProperty(INITIAL_WORKFLOW_CPS_GLOBAL_LIB_VERSION),
       project.initializedProperty(INITIAL_WORKFLOW_JOB_PLUGIN_VERSION),
       project.initializedProperty(INITIAL_WORKFLOW_MULTIBRANCH_PLUGIN_VERSION),
       project.initializedProperty(INITIAL_WORKFLOW_SCM_STEP_PLUGIN_VERSION),
       project.initializedProperty(INITIAL_WORKFLOW_STEP_API_PLUGIN_VERSION),
-      project.initializedProperty(INITIAL_WORKFLOW_SUPPORT_PLUGIN_VERSION)
+      project.initializedProperty(INITIAL_WORKFLOW_SUPPORT_PLUGIN_VERSION),
+      project.objects
     )
   }
 
   @Test
   internal fun `default versions can be retrieved`() {
     softlyAssert {
-      assertThat(pluginDependencySpec.workflowApiPluginVersion).isEqualTo(
+      assertThat(pluginDependencySpec.workflowApiPluginVersion.get()).isEqualTo(
         INITIAL_WORKFLOW_API_PLUGIN_VERSION
       )
-      assertThat(pluginDependencySpec.workflowBasicStepsPluginVersion).isEqualTo(
+      assertThat(pluginDependencySpec.workflowBasicStepsPluginVersion.get()).isEqualTo(
         INITIAL_WORKFLOW_BASIC_STEPS_PLUGIN_VERSION
       )
-      assertThat(pluginDependencySpec.workflowCpsPluginVersion).isEqualTo(
+      assertThat(pluginDependencySpec.workflowCpsPluginVersion.get()).isEqualTo(
         INITIAL_WORKFLOW_CPS_PLUGIN_VERSION
       )
-      assertThat(pluginDependencySpec.workflowDurableTaskStepPluginVersion).isEqualTo(
+      assertThat(pluginDependencySpec.workflowDurableTaskStepPluginVersion.get()).isEqualTo(
         INITIAL_WORKFLOW_DURABLE_TASK_STEP_PLUGIN_VERSION
       )
-      assertThat(pluginDependencySpec.workflowCpsGlobalLibraryPluginVersion).isEqualTo(
-        INITIAL_GLOBAL_LIB_VERSION
+      assertThat(pluginDependencySpec.workflowCpsGlobalLibraryPluginVersion.get()).isEqualTo(
+        INITIAL_WORKFLOW_CPS_GLOBAL_LIB_VERSION
       )
-      assertThat(pluginDependencySpec.workflowJobPluginVersion).isEqualTo(
+      assertThat(pluginDependencySpec.workflowJobPluginVersion.get()).isEqualTo(
         INITIAL_WORKFLOW_JOB_PLUGIN_VERSION
       )
-      assertThat(pluginDependencySpec.workflowMultibranchPluginVersion).isEqualTo(
+      assertThat(pluginDependencySpec.workflowMultibranchPluginVersion.get()).isEqualTo(
         INITIAL_WORKFLOW_MULTIBRANCH_PLUGIN_VERSION
       )
-      assertThat(pluginDependencySpec.workflowScmStepPluginVersion).isEqualTo(
+      assertThat(pluginDependencySpec.workflowScmStepPluginVersion.get()).isEqualTo(
         INITIAL_WORKFLOW_SCM_STEP_PLUGIN_VERSION
       )
-      assertThat(pluginDependencySpec.workflowStepApiPluginVersion).isEqualTo(
+      assertThat(pluginDependencySpec.workflowStepApiPluginVersion.get()).isEqualTo(
         INITIAL_WORKFLOW_STEP_API_PLUGIN_VERSION
       )
-      assertThat(pluginDependencySpec.workflowSupportPluginVersion).isEqualTo(
+      assertThat(pluginDependencySpec.workflowSupportPluginVersion.get()).isEqualTo(
         INITIAL_WORKFLOW_SUPPORT_PLUGIN_VERSION
       )
     }
@@ -87,76 +88,76 @@ internal class PluginDependencySpecTest {
 
   @Test
   internal fun `can set Workflow API Plugin version`() {
-    pluginDependencySpec.workflowApiPluginVersion = "newWorkflowApiVersion"
+    pluginDependencySpec.workflowApiPluginVersion.set("newWorkflowApiVersion")
 
-    assertThat(pluginDependencySpec.workflowApiPluginVersion).isEqualTo("newWorkflowApiVersion")
+    assertThat(pluginDependencySpec.workflowApiPluginVersion.get()).isEqualTo("newWorkflowApiVersion")
   }
 
   @Test
   internal fun `can set Workflow Basic Steps Plugin version`() {
-    pluginDependencySpec.workflowBasicStepsPluginVersion = "newWorkflowBasicStepsPluginVersion"
+    pluginDependencySpec.workflowBasicStepsPluginVersion.set("newWorkflowBasicStepsPluginVersion")
 
-    assertThat(pluginDependencySpec.workflowBasicStepsPluginVersion).isEqualTo("newWorkflowBasicStepsPluginVersion")
+    assertThat(pluginDependencySpec.workflowBasicStepsPluginVersion.get()).isEqualTo("newWorkflowBasicStepsPluginVersion")
   }
 
   @Test
   internal fun `can set Workflow CPS Plugin version`() {
-    pluginDependencySpec.workflowCpsPluginVersion = "newWorkflowCPSPluginVersion"
+    pluginDependencySpec.workflowCpsPluginVersion.set("newWorkflowCPSPluginVersion")
 
-    assertThat(pluginDependencySpec.workflowCpsPluginVersion).isEqualTo("newWorkflowCPSPluginVersion")
+    assertThat(pluginDependencySpec.workflowCpsPluginVersion.get()).isEqualTo("newWorkflowCPSPluginVersion")
   }
 
   @Test
   internal fun `can set Workflow Durable Task Step Plugin Version`() {
-    pluginDependencySpec.workflowDurableTaskStepPluginVersion = "newWorkflowDurableTaskStepPluginVersion"
+    pluginDependencySpec.workflowDurableTaskStepPluginVersion.set("newWorkflowDurableTaskStepPluginVersion")
 
-    assertThat(pluginDependencySpec.workflowDurableTaskStepPluginVersion).isEqualTo("newWorkflowDurableTaskStepPluginVersion")
+    assertThat(pluginDependencySpec.workflowDurableTaskStepPluginVersion.get()).isEqualTo("newWorkflowDurableTaskStepPluginVersion")
   }
 
   @Test
   internal fun `can set Workflow CPS Global Library Plugin version`() {
-    pluginDependencySpec.workflowCpsGlobalLibraryPluginVersion = "newWorkflowCpsGlobalLibraryPluginVersion"
+    pluginDependencySpec.workflowCpsGlobalLibraryPluginVersion.set("newWorkflowCpsGlobalLibraryPluginVersion")
 
-    assertThat(pluginDependencySpec.workflowCpsGlobalLibraryPluginVersion).isEqualTo("newWorkflowCpsGlobalLibraryPluginVersion")
+    assertThat(pluginDependencySpec.workflowCpsGlobalLibraryPluginVersion.get()).isEqualTo("newWorkflowCpsGlobalLibraryPluginVersion")
   }
 
   @Test
   internal fun `can set Workflow Job Plugin version`() {
-    pluginDependencySpec.workflowJobPluginVersion = "newWorkflowJobPluginVersion"
+    pluginDependencySpec.workflowJobPluginVersion.set("newWorkflowJobPluginVersion")
 
-    assertThat(pluginDependencySpec.workflowJobPluginVersion).isEqualTo("newWorkflowJobPluginVersion")
+    assertThat(pluginDependencySpec.workflowJobPluginVersion.get()).isEqualTo("newWorkflowJobPluginVersion")
   }
 
   @Test
   internal fun `can set Workflow Multibranch Plugin version`() {
-    pluginDependencySpec.workflowMultibranchPluginVersion = "newWorkflowMultibranchPluginVersion"
+    pluginDependencySpec.workflowMultibranchPluginVersion.set("newWorkflowMultibranchPluginVersion")
 
-    assertThat(pluginDependencySpec.workflowMultibranchPluginVersion).isEqualTo("newWorkflowMultibranchPluginVersion")
+    assertThat(pluginDependencySpec.workflowMultibranchPluginVersion.get()).isEqualTo("newWorkflowMultibranchPluginVersion")
   }
 
   @Test
   internal fun `can set Workflow Step API version`() {
-    pluginDependencySpec.workflowStepApiPluginVersion = "newWorkflowStepApiPluginVersion"
+    pluginDependencySpec.workflowStepApiPluginVersion.set("newWorkflowStepApiPluginVersion")
 
-    assertThat(pluginDependencySpec.workflowStepApiPluginVersion).isEqualTo("newWorkflowStepApiPluginVersion")
+    assertThat(pluginDependencySpec.workflowStepApiPluginVersion.get()).isEqualTo("newWorkflowStepApiPluginVersion")
   }
 
   @Test
   internal fun `can set Workflow Support version`() {
-    pluginDependencySpec.workflowSupportPluginVersion = "newWorkflowSupportPluginVersion"
+    pluginDependencySpec.workflowSupportPluginVersion.set("newWorkflowSupportPluginVersion")
 
-    assertThat(pluginDependencySpec.workflowSupportPluginVersion).isEqualTo("newWorkflowSupportPluginVersion")
+    assertThat(pluginDependencySpec.workflowSupportPluginVersion.get()).isEqualTo("newWorkflowSupportPluginVersion")
   }
 
   @Test
   internal fun `adding multiple plugins`() {
-    val initialSize = pluginDependencySpec.pluginDependencies().size
+    val initialSize = pluginDependencySpec.pluginDependencies().get().size
     pluginDependencySpec.dependency("com.mkobit", "mkobit-a", "1.0")
-    assertThat(pluginDependencySpec.pluginDependencies()).hasSize(initialSize + 1)
+    assertThat(pluginDependencySpec.pluginDependencies().get()).hasSize(initialSize + 1)
     pluginDependencySpec.dependency("com.mkobit", "mkobit-b", "2.0")
-    assertThat(pluginDependencySpec.pluginDependencies()).hasSize(initialSize + 2)
+    assertThat(pluginDependencySpec.pluginDependencies().get()).hasSize(initialSize + 2)
     pluginDependencySpec.dependency("com.mkobit", "mkobit-c", "3.0")
-    assertThat(pluginDependencySpec.pluginDependencies()).hasSize(initialSize + 3)
+    assertThat(pluginDependencySpec.pluginDependencies().get()).hasSize(initialSize + 3)
   }
 
   @ParameterizedTest(name = "{0} with artifact Id {1}")
@@ -171,7 +172,7 @@ internal class PluginDependencySpecTest {
       it.version == version
     }, version)
 
-    assertThat(pluginDependencies).haveExactly(1, allOf(artifactCondition, versionCondition))
+    assertThat(pluginDependencies.get()).haveExactly(1, allOf(artifactCondition, versionCondition))
   }
 
   @Suppress("UNUSED")
