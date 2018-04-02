@@ -1,5 +1,6 @@
 package buildsrc
 
+@Suppress("UNUSED", "MemberVisibilityCanBePrivate")
 object DependencyInfo {
   const val javapoetVersion = "1.10.0"
   const val okHttpVersion = "3.10.0"

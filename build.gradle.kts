@@ -46,8 +46,8 @@ val SourceSet.kotlin: SourceDirectorySet
 buildScan {
   fun env(key: String): String? = System.getenv(key)
 
-  setLicenseAgree("yes")
-  setLicenseAgreementUrl("https://gradle.com/terms-of-service")
+  setTermsOfServiceAgree("yes")
+  setTermsOfServiceUrl("https://gradle.com/terms-of-service")
 
   // Env variables from https://circleci.com/docs/2.0/env-vars/
   if (env("CI") != null) {
