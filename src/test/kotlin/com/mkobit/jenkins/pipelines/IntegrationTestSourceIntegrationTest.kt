@@ -2,7 +2,9 @@ package com.mkobit.jenkins.pipelines
 
 import com.mkobit.gradle.test.assertj.GradleAssertions.assertThat
 import com.mkobit.gradle.test.kotlin.testkit.runner.build
+import com.mkobit.gradle.test.kotlin.testkit.runner.buildAndFail
 import com.mkobit.gradle.test.kotlin.testkit.runner.info
+import com.mkobit.gradle.test.kotlin.testkit.runner.quiet
 import org.assertj.core.api.Assertions.allOf
 import org.assertj.core.api.Assertions.anyOf
 import org.assertj.core.api.Assertions.assertThat
@@ -18,9 +20,11 @@ import org.junit.jupiter.api.TestTemplate
 import testsupport.ForGradleVersions
 import testsupport.GradleProject
 import testsupport.IntelliJSupport
+import testsupport.Issue
 import testsupport.NotImplementedYet
 import testsupport.condition
 import testsupport.softlyAssert
+import java.util.regex.Pattern
 import org.junit.jupiter.params.provider.Arguments.of as argumentsOf
 
 @ForGradleVersions
@@ -35,7 +39,9 @@ internal class IntegrationTestSourceIntegrationTest {
 
   @TestTemplate
   internal fun `integrationTest compile classpath does not contain any HPI or JPI artifacts`(@GradleProject(["projects", "show-configuration-states"]) gradleRunner: GradleRunner) {
-    val buildResult: BuildResult = gradleRunner.build("--quiet", "showResolvedIntegrationTestCompileClasspathArtifacts")
+    val buildResult: BuildResult = gradleRunner.apply {
+      quiet = true
+    }.build("showResolvedIntegrationTestCompileClasspathArtifacts")
 
     softlyAssert {
       assertThat(buildResult.output.trim().split(System.lineSeparator())).isNotEmpty.allSatisfy {
@@ -105,6 +111,19 @@ internal class IntegrationTestSourceIntegrationTest {
     assertThat(buildResult)
       .withFailMessage("Build output: %s", buildResult.output)
       .hasTaskSuccessAtPath(":integrationTest")
+  }
+
+  @TestTemplate
+  @Issue("https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/23")
+  internal fun `no startup exceptions for tests`(@GradleProject(["projects", "basic-JenkinsRule-usage"]) gradleRunner: GradleRunner) {
+    val buildResult: BuildResult = gradleRunner.apply {
+      info = true
+    }.build("integrationTest")
+
+    assertThat(buildResult)
+      .outputDoesNotContain("Caused: java.lang.NoClassDefFoundError: org/jenkinsci/main/modules/sshd/SshCommandFactory")
+      .outputDoesNotContain("Caused: com.google.inject.ProvisionException: Unable to provision, see the following errors:")
+      .outputDoesNotMatch(Pattern.compile(".*\\sERROR\\s.*", Pattern.DOTALL))
   }
 
   @TestTemplate

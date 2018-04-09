@@ -263,7 +263,10 @@ internal class SharedLibraryPluginTest {
       "jenkinsCoreLibraries" to "Jenkins core dependencies",
       "jenkinsTestLibraries" to "Jenkins test dependencies",
       "sharedLibraryGroovy" to "Shared Library Groovy",
-      "sharedLibraryIvy" to "Ivy (@Grab support)"
+      "sharedLibraryIvy" to "Ivy (@Grab support)",
+      "jenkinsWar" to "Jenkins WAR and modules bundle",
+      "jenkinsModules" to "Only Jenkins WAR modules",
+      "jenkinsOnlyWarExtension" to "Only Jenkins WAR bundle"
     )
 
     return configurations.entries.stream()
@@ -330,7 +333,6 @@ internal class SharedLibraryPluginTest {
   @Test
   internal fun `integrationTestPipelineResources directory is a source set and available on integrationRuntimeOnly classpath`() {
   }
-
 
   // Internal function needed here to trigger evaluation
   private fun Project.evaluate() {
