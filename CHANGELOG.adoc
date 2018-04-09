@@ -24,6 +24,11 @@ For each release, a subsection should be added for each of the following if they
 
 == UNRELEASED
 
+=== Added
+
+* All `org.jenkins-ci.modules` group dependencies from the `jenkins-war` dependency are included in integration tests.
+  This should hopefully reduce a lot of the standard out error noise by Jenkins during tests.
+
 === Changed
 
 * `javapoet`, `okhttp`, and `kotlin-logging` package version upgrades
