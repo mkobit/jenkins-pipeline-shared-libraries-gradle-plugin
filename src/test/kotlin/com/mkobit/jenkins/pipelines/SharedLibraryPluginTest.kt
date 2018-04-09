@@ -123,101 +123,6 @@ internal class SharedLibraryPluginTest {
       .contains("sharedLibraryGroovy")
   }
 
-  @Disabled("Dependency addition moved into execution phase (configuration resolution)")
-  @DisplayName("JenkinsPipelineUnit default version is 1.1")
-  @Test
-  internal fun `JenkinsPipelineUnit default version is 1_1`() {
-    val pipelineUnitVersion = "1.1"
-    project.evaluate()
-
-    val group = Condition<Dependency>(Predicate {
-      it.group == "com.lesfurets"
-    }, "com.lesfurets")
-    val name = Condition<Dependency>(Predicate {
-      it.name == "jenkins-pipeline-unit"
-    }, "jenkins-pipeline-unit")
-    val version = Condition<Dependency>(Predicate {
-      it.version == pipelineUnitVersion
-    }, pipelineUnitVersion)
-
-    val implementation = project.configurations.getByName("jenkinsPipelineUnitTestLibraries")
-    assertThat(implementation.incoming.dependencies).haveExactly(1, allOf(group, name, version))
-  }
-
-  @Disabled("Dependency addition moved into execution phase (configuration resolution)")
-  @Test
-  internal fun `Jenkins Test Harness is available in Jenkins test libraries configuration`() {
-    project.evaluate()
-
-    val group = Condition<Dependency>(Predicate {
-      it.group == "org.jenkins-ci.main"
-    }, "org.jenkins-ci.main")
-    val name = Condition<Dependency>(Predicate {
-      it.name == "jenkins-test-harness"
-    }, "jenkins-test-harness")
-
-    val configuration = project.configurations.getByName("jenkinsTestLibraries")
-    assertThat(configuration.description).isNotEmpty()
-    assertThat(configuration.incoming.dependencies).haveExactly(1, allOf(group, name))
-  }
-
-  @Disabled("may not happen at configuration evaluation time because will happen during resolution - revisit this")
-  @Test
-  internal fun `Jenkins Pipeline Shared Groovy Libraries Plugin available in integrationTestImplementationConfiguration and HPI available in integrationTestRuntimeOnly`() {
-    project.evaluate()
-
-    val group = Condition<Dependency>(Predicate {
-      it.group == "org.jenkins-ci.plugins.workflow"
-    }, "org.jenkins-ci.plugins.workflow")
-    val name = Condition<Dependency>(Predicate {
-      it.name == "workflow-cps-global-lib"
-    }, "workflow-cps-global-lib")
-    val jar = Condition<Dependency>(Predicate {
-      it is ExternalModuleDependency && it.artifacts.any { it.extension == "jar" }
-    }, "jar extension")
-    val hpi = Condition<Dependency>(Predicate {
-      it is ExternalModuleDependency && it.artifacts.any { it.extension == "hpi" }
-    }, "hpi extension")
-
-    val implementation = project.configurations.getByName("integrationTestImplementation")
-    assertThat(implementation.incoming.dependencies).haveExactly(1, allOf(group, name, jar))
-    val runtimeOnly = project.configurations.getByName("integrationTestRuntimeOnly")
-    assertThat(runtimeOnly.incoming.dependencies).haveExactly(1, allOf(group, name, hpi))
-  }
-
-  @Test
-  internal fun `Jenkins WAR is available in Jenkins test runtime configuration`() {
-    project.evaluate()
-
-    val group = Condition<Dependency>(Predicate {
-      it.group == "org.jenkins-ci.main"
-    }, "org.jenkins-ci.main")
-    val name = Condition<Dependency>(Predicate {
-      it.name == "jenkins-war"
-    }, "jenkins-war")
-    val extension = Condition<Dependency>(Predicate {
-      it is ExternalModuleDependency && it.artifacts.any { it.extension == "war" }
-    }, "war")
-
-    val configuration = project.configurations.getByName("jenkinsTestLibrariesRuntimeOnly")
-    assertThat(configuration.incoming.dependencies).haveExactly(1, allOf(group, name, extension))
-  }
-
-  @Test
-  internal fun `Jenkins Core dependency is available in Jenkins core library configuration`() {
-    project.evaluate()
-
-    val group = Condition<Dependency>(Predicate {
-      it.group == "org.jenkins-ci.main"
-    }, "org.jenkins-ci.main")
-    val name = Condition<Dependency>(Predicate {
-      it.name == "jenkins-core"
-    }, "jenkins-core")
-
-    val configuration = project.configurations.getByName("jenkinsCoreLibraries")
-    assertThat(configuration.incoming.dependencies).haveExactly(1, allOf(group, name))
-  }
-
   @Test
   internal fun `integrationTest task sets the system property for the buildDirectory`() {
     val integrationTest = project.tasks.getByName("integrationTest")
@@ -229,7 +134,7 @@ internal class SharedLibraryPluginTest {
   }
 
   @Test
-  internal fun `integrationTest task is in the verification group and has a description`() {
+  internal fun `integrationTest task is in the verification group`() {
     val integrationTest = project.tasks.getByName("integrationTest")
 
     assertThat(integrationTest).isNotNull().isInstanceOf(org.gradle.api.tasks.testing.Test::class.java)
@@ -240,17 +145,23 @@ internal class SharedLibraryPluginTest {
   @Test
   internal fun `groovydocJar task is created`() {
     val groovydocJar = project.tasks.getByName("groovydocJar")
-    assertThat(groovydocJar)
-      .isNotNull()
-      .isInstanceOf(Jar::class.java)
+    assertThat(groovydocJar).satisfies {
+      assertThat(it)
+        .isNotNull()
+        .isInstanceOf(Jar::class.java)
+      assertThat(it.description).isNotEmpty()
+    }
   }
 
   @Test
   internal fun `sourcesJar task is created`() {
-    val groovydocJar = project.tasks.getByName("sourcesJar")
-    assertThat(groovydocJar)
-      .isNotNull()
-      .isInstanceOf(Jar::class.java)
+    val sourcesJar = project.tasks.getByName("sourcesJar")
+    assertThat(sourcesJar).satisfies {
+      assertThat(it)
+        .isNotNull()
+        .isInstanceOf(Jar::class.java)
+      assertThat(it.description).isNotEmpty()
+    }
   }
 
   @TestFactory
@@ -286,26 +197,6 @@ internal class SharedLibraryPluginTest {
   }
 
   @Test
-  internal fun `integrationTestImplementation extends configurations for Jenkins core, plugins, and testing`() {
-    val configuration = project.configurations.getByName("integrationTestImplementation")
-
-    assertThat(configuration.extendsFrom.map { it.name })
-      .isNotEmpty
-      .contains("jenkinsPluginLibraries", "jenkinsCoreLibraries", "jenkinsTestLibraries", "sharedLibraryGroovy")
-      .doesNotContain("jenkinsTestLibrariesRuntimeOnly", "jenkinsPluginHpisAndJpis")
-  }
-
-  @Test
-  internal fun `integrationTestRuntimeOnly extends configurations for Jenkins test and plugin runtime`() {
-    val configuration = project.configurations.getByName("integrationTestRuntimeOnly")
-
-    assertThat(configuration.description).isNotEmpty()
-    assertThat(configuration.extendsFrom.map { it.name })
-      .isNotEmpty
-      .contains("jenkinsTestLibrariesRuntimeOnly", "jenkinsPluginHpisAndJpis")
-  }
-
-  @Test
   internal fun `code generation tasks do not have a group`() {
     val generationTasks = project.tasks.withType(GenerateJavaFile::class.java)
 
@@ -313,7 +204,7 @@ internal class SharedLibraryPluginTest {
       .isNotEmpty
       .allSatisfy {
         assertThat(it.group)
-          .`as`("Group is not set")
+          .`as`("Group is not set for ${GenerateJavaFile::class} tasks")
           .isNull()
       }
   }

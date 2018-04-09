@@ -291,12 +291,14 @@ open class SharedLibraryPlugin @Inject constructor(
   private fun Project.setupDocumentationTasks() {
     tasks {
       "sourcesJar"(Jar::class) {
+        description = "Creates a JAR of the source"
         description = "Assemble the sources JAR"
         classifier = "sources"
         from(java.sourceSets.main.allSource)
       }
       "groovydocJar"(Jar::class) {
         val groovydoc = GroovyPlugin.GROOVYDOC_TASK_NAME(Groovydoc::class)
+        description = "Creates a JAR of the Groovydoc"
         dependsOn(groovydoc)
         description = "Assemble the Groovydoc JAR"
         classifier = "javadoc"
