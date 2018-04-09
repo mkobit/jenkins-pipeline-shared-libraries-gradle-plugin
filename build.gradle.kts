@@ -129,7 +129,7 @@ dependencies {
   implementation(DependencyInfo.okHttpClient)
   testImplementation(kotlin("reflect"))
   testImplementation(DependencyInfo.okHttpMockServer)
-  testImplementation("com.mkobit.gradle.test:gradle-test-kotlin-extensions:0.3.0")
+  testImplementation("com.mkobit.gradle.test:gradle-test-kotlin-extensions:0.4.0")
   testImplementation("com.mkobit.gradle.test:assertj-gradle:0.2.0")
   testImplementation(DependencyInfo.guava)
   testImplementation(DependencyInfo.assertJCore)
