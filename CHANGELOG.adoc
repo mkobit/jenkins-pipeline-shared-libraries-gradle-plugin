@@ -62,6 +62,34 @@ sharedLibrary {
 }
 ----
 
+=== Changed
+
+* Updated default versions:
++
+[cols="3*",options="header"]
+|===
+|Component
+|From
+|TO
+
+|Core
+|2.89.4
+|2.107.1
+
+|Test Harness
+|2.34
+|2.38
+
+|Workflow CPS Plugin
+|2.45
+|2.47
+
+|Workflow Job Plugin
+|2.17
+|2.18
+
+|===
+
 == 0.5.0 (2018/03/06)
 
 === Added

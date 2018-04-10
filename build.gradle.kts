@@ -146,15 +146,15 @@ dependencies {
   // against the libraries that are used.
   val pipelineTestResources by java.sourceSets.getting
   pipelineTestResources.compileOnlyConfigurationName("com.lesfurets:jenkins-pipeline-unit:1.1")
-  pipelineTestResources.compileOnlyConfigurationName("org.jenkins-ci.main:jenkins-test-harness:2.34")
+  pipelineTestResources.compileOnlyConfigurationName("org.jenkins-ci.main:jenkins-test-harness:2.38")
   pipelineTestResources.compileOnlyConfigurationName("org.codehaus.groovy:groovy:2.4.11")
   val jenkinsPluginDependencies = listOf(
     "org.jenkins-ci.plugins.workflow:workflow-api:2.26",
     "org.jenkins-ci.plugins.workflow:workflow-basic-steps:2.6",
-    "org.jenkins-ci.plugins.workflow:workflow-cps:2.45",
+    "org.jenkins-ci.plugins.workflow:workflow-cps:2.47",
     "org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:2.9",
     "org.jenkins-ci.plugins.workflow:workflow-durable-task-step:2.19",
-    "org.jenkins-ci.plugins.workflow:workflow-job:2.17",
+    "org.jenkins-ci.plugins.workflow:workflow-job:2.18",
     "org.jenkins-ci.plugins.workflow:workflow-multibranch:2.17",
     "org.jenkins-ci.plugins.workflow:workflow-scm-step:2.6",
     "org.jenkins-ci.plugins.workflow:workflow-step-api:2.14",
@@ -163,7 +163,7 @@ dependencies {
   jenkinsPluginDependencies.forEach {
     "jenkinsPlugins"(it)
   }
-  "jenkinsPlugins"("org.jenkins-ci.main:jenkins-core:2.89.4") {
+  "jenkinsPlugins"("org.jenkins-ci.main:jenkins-core:2.107.1") {
     isTransitive = false
   }
 }
