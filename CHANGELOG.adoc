@@ -22,7 +22,7 @@ For each release, a subsection should be added for each of the following if they
 * `Fixed` for any bug fixes.
 * `Security` in case of vulnerabilities.
 
-== UNRELEASED
+== 0.6.0 (2018/04/10)
 
 === Added
 
