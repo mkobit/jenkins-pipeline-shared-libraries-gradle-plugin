@@ -14,5 +14,6 @@ tasks.withType(Test) {
   testLogging {
     exceptionFormat = 'full'
     events('started')
+    showStandardStreams = true
   }
 }

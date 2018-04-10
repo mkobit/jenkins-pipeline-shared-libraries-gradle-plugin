@@ -17,6 +17,12 @@ import java.util.Objects
 import javax.annotation.Generated
 import javax.lang.model.element.Modifier
 
+private val string: ClassName = ClassName.get(String::class.java)
+
+private val filePath: ClassName = ClassName.get("hudson", "FilePath")
+private val hudsonRun: ClassName = ClassName.get("hudson.model", "Run")
+private val taskListener: ClassName = ClassName.get("hudson.model", "TaskListener")
+
 private const val codegenPackage = "com.mkobit.jenkins.pipelines.codegen"
 
 private val generatedAnnotationSpec: AnnotationSpec = AnnotationSpec.builder(Generated::class.java).addMember("value", "{ \$S }", "Shared Library Plugin").build()
@@ -26,26 +32,22 @@ internal fun localLibraryAdder(): JavaFile {
     ClassName.get("javax.annotation", "Nonnull")
   ).build()
 
-  val nameParam = ParameterSpec.builder(ClassName.get(String::class.java).annotated(javaxNonNull), "name")
+  val nameParam = ParameterSpec.builder(string.annotated(javaxNonNull), "name")
     .addModifiers(Modifier.FINAL)
     .build()
-  val versionParam = ParameterSpec.builder(ClassName.get(String::class.java).annotated(javaxNonNull), "version")
+  val versionParam = ParameterSpec.builder(string.annotated(javaxNonNull), "version")
     .addModifiers(Modifier.FINAL)
     .build()
   val changelogParam = ParameterSpec.builder(TypeName.BOOLEAN, "changelog")
     .addModifiers(Modifier.FINAL)
     .build()
-  val targetParam = ParameterSpec.builder(ClassName.get("hudson", "FilePath")
-    .annotated(javaxNonNull), "target")
+  val targetParam = ParameterSpec.builder(filePath.annotated(javaxNonNull), "target")
     .addModifiers(Modifier.FINAL)
     .build()
-  val runClass = ClassName.get("hudson.model", "Run")
-//  val jobClass = ClassName.get("hudson.model", "Job")
-//  val runParam = ParameterSpec.builder(ParameterizedTypeName.get(runClass, WildcardTypeName.subtypeOf(jobClass), WildcardTypeName.subtypeOf(runClass)), "run", Modifier.FINAL)
-  val runParam = ParameterSpec.builder(ParameterizedTypeName.get(runClass, WildcardTypeName.subtypeOf(Object::class.java), WildcardTypeName.subtypeOf(Object::class.java)), "run", Modifier.FINAL)
+  val runParam = ParameterSpec.builder(ParameterizedTypeName.get(hudsonRun, WildcardTypeName.subtypeOf(Object::class.java), WildcardTypeName.subtypeOf(Object::class.java)), "run", Modifier.FINAL)
     .addAnnotation(javaxNonNull)
     .build()
-  val listenerParam = ParameterSpec.builder(ClassName.get("hudson.model", "TaskListener").annotated(javaxNonNull), "listener")
+  val listenerParam = ParameterSpec.builder(taskListener.annotated(javaxNonNull), "listener")
     .addModifiers(Modifier.FINAL)
     .build()
 
@@ -102,7 +104,7 @@ internal fun localLibraryAdder(): JavaFile {
         .addParameter(listenerParam)
         .addException(IOException::class.java)
         .addException(InterruptedException::class.java)
-        .addStatement("final FilePath localFilePath = new FilePath(localPath.toFile())")
+        .addStatement("final \$T localFilePath = new \$T(localPath.toFile())", filePath, filePath)
         .addStatement("listener.getLogger().format(\$S, localPath, target, \$T.lineSeparator())", "Copying from local path %s to workspace path %s%s", ClassName.get(System::class.java))
         .addComment("Exclusion filter copied from SCMSourceRetriever")
         .addStatement("localFilePath.copyRecursiveTo(${'$'}S, null, target)", "src/**/*.groovy,vars/*.groovy,vars/*.txt,resources/")

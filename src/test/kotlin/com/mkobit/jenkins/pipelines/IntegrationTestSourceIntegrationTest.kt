@@ -239,8 +239,10 @@ internal class IntegrationTestSourceIntegrationTest {
     val buildResult = gradleRunner.build("check")
 
     assertThat(buildResult)
+      .outputContains("com.mkobit.LocalLibraryJenkinsRuleUsageTest > noopTest STANDARD_ERROR")
       .outputDoesNotContain("Failed to save")
       .outputDoesNotContain("Refusing to marshal")
+      .outputDoesNotContain("might be dangerous, so rejecting; see https://jenkins.io/redirect/class-filter/")
   }
 
   @TestTemplate
