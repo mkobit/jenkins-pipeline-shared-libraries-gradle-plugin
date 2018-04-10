@@ -147,7 +147,7 @@ dependencies {
   val pipelineTestResources by java.sourceSets.getting
   pipelineTestResources.compileOnlyConfigurationName("com.lesfurets:jenkins-pipeline-unit:1.1")
   pipelineTestResources.compileOnlyConfigurationName("org.jenkins-ci.main:jenkins-test-harness:2.38")
-  pipelineTestResources.compileOnlyConfigurationName("org.codehaus.groovy:groovy:2.4.11")
+  pipelineTestResources.compileOnlyConfigurationName("org.codehaus.groovy:groovy:2.4.12")
   val jenkinsPluginDependencies = listOf(
     "org.jenkins-ci.plugins.workflow:workflow-api:2.26",
     "org.jenkins-ci.plugins.workflow:workflow-basic-steps:2.6",
