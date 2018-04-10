@@ -2,7 +2,6 @@ package com.mkobit.jenkins.pipelines
 
 import com.mkobit.gradle.test.assertj.GradleAssertions.assertThat
 import com.mkobit.gradle.test.kotlin.testkit.runner.build
-import com.mkobit.gradle.test.kotlin.testkit.runner.buildAndFail
 import com.mkobit.gradle.test.kotlin.testkit.runner.info
 import com.mkobit.gradle.test.kotlin.testkit.runner.quiet
 import org.assertj.core.api.Assertions.allOf
@@ -103,7 +102,7 @@ internal class IntegrationTestSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `can use @JenkinsRule in integration tests`(@GradleProject(["projects", "basic-JenkinsRule-usage"]) gradleRunner: GradleRunner) {
+  internal fun `can run tests using @JenkinsRule in integration tests`(@GradleProject(["projects", "basic-JenkinsRule-usage"]) gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.apply {
       info = true
     }.build("integrationTest")
@@ -214,7 +213,7 @@ internal class IntegrationTestSourceIntegrationTest {
 
   @TestTemplate
   internal fun `"check" lifecycle task executes "integrationTest"`(@GradleProject(["projects", "only-plugins-block"]) gradleRunner: GradleRunner) {
-    val buildResult: BuildResult = gradleRunner.build("check")
+    val buildResult = gradleRunner.build("check")
 
     assertThat(buildResult)
       .hasTaskAtPath(":test")
@@ -222,13 +221,24 @@ internal class IntegrationTestSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `generated sources can be used in Java and Groovy integration tests`(@GradleProject(["projects", "generated-sources-usage"]) gradleRunner: GradleRunner) {
-    val buildResult: BuildResult = gradleRunner.apply {
+  internal fun `generated sources can be used in Java and Groovy integration tests`(@GradleProject(["projects", "basic-generated-sources-usage"]) gradleRunner: GradleRunner) {
+    val buildResult = gradleRunner.apply {
       info = true
     }.build("check")
 
     assertThat(buildResult)
       .hasTaskSuccessAtPath(":compileIntegrationTestGroovy")
+  }
+
+  @Disabled("https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/61")
+  @TestTemplate
+  @Issue("https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/61")
+  fun `generated sources can be consumed in a @JenkinsRule`(@GradleProject(["projects", "generated-sources-JenkinsRule-usage"]) gradleRunner: GradleRunner) {
+    val buildResult = gradleRunner.build("check")
+
+    assertThat(buildResult)
+      .outputDoesNotContain("Failed to save")
+      .outputDoesNotContain("Refusing to marshal")
   }
 
   @TestTemplate
