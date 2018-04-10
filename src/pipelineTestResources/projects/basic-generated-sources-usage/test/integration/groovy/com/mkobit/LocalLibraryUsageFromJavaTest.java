@@ -9,7 +9,7 @@ import java.util.Collections;
 public class LocalLibraryUsageFromJavaTest {
 
   @Test
-  public void configureRule() {
+  public void createRetriever() {
     final LibraryRetriever retriever = new LocalLibraryRetriever();
   }
 }

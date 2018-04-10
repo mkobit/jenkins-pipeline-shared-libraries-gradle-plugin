@@ -221,12 +221,15 @@ internal class IntegrationTestSourceIntegrationTest {
 
   @TestTemplate
   internal fun `generated sources can be used in Java and Groovy integration tests`(@GradleProject(["projects", "basic-generated-sources-usage"]) gradleRunner: GradleRunner) {
-    val buildResult = gradleRunner.apply {
-      info = true
-    }.build("check")
+    gradleRunner.build("integrationTest", "--tests", "*LocalLibraryUsageFromGroovyTest").let {
+      assertThat(it)
+        .outputContains("com.mkobit.LocalLibraryUsageFromGroovyTest > createRetriever STARTED")
+    }
 
-    assertThat(buildResult)
-      .hasTaskSuccessAtPath(":compileIntegrationTestGroovy")
+    gradleRunner.build("integrationTest", "--tests", "*LocalLibraryUsageFromJavaTest").let {
+      assertThat(it)
+        .outputContains("com.mkobit.LocalLibraryUsageFromJavaTest > createRetriever STARTED")
+    }
   }
 
   @Disabled("https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/61")
