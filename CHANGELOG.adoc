@@ -38,7 +38,7 @@ For each release, a subsection should be added for each of the following if they
 [source, groovy]
 ----
 sharedLibrary {
-  coreVersion = "2.86"
+  coreVersion = "2.114"
   testHarnessVersion = "2.32"
   pluginDependencies {
     workflowCpsPluginVersion = "2.4"
