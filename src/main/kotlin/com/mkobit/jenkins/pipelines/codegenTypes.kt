@@ -10,6 +10,7 @@ import com.squareup.javapoet.ParameterizedTypeName
 import com.squareup.javapoet.TypeName
 import com.squareup.javapoet.TypeSpec
 import com.squareup.javapoet.WildcardTypeName
+import java.io.File
 import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -17,13 +18,14 @@ import java.util.Objects
 import javax.annotation.Generated
 import javax.lang.model.element.Modifier
 
+private const val codegenPackage = "com.mkobit.jenkins.pipelines.codegen"
+
+private val file: ClassName = ClassName.get(File::class.java)
 private val string: ClassName = ClassName.get(String::class.java)
 
 private val filePath: ClassName = ClassName.get("hudson", "FilePath")
 private val hudsonRun: ClassName = ClassName.get("hudson.model", "Run")
 private val taskListener: ClassName = ClassName.get("hudson.model", "TaskListener")
-
-private const val codegenPackage = "com.mkobit.jenkins.pipelines.codegen"
 
 private val generatedAnnotationSpec: AnnotationSpec = AnnotationSpec.builder(Generated::class.java).addMember("value", "{ \$S }", "Shared Library Plugin").build()
 
@@ -55,7 +57,7 @@ internal fun localLibraryAdder(): JavaFile {
     .addAnnotation(generatedAnnotationSpec)
     .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
     .addField(
-      FieldSpec.builder(Path::class.java, "localPath", Modifier.FINAL, Modifier.PRIVATE)
+      FieldSpec.builder(file, "localDirectory", Modifier.FINAL, Modifier.PRIVATE)
         .build()
     ).superclass(ClassName.get("org.jenkinsci.plugins.workflow.libs", "LibraryRetriever"))
     .addMethod(
@@ -67,7 +69,7 @@ internal fun localLibraryAdder(): JavaFile {
       MethodSpec.constructorBuilder()
         .addModifiers(Modifier.PUBLIC)
         .addParameter(Path::class.java, "path", Modifier.FINAL)
-        .addStatement("localPath = \$T.requireNonNull(path)", Objects::class.java)
+        .addStatement("localDirectory = \$T.requireNonNull(path).toFile()", Objects::class.java)
         .build()
   ).addMethod(
     MethodSpec.methodBuilder("retrieve")
@@ -104,8 +106,8 @@ internal fun localLibraryAdder(): JavaFile {
         .addParameter(listenerParam)
         .addException(IOException::class.java)
         .addException(InterruptedException::class.java)
-        .addStatement("final \$T localFilePath = new \$T(localPath.toFile())", filePath, filePath)
-        .addStatement("listener.getLogger().format(\$S, localPath, target, \$T.lineSeparator())", "Copying from local path %s to workspace path %s%s", ClassName.get(System::class.java))
+        .addStatement("final \$T localFilePath = new \$T(localDirectory)", filePath, filePath)
+        .addStatement("listener.getLogger().format(\$S, localDirectory, target, \$T.lineSeparator())", "Copying from local path %s to workspace path %s%s", ClassName.get(System::class.java))
         .addComment("Exclusion filter copied from SCMSourceRetriever")
         .addStatement("localFilePath.copyRecursiveTo(${'$'}S, null, target)", "src/**/*.groovy,vars/*.groovy,vars/*.txt,resources/")
         .build()

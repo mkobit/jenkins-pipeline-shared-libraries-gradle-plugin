@@ -232,7 +232,6 @@ internal class IntegrationTestSourceIntegrationTest {
     }
   }
 
-  @Disabled("https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/61")
   @TestTemplate
   @Issue("https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/61")
   fun `generated sources can be consumed in a @JenkinsRule`(@GradleProject(["projects", "generated-sources-JenkinsRule-usage"]) gradleRunner: GradleRunner) {
