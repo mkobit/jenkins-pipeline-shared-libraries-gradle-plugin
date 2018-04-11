@@ -22,6 +22,12 @@ For each release, a subsection should be added for each of the following if they
 * `Fixed` for any bug fixes.
 * `Security` in case of vulnerabilities.
 
+== 0.6.1 (2018/04/11)
+
+=== Fixed
+
+* Error logs and problems with JEP-200 with latest Jenkins 2.107.1 LTS release (see these blog posts - link:https://jenkins.io/blog/2018/01/13/jep-200/[2018/01/13/jep-200], link:https://jenkins.io/blog/2018/03/15/jep-200-lts[2018/03/15/jep-200-lts])
+
 == 0.6.0 (2018/04/10)
 
 === Added

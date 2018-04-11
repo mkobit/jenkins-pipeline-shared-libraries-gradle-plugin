@@ -7,7 +7,7 @@ import org.junit.Test
 class LocalLibraryUsageFromGroovyTest {
 
   @Test
-  void configureRule() {
+  void createRetriever() {
     final LibraryRetriever retriever = new LocalLibraryRetriever()
   }
 }
