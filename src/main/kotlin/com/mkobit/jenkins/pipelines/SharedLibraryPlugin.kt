@@ -48,7 +48,7 @@ open class SharedLibraryPlugin @Inject constructor(
     private const val SHARED_LIBRARY_EXTENSION_NAME = "sharedLibrary"
     private const val TEST_ROOT_PATH = "test"
     private const val DEFAULT_JENKINS_PIPELINE_UNIT_VERSION = "1.1"
-    private const val DEFAULT_CORE_VERSION = "2.107.1"
+    private const val DEFAULT_CORE_VERSION = "2.107.2"
     private const val DEFAULT_TEST_HARNESS_VERSION = "2.38"
     private const val DEFAULT_WORKFLOW_API_PLUGIN_VERSION = "2.26"
     private const val DEFAULT_WORKFLOW_BASIC_STEPS_PLUGIN_VERSION = "2.6"

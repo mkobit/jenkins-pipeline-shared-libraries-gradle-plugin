@@ -163,7 +163,7 @@ dependencies {
   jenkinsPluginDependencies.forEach {
     "jenkinsPlugins"(it)
   }
-  "jenkinsPlugins"("org.jenkins-ci.main:jenkins-core:2.107.1") {
+  "jenkinsPlugins"("org.jenkins-ci.main:jenkins-core:2.107.2") {
     isTransitive = false
   }
 }
