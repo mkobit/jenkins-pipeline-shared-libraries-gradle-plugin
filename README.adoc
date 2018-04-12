@@ -1,6 +1,6 @@
 = Jenkins Pipeline Shared Library Gradle Plugin
 :toc:
-:latest-version: 0.6.1
+:latest-version: 0.6.2
 :supports-gradle: 4.6
 :github-repo-id: jenkins-pipeline-shared-libraries-gradle-plugin
 :uri-github-releases: https://github.com/mkobit/{github-repo-id}/releases

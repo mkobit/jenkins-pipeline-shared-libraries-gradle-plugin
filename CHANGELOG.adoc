@@ -22,6 +22,24 @@ For each release, a subsection should be added for each of the following if they
 * `Fixed` for any bug fixes.
 * `Security` in case of vulnerabilities.
 
+== 0.6.2 (2018/04/12)
+
+=== Changed
+
+* Rebaseline core version to latest LTS due to link:https://jenkins.io/security/advisory/2018-04-11[2018-04-11 security advisory]
++
+[cols="3*",options="header"]
+|===
+|Component
+|From
+|TO
+
+|Core
+|2.107.1
+|2.107.2
+|===
+
+
 == 0.6.1 (2018/04/11)
 
 === Fixed
@@ -67,8 +85,6 @@ sharedLibrary {
   }
 }
 ----
-
-=== Changed
 
 * Updated default versions:
 +
