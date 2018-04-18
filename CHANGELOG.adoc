@@ -22,6 +22,8 @@ For each release, a subsection should be added for each of the following if they
 * `Fixed` for any bug fixes.
 * `Security` in case of vulnerabilities.
 
+== UNRELEASED
+
 == 0.6.2 (2018/04/12)
 
 === Changed
@@ -38,7 +40,6 @@ For each release, a subsection should be added for each of the following if they
 |2.107.1
 |2.107.2
 |===
-
 
 == 0.6.1 (2018/04/11)
 
