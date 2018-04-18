@@ -75,6 +75,6 @@ workflows:
   build:
     jobs:
       - check
-      - test-gradle-4.7-rc-1:
+      - test-gradle-4.7:
           requires:
             - check
