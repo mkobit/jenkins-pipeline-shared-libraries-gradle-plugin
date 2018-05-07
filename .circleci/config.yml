@@ -56,6 +56,19 @@ jobs:
             - build/*
             - buildSrc/.gradle/*
             - buildSrc/build/*
+            
+  test-gradle-4.6:
+    <<: *java-8-defaults
+    steps:
+      - checkout
+      - *generate-cache-key
+      - *restore-home-cache
+      - attach_workspace:
+          at: ~/build-working-directory
+      - run:
+          command: ./gradlew build -PgradleTestVersions=4.6 --max-workers 2 --stacktrace
+          name: Test With Gradle 4.6
+      - *junit-platform-test-results
 
   test-gradle-4.7:
     <<: *java-8-defaults
@@ -67,7 +80,7 @@ jobs:
           at: ~/build-working-directory
       - run:
           command: ./gradlew build -PgradleTestVersions=4.7 --max-workers 2 --stacktrace
-          name: Test With Gradle 4.7-rc-1
+          name: Test With Gradle 4.7
       - *junit-platform-test-results
 
 workflows:
@@ -75,6 +88,9 @@ workflows:
   build:
     jobs:
       - check
+      - test-gradle-4.6:
+          requires:
+            - check
       - test-gradle-4.7:
           requires:
             - check

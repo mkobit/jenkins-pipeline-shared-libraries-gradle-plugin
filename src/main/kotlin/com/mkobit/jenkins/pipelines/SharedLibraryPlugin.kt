@@ -493,5 +493,5 @@ open class SharedLibraryPlugin @Inject constructor(
    * @param dependencyNotation the dependency notation
    */
   private fun DependencyHandler.add(configuration: Configuration, dependencyNotation: Any): Dependency =
-    add(configuration.name, dependencyNotation)
+    add(configuration.name, dependencyNotation)!!
 }

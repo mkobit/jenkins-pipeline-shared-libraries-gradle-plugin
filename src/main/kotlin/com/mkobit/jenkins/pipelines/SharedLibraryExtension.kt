@@ -12,7 +12,8 @@ import org.gradle.api.provider.Provider
  * @property testHarnessVersion Version of the [jenkins-test-harness](https://github.com/jenkinsci/jenkins-test-harness)
  * library to use in integration tests
  */
-open class SharedLibraryExtension(
+open class
+SharedLibraryExtension(
   val coreVersion: Property<String>,
   val pipelineTestUnitVersion: Property<String>,
   val testHarnessVersion: Property<String>,

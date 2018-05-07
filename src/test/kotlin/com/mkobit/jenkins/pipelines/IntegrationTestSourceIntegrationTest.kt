@@ -200,7 +200,6 @@ internal class IntegrationTestSourceIntegrationTest {
     }.doesNotThrowAnyException()
   }
 
-  @Disabled("This example works in a local Gradle project, but not with Gradle Test Kit. See https://github.com/gradle/kotlin-dsl/issues/492")
   @TestTemplate
   fun `Kotlin DSL extension configuration`(@GradleProject(["projects", "gradle-configuration-kotlin"]) gradleRunner: GradleRunner) {
     assertThatCode {

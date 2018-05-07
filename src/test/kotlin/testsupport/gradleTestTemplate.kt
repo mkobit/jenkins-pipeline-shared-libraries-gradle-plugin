@@ -55,6 +55,7 @@ internal class MultiVersionGradleProjectTestTemplate : TestTemplateInvocationCon
       setOf(
         GradleVersion.version("4.6"),
         GradleVersion.version("4.7"),
+        GradleVersion.version("4.8"),
         CURRENT_GRADLE_VERSION
       )
     }
@@ -134,7 +135,7 @@ internal class MultiVersionGradleProjectTestTemplate : TestTemplateInvocationCon
       .isPresent
 }
 
-data class GradleProjectInvocationContext(
+private data class GradleProjectInvocationContext(
   private val contextDisplay: String,
   private val version: GradleVersion
 ) : TestTemplateInvocationContext {
