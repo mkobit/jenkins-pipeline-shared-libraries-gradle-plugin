@@ -183,7 +183,6 @@ internal class IntegrationTestSourceIntegrationTest {
   internal fun `no configurations are resolved if no build tasks are executed`(@GradleProject(["projects", "show-configuration-states"]) gradleRunner: GradleRunner) {
     val buildResult = gradleRunner.build("--quiet", "printConfigurationStates")
 
-
     assertThat(buildResult).outputSatisfies {
       assertThat(it.trim().split(System.lineSeparator())).allSatisfy {
         assertThat(it).endsWith(Configuration.State.UNRESOLVED.name)
@@ -192,7 +191,7 @@ internal class IntegrationTestSourceIntegrationTest {
   }
 
   @TestTemplate
-  fun `Groovy DSL extension configuration`(@GradleProject(["projects", "gradle-configuration-groovy"]) gradleRunner: GradleRunner) {
+  internal fun `Groovy DSL extension configuration`(@GradleProject(["projects", "gradle-configuration-groovy"]) gradleRunner: GradleRunner) {
     assertThatCode {
       gradleRunner.apply {
         info = true
@@ -201,6 +200,7 @@ internal class IntegrationTestSourceIntegrationTest {
   }
 
   @TestTemplate
+  @ForGradleVersions(["4.8"])
   fun `Kotlin DSL extension configuration`(@GradleProject(["projects", "gradle-configuration-kotlin"]) gradleRunner: GradleRunner) {
     assertThatCode {
       gradleRunner.apply {
