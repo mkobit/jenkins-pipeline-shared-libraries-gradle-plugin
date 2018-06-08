@@ -7,6 +7,8 @@ import mu.KotlinLogging
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.util.GradleVersion
 import org.junit.jupiter.api.extension.AfterTestExecutionCallback
+import org.junit.jupiter.api.extension.ConditionEvaluationResult
+import org.junit.jupiter.api.extension.ExecutionCondition
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.Extension
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -36,105 +38,54 @@ annotation class GradleProject(val resourcePath: Array<String> = [])
 
 @Integration
 @ExtendWith(MultiVersionGradleProjectTestTemplate::class)
-@Target(AnnotationTarget.CLASS)
+@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
 annotation class ForGradleVersions(
   val versions: Array<String> = []
 )
 
 internal class MultiVersionGradleProjectTestTemplate : TestTemplateInvocationContextProvider {
-
   companion object {
-    private val LOGGER: Logger = Logger.getLogger(MultiVersionGradleProjectTestTemplate::class.qualifiedName)
-    // System property key to run tests for specified versions.
-    // Versions can be specified as 'all', 'default', or semicolon separated (';') versions
-    private val VERSIONS_PROPERTY_KEY: String = "${ForGradleVersions::class.qualifiedName!!}.versions"
-    private val CURRENT_GRADLE_VERSION: GradleVersion by lazy {
-      GradleVersion.current()
-    }
     private val DEFAULT_VERSIONS: Set<GradleVersion> by lazy {
       setOf(
         GradleVersion.version("4.6"),
         GradleVersion.version("4.7"),
-        CURRENT_GRADLE_VERSION
+        GradleVersion.version("4.8"),
+        GradleVersion.current()
       )
     }
   }
 
   override fun provideTestTemplateInvocationContexts(context: ExtensionContext): Stream<TestTemplateInvocationContext> {
-    return context.testClass
-      .flatMap { clazz -> AnnotationSupport.findAnnotation(clazz, ForGradleVersions::class.java) }
+    // Prioritize method annotation over class annotation
+    return findGradleVersions(context)
       .map { gradleVersions -> gradleVersions.versions }
       .map { versions ->
         when {
-          versions.size == 1 && versions.first().toLowerCase() == "current" -> listOf(CURRENT_GRADLE_VERSION)
-          else ->  versions.map(GradleVersion::version)
+          // Handle case where version is specified as 'current'
+          versions.size == 1 && versions.first().toLowerCase() == "current" -> listOf(GradleVersion.current())
+          versions.isNotEmpty() -> versions.map(GradleVersion::version)
+          else ->  DEFAULT_VERSIONS
         }
       }
-      .map { gradleVersions -> determineVersionsToExecute(gradleVersions) }
       .map { gradleVersions -> gradleVersions.map { GradleProjectInvocationContext(context.displayName, it) } }
-      .map { it.stream().distinct() }
-      .orElseThrow { Exception("Don't think this should happen, as default values should be found") }
-      .map { it as TestTemplateInvocationContext } // Needed because of https://github.com/junit-team/junit5/issues/1226
+      .map {
+        it.stream().distinct()
+          .map {
+            // Needed because of https://github.com/junit-team/junit5/issues/1226
+            it as TestTemplateInvocationContext
+          }
+      }
+      .orElseThrow { RuntimeException("Could not create invocation contexts") }
   }
 
-  /**
-   * Determines the final versions of Gradle to execute a test with based on the:
-   * 1. Annotations
-   * 2. System properties
-   * 3. Default versions at [DEFAULT_VERSIONS]
-   */
-  private fun determineVersionsToExecute(gradleVersions: Collection<GradleVersion>): Collection<GradleVersion> {
-    val versionsFromSystemProperty: Collection<GradleVersion> by lazy {
-      System.getProperty(VERSIONS_PROPERTY_KEY)?.let { value ->
-        return@let when (value) {
-          "all", "default" -> {
-            LOGGER.fine { "System property supplied default $value to use all/default versions $DEFAULT_VERSIONS" }
-            DEFAULT_VERSIONS
-          }
-          "current" -> {
-            LOGGER.fine { "System property supplied $value so running only against current version $CURRENT_GRADLE_VERSION" }
-            listOf(CURRENT_GRADLE_VERSION)
-          }
-          else -> {
-            LOGGER.fine { "Determining versions from system property value $value" }
-            value.split(";")
-              .map(GradleVersion::version)
-          }
-        }
-      } ?: emptySet()
-    }
+  override fun supportsTestTemplate(context: ExtensionContext): Boolean = findGradleVersions(context).isPresent
 
-    return when {
-      // If a version is specified on both the annotation and the system property, we should only include tests
-      // that are in the intersection of the two. For example, '4.4' specified in annotation and '4.3' in the
-      // System property, we should not run the test because the annotation should be "more specific".
-      // TODO: I'm pretty sure this implementation wrong, so should come back to this
-      gradleVersions.isNotEmpty() -> versionsFromSystemProperty.intersect(gradleVersions).let {
-        if (it.isEmpty()) {
-          LOGGER.fine { "No intersection between annotated versions and system property versions" }
-          gradleVersions
-        } else {
-          it
-        }
-      }
-      versionsFromSystemProperty.isNotEmpty() -> {
-        LOGGER.fine { "Using System property provided versions $versionsFromSystemProperty" }
-        versionsFromSystemProperty
-      }
-      else -> {
-        LOGGER.fine { "No versions specified in code or by system properties so using default $DEFAULT_VERSIONS" }
-        DEFAULT_VERSIONS
-      }
-    }
-  }
-
-  // better handle @NotImplemented cases
-  override fun supportsTestTemplate(context: ExtensionContext): Boolean = context.testClass
-      .map { clazz ->  AnnotationSupport.findAnnotation(clazz, ForGradleVersions::class.java) }
-      .isPresent
+  private fun findGradleVersions(context: ExtensionContext): Optional<ForGradleVersions> =
+    AnnotationSupport.findAnnotation(context.testMethod, ForGradleVersions::class.java)
+      .or { AnnotationSupport.findAnnotation(context.testClass, ForGradleVersions::class.java) }
 }
 
-data class GradleProjectInvocationContext(
+private data class GradleProjectInvocationContext(
   private val contextDisplay: String,
   private val version: GradleVersion
 ) : TestTemplateInvocationContext {
@@ -146,10 +97,51 @@ data class GradleProjectInvocationContext(
       version.version
     } + "] ⇒ $contextDisplay"
 
-  override fun getAdditionalExtensions(): List<Extension> = listOf(ResourceGradleProjectProviderExtension(version))
+  override fun getAdditionalExtensions(): List<Extension> = listOf(
+    ResourceGradleProjectProviderExtension(version),
+    FilteringGradleExecutionCondition(version)
+  )
 }
 
-private class ResourceGradleProjectProviderExtension(private val gradleVersion: GradleVersion) : ParameterResolver, AfterTestExecutionCallback {
+private class FilteringGradleExecutionCondition(
+  private val targetVersion: GradleVersion
+) : ExecutionCondition {
+
+  companion object {
+    // System property key to run tests for specified versions.
+    // Versions can be specified as 'all', 'default', or semicolon separated (';') versions
+    private val VERSIONS_PROPERTY_KEY: String = "${ForGradleVersions::class.qualifiedName!!}.versions"
+    private val DEFAULT_CONDITION: ConditionEvaluationResult =
+      ConditionEvaluationResult.enabled("No filter specified")
+  }
+
+  override fun evaluateExecutionCondition(context: ExtensionContext): ConditionEvaluationResult {
+    val propertyValue = System.getProperty(VERSIONS_PROPERTY_KEY) ?: return DEFAULT_CONDITION
+
+    return when (propertyValue) {
+      "all", "default" -> ConditionEvaluationResult.enabled("All tests enabled through $propertyValue filter")
+      "current" -> {
+        if (targetVersion == GradleVersion.current()) {
+          ConditionEvaluationResult.enabled("Target version is the current version")
+        } else {
+          ConditionEvaluationResult.disabled("Target version $targetVersion is not the current version ${GradleVersion.current()}")
+        }
+      }
+      else -> {
+        val systemPropertyVersions = propertyValue.split(";").map(GradleVersion::version)
+        if (targetVersion in systemPropertyVersions) {
+          ConditionEvaluationResult.enabled("Target version $targetVersion is in System property specified versions $systemPropertyVersions")
+        } else {
+          ConditionEvaluationResult.disabled("Target version $targetVersion is not in System property specified versions $systemPropertyVersions")
+        }
+      }
+    }
+  }
+}
+
+private class ResourceGradleProjectProviderExtension(
+  private val gradleVersion: GradleVersion
+) : ParameterResolver, AfterTestExecutionCallback {
 
   companion object {
     private val LOGGER = KotlinLogging.logger { }
