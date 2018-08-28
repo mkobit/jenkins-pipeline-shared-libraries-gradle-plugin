@@ -200,7 +200,7 @@ internal class IntegrationTestSourceIntegrationTest {
   }
 
   @TestTemplate
-  @ForGradleVersions(["4.8"])
+  @ForGradleVersions(["4.10"])
   fun `Kotlin DSL extension configuration`(@GradleProject(["projects", "gradle-configuration-kotlin"]) gradleRunner: GradleRunner) {
     assertThatCode {
       gradleRunner.apply {

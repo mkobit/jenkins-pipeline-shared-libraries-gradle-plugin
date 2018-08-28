@@ -19,7 +19,7 @@ gradlePlugin {
   plugins.invoke {
     // Don't get the extensions for NamedDomainObjectContainer here because we only have a NamedDomainObjectContainer
     // See https://github.com/gradle/kotlin-dsl/issues/459
-    "sharedLibrary" {
+    register("sharedLibrary") {
       id = "buildsrc.jenkins-rebaseline"
       implementationClass = "buildsrc.jenkins.baseline.JenkinsRebaselineToolsPlugin"
     }

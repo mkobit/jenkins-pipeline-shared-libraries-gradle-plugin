@@ -1,7 +1,7 @@
 = Jenkins Pipeline Shared Library Gradle Plugin
 :toc:
 :latest-version: 0.6.2
-:supports-gradle: 4.6+
+:supports-gradle: 4.10+
 :github-repo-id: jenkins-pipeline-shared-libraries-gradle-plugin
 :uri-github-releases: https://github.com/mkobit/{github-repo-id}/releases
 :uri-jenkins-test-harness: https://github.com/jenkinsci/jenkins-test-harness.git

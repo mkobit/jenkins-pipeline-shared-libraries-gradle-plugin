@@ -8,7 +8,6 @@ import org.jetbrains.dokka.DokkaConfiguration
 import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.jetbrains.kotlin.preprocessor.mkdirsOrFail
 import java.io.ByteArrayOutputStream
 import java.net.URL
 
@@ -94,7 +93,7 @@ configurations {
   // It is mainly used to get IDEA autocompletion and for use it caching dependencies in Circle CI
   // These are used for code completion in the pipelineTestResources to more easily facilitate writing tests
   // against the libraries that are used.
-  val pipelineTestResources by java.sourceSets.getting
+  val pipelineTestResources by sourceSets.getting
 
   val resourcesCompileOnly = get(pipelineTestResources.compileOnlyConfigurationName)
   val jenkinsPlugins by creating {
@@ -144,33 +143,33 @@ dependencies {
 
   // These are used for code completion in the pipelineTestResources to more easily facilitate writing tests
   // against the libraries that are used.
-  val pipelineTestResources by java.sourceSets.getting
+  val pipelineTestResources by sourceSets.getting
   pipelineTestResources.compileOnlyConfigurationName("com.lesfurets:jenkins-pipeline-unit:1.1")
-  pipelineTestResources.compileOnlyConfigurationName("org.jenkins-ci.main:jenkins-test-harness:2.38")
+  pipelineTestResources.compileOnlyConfigurationName("org.jenkins-ci.main:jenkins-test-harness:2.40")
   pipelineTestResources.compileOnlyConfigurationName("org.codehaus.groovy:groovy:2.4.12")
   val jenkinsPluginDependencies = listOf(
-    "org.jenkins-ci.plugins.workflow:workflow-api:2.26",
-    "org.jenkins-ci.plugins.workflow:workflow-basic-steps:2.6",
-    "org.jenkins-ci.plugins.workflow:workflow-cps:2.47",
-    "org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:2.9",
-    "org.jenkins-ci.plugins.workflow:workflow-durable-task-step:2.19",
-    "org.jenkins-ci.plugins.workflow:workflow-job:2.18",
+    "org.jenkins-ci.plugins.workflow:workflow-api:2.29",
+    "org.jenkins-ci.plugins.workflow:workflow-basic-steps:2.10",
+    "org.jenkins-ci.plugins.workflow:workflow-cps:2.54",
+    "org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:2.10",
+    "org.jenkins-ci.plugins.workflow:workflow-durable-task-step:2.21",
+    "org.jenkins-ci.plugins.workflow:workflow-job:2.24",
     "org.jenkins-ci.plugins.workflow:workflow-multibranch:2.17",
     "org.jenkins-ci.plugins.workflow:workflow-scm-step:2.6",
-    "org.jenkins-ci.plugins.workflow:workflow-step-api:2.14",
-    "org.jenkins-ci.plugins.workflow:workflow-support:2.18"
+    "org.jenkins-ci.plugins.workflow:workflow-step-api:2.16",
+    "org.jenkins-ci.plugins.workflow:workflow-support:2.20"
   )
   jenkinsPluginDependencies.forEach {
     "jenkinsPlugins"(it)
   }
-  "jenkinsPlugins"("org.jenkins-ci.main:jenkins-core:2.107.2") {
+  "jenkinsPlugins"("org.jenkins-ci.main:jenkins-core:2.121.3") {
     isTransitive = false
   }
 }
 
 tasks {
-  "wrapper"(Wrapper::class) {
-    gradleVersion = "4.8"
+  register("wrapper", Wrapper::class.java) {
+    gradleVersion = "4.10"
     distributionType = Wrapper.DistributionType.ALL
   }
 
@@ -217,7 +216,7 @@ tasks {
     val downloadUrl = "https://circle-downloads.s3.amazonaws.com/releases/build_agent_wrapper/circleci"
     inputs.property("url", downloadUrl)
     outputs.file(circleCiScriptDestination)
-    doFirst { circleCiScriptDestination.parentFile.mkdirsOrFail() }
+    doFirst { circleCiScriptDestination.parentFile.mkdirs() }
     commandLine("curl", "--fail", "-L", downloadUrl, "-o", circleCiScriptDestination)
     doLast {
       project.exec { commandLine("chmod", "+x", circleCiScriptDestination) }
@@ -243,7 +242,7 @@ tasks {
     args("build")
   }
 
-  val main by java.sourceSets
+  val main by sourceSets
   val sourcesJar by creating(Jar::class) {
     group = JavaBasePlugin.DOCUMENTATION_GROUP
     description = "Assembles a JAR of the source code"
@@ -348,7 +347,7 @@ tasks {
     commandLine("git", "push", "origin", "refs/tags/${project.version}")
   }
 
-  "release" {
+  register("release") {
     group = PublishingPlugin.PUBLISH_TASK_GROUP
     description = "Publishes the plugin to the Gradle plugin portal and pushes up a Git tag for the current commit"
     dependsOn(docVersionChecks, publishPlugins, pushGitTag, gitTag, gitDirtyCheck, "build")
@@ -367,11 +366,11 @@ gradlePlugin {
   plugins.invoke {
     // Don't get the extensions for NamedDomainObjectContainer here because we only have a NamedDomainObjectContainer
     // See https://github.com/gradle/kotlin-dsl/issues/459
-    "sharedLibrary" {
+    register("sharedLibrary") {
       id = sharedLibraryPluginId
       implementationClass = "com.mkobit.jenkins.pipelines.SharedLibraryPlugin"
     }
-    "jenkinsIntegration" {
+    register("jenkinsIntegration") {
       id =  "com.mkobit.jenkins.pipelines.jenkins-integration"
       implementationClass = "com.mkobit.jenkins.pipelines.JenkinsIntegrationPlugin"
     }
@@ -386,7 +385,7 @@ pluginBundle {
 
   plugins(delegateClosureOf<NamedDomainObjectContainer<PluginConfig>> {
     invoke {
-      "pipelineLibraryDevelopment" {
+      register("pipelineLibraryDevelopment") {
         id = sharedLibraryPluginId
         displayName = "Jenkins Pipeline Shared Library Development"
       }

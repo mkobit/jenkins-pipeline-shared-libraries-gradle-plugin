@@ -47,9 +47,6 @@ internal class MultiVersionGradleProjectTestTemplate : TestTemplateInvocationCon
   companion object {
     private val DEFAULT_VERSIONS: Set<GradleVersion> by lazy {
       setOf(
-        GradleVersion.version("4.6"),
-        GradleVersion.version("4.7"),
-        GradleVersion.version("4.8"),
         GradleVersion.current()
       )
     }
@@ -91,7 +88,7 @@ private data class GradleProjectInvocationContext(
 ) : TestTemplateInvocationContext {
 
   override fun getDisplayName(invocationIndex: Int): String  = "[Gradle " +
-    if (version == GradleVersion.current()) {
+    if (version.equals(GradleVersion.current())) {
       "${version.version} (current)"
     } else {
       version.version
@@ -121,7 +118,7 @@ private class FilteringGradleExecutionCondition(
     return when (propertyValue) {
       "all", "default" -> ConditionEvaluationResult.enabled("All tests enabled through $propertyValue filter")
       "current" -> {
-        if (targetVersion == GradleVersion.current()) {
+        if (targetVersion.equals(GradleVersion.current())) {
           ConditionEvaluationResult.enabled("Target version is the current version")
         } else {
           ConditionEvaluationResult.disabled("Target version $targetVersion is not the current version ${GradleVersion.current()}")
