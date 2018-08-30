@@ -33,15 +33,15 @@ internal open class JenkinsIntegrationPlugin : Plugin<Project> {
       )
 
       tasks {
-        "retrieveJenkinsGdsl" {
+        register("retrieveJenkinsGdsl") {
           setupRetrieveJenkinsGdsl(integration, this)
         }
 
-        "retrieveJenkinsPluginData" {
+        register("retrieveJenkinsPluginData") {
           setupRetrieveJenkinsPluginData(integration, this)
         }
 
-        "retrieveJenkinsVersion" {
+        register("retrieveJenkinsVersion") {
           setupRetrieveJenkinsVersion(integration, this)
         }
       }
