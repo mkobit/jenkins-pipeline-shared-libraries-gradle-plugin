@@ -12,13 +12,13 @@ import java.io.ByteArrayOutputStream
 import java.net.URL
 
 plugins {
-  id("com.gradle.build-scan") version "1.13.1"
+  id("com.gradle.build-scan") version "1.16"
   `kotlin-dsl`
   `java-library`
   `java-gradle-plugin`
-  id("com.gradle.plugin-publish") version "0.9.10"
-  id("com.github.ben-manes.versions") version "0.17.0"
-  id("org.jetbrains.dokka") version "0.9.16"
+  id("com.gradle.plugin-publish") version "0.10.0"
+  id("com.github.ben-manes.versions") version "0.20.0"
+  id("org.jetbrains.dokka") version "0.9.17"
   // TODO: load version from shared location
   // Only used for local publishing for testing
   `maven-publish`
