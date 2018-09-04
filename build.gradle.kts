@@ -25,7 +25,7 @@ plugins {
  id("buildsrc.jenkins-rebaseline")
 }
 
-version = "0.6.2"
+version = "0.7.0"
 group = "com.mkobit.jenkins.pipelines"
 description = "Gradle plugins for Jenkins Shared libraries usage"
 
