@@ -22,11 +22,66 @@ For each release, a subsection should be added for each of the following if they
 * `Removed` for now removed features.
 * `Security` in case of vulnerabilities.
 
-== UNRELEASED
+== 0.7.0 (2018/09/04)
+
+This version requires at least Gradle 4.10.
 
 === Changed
 
-* Built with Gradle 4.8 and Kotlin DSL Plugin 0.17.5
+* Built with Gradle 4.10 and Kotlin DSL Plugin 1.0-rc-3
+* Updated default versions:
++
+[cols="3*",options="header"]
+|===
+|Component
+|From
+|TO
+
+|Core
+|2.107.2
+|2.121.3
+
+|Test Harness
+|2.38
+|2.40
+
+|Workflow API Plugin
+|2.26
+|2.29
+
+|Workflow Basic Steps Plugin
+|2.6
+|2.10
+
+|Workflow CPS Plugin
+|2.47
+|2.54
+
+|Workflow Durable Task Step Plugin
+|2.19
+|2.21
+
+|Workflow Global CPS Library Plugin
+|2.9
+|2.10
+
+|Workflow Job Plugin
+|2.18
+|2.24
+
+|Workflow Multibranch Plugin
+|2.17
+|2.20
+
+|Workflow Step API Plugin
+|2.14
+|2.16
+
+|Workflow Support Plugin
+|2.18
+|2.20
+
+|===
 
 == 0.6.2 (2018/04/12)
 
