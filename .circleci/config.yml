@@ -1,8 +1,9 @@
 version: 2.1
 
-java-8-defaults: &java-8-defaults
-  working_directory: ~/build-working-directory
-  docker:
+executors:
+  java-8:
+    working_directory: ~/build-working-directory
+    docker:
     - image: circleci/openjdk:8-jdk
       environment:
         JAVA_OPTS: -XX:+UseG1GC
@@ -40,7 +41,7 @@ shared-steps:
 
 jobs:
   check:
-    <<: *java-8-defaults
+    executor: java-8
     steps:
       - checkout
       - *generate-cache-key
@@ -59,7 +60,7 @@ jobs:
             - buildSrc/build/*
 
   test-gradle-5.0-rc-1:
-    <<: *java-8-defaults
+    executor: java-8
     steps:
       - checkout
       - *generate-cache-key
