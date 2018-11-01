@@ -27,6 +27,7 @@ For each release, a subsection should be added for each of the following if they
 === Changed
 
 * Dependency updates
+* A few unintentional public functions have been moved to `internal`
 
 == 0.7.0 (2018/09/04)
 

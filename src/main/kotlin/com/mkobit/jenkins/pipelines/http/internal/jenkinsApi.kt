@@ -47,7 +47,7 @@ private fun newSinglePoolClient(baseUrl: HttpUrl, authentication: Authentication
  * @param baseUrl the base URL of the Jenkins instance
  */
 @Throws(IOException::class)
-fun downloadGdsl(baseUrl: HttpUrl, authentication: Authentication): Response {
+internal fun downloadGdsl(baseUrl: HttpUrl, authentication: Authentication): Response {
   val client = newSinglePoolClient(baseUrl, authentication)
 
   val gdslUrl = baseUrl.newBuilder()
@@ -67,7 +67,7 @@ fun downloadGdsl(baseUrl: HttpUrl, authentication: Authentication): Response {
  * @param baseUrl the base URL of the Jenkins instance
  */
 @Throws(IOException::class)
-fun retrievePluginManagerData(baseUrl: HttpUrl, authentication: Authentication): Response {
+internal fun retrievePluginManagerData(baseUrl: HttpUrl, authentication: Authentication): Response {
   val client = newSinglePoolClient(baseUrl, authentication)
 
   val pluginManagerUrl = baseUrl.newBuilder()
@@ -87,7 +87,7 @@ fun retrievePluginManagerData(baseUrl: HttpUrl, authentication: Authentication):
 }
 
 @Throws(IOException::class)
-fun connect(baseUrl: HttpUrl, authentication: Authentication): Response {
+internal fun connect(baseUrl: HttpUrl, authentication: Authentication): Response {
   val client = newSinglePoolClient(baseUrl, authentication)
 
   val gdslUrl = baseUrl.newBuilder()
