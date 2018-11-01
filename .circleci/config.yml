@@ -1,3 +1,5 @@
+version: 2.1
+
 java-8-defaults: &java-8-defaults
   working_directory: ~/build-working-directory
   docker:
@@ -36,7 +38,6 @@ shared-steps:
     store_test_results:
       path: ~/build-working-directory/build/test-results/
 
-version: 2
 jobs:
   check:
     <<: *java-8-defaults
@@ -56,21 +57,8 @@ jobs:
             - build/*
             - buildSrc/.gradle/*
             - buildSrc/build/*
-            
-  test-gradle-4.6:
-    <<: *java-8-defaults
-    steps:
-      - checkout
-      - *generate-cache-key
-      - *restore-home-cache
-      - attach_workspace:
-          at: ~/build-working-directory
-      - run:
-          command: ./gradlew build -PgradleTestVersions=4.6 --max-workers 2 --stacktrace
-          name: Test With Gradle 4.6
-      - *junit-platform-test-results
 
-  test-gradle-4.7:
+  test-gradle-5.0-rc-1:
     <<: *java-8-defaults
     steps:
       - checkout
@@ -79,8 +67,8 @@ jobs:
       - attach_workspace:
           at: ~/build-working-directory
       - run:
-          command: ./gradlew build -PgradleTestVersions=4.7 --max-workers 2 --stacktrace
-          name: Test With Gradle 4.7
+          command: ./gradlew build -PgradleTestVersions=5.0-rc-1 --max-workers 2 --stacktrace
+          name: Test With Gradle 5.0-rc-1
       - *junit-platform-test-results
 
 workflows:
@@ -88,9 +76,6 @@ workflows:
   build:
     jobs:
       - check
-      - test-gradle-4.6:
-          requires:
-            - check
-      - test-gradle-4.7:
+      - test-gradle-5.0-rc-1:
           requires:
             - check
