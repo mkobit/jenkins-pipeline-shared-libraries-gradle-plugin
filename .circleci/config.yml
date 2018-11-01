@@ -67,7 +67,7 @@ jobs:
     steps:
       - checkout
       - restore-home-cache
-      - gradle-build
+      - gradle-build:
         submit-build-scan: true
         gradle-test-versions: current
       - save-home-cache
@@ -86,7 +86,7 @@ jobs:
       - restore-home-cache
       - attach_workspace:
           at: ~/build-working-directory
-      - gradle-build
+      - gradle-build:
         gradle-test-versions: 5.0-rc-1
 
 workflows:
