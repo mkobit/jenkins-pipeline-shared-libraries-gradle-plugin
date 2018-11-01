@@ -41,15 +41,15 @@ commands:
     description: Saves the Gradle home cache
     steps:
       - run:
-        name: Generate cache key
-        command: |
-          mkdir -p build
-          find settings.gradle.kts build.gradle.kts gradle buildSrc/src buildSrc/build.gradle.kts -type f -exec sha256sum '{}' \; | tee build/circle-ci-key.txt
+          name: Generate cache key
+          command: |
+            mkdir -p build
+            find settings.gradle.kts build.gradle.kts gradle buildSrc/src buildSrc/build.gradle.kts -type f -exec sha256sum '{}' \; | tee build/circle-ci-key.txt
       - save_cache:
-        paths:
-        - ~/.gradle
-        key: v2-home-cache-{{ checksum "build/circle-ci-key.txt" }}
-        when: always
+          paths:
+            - ~/.gradle
+          key: v2-home-cache-{{ checksum "build/circle-ci-key.txt" }}
+          when: always
 
 # TODO: this is an aritfact of determining why some builds fail with OOM on Circle CI
 shared-steps:
@@ -68,8 +68,8 @@ jobs:
       - checkout
       - restore-home-cache
       - gradle-build:
-        submit-build-scan: true
-        gradle-test-versions: current
+          submit-build-scan: true
+          gradle-test-versions: current
       - save-home-cache
       - persist_to_workspace:
           root: ~/build-working-directory
@@ -79,7 +79,7 @@ jobs:
             - buildSrc/.gradle/*
             - buildSrc/build/*
 
-  test-gradle-5.0-rc-1:
+  test-gradle-5_0-rc-1:
     executor: java-8
     steps:
       - checkout
@@ -87,13 +87,13 @@ jobs:
       - attach_workspace:
           at: ~/build-working-directory
       - gradle-build:
-        gradle-test-versions: 5.0-rc-1
+          gradle-test-versions: 5.0-rc-1
 
 workflows:
   version: 2
   build:
     jobs:
       - check
-      - test-gradle-5.0-rc-1:
+      - test-gradle-5_0-rc-1:
           requires:
             - check
