@@ -5,7 +5,7 @@ object DependencyInfo {
   const val assertJGradle = "com.mkobit.gradle.test:assertj-gradle:0.2.0"
   const val gradleTestKotlinExtensions = "com.mkobit.gradle.test:gradle-test-kotlin-extensions:0.6.0"
   const val javapoetVersion = "1.11.1"
-  const val okHttpVersion = "3.11.0"
+  const val okHttpVersion = "3.12.0"
   const val junitPlatformVersion = "1.3.2"
   const val junitJupiterVersion = "5.3.2"
   const val junit5Log4jVersion = "2.11.1"
