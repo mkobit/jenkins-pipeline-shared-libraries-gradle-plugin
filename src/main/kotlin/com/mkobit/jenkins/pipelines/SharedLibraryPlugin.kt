@@ -422,7 +422,8 @@ open class SharedLibraryPlugin @Inject constructor(
     val workflowScmStepPluginVersion = initializedProperty(DEFAULT_WORKFLOW_SCM_STEP_PLUGIN_VERSION)
     val workflowSupportPluginVersion = initializedProperty(DEFAULT_WORKFLOW_SUPPORT_PLUGIN_VERSION)
 
-    val pluginDependencySpec = objectFactory.newInstance(PluginDependencySpec::class.java,
+    val pluginDependencySpec = objectFactory.newInstance(
+      PluginDependencySpec::class.java,
       workflowApiPluginVersion,
       workflowBasicStepsPluginVersion,
       workflowCpsPluginVersion,

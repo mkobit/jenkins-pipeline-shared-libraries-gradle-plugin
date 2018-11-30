@@ -47,16 +47,26 @@ open class PluginDependencySpec @Inject constructor(
     additionalDependencies.add(PluginDependency(group, name, version))
   }
 
-  private fun workflowApiPluginDependency(): Provider<String> = workflowApiPluginVersion.map { "org.jenkins-ci.plugins.workflow:workflow-api:$it" }
-  private fun workflowBasicStepsPluginDependency(): Provider<String> = workflowBasicStepsPluginVersion.map { "org.jenkins-ci.plugins.workflow:workflow-basic-steps:$it" }
-  private fun workflowCpsPluginDependency(): Provider<String> = workflowCpsPluginVersion.map { "org.jenkins-ci.plugins.workflow:workflow-cps:$it" }
-  private fun workflowDurableTaskStepPluginDependency(): Provider<String> = workflowDurableTaskStepPluginVersion.map { "org.jenkins-ci.plugins.workflow:workflow-durable-task-step:$it" }
-  private fun workflowGlobalCpsLibraryPluginDependency(): Provider<String> = workflowCpsGlobalLibraryPluginVersion.map { "org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:$it" }
-  private fun workflowJobPluginDependency(): Provider<String> = workflowJobPluginVersion.map { "org.jenkins-ci.plugins.workflow:workflow-job:$it" }
-  private fun workflowMultibranchPluginDependency(): Provider<String> = workflowMultibranchPluginVersion.map { "org.jenkins-ci.plugins.workflow:workflow-multibranch:$it" }
-  private fun workflowScmStepPluginDependency(): Provider<String> = workflowScmStepPluginVersion.map { "org.jenkins-ci.plugins.workflow:workflow-scm-step:$it" }
-  private fun workflowStepApiPluginDependency(): Provider<String> = workflowStepApiPluginVersion.map { "org.jenkins-ci.plugins.workflow:workflow-step-api:$it" }
-  private fun workflowSupportPluginDependency(): Provider<String> = workflowSupportPluginVersion.map { "org.jenkins-ci.plugins.workflow:workflow-support:$it" }
+  private fun workflowApiPluginDependency(): Provider<String> =
+    workflowApiPluginVersion.map { "org.jenkins-ci.plugins.workflow:workflow-api:$it" }
+  private fun workflowBasicStepsPluginDependency(): Provider<String> =
+    workflowBasicStepsPluginVersion.map { "org.jenkins-ci.plugins.workflow:workflow-basic-steps:$it" }
+  private fun workflowCpsPluginDependency(): Provider<String> =
+    workflowCpsPluginVersion.map { "org.jenkins-ci.plugins.workflow:workflow-cps:$it" }
+  private fun workflowDurableTaskStepPluginDependency(): Provider<String> =
+    workflowDurableTaskStepPluginVersion.map { "org.jenkins-ci.plugins.workflow:workflow-durable-task-step:$it" }
+  private fun workflowGlobalCpsLibraryPluginDependency(): Provider<String> =
+    workflowCpsGlobalLibraryPluginVersion.map { "org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:$it" }
+  private fun workflowJobPluginDependency(): Provider<String> =
+    workflowJobPluginVersion.map { "org.jenkins-ci.plugins.workflow:workflow-job:$it" }
+  private fun workflowMultibranchPluginDependency(): Provider<String> =
+    workflowMultibranchPluginVersion.map { "org.jenkins-ci.plugins.workflow:workflow-multibranch:$it" }
+  private fun workflowScmStepPluginDependency(): Provider<String> =
+    workflowScmStepPluginVersion.map { "org.jenkins-ci.plugins.workflow:workflow-scm-step:$it" }
+  private fun workflowStepApiPluginDependency(): Provider<String> =
+    workflowStepApiPluginVersion.map { "org.jenkins-ci.plugins.workflow:workflow-step-api:$it" }
+  private fun workflowSupportPluginDependency(): Provider<String> =
+    workflowSupportPluginVersion.map { "org.jenkins-ci.plugins.workflow:workflow-support:$it" }
 
   fun pluginDependencies(): ListProperty<PluginDependency> {
     // .empty() needed due to https://github.com/gradle/gradle/issues/7485
