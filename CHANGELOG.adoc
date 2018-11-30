@@ -29,6 +29,7 @@ This version requires at least Gradle 5.0+.
 === Changed
 
 * A few unintentional public functions have been moved to `internal`
+* Tasks created and configured in plugins have been updated to use configuration avoidance (`named`, `register`) while configurations and other domain objects have been switched back to the immediate APIs (`create`, `getByName`)
 * Dependency version updates
 * Updated default versions:
 +

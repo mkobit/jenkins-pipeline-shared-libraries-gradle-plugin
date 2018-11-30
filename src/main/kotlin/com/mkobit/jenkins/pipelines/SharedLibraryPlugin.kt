@@ -86,8 +86,8 @@ open class SharedLibraryPlugin @Inject constructor(
   override fun apply(target: Project) {
     target.run {
       // Ordering of calls here matters
-      pluginManager.apply(GroovyPlugin::class.java)
-      pluginManager.apply(JenkinsIntegrationPlugin::class.java)
+      apply<GroovyPlugin>()
+      apply<JenkinsIntegrationPlugin>()
       setupJenkinsRepository()
       setupJavaDefaults()
       setupSharedLibraryExtension()
@@ -109,7 +109,7 @@ open class SharedLibraryPlugin @Inject constructor(
    * Sets up the `main` source set.
    */
   private fun Project.setupMain() {
-    val main = java.sourceSets.main.apply {
+    val main = sourceSets.main.apply {
       java.setSrcDirs(emptyList<String>())
       groovy.setSrcDirs(listOf("src", "vars"))
       resources.setSrcDirs(listOf("resources"))
@@ -137,16 +137,16 @@ open class SharedLibraryPlugin @Inject constructor(
       resources.setSrcDirs(listOf("$unitTestDirectory/resources"))
     }
     configurations {
-      val unitTestLibrary = register(UNIT_TESTING_LIBRARY_CONFIGURATION) {
+      val unitTestLibrary = create(UNIT_TESTING_LIBRARY_CONFIGURATION) {
         description = "Jenkins Pipeline Unit libraries"
         defaultJenkinsConfigurationSetup()
         withDependencies {
-          LOGGER.debug { "Adding JenkinsPipelineUnit dependency to configuration${this@register.name}" }
-          dependencyHandler.add(this@register, extensions.sharedLibraryExtension.pipelineUnitDependency().get())
+          LOGGER.debug { "Adding JenkinsPipelineUnit dependency to configuration${this@create.name}" }
+          dependencyHandler.add(this@create, sharedLibraryExtension.pipelineUnitDependency().get())
         }
       }
       getByName(test.implementationConfigurationName) {
-        this.extendsFrom(unitTestLibrary.get(), getByName(GROOVY_CONFIGURATION))
+        extendsFrom(unitTestLibrary, getByName(GROOVY_CONFIGURATION))
       }
     }
   }
@@ -156,9 +156,9 @@ open class SharedLibraryPlugin @Inject constructor(
    */
   private fun Project.setupConfigurationsAndDependencies() {
     val dependencyHandler = dependencies
-    val sharedLibraryExtension = extensions.sharedLibraryExtension
+    val sharedLibraryExtension = sharedLibraryExtension
     configurations {
-      val jenkinsPlugins = register(JENKINS_PLUGINS_CONFIGURATION) {
+      val jenkinsPlugins = create(JENKINS_PLUGINS_CONFIGURATION) {
         defaultJenkinsConfigurationSetup(canBeResolved = true)
         description = "Jenkins plugin dependencies"
         withDependencies {
@@ -169,31 +169,31 @@ open class SharedLibraryPlugin @Inject constructor(
             .get()
             .map { it.asStringNotation() }
             .onEach { LOGGER.debug { "Adding plugin dependency notation $it to configuration $name" } }
-            .forEach { dependencyHandler.add(this@register, it) }
+            .forEach { dependencyHandler.add(this@create, it) }
         }
       }
-      register(PLUGIN_HPI_JPI_CONFIGURATION) {
+      create(PLUGIN_HPI_JPI_CONFIGURATION) {
         defaultJenkinsConfigurationSetup()
         description = "Jenkins plugin HPI and JPI dependencies needed at runtime"
         withDependencies {
-          jenkinsPlugins.get().resolvedConfiguration.resolvedArtifacts
+          jenkinsPlugins.resolvedConfiguration.resolvedArtifacts
             .filter { it.extension in setOf("hpi", "jpi") }
             .onEach { LOGGER.debug { "Adding plugin dependency $it with extension ${it.extension} to configuration $name" } }
             .map { "${it.moduleVersion}@${it.extension}" }
-            .forEach { dependencyHandler.add(this@register, it) }
+            .forEach { dependencyHandler.add(this@create, it) }
         }
       }
-      register(PLUGIN_LIBRARY_CONFIGURATION) {
+      create(PLUGIN_LIBRARY_CONFIGURATION) {
         defaultJenkinsConfigurationSetup()
         description = "Jenkins plugin JAR libraries"
         withDependencies {
           // Map each included HPI to that plugin's JAR for usage in compilation of tests and also
           // include all of the additional JAR dependencies from the transitive dependencies of the plugin
-          jenkinsPlugins.get().resolvedConfiguration.resolvedArtifacts
+          jenkinsPlugins.resolvedConfiguration.resolvedArtifacts
             .filter { it.extension in setOf("hpi", "jpi", "jar") }
             .onEach { LOGGER.debug { "Adding JAR dependency on $it to configuration $name" } }
             .map { "${it.moduleVersion}@jar" } // Use the published JAR libraries for each plugin
-            .forEach { dependencyHandler.add(this@register, it) }
+            .forEach { dependencyHandler.add(this@create, it) }
 
           // TODO: hack - total hack to get the stupid servlet API dependency on the classpath
           // since I can't seem to pull it from the POM of Jenkins Core due to it being 'provided' scope
@@ -202,68 +202,68 @@ open class SharedLibraryPlugin @Inject constructor(
           // This probably won't work for older versions of Jenkins because of different servlet-api
           // versions, but should work enough for now to enable usage of Jenkins core and plugin classes in the library
           // source
-          dependencyHandler.add(this@register, "javax.servlet:javax.servlet-api:3.1.0")
+          dependencyHandler.add(this@create, "javax.servlet:javax.servlet-api:3.1.0")
         }
       }
-      val coreLibrary = register(CORE_LIBRARY_CONFIGURATION) {
+      val coreLibrary = create(CORE_LIBRARY_CONFIGURATION) {
         defaultJenkinsConfigurationSetup(canBeResolved = true)
         description = "Jenkins core libraries and modules"
         withDependencies {
-          dependencyHandler.add(this@register, sharedLibraryExtension.coreDependency().get())
+          dependencyHandler.add(this@create, sharedLibraryExtension.coreDependency().get())
         }
       }
-      val jenkinsWar = register(WAR_CONFIGURATION) {
+      val jenkinsWar = create(WAR_CONFIGURATION) {
         defaultJenkinsConfigurationSetup(canBeResolved = true)
         description = "Jenkins WAR libraries and modules"
         withDependencies {
-          dependencyHandler.add(this@register, sharedLibraryExtension.jenkinsWar().get())
+          dependencyHandler.add(this@create, sharedLibraryExtension.jenkinsWar().get())
         }
       }
-      register(ONLY_WAR_CONFIGURATION) {
+      create(ONLY_WAR_CONFIGURATION) {
         defaultJenkinsConfigurationSetup()
         description = "Contains the WAR distribution of Jenkins"
         withDependencies {
-          jenkinsWar.get().resolvedConfiguration.resolvedArtifacts
+          jenkinsWar.resolvedConfiguration.resolvedArtifacts
             .filter { it.extension == "war" }
             .onEach { LOGGER.debug { "Adding WAR dependency $it to configuration $name" } }
-            .forEach { dependencyHandler.add(this@register, "${it.moduleVersion}@war") }
+            .forEach { dependencyHandler.add(this@create, "${it.moduleVersion}@war") }
         }
       }
-      register(MODULES_CONFIGURATION) {
+      create(MODULES_CONFIGURATION) {
         defaultJenkinsConfigurationSetup(canBeResolved = true)
         description = "Jenkins WAR libraries and modules"
         withDependencies {
-          jenkinsWar.get().resolvedConfiguration.resolvedArtifacts
+          jenkinsWar.resolvedConfiguration.resolvedArtifacts
             .filter { it.moduleVersion.id.group == "org.jenkins-ci.modules" }
             .filter { it.extension == "jar" }
             .onEach { LOGGER.debug { "Adding module dependency $it to configuration $name" } }
-            .forEach { dependencyHandler.add(this@register, it.moduleVersion.toString()) }
+            .forEach { dependencyHandler.add(this@create, it.moduleVersion.toString()) }
         }
       }
-      register(TEST_LIBRARY_CONFIGURATION) {
+      create(TEST_LIBRARY_CONFIGURATION) {
         defaultJenkinsConfigurationSetup()
         description = "Jenkins test harness and modules"
         withDependencies {
-          dependencyHandler.add(this@register, sharedLibraryExtension.testHarnessDependency().get())
+          dependencyHandler.add(this@create, sharedLibraryExtension.testHarnessDependency().get())
         }
       }
-      register(TEST_LIBRARY_RUNTIME_ONLY_CONFIGURATION) {
+      create(TEST_LIBRARY_RUNTIME_ONLY_CONFIGURATION) {
         defaultJenkinsConfigurationSetup()
         description = "Jenkins test runtime libraries"
         withDependencies {
           sharedLibraryExtension.jenkinsWar().map { "$it@war" }
-          dependencyHandler.add(this@register, sharedLibraryExtension.jenkinsWar().map { "$it@war" }.get())
+          dependencyHandler.add(this@create, sharedLibraryExtension.jenkinsWar().map { "$it@war" }.get())
         }
       }
-      register(GROOVY_CONFIGURATION) {
+      create(GROOVY_CONFIGURATION) {
         defaultJenkinsConfigurationSetup()
         description = "Shared Library Groovy dependency"
         withDependencies {
-          val groovyArtifact = coreLibrary.get().resolvedConfiguration.resolvedArtifacts.find {
+          val groovyArtifact = coreLibrary.resolvedConfiguration.resolvedArtifacts.find {
             it.moduleVersion.id.group == "org.codehaus.groovy"
           } ?: throw GradleException("Could not find Groovy dependency from Jenkins core")
           LOGGER.debug { "Adding ${groovyArtifact.moduleVersion} to configuration $name" }
-          dependencyHandler.add(this@register, groovyArtifact.moduleVersion.id.toString())
+          dependencyHandler.add(this@create, groovyArtifact.moduleVersion.id.toString())
         }
       }
     }
@@ -279,10 +279,12 @@ open class SharedLibraryPlugin @Inject constructor(
     }
     dependencies.add(ivy, IVY_COORDINATES)
     tasks {
-      withType<GroovyCompile> {
+      withType<GroovyCompile>().configureEach {
         groovyClasspath += ivy
       }
-      getByName("test", Test::class).classpath += ivy
+      "test"(Test::class) {
+        classpath += ivy
+      }
     }
   }
 
@@ -291,14 +293,14 @@ open class SharedLibraryPlugin @Inject constructor(
    */
   private fun Project.setupDocumentationTasks() {
     tasks {
-      register("sourcesJar", Jar::class) {
+      register<Jar>("sourcesJar") {
         description = "Creates a JAR of the source"
         description = "Assemble the sources JAR"
         classifier = "sources"
         from(java.sourceSets.main.allSource)
       }
-      register("groovydocJar", Jar::class) {
-        val groovydoc = GroovyPlugin.GROOVYDOC_TASK_NAME(Groovydoc::class)
+      val groovydoc = named<Groovydoc>(GroovyPlugin.GROOVYDOC_TASK_NAME)
+      register<Jar>("groovydocJar") {
         description = "Creates a JAR of the Groovydoc"
         dependsOn(groovydoc)
         description = "Assemble the Groovydoc JAR"
@@ -314,42 +316,16 @@ open class SharedLibraryPlugin @Inject constructor(
     val generatedIntegrationDir = projectLayout.buildDirectory.dir("generated-src/integrationTest")
     val generatedIntegrationSource = generatedIntegrationDir.map { it.dir("src") }
     val generatedIntegrationResources = generatedIntegrationDir.map { it.dir("resources") }
-    java.sourceSets {
-      register(INTEGRATION_TEST_SOURCE_SET) {
-        description = "Integration test set for shared library source"
-        val integrationTestDirectory = "$TEST_ROOT_PATH/integration"
-        java.setSrcDirs(listOf("$integrationTestDirectory/java"))
-        groovy.setSrcDirs(listOf("$integrationTestDirectory/groovy", generatedIntegrationSource))
-        resources.setSrcDirs(listOf("$integrationTestDirectory/resources", generatedIntegrationResources))
-
-        val generateLocalLibraryRetriever by tasks.creating(GenerateJavaFile::class) {
-          description = "Generates an org.jenkinsci.plugins.workflow.libs.LibraryRetriever implementation for simplified integration with @JenkinsRule and local source code"
-          srcDir.set(generatedIntegrationSource)
-          javaFile.set(localLibraryAdder())
-        }
-        val generateIntegrationClassFilter by tasks.creating {
-          description = "Generates a class filter (https://jenkins.io/blog/2018/01/13/jep-200/)"
-          val resourceFile = generatedIntegrationResources.map { it.file("META-INF/hudson.remoting.ClassFilter") }
-          outputs.file(resourceFile)
-          val resourceFileContent = """
-            # Generated by Shared Library Gradle Plugin
-            com.mkobit.jenkins.pipelines.codegen.LocalLibraryRetriever
-          """.trimIndent()
-          inputs.property("content", resourceFileContent)
-          doFirst {
-            resourceFile.get().asFile.run {
-              parentFile.mkdirs()
-              writeText(resourceFileContent, Charsets.UTF_8)
-            }
-          }
-        }
-        tasks[getCompileTaskName("groovy")].dependsOn(generateLocalLibraryRetriever)
-        tasks[processResourcesTaskName].dependsOn(generateIntegrationClassFilter)
-      }
+    val integrationTestSourceSet = java.sourceSets.create(INTEGRATION_TEST_SOURCE_SET) {
+      description = "Integration test set for shared library source"
+      val integrationTestDirectory = "$TEST_ROOT_PATH/integration"
+      java.setSrcDirs(listOf("$integrationTestDirectory/java"))
+      groovy.setSrcDirs(listOf("$integrationTestDirectory/groovy", generatedIntegrationSource))
+      resources.setSrcDirs(listOf("$integrationTestDirectory/resources", generatedIntegrationResources))
     }
 
     configurations {
-      java.sourceSets.integrationTest.implementationConfigurationName {
+      sourceSets.integrationTest.implementationConfigurationName {
         extendsFrom(
           getByName(GROOVY_CONFIGURATION),
           getByName(CORE_LIBRARY_CONFIGURATION),
@@ -359,8 +335,8 @@ open class SharedLibraryPlugin @Inject constructor(
         )
       }
 
-      java.sourceSets.integrationTest.runtimeOnlyConfigurationName {
-        this.extendsFrom(
+      sourceSets.integrationTest.runtimeOnlyConfigurationName {
+        extendsFrom(
           getByName(PLUGIN_HPI_JPI_CONFIGURATION),
           getByName(TEST_LIBRARY_RUNTIME_ONLY_CONFIGURATION),
           getByName(ONLY_WAR_CONFIGURATION)
@@ -369,19 +345,48 @@ open class SharedLibraryPlugin @Inject constructor(
     }
 
     tasks {
-      val integrationTest = register(INTEGRATION_TEST_TASK, Test::class) {
+      val generateLocalLibraryRetriever by registering(GenerateJavaFile::class) {
+        description = "Generates an org.jenkinsci.plugins.workflow.libs.LibraryRetriever implementation for simplified integration with @JenkinsRule and local source code"
+        srcDir.set(generatedIntegrationSource)
+        javaFile.set(localLibraryAdder())
+      }
+      val generateIntegrationClassFilter by registering {
+        description = "Generates a class filter (https://jenkins.io/blog/2018/01/13/jep-200/)"
+        val resourceFile = generatedIntegrationResources.map { it.file("META-INF/hudson.remoting.ClassFilter") }
+        outputs.file(resourceFile)
+        val resourceFileContent = """
+            # Generated by Shared Library Gradle Plugin
+            com.mkobit.jenkins.pipelines.codegen.LocalLibraryRetriever
+          """.trimIndent()
+        inputs.property("content", resourceFileContent)
+        doFirst {
+          resourceFile.get().asFile.run {
+            parentFile.mkdirs()
+            writeText(resourceFileContent, Charsets.UTF_8)
+          }
+        }
+      }
+      named(integrationTestSourceSet.getCompileTaskName("groovy")) {
+        dependsOn(generateLocalLibraryRetriever)
+      }
+      named(integrationTestSourceSet.processResourcesTaskName) {
+        dependsOn(generateIntegrationClassFilter)
+      }
+      val integrationTest = register<Test>(INTEGRATION_TEST_TASK) {
         dependsOn(java.sourceSets.main.classesTaskName)
         mustRunAfter("test")
         group = LifecycleBasePlugin.VERIFICATION_GROUP
         description = "Runs tests with the jenkins-test-harness"
-        testClassesDirs = java.sourceSets.integrationTest.output.classesDirs
-        classpath = java.sourceSets.integrationTest.runtimeClasspath
+        testClassesDirs = sourceSets.integrationTest.output.classesDirs
+        classpath = sourceSets.integrationTest.runtimeClasspath
         // Set the build directory for Jenkins test harness.
         // See https://issues.jenkins-ci.org/browse/JENKINS-26331
         systemProperty("buildDirectory", projectLayout.buildDirectory.get().asFile.absolutePath)
         shouldRunAfter("test")
       }
-      getByName(LifecycleBasePlugin.CHECK_TASK_NAME).dependsOn(integrationTest)
+      named(LifecycleBasePlugin.CHECK_TASK_NAME) {
+        dependsOn(integrationTest)
+      }
     }
   }
 
@@ -423,7 +428,7 @@ open class SharedLibraryPlugin @Inject constructor(
     val workflowSupportPluginVersion = initializedProperty(DEFAULT_WORKFLOW_SUPPORT_PLUGIN_VERSION)
 
     val pluginDependencySpec = objectFactory.newInstance(
-      PluginDependencySpec::class.java,
+      PluginDependencySpec::class,
       workflowApiPluginVersion,
       workflowBasicStepsPluginVersion,
       workflowCpsPluginVersion,
@@ -438,7 +443,7 @@ open class SharedLibraryPlugin @Inject constructor(
     )
     extensions.create(
       SHARED_LIBRARY_EXTENSION_NAME,
-      SharedLibraryExtension::class.java,
+      SharedLibraryExtension::class,
       coreVersion,
       pipelineTestUnitVersion,
       testHarnessVersion,
@@ -458,14 +463,20 @@ open class SharedLibraryPlugin @Inject constructor(
   /**
    * Gets the extension of type [SharedLibraryExtension].
    */
-  private val ExtensionContainer.sharedLibraryExtension: SharedLibraryExtension
-    get() = getByType(SharedLibraryExtension::class.java)
+  private val Project.sharedLibraryExtension: SharedLibraryExtension
+    get() = the()
 
   /**
    * Gets the [JavaPluginConvention].
    */
   private val Project.java: JavaPluginConvention
-    get() = withConvention(JavaPluginConvention::class) { this }
+    get() = the()
+
+  /**
+   * Gets the [SourceSetContainer].
+   */
+  private val Project.sourceSets: SourceSetContainer
+    get() = the()
 
   /**
    * Gets the source set with name "main".
