@@ -197,7 +197,7 @@ tasks {
     kotlinOptions.jvmTarget = "1.8"
   }
 
-  "test"(Test::class) {
+  test {
     useJUnitPlatform()
     systemProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager")
     findProperty("gradleTestVersions")?.let {
@@ -364,11 +364,12 @@ gradlePlugin {
   plugins {
     // Don't get the extensions for NamedDomainObjectContainer here because we only have a NamedDomainObjectContainer
     // See https://github.com/gradle/kotlin-dsl/issues/459
-    register("sharedLibrary") {
+    create("sharedLibrary") {
       id = sharedLibraryPluginId
       implementationClass = "com.mkobit.jenkins.pipelines.SharedLibraryPlugin"
+      description = "Jenkins Pipeline Shared Library Development"
     }
-    register("jenkinsIntegration") {
+    create("jenkinsIntegration") {
       id =  "com.mkobit.jenkins.pipelines.jenkins-integration"
       implementationClass = "com.mkobit.jenkins.pipelines.JenkinsIntegrationPlugin"
     }
@@ -382,11 +383,9 @@ pluginBundle {
   website = ProjectInfo.projectUrl
 
   plugins(delegateClosureOf<NamedDomainObjectContainer<PluginConfig>> {
-    invoke {
-      register("pipelineLibraryDevelopment") {
-        id = sharedLibraryPluginId
-        displayName = "Jenkins Pipeline Shared Library Development"
-      }
+    create("pipelineLibraryDevelopment") {
+      id = sharedLibraryPluginId
+      displayName = "Jenkins Pipeline Shared Library Development"
     }
   })
 }
