@@ -9,17 +9,16 @@ import javax.inject.Inject
 
 /**
  * Specifies the Jenkins plugin dependencies to include.
- * @property workflowApiPlugin
- * @property workflowBasicStepsPlugin
- * @property workflowCpsPlugin
- * @property workflowDurableTaskStepPlugin
- * @property workflowGlobalCpsLibraryPlugin shared pipeline libraries plugin version. See the [documentation]
- * (https://plugins.jenkins.io/workflow-cps-global-lib)
- * @property workflowJobPlugin
- * @property workflowMultibranchPlugin
- * @property workflowScmStepPlugin
- * @property workflowStepApiPlugin
- * @property workflowSupportPlugin
+ * @property workflowApiPluginVersion [Pipeline: API](https://plugins.jenkins.io/workflow-api) plugin version
+ * @property workflowBasicStepsPluginVersion [Pipeline: Basic Steps](https://plugins.jenkins.io/workflow-basic-steps) plugin version
+ * @property workflowCpsPluginVersion [Pipeline: Groovy](https://plugins.jenkins.io/workflow-cps) plugin version
+ * @property workflowDurableTaskStepPluginVersion [Durable Task](https://plugins.jenkins.io/durable-task) plugin version
+ * @property workflowCpsGlobalLibraryPluginVersion [Pipeline: Shared Groovy Libraries](https://plugins.jenkins.io/workflow-cps-global-lib)
+ * @property workflowJobPluginVersion [Pipeline: Job](https://plugins.jenkins.io/workflow-job) plugin version
+ * @property workflowMultibranchPluginVersion [Pipeline: Multibranch](https://plugins.jenkins.io/workflow-multibranch) plugin version
+ * @property workflowScmStepPluginVersion [Pipeline: SCM Step](https://plugins.jenkins.io/workflow-scm-step) plugin version
+ * @property workflowStepApiPluginVersion [Pipeline: Step API](https://plugins.jenkins.io/workflow-step-api) plugin version
+ * @property workflowSupportPluginVersion [Pipeline: Supporting APIs](https://plugins.jenkins.io/workflow-support) plugin version
  */
 open class PluginDependencySpec @Inject constructor(
   val workflowApiPluginVersion: Property<String>,
