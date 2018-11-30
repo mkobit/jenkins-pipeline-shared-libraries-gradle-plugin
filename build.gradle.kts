@@ -112,7 +112,7 @@ configurations {
     }
   }
   resourcesCompileOnly.extendsFrom(jenkinsPlugins)
-  configurations.all {
+  all {
     incoming.beforeResolve {
       if (hierarchy.contains(resourcesCompileOnly)) {
         // Trigger the dependency seeding
@@ -173,7 +173,7 @@ tasks {
     gradleVersion = "5.0"
   }
 
-  withType<Jar> {
+  withType<Jar>().configureEach {
     from(project.projectDir) {
       include("LICENSE.txt")
       into("META-INF")
@@ -186,14 +186,14 @@ tasks {
     }
   }
 
-  withType<Javadoc> {
+  withType<Javadoc>().configureEach {
     options {
       header = project.name
       encoding = "UTF-8"
     }
   }
 
-  withType<KotlinCompile> {
+  withType<KotlinCompile>().configureEach {
     kotlinOptions.jvmTarget = "1.8"
   }
 
@@ -211,7 +211,7 @@ tasks {
   }
 
   val circleCiScriptDestination = file("$buildDir/circle/circleci")
-  val downloadCircleCiScript by creating(Exec::class) {
+  val downloadCircleCiScript by registering(Exec::class) {
     description = "Download the Circle CI binary"
     val downloadUrl = "https://circle-downloads.s3.amazonaws.com/releases/build_agent_wrapper/circleci"
     inputs.property("url", downloadUrl)
@@ -225,7 +225,7 @@ tasks {
     }
   }
 
-  val checkCircleConfig by creating(Exec::class) {
+  val checkCircleConfig by registering(Exec::class) {
     description = "Checks that the Circle configuration is valid"
     dependsOn(downloadCircleCiScript)
     val circleConfig = file(".circleci/config.yml")
@@ -233,7 +233,7 @@ tasks {
     args("config", "validate", "-c", circleConfig)
   }
 
-  val circleCiBuild by creating(Exec::class) {
+  val circleCiBuild by registering(Exec::class) {
     description = "Runs a build using the local Circle CI configuration"
     // Fails with workflows - https://discuss.circleci.com/t/command-line-support-for-workflows/14510
     enabled = false
@@ -253,7 +253,7 @@ tasks {
   // No Java code, so don't need the javadoc task.
   // Dokka generates our documentation.
   remove(getByName("javadoc"))
-  val dokka by getting(DokkaTask::class) {
+  dokka  {
     dependsOn(main.classesTaskName)
     jdkVersion = 8
     outputFormat = "html"
@@ -274,7 +274,7 @@ tasks {
   val javadocJar by creating(Jar::class) {
     dependsOn(dokka)
     description = "Assembles a JAR of the generated Javadoc"
-    from(dokka.outputDirectory)
+    from(dokka.map { it.outputDirectory })
     group = JavaBasePlugin.DOCUMENTATION_GROUP
     classifier = "javadoc"
   }
@@ -282,8 +282,6 @@ tasks {
   assemble {
     dependsOn(sourcesJar, javadocJar)
   }
-
-  val login by getting
 
   val gitDirtyCheck by creating {
     doFirst {
@@ -334,7 +332,7 @@ tasks {
     commandLine("git", "tag", "--sign", "--annotate", project.version, "--message", "Gradle created tag for ${project.version}")
   }
 
-  val publishPlugins by getting {
+  publishPlugins {
     dependsOn(gitDirtyCheck)
     mustRunAfter(login, docVersionChecks)
   }

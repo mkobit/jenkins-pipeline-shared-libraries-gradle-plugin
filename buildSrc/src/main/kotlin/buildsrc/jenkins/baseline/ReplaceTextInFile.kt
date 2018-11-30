@@ -14,15 +14,14 @@ import java.nio.file.Files
 import javax.inject.Inject
 
 open class ReplaceTextInFile @Inject constructor(
-  objectFactory: ObjectFactory,
-  projectLayout: ProjectLayout
+  objectFactory: ObjectFactory
 ) : DefaultTask() {
 
   @get:Nested
   val replacements: ListProperty<Replacement> = objectFactory.listProperty(Replacement::class.java)
 
   @get:InputFile
-  val targetFile: RegularFileProperty = projectLayout.fileProperty()
+  val targetFile: RegularFileProperty = objectFactory.fileProperty()
 
   @TaskAction
   fun replaceText() {
