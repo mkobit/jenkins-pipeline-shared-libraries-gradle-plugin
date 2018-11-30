@@ -155,7 +155,7 @@ dependencies {
     "org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:2.12",
     "org.jenkins-ci.plugins.workflow:workflow-durable-task-step:2.26",
     "org.jenkins-ci.plugins.workflow:workflow-job:2.29",
-    "org.jenkins-ci.plugins.workflow:workflow-multibranch:2.17",
+    "org.jenkins-ci.plugins.workflow:workflow-multibranch:2.20",
     "org.jenkins-ci.plugins.workflow:workflow-scm-step:2.7",
     "org.jenkins-ci.plugins.workflow:workflow-step-api:2.16",
     "org.jenkins-ci.plugins.workflow:workflow-support:2.23"

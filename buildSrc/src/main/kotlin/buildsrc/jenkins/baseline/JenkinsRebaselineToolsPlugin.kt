@@ -94,7 +94,7 @@ class JenkinsRebaselineToolsPlugin : Plugin<Project> {
           add(workflowDurableTaskStepVersion.map { moduleDefinitionReplacement("org.jenkins-ci.plugins.workflow:workflow-durable-task-step", it) })
           add(workflowCpsGlobalLibVersion.map { moduleDefinitionReplacement("org.jenkins-ci.plugins.workflow:workflow-cps-global-lib", it) })
           add(workflowJobVersion.map { moduleDefinitionReplacement("org.jenkins-ci.plugins.workflow:workflow-job", it) })
-          add(workflowMultibranchVersion.map { moduleDefinitionReplacement("org.jenkins-ci.plugins.workflow:multibranch", it) })
+          add(workflowMultibranchVersion.map { moduleDefinitionReplacement("org.jenkins-ci.plugins.workflow:workflow-multibranch", it) })
           add(workflowStepApiVersion.map { moduleDefinitionReplacement("org.jenkins-ci.plugins.workflow:workflow-step-api", it) })
           add(workflowScmStepVersion.map { moduleDefinitionReplacement("org.jenkins-ci.plugins.workflow:workflow-scm-step", it) })
           add(workflowSupportVersion.map { moduleDefinitionReplacement("org.jenkins-ci.plugins.workflow:workflow-support", it) })
