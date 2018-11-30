@@ -381,11 +381,4 @@ pluginBundle {
   description = "Configures and sets up a Gradle project for development and testing of a Jenkins Pipeline shared library (https://jenkins.io/doc/book/pipeline/shared-libraries/)"
   tags = listOf("jenkins", "pipeline", "shared library", "global library")
   website = ProjectInfo.projectUrl
-
-  plugins(delegateClosureOf<NamedDomainObjectContainer<PluginConfig>> {
-    create("pipelineLibraryDevelopment") {
-      id = sharedLibraryPluginId
-      displayName = "Jenkins Pipeline Shared Library Development"
-    }
-  })
 }
