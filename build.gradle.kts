@@ -367,18 +367,20 @@ gradlePlugin {
     create("sharedLibrary") {
       id = sharedLibraryPluginId
       implementationClass = "com.mkobit.jenkins.pipelines.SharedLibraryPlugin"
-      description = "Jenkins Pipeline Shared Library Development"
+      displayName = "Jenkins Pipeline Shared Library Development"
+      description = "Configures and sets up a Gradle project for development and testing of a Jenkins Pipeline shared library (https://jenkins.io/doc/book/pipeline/shared-libraries/)"
     }
     create("jenkinsIntegration") {
       id =  "com.mkobit.jenkins.pipelines.jenkins-integration"
       implementationClass = "com.mkobit.jenkins.pipelines.JenkinsIntegrationPlugin"
+      displayName = "Jenkins Integration Plugin"
+      description = "Tasks to retrieve information from a Jenkins instance to be aid in the development of tools with Gradle"
     }
   }
 }
 
 pluginBundle {
   vcsUrl = ProjectInfo.projectUrl
-  description = "Configures and sets up a Gradle project for development and testing of a Jenkins Pipeline shared library (https://jenkins.io/doc/book/pipeline/shared-libraries/)"
   tags = listOf("jenkins", "pipeline", "shared library", "global library")
   website = ProjectInfo.projectUrl
 }
