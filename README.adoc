@@ -1,7 +1,7 @@
 = Jenkins Pipeline Shared Library Gradle Plugin
 :toc:
-:latest-version: 0.7.0
-:supports-gradle: 4.10+
+:latest-version: 0.8.0
+:supports-gradle: 5.0+
 :github-repo-id: jenkins-pipeline-shared-libraries-gradle-plugin
 :uri-github-releases: https://github.com/mkobit/{github-repo-id}/releases
 :uri-jenkins-test-harness: https://github.com/jenkinsci/jenkins-test-harness.git
@@ -45,8 +45,6 @@ This plugin intends to help with development of link:{uri-jenkins-shared-library
 See the link:{uri-consumer-example}[example repository] for a demonstration of using this plugin.
 
 == 5 minute onboarding
-
-NOTE: Requires at least Gradle 4.6
 
 . Consume plugin from Gradle plugin portal
 +
