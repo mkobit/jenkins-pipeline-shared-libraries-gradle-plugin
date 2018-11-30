@@ -22,12 +22,63 @@ For each release, a subsection should be added for each of the following if they
 * `Removed` for now removed features.
 * `Security` in case of vulnerabilities.
 
-== UNRELEASED (YYYY/MM/DD)
+== 0.8.0 (2018/11/30)
+
+This version requires at least Gradle 5.0+.
 
 === Changed
 
-* Dependency updates
 * A few unintentional public functions have been moved to `internal`
+* Dependency version updates
+* Updated default versions:
++
+[cols="3*",options="header"]
+|===
+|Component
+|From
+|To
+
+|Core
+|2.121.3
+|2.138.3
+
+|Test Harness
+|2.40
+|2.44
+
+|Workflow API Plugin
+|2.29
+|2.33
+
+|Workflow Basic Steps Plugin
+|2.10
+|2.13
+
+|Workflow CPS Plugin
+|2.54
+|2.61
+
+|Workflow Global CPS Library Plugin
+|2.10
+|2.12
+
+|Workflow Durable Task Step Plugin
+|2.21
+|2.26
+
+|Workflow Job Plugin
+|2.24
+|2.29
+
+|Workflow SCM Step Plugin
+|2.6
+|2.7
+
+|Workflow Support Plugin
+|2.20
+|2.23
+
+|===
 
 == 0.7.0 (2018/09/04)
 
@@ -42,7 +93,7 @@ This version requires at least Gradle 4.10.
 |===
 |Component
 |From
-|TO
+|To
 
 |Core
 |2.107.2
@@ -100,7 +151,7 @@ This version requires at least Gradle 4.10.
 |===
 |Component
 |From
-|TO
+|To
 
 |Core
 |2.107.1
@@ -159,7 +210,7 @@ sharedLibrary {
 |===
 |Component
 |From
-|TO
+|To
 
 |Core
 |2.89.4
@@ -220,7 +271,7 @@ WARNING: Unit testing code that uses `@Grab` does not seem to work.
 |===
 |Component
 |From
-|TO
+|To
 
 |Core
 |2.89.2
@@ -278,7 +329,7 @@ WARNING: Unit testing code that uses `@Grab` does not seem to work.
 |===
 |Component
 |From
-|TO
+|To
 
 |Core
 |2.73.2
