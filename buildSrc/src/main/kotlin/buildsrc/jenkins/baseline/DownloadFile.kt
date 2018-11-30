@@ -19,8 +19,7 @@ import java.time.Instant
 import javax.inject.Inject
 
 open class DownloadFile @Inject constructor(
-  objectFactory: ObjectFactory,
-  projectLayout: ProjectLayout
+  objectFactory: ObjectFactory
 ) : DefaultTask() {
 
   @get:Input
@@ -34,7 +33,7 @@ open class DownloadFile @Inject constructor(
   val upToDateDuration: Property<Duration> = objectFactory.property()
 
   @get:OutputFile
-  val destination: RegularFileProperty = projectLayout.fileProperty()
+  val destination: RegularFileProperty = objectFactory.fileProperty()
 
   init {
     outputs.upToDateWhen {

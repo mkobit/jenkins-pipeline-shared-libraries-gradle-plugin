@@ -1,30 +1,58 @@
-java-8-defaults: &java-8-defaults
-  working_directory: ~/build-working-directory
-  docker:
+version: 2.1
+
+executors:
+  java-8:
+    working_directory: ~/build-working-directory
+    docker:
     - image: circleci/openjdk:8-jdk
       environment:
         JAVA_OPTS: -XX:+UseG1GC
         # Disable Kotlin compiler daemon - https://discuss.kotlinlang.org/t/solved-disable-kotlin-compiler-process-keepalive/2622
         GRADLE_OPTS: -Xmx512m -Xms256m -Dkotlin.compiler.execution.strategy="in-process"
 
+commands:
+  gradle-build:
+    description: Runs './gradlew build' testing against the provided version
+    parameters:
+      gradle-test-versions:
+        type: string
+      submit-build-scan:
+        type: boolean
+        default: false
+    steps:
+      - run:
+          name: Run Gradle Build
+          command: ./gradlew build -P gradleTestVersions="<< parameters.gradle-test-versions >>" --max-workers 2 --stacktrace<<# parameters.submit-build-scan >> --scan<</ parameters.submit-build-scan >>
+      - store_test_results:
+          path: ~/build-working-directory/build/test-results/
+  restore-home-cache:
+    description: Restores the Gradle home cache.
+    steps:
+      - run:
+          name: Generate cache key
+          command: |
+            mkdir -p build
+            find settings.gradle.kts build.gradle.kts gradle buildSrc/src buildSrc/build.gradle.kts -type f -exec sha256sum '{}' \; | tee build/circle-ci-key.txt
+      - restore_cache:
+          keys:
+            - v2-home-cache-{{ checksum "build/circle-ci-key.txt" }}
+            - v2-home-cache-
+  save-home-cache:
+    description: Saves the Gradle home cache
+    steps:
+      - run:
+          name: Generate cache key
+          command: |
+            mkdir -p build
+            find settings.gradle.kts build.gradle.kts gradle buildSrc/src buildSrc/build.gradle.kts -type f -exec sha256sum '{}' \; | tee build/circle-ci-key.txt
+      - save_cache:
+          paths:
+            - ~/.gradle
+          key: v2-home-cache-{{ checksum "build/circle-ci-key.txt" }}
+          when: always
+
+# TODO: this is an artifact of determining why some builds fail with OOM on Circle CI
 shared-steps:
-  generate-cache-key: &generate-cache-key
-    run:
-      command: |
-        mkdir -p build
-        find settings.gradle.kts build.gradle.kts gradle buildSrc/src buildSrc/build.gradle.kts -type f -exec sha256sum '{}' \; | tee build/circle-ci-key.txt
-      name: Generate cache key
-  restore-home-cache: &restore-home-cache
-    restore_cache:
-      keys:
-        - v2-home-cache-{{ checksum "build/circle-ci-key.txt" }}
-        - v2-home-cache-
-  save-home-cache: &save-home-cache
-    save_cache:
-      paths:
-        - ~/.gradle
-      key: v2-home-cache-{{ checksum "build/circle-ci-key.txt" }}
-      when: always
   show-java-info: &show-java-info
     run:
       command: |
@@ -32,23 +60,17 @@ shared-steps:
         java -XshowSettings:vm -XX:+PrintCommandLineFlags -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -version
         javac -version
       name: Show Java Version
-  junit-platform-test-results: &junit-platform-test-results
-    store_test_results:
-      path: ~/build-working-directory/build/test-results/
 
-version: 2
 jobs:
   check:
-    <<: *java-8-defaults
+    executor: java-8
     steps:
       - checkout
-      - *generate-cache-key
-      - *restore-home-cache
-      - run:
-          command: ./gradlew build -PgradleTestVersions=current --max-workers 2 --stacktrace  --scan
-          name: Test With Current Gradle Wrapper Version
-      - *junit-platform-test-results
-      - *save-home-cache
+      - restore-home-cache
+      - gradle-build:
+          submit-build-scan: true
+          gradle-test-versions: current
+      - save-home-cache
       - persist_to_workspace:
           root: ~/build-working-directory
           paths:
@@ -56,41 +78,9 @@ jobs:
             - build/*
             - buildSrc/.gradle/*
             - buildSrc/build/*
-            
-  test-gradle-4.6:
-    <<: *java-8-defaults
-    steps:
-      - checkout
-      - *generate-cache-key
-      - *restore-home-cache
-      - attach_workspace:
-          at: ~/build-working-directory
-      - run:
-          command: ./gradlew build -PgradleTestVersions=4.6 --max-workers 2 --stacktrace
-          name: Test With Gradle 4.6
-      - *junit-platform-test-results
-
-  test-gradle-4.7:
-    <<: *java-8-defaults
-    steps:
-      - checkout
-      - *generate-cache-key
-      - *restore-home-cache
-      - attach_workspace:
-          at: ~/build-working-directory
-      - run:
-          command: ./gradlew build -PgradleTestVersions=4.7 --max-workers 2 --stacktrace
-          name: Test With Gradle 4.7
-      - *junit-platform-test-results
 
 workflows:
   version: 2
   build:
     jobs:
       - check
-      - test-gradle-4.6:
-          requires:
-            - check
-      - test-gradle-4.7:
-          requires:
-            - check

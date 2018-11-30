@@ -2,10 +2,12 @@ package buildsrc
 
 @Suppress("UNUSED", "MemberVisibilityCanBePrivate")
 object DependencyInfo {
+  const val assertJGradle = "com.mkobit.gradle.test:assertj-gradle:0.2.0"
+  const val gradleTestKotlinExtensions = "com.mkobit.gradle.test:gradle-test-kotlin-extensions:0.6.0"
   const val javapoetVersion = "1.11.1"
-  const val okHttpVersion = "3.11.0"
-  const val junitPlatformVersion = "1.3.0"
-  const val junitJupiterVersion = "5.3.0"
+  const val okHttpVersion = "3.12.0"
+  const val junitPlatformVersion = "1.3.2"
+  const val junitJupiterVersion = "5.3.2"
   const val junit5Log4jVersion = "2.11.1"
   const val kotlinLoggingVersion = "1.6.10"
   const val slf4jVersion = "1.7.25"
@@ -13,11 +15,11 @@ object DependencyInfo {
   val okHttpClient = okHttp("okhttp")
   val okHttpMockServer = okHttp("mockwebserver")
 
-  const val assertJCore = "org.assertj:assertj-core:3.9.1"
-  const val guava = "com.google.guava:guava:26.0-jre"
+  const val assertJCore = "org.assertj:assertj-core:3.11.1"
+  const val guava = "com.google.guava:guava:27.0.1-jre"
   const val javapoet = "com.squareup:javapoet:$javapoetVersion"
-  const val mockito = "org.mockito:mockito-core:2.21.0"
-  const val mockitoKotlin = "com.nhaarman:mockito-kotlin:1.6.0"
+  const val mockito = "org.mockito:mockito-core:2.23.4"
+  const val mockitoKotlin = "com.nhaarman.mockitokotlin2:mockito-kotlin:2.0.0"
   val junitPlatformRunner = junitPlatform("runner")
   val junitJupiterApi = junitJupiter("api")
   val junitJupiterEngine = junitJupiter("engine")

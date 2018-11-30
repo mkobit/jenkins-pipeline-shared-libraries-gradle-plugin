@@ -12,7 +12,7 @@ import java.io.ByteArrayOutputStream
 import java.net.URL
 
 plugins {
-  id("com.gradle.build-scan") version "1.16"
+  id("com.gradle.build-scan") version "2.0.2"
   `kotlin-dsl`
   `java-library`
   `java-gradle-plugin`
@@ -25,7 +25,7 @@ plugins {
  id("buildsrc.jenkins-rebaseline")
 }
 
-version = "0.7.0"
+version = "0.8.0"
 group = "com.mkobit.jenkins.pipelines"
 description = "Gradle plugins for Jenkins Shared libraries usage"
 
@@ -45,8 +45,8 @@ val SourceSet.kotlin: SourceDirectorySet
 buildScan {
   fun env(key: String): String? = System.getenv(key)
 
-  setTermsOfServiceAgree("yes")
-  setTermsOfServiceUrl("https://gradle.com/terms-of-service")
+  termsOfServiceAgree = "yes"
+  termsOfServiceUrl = "https://gradle.com/terms-of-service"
 
   // Env variables from https://circleci.com/docs/2.0/env-vars/
   if (env("CI") != null) {
@@ -69,17 +69,18 @@ buildScan {
 java {
   sourceCompatibility = JavaVersion.VERSION_1_8
   targetCompatibility = JavaVersion.VERSION_1_8
-  sourceSets.invoke {
-    // This source set used for resources to get IDE completion for ease of writing tests against JenkinsPipelineUnit and Jenkins Test Harness
-    val pipelineTestResources by creating {
-      java.setSrcDirs(emptyList<Any>())
-      kotlin.setSrcDirs(emptyList<Any>())
-      resources.setSrcDirs(listOf(file("src/$name")))
-    }
+}
 
-    "test" {
-      runtimeClasspath += pipelineTestResources.output
-    }
+sourceSets {
+  // This source set used for resources to get IDE completion for ease of writing tests against JenkinsPipelineUnit and Jenkins Test Harness
+  val pipelineTestResources by creating {
+    java.setSrcDirs(emptyList<Any>())
+    kotlin.setSrcDirs(emptyList<Any>())
+    resources.setSrcDirs(listOf(file("src/$name")))
+  }
+
+  test {
+    runtimeClasspath += pipelineTestResources.output
   }
 }
 
@@ -111,7 +112,7 @@ configurations {
     }
   }
   resourcesCompileOnly.extendsFrom(jenkinsPlugins)
-  configurations.all {
+  all {
     incoming.beforeResolve {
       if (hierarchy.contains(resourcesCompileOnly)) {
         // Trigger the dependency seeding
@@ -127,13 +128,13 @@ dependencies {
   implementation(DependencyInfo.kotlinLogging)
   implementation(DependencyInfo.okHttpClient)
   testImplementation(kotlin("reflect"))
-  testImplementation(DependencyInfo.okHttpMockServer)
-  testImplementation("com.mkobit.gradle.test:gradle-test-kotlin-extensions:0.5.0")
-  testImplementation("com.mkobit.gradle.test:assertj-gradle:0.2.0")
-  testImplementation(DependencyInfo.guava)
   testImplementation(DependencyInfo.assertJCore)
+  testImplementation(DependencyInfo.assertJGradle)
+  testImplementation(DependencyInfo.gradleTestKotlinExtensions)
+  testImplementation(DependencyInfo.guava)
   testImplementation(DependencyInfo.mockito)
   testImplementation(DependencyInfo.mockitoKotlin)
+  testImplementation(DependencyInfo.okHttpMockServer)
   DependencyInfo.junitTestImplementationArtifacts.forEach {
     testImplementation(it)
   }
@@ -145,35 +146,34 @@ dependencies {
   // against the libraries that are used.
   val pipelineTestResources by sourceSets.getting
   pipelineTestResources.compileOnlyConfigurationName("com.lesfurets:jenkins-pipeline-unit:1.1")
-  pipelineTestResources.compileOnlyConfigurationName("org.jenkins-ci.main:jenkins-test-harness:2.40")
+  pipelineTestResources.compileOnlyConfigurationName("org.jenkins-ci.main:jenkins-test-harness:2.44")
   pipelineTestResources.compileOnlyConfigurationName("org.codehaus.groovy:groovy:2.4.12")
   val jenkinsPluginDependencies = listOf(
-    "org.jenkins-ci.plugins.workflow:workflow-api:2.29",
-    "org.jenkins-ci.plugins.workflow:workflow-basic-steps:2.10",
-    "org.jenkins-ci.plugins.workflow:workflow-cps:2.54",
-    "org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:2.10",
-    "org.jenkins-ci.plugins.workflow:workflow-durable-task-step:2.21",
-    "org.jenkins-ci.plugins.workflow:workflow-job:2.24",
-    "org.jenkins-ci.plugins.workflow:workflow-multibranch:2.17",
-    "org.jenkins-ci.plugins.workflow:workflow-scm-step:2.6",
+    "org.jenkins-ci.plugins.workflow:workflow-api:2.33",
+    "org.jenkins-ci.plugins.workflow:workflow-basic-steps:2.13",
+    "org.jenkins-ci.plugins.workflow:workflow-cps:2.61",
+    "org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:2.12",
+    "org.jenkins-ci.plugins.workflow:workflow-durable-task-step:2.26",
+    "org.jenkins-ci.plugins.workflow:workflow-job:2.29",
+    "org.jenkins-ci.plugins.workflow:workflow-multibranch:2.20",
+    "org.jenkins-ci.plugins.workflow:workflow-scm-step:2.7",
     "org.jenkins-ci.plugins.workflow:workflow-step-api:2.16",
-    "org.jenkins-ci.plugins.workflow:workflow-support:2.20"
+    "org.jenkins-ci.plugins.workflow:workflow-support:2.23"
   )
   jenkinsPluginDependencies.forEach {
     "jenkinsPlugins"(it)
   }
-  "jenkinsPlugins"("org.jenkins-ci.main:jenkins-core:2.121.3") {
+  "jenkinsPlugins"("org.jenkins-ci.main:jenkins-core:2.138.3") {
     isTransitive = false
   }
 }
 
 tasks {
-  register("wrapper", Wrapper::class.java) {
-    gradleVersion = "4.10"
-    distributionType = Wrapper.DistributionType.ALL
+  wrapper{
+    gradleVersion = "5.0"
   }
 
-  withType<Jar> {
+  withType<Jar>().configureEach {
     from(project.projectDir) {
       include("LICENSE.txt")
       into("META-INF")
@@ -186,14 +186,14 @@ tasks {
     }
   }
 
-  withType<Javadoc> {
+  withType<Javadoc>().configureEach {
     options {
       header = project.name
       encoding = "UTF-8"
     }
   }
 
-  withType<KotlinCompile> {
+  withType<KotlinCompile>().configureEach {
     kotlinOptions.jvmTarget = "1.8"
   }
 
@@ -211,7 +211,7 @@ tasks {
   }
 
   val circleCiScriptDestination = file("$buildDir/circle/circleci")
-  val downloadCircleCiScript by creating(Exec::class) {
+  val downloadCircleCiScript by registering(Exec::class) {
     description = "Download the Circle CI binary"
     val downloadUrl = "https://circle-downloads.s3.amazonaws.com/releases/build_agent_wrapper/circleci"
     inputs.property("url", downloadUrl)
@@ -225,7 +225,7 @@ tasks {
     }
   }
 
-  val checkCircleConfig by creating(Exec::class) {
+  val checkCircleConfig by registering(Exec::class) {
     description = "Checks that the Circle configuration is valid"
     dependsOn(downloadCircleCiScript)
     val circleConfig = file(".circleci/config.yml")
@@ -233,7 +233,7 @@ tasks {
     args("config", "validate", "-c", circleConfig)
   }
 
-  val circleCiBuild by creating(Exec::class) {
+  val circleCiBuild by registering(Exec::class) {
     description = "Runs a build using the local Circle CI configuration"
     // Fails with workflows - https://discuss.circleci.com/t/command-line-support-for-workflows/14510
     enabled = false
@@ -253,7 +253,7 @@ tasks {
   // No Java code, so don't need the javadoc task.
   // Dokka generates our documentation.
   remove(getByName("javadoc"))
-  val dokka by getting(DokkaTask::class) {
+  dokka  {
     dependsOn(main.classesTaskName)
     jdkVersion = 8
     outputFormat = "html"
@@ -274,16 +274,14 @@ tasks {
   val javadocJar by creating(Jar::class) {
     dependsOn(dokka)
     description = "Assembles a JAR of the generated Javadoc"
-    from(dokka.outputDirectory)
+    from(dokka.map { it.outputDirectory })
     group = JavaBasePlugin.DOCUMENTATION_GROUP
     classifier = "javadoc"
   }
 
-  val assemble by getting {
+  assemble {
     dependsOn(sourcesJar, javadocJar)
   }
-
-  val login by getting
 
   val gitDirtyCheck by creating {
     doFirst {
@@ -334,7 +332,7 @@ tasks {
     commandLine("git", "tag", "--sign", "--annotate", project.version, "--message", "Gradle created tag for ${project.version}")
   }
 
-  val publishPlugins by getting {
+  publishPlugins {
     dependsOn(gitDirtyCheck)
     mustRunAfter(login, docVersionChecks)
   }
@@ -363,7 +361,7 @@ artifacts {
 
 val sharedLibraryPluginId = "com.mkobit.jenkins.pipelines.shared-library"
 gradlePlugin {
-  plugins.invoke {
+  plugins {
     // Don't get the extensions for NamedDomainObjectContainer here because we only have a NamedDomainObjectContainer
     // See https://github.com/gradle/kotlin-dsl/issues/459
     register("sharedLibrary") {

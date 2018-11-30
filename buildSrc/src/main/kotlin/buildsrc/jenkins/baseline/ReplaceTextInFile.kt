@@ -10,19 +10,19 @@ import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
+import org.gradle.kotlin.dsl.listProperty
 import java.nio.file.Files
 import javax.inject.Inject
 
 open class ReplaceTextInFile @Inject constructor(
-  objectFactory: ObjectFactory,
-  projectLayout: ProjectLayout
+  objectFactory: ObjectFactory
 ) : DefaultTask() {
 
   @get:Nested
-  val replacements: ListProperty<Replacement> = objectFactory.listProperty(Replacement::class.java)
+  val replacements: ListProperty<Replacement> = objectFactory.listProperty<Replacement>().empty()
 
   @get:InputFile
-  val targetFile: RegularFileProperty = projectLayout.fileProperty()
+  val targetFile: RegularFileProperty = objectFactory.fileProperty()
 
   @TaskAction
   fun replaceText() {
