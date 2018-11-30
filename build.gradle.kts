@@ -12,7 +12,7 @@ import java.io.ByteArrayOutputStream
 import java.net.URL
 
 plugins {
-  id("com.gradle.build-scan") version "1.16"
+  id("com.gradle.build-scan") version "2.0.2"
   `kotlin-dsl`
   `java-library`
   `java-gradle-plugin`
@@ -45,8 +45,8 @@ val SourceSet.kotlin: SourceDirectorySet
 buildScan {
   fun env(key: String): String? = System.getenv(key)
 
-  setTermsOfServiceAgree("yes")
-  setTermsOfServiceUrl("https://gradle.com/terms-of-service")
+  termsOfServiceAgree = "yes"
+  termsOfServiceUrl = "https://gradle.com/terms-of-service"
 
   // Env variables from https://circleci.com/docs/2.0/env-vars/
   if (env("CI") != null) {
@@ -69,17 +69,18 @@ buildScan {
 java {
   sourceCompatibility = JavaVersion.VERSION_1_8
   targetCompatibility = JavaVersion.VERSION_1_8
-  sourceSets.invoke {
-    // This source set used for resources to get IDE completion for ease of writing tests against JenkinsPipelineUnit and Jenkins Test Harness
-    val pipelineTestResources by creating {
-      java.setSrcDirs(emptyList<Any>())
-      kotlin.setSrcDirs(emptyList<Any>())
-      resources.setSrcDirs(listOf(file("src/$name")))
-    }
+}
 
-    "test" {
-      runtimeClasspath += pipelineTestResources.output
-    }
+sourceSets {
+  // This source set used for resources to get IDE completion for ease of writing tests against JenkinsPipelineUnit and Jenkins Test Harness
+  val pipelineTestResources by creating {
+    java.setSrcDirs(emptyList<Any>())
+    kotlin.setSrcDirs(emptyList<Any>())
+    resources.setSrcDirs(listOf(file("src/$name")))
+  }
+
+  test {
+    runtimeClasspath += pipelineTestResources.output
   }
 }
 
@@ -127,13 +128,13 @@ dependencies {
   implementation(DependencyInfo.kotlinLogging)
   implementation(DependencyInfo.okHttpClient)
   testImplementation(kotlin("reflect"))
-  testImplementation(DependencyInfo.okHttpMockServer)
-  testImplementation("com.mkobit.gradle.test:gradle-test-kotlin-extensions:0.5.0")
-  testImplementation("com.mkobit.gradle.test:assertj-gradle:0.2.0")
-  testImplementation(DependencyInfo.guava)
   testImplementation(DependencyInfo.assertJCore)
+  testImplementation(DependencyInfo.assertJGradle)
+  testImplementation(DependencyInfo.gradleTestKotlinExtensions)
+  testImplementation(DependencyInfo.guava)
   testImplementation(DependencyInfo.mockito)
   testImplementation(DependencyInfo.mockitoKotlin)
+  testImplementation(DependencyInfo.okHttpMockServer)
   DependencyInfo.junitTestImplementationArtifacts.forEach {
     testImplementation(it)
   }
@@ -168,9 +169,8 @@ dependencies {
 }
 
 tasks {
-  register("wrapper", Wrapper::class.java) {
-    gradleVersion = "4.10"
-    distributionType = Wrapper.DistributionType.ALL
+  wrapper{
+    gradleVersion = "5.0"
   }
 
   withType<Jar> {
@@ -279,7 +279,7 @@ tasks {
     classifier = "javadoc"
   }
 
-  val assemble by getting {
+  assemble {
     dependsOn(sourcesJar, javadocJar)
   }
 
@@ -363,7 +363,7 @@ artifacts {
 
 val sharedLibraryPluginId = "com.mkobit.jenkins.pipelines.shared-library"
 gradlePlugin {
-  plugins.invoke {
+  plugins {
     // Don't get the extensions for NamedDomainObjectContainer here because we only have a NamedDomainObjectContainer
     // See https://github.com/gradle/kotlin-dsl/issues/459
     register("sharedLibrary") {

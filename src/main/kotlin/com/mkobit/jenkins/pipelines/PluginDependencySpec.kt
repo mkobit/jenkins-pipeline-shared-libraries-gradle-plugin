@@ -34,7 +34,8 @@ open class PluginDependencySpec @Inject constructor(
   val workflowSupportPluginVersion: Property<String>,
   private val objectFactory: ObjectFactory
 ) {
-  private val additionalDependencies: ListProperty<PluginDependency> = objectFactory.listProperty()
+  // .empty() needed due to https://github.com/gradle/gradle/issues/7485
+  private val additionalDependencies: ListProperty<PluginDependency> = objectFactory.listProperty<PluginDependency>().empty()
 
   /**
    * Adds a dependency with the provided coordinates.
@@ -58,7 +59,8 @@ open class PluginDependencySpec @Inject constructor(
   private fun workflowSupportPluginDependency(): Provider<String> = workflowSupportPluginVersion.map { "org.jenkins-ci.plugins.workflow:workflow-support:$it" }
 
   fun pluginDependencies(): ListProperty<PluginDependency> {
-    val dependencies: ListProperty<PluginDependency> = objectFactory.listProperty()
+    // .empty() needed due to https://github.com/gradle/gradle/issues/7485
+    val dependencies: ListProperty<PluginDependency> = objectFactory.listProperty<PluginDependency>().empty()
     dependencies.addAll(additionalDependencies)
     listOf(
         workflowApiPluginDependency(),

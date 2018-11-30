@@ -51,7 +51,7 @@ commands:
           key: v2-home-cache-{{ checksum "build/circle-ci-key.txt" }}
           when: always
 
-# TODO: this is an aritfact of determining why some builds fail with OOM on Circle CI
+# TODO: this is an artifact of determining why some builds fail with OOM on Circle CI
 shared-steps:
   show-java-info: &show-java-info
     run:
@@ -79,21 +79,8 @@ jobs:
             - buildSrc/.gradle/*
             - buildSrc/build/*
 
-  test-gradle-5_0-rc-1:
-    executor: java-8
-    steps:
-      - checkout
-      - restore-home-cache
-      - attach_workspace:
-          at: ~/build-working-directory
-      - gradle-build:
-          gradle-test-versions: 5.0-rc-1
-
 workflows:
   version: 2
   build:
     jobs:
       - check
-      - test-gradle-5_0-rc-1:
-          requires:
-            - check

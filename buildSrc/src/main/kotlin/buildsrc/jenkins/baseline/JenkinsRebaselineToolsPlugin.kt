@@ -11,7 +11,7 @@ import org.gradle.kotlin.dsl.getValue
 import java.io.File
 import java.time.Duration
 
-open class JenkinsRebaselineToolsPlugin : Plugin<Project> {
+class JenkinsRebaselineToolsPlugin : Plugin<Project> {
 
   private val xmlMapper: XmlMapper by lazy { XmlMapper() }
 
@@ -101,6 +101,7 @@ open class JenkinsRebaselineToolsPlugin : Plugin<Project> {
         }
       }
 
+      @Suppress("UNUSED_VARIABLE")
       val runRebaseline by tasks.creating {
         group = TASK_GROUP
         description = "Executes tasks to rebaseline project"

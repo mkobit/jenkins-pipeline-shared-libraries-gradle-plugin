@@ -1,6 +1,6 @@
 package com.mkobit.jenkins.pipelines
 
-import com.nhaarman.mockito_kotlin.mock
+import com.nhaarman.mockitokotlin2.mock
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.SoftAssertions
 import org.gradle.testfixtures.ProjectBuilder
