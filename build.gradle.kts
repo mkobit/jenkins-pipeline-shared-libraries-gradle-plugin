@@ -22,7 +22,7 @@ plugins {
   // TODO: load version from shared location
   // Only used for local publishing for testing
   `maven-publish`
- id("buildsrc.jenkins-rebaseline")
+  buildsrc.`jenkins-rebaseline`
 }
 
 version = "0.8.0"
