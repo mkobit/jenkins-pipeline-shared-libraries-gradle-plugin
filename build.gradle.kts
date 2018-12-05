@@ -210,36 +210,55 @@ tasks {
     }
   }
 
-  val circleCiScriptDestination = file("$buildDir/circle/circleci")
-  val downloadCircleCiScript by registering(Exec::class) {
-    description = "Download the Circle CI binary"
-    val downloadUrl = "https://circle-downloads.s3.amazonaws.com/releases/build_agent_wrapper/circleci"
+  val circleCiBundleDownloadLocation = layout.buildDirectory.file("circle/circleci.tar.gz")
+  val circleCiBundleUnpackLocation = layout.buildDirectory.dir("circle/circle-unpacked")
+  val circleCiScriptDestination = circleCiBundleUnpackLocation.map {
+    fileTree(it).filter { fileDetails -> fileDetails.name == "circleci" }.singleFile
+  }
+  val downloadCircleCiBundle by registering {
+    val downloadUrl = "https://github.com/CircleCI-Public/circleci-cli/releases/download/v0.1.4308/circleci-cli_0.1.4308_linux_amd64.tar.gz"
     inputs.property("url", downloadUrl)
-    outputs.file(circleCiScriptDestination)
-    doFirst { circleCiScriptDestination.parentFile.mkdirs() }
-    commandLine("curl", "--fail", "-L", downloadUrl, "-o", circleCiScriptDestination)
-    doLast {
-      project.exec { commandLine("chmod", "+x", circleCiScriptDestination) }
-      // Hack: replace -it with -i to work in non TTY - https://discuss.circleci.com/t/allow-for-using-circle-ci-tooling-without-a-tty/15501/4
-      project.exec { commandLine("sed", "--in-place", "--", "s/run -it/run -i/g", circleCiScriptDestination) }
+    outputs.file(circleCiBundleDownloadLocation)
+    doFirst("download archive") {
+      ant.invokeMethod("get", mapOf("src" to downloadUrl, "dest" to circleCiBundleDownloadLocation.map { it.asFile }.get()))
     }
   }
 
-  val checkCircleConfig by registering(Exec::class) {
-    description = "Checks that the Circle configuration is valid"
-    dependsOn(downloadCircleCiScript)
-    val circleConfig = file(".circleci/config.yml")
-    executable(circleCiScriptDestination)
-    args("config", "validate", "-c", circleConfig)
+  val unpackCircleCi by registering {
+    dependsOn(downloadCircleCiBundle)
+    inputs.file(circleCiBundleDownloadLocation)
+    outputs.dir(circleCiBundleUnpackLocation)
+    doFirst("unpack archive") {
+      copy {
+        from(tarTree(resources.gzip(circleCiBundleDownloadLocation.map { it.asFile }.get())))
+        into(circleCiBundleUnpackLocation)
+      }
+      ant.invokeMethod("chmod", mapOf("file" to circleCiScriptDestination.get(), "perm" to "+x"))
+    }
   }
 
-  val circleCiBuild by registering(Exec::class) {
+  register("checkCircleConfig") {
+    description = "Checks that the Circle configuration is valid"
+    dependsOn(unpackCircleCi)
+    doFirst("execute circle config validate") {
+      exec {
+        executable(circleCiScriptDestination.get())
+        args("config", "validate", "-c", file(".circleci/config.yml"))
+      }
+    }
+  }
+
+  register("circleCiBuild") {
     description = "Runs a build using the local Circle CI configuration"
     // Fails with workflows - https://discuss.circleci.com/t/command-line-support-for-workflows/14510
     enabled = false
-    dependsOn(downloadCircleCiScript)
-    executable(circleCiScriptDestination)
-    args("build")
+    dependsOn(unpackCircleCi)
+    doFirst("execute circle build") {
+      exec {
+        executable(circleCiScriptDestination.get())
+        args("build")
+      }
+    }
   }
 
   val main by sourceSets
