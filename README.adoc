@@ -1,6 +1,5 @@
 = Jenkins Pipeline Shared Library Gradle Plugin
 :toc:
-:latest-version: 0.8.0
 :supports-gradle: 5.0+
 :github-repo-id: jenkins-pipeline-shared-libraries-gradle-plugin
 :uri-github-releases: https://github.com/mkobit/{github-repo-id}/releases
@@ -10,7 +9,7 @@
 :uri-consumer-example: https://github.com/mkobit/jenkins-pipeline-shared-library-example
 :uri-build-status-image: https://circleci.com/gh/mkobit/{github-repo-id}/tree/master.svg?style=svg
 :circle-ci-status-badge: image:{uri-build-status-image}["CircleCI", link="https://circleci.com/gh/mkobit/{github-repo-id}/tree/master"]
-:uri-version-badge-image: https://img.shields.io/badge/Gradle%20Plugin-{latest-version}-blue.svg
+:uri-version-badge-image: https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/com/mkobit/jenkins/pipelines/jenkins-pipeline-shared-libraries-gradle-plugin/maven-metadata.xml.svg?label=Gradle Plugin Portal
 :uri-gradle-support-badge-image: https://img.shields.io/badge/Supports%20Gradle-{supports-gradle}-blue.svg
 :supports-gradle-badge: image:{uri-gradle-support-badge-image}["Gradle Version"]
 :uri-gradle-plugin-portal: https://plugins.gradle.org/plugin/com.mkobit.jenkins.pipelines.shared-library
@@ -48,10 +47,10 @@ See the link:{uri-consumer-example}[example repository] for a demonstration of u
 
 . Consume plugin from Gradle plugin portal
 +
-[source, kotlin, subs="attributes+"]
+[source, kotlin]
 ----
 plugins {
-  id("com.mkobit.jenkins.pipelines.shared-library") version "{latest-version}"
+  id("com.mkobit.jenkins.pipelines.shared-library") version "x.x.x"
 }
 ----
 . Set up preferred test dependencies (for example, JUnit or Spock)
