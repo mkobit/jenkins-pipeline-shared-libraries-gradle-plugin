@@ -74,9 +74,45 @@ jobs:
             - build/*
             - buildSrc/.gradle/*
             - buildSrc/build/*
+  test-gradle-5_1:
+    executor: java-8
+    steps:
+      - checkout
+      - restore-home-cache
+      - attach_workspace:
+          at: ~/build-working-directory
+      - gradle-build:
+          gradle-test-versions: "5.1"
+  test-gradle-5_1_1:
+    executor: java-8
+    steps:
+      - checkout
+      - restore-home-cache
+      - attach_workspace:
+          at: ~/build-working-directory
+      - gradle-build:
+          gradle-test-versions: "5.1.1"
+  test-gradle-5_2:
+    executor: java-8
+    steps:
+      - checkout
+      - restore-home-cache
+      - attach_workspace:
+          at: ~/build-working-directory
+      - gradle-build:
+          gradle-test-versions: "5.2"
 
 workflows:
   version: 2
   build:
     jobs:
       - check
+      - test-gradle-5_1_1:
+          requires:
+            - check
+      - test-gradle-5_1:
+          requires:
+            - check
+      - test-gradle-5_2:
+          requires:
+            - check
