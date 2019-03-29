@@ -51,7 +51,9 @@ internal class MultiVersionGradleProjectTestTemplate : TestTemplateInvocationCon
         GradleVersion.version("5.0"),
         GradleVersion.version("5.1"),
         GradleVersion.version("5.1.1"),
-        GradleVersion.version("5.2")
+        GradleVersion.version("5.2"),
+        GradleVersion.version("5.3"),
+        GradleVersion.version("5.3.1")
       )
     }
   }
@@ -71,9 +73,9 @@ internal class MultiVersionGradleProjectTestTemplate : TestTemplateInvocationCon
       .map { gradleVersions -> gradleVersions.map { GradleProjectInvocationContext(context.displayName, it) } }
       .map {
         it.stream().distinct()
-          .map {
+          .map { gradleProjectContext ->
             // Needed because of https://github.com/junit-team/junit5/issues/1226
-            it as TestTemplateInvocationContext
+            gradleProjectContext as TestTemplateInvocationContext
           }
       }
       .orElseThrow { RuntimeException("Could not create invocation contexts") }

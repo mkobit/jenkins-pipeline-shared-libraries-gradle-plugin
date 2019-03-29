@@ -101,6 +101,15 @@ jobs:
           at: ~/build-working-directory
       - gradle-build:
           gradle-test-versions: "5.2"
+  test-gradle-5_3:
+    executor: java-8
+    steps:
+      - checkout
+      - restore-home-cache
+      - attach_workspace:
+          at: ~/build-working-directory
+      - gradle-build:
+          gradle-test-versions: "5.3"
 
 workflows:
   version: 2
