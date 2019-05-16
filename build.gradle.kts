@@ -1,4 +1,3 @@
-import buildsrc.DependencyInfo
 import buildsrc.ProjectInfo
 import org.gradle.jvm.tasks.Jar
 import org.jetbrains.dokka.DokkaConfiguration
@@ -119,28 +118,43 @@ configurations {
         jenkinsPlugins.resolve()
       }
     }
+    resolutionStrategy.eachDependency {
+      when (requested.group) {
+        "com.squareup.okhttp3" -> useVersion("3.14.1")
+        "dev.minutest" -> useVersion("1.7.0")
+        "org.junit.jupiter" -> useVersion("5.4.2")
+        "org.junit.platform" -> useVersion("1.4.2")
+        "io.strikt" -> useVersion("0.20.1")
+        "org.apache.logging.log4j" -> useVersion("2.11.2")
+      }
+    }
   }
 }
 
 dependencies {
   api(gradleApi())
-  api(DependencyInfo.javapoet)
-  implementation(DependencyInfo.kotlinLogging)
-  implementation(DependencyInfo.okHttpClient)
+  api("com.squareup:javapoet:1.11.1")
+  implementation("io.github.microutils:kotlin-logging:1.6.10")
+  implementation("com.squareup.okhttp3:okhttp")
   testImplementation(kotlin("reflect"))
-  testImplementation(DependencyInfo.assertJCore)
-  testImplementation(DependencyInfo.assertJGradle)
-  testImplementation(DependencyInfo.gradleTestKotlinExtensions)
-  testImplementation(DependencyInfo.guava)
-  testImplementation(DependencyInfo.mockito)
-  testImplementation(DependencyInfo.mockitoKotlin)
-  testImplementation(DependencyInfo.okHttpMockServer)
-  DependencyInfo.junitTestImplementationArtifacts.forEach {
-    testImplementation(it)
-  }
-  DependencyInfo.junitTestRuntimeOnlyArtifacts.forEach {
-    testRuntimeOnly(it)
-  }
+  testImplementation("org.assertj:assertj-core:3.12.2")
+  testImplementation("com.mkobit.gradle.test:assertj-gradle:0.2.0")
+  testImplementation("com.mkobit.gradle.test:gradle-test-kotlin-extensions:0.6.0")
+  testImplementation("com.google.guava:guava:27.1-jre")
+  testImplementation("org.mockito:mockito-core:2.27.0")
+  testImplementation("com.nhaarman.mockitokotlin2:mockito-kotlin:2.1.0")
+  testImplementation("com.squareup.okhttp3:mockwebserver")
+
+  testImplementation("io.strikt:strikt-core")
+  testImplementation("io.strikt:strikt-gradle")
+
+  testImplementation("dev.minutest:minutest")
+  testImplementation("org.junit.jupiter:junit-jupiter-api")
+  testImplementation("org.junit.jupiter:junit-jupiter-params")
+
+  testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+  testRuntimeOnly("org.apache.logging.log4j:log4j-core")
+  testRuntimeOnly("org.apache.logging.log4j:log4j-jul")
 
   // These are used for code completion in the pipelineTestResources to more easily facilitate writing tests
   // against the libraries that are used.
