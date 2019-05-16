@@ -184,7 +184,7 @@ dependencies {
 
 tasks {
   wrapper {
-    gradleVersion = "5.0"
+    gradleVersion = "5.4.1"
   }
 
   dependencyUpdates {
