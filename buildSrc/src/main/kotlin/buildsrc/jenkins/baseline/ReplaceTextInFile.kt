@@ -1,7 +1,6 @@
 package buildsrc.jenkins.baseline
 
 import org.gradle.api.DefaultTask
-import org.gradle.api.file.ProjectLayout
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.ListProperty

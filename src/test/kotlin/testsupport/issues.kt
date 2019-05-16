@@ -16,4 +16,3 @@ private class IssueExtension : BeforeTestExecutionCallback {
       .ifPresent { context.publishReportEntry("issue", it) }
   }
 }
-

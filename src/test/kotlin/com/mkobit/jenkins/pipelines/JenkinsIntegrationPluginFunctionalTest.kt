@@ -160,9 +160,9 @@ internal class JenkinsIntegrationPluginFunctionalTest {
       setResponseCode(401)
       setHeader("X-Hudson", "1.395")
       setHeader("X-Jenkins", version)
-      setHeader("X-Jenkins-Session","4d661237")
-      setHeader("X-Hudson-CLI-Port","40877")
-      setHeader("X-Jenkins-CLI-Port","40877")
+      setHeader("X-Jenkins-Session", "4d661237")
+      setHeader("X-Hudson-CLI-Port", "40877")
+      setHeader("X-Jenkins-CLI-Port", "40877")
       setHeader("X-Jenkins-CLI2-Port", "40877")
       setHeader("X-You-Are-Authenticated-As", "anonymous")
     })
@@ -192,7 +192,7 @@ internal class JenkinsIntegrationPluginFunctionalTest {
   }
 
   private fun GradleRunner.setupIntegrationExtension(server: MockWebServer, authentication: Authentication? = null) {
-    val authenticationText = when(authentication) {
+    val authenticationText = when (authentication) {
       is AnonymousAuthentication -> throw IllegalArgumentException("AnonymousAuthentication should not be tested against since it is the default")
       is BasicAuthentication -> "providers.provider { com.mkobit.jenkins.pipelines.http.BasicAuthentication('${authentication.username}', '${authentication.password}') }"
       is ApiTokenAuthentication -> "providers.provider { com.mkobit.jenkins.pipelines.http.ApiTokenAuthentication('${authentication.username}', '${authentication.apiToken}') }"

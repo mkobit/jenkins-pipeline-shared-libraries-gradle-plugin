@@ -12,7 +12,6 @@ import org.assertj.core.api.Assertions.not
 import org.gradle.api.artifacts.Configuration
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestTemplate
 import testsupport.ForGradleVersions
@@ -23,7 +22,6 @@ import testsupport.NotImplementedYet
 import testsupport.condition
 import testsupport.softlyAssert
 import java.util.regex.Pattern
-import org.junit.jupiter.params.provider.Arguments.of as argumentsOf
 
 @ForGradleVersions
 internal class IntegrationTestSourceIntegrationTest {

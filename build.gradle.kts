@@ -1,11 +1,7 @@
 import buildsrc.DependencyInfo
 import buildsrc.ProjectInfo
-import com.gradle.publish.PluginConfig
-import com.gradle.publish.PublishPlugin
-import org.gradle.api.internal.HasConvention
 import org.gradle.jvm.tasks.Jar
 import org.jetbrains.dokka.DokkaConfiguration
-import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.io.ByteArrayOutputStream
@@ -14,8 +10,8 @@ import java.net.URL
 plugins {
   id("com.gradle.build-scan") version "2.0.2"
   `kotlin-dsl`
+  id("org.jlleitschuh.gradle.ktlint") version "8.0.0"
   `java-library`
-  `java-gradle-plugin`
   id("com.gradle.plugin-publish") version "0.10.0"
   id("com.github.ben-manes.versions") version "0.21.0"
   id("org.jetbrains.dokka") version "0.9.17"
@@ -87,6 +83,10 @@ sourceSets {
 repositories {
   maven(url = "https://repo.jenkins-ci.org/public/")
   jcenter()
+}
+
+ktlint {
+  version.set("0.32.0")
 }
 
 configurations {
@@ -169,7 +169,7 @@ dependencies {
 }
 
 tasks {
-  wrapper{
+  wrapper {
     gradleVersion = "5.0"
   }
 
@@ -287,7 +287,7 @@ tasks {
   // No Java code, so don't need the javadoc task.
   // Dokka generates our documentation.
   remove(getByName("javadoc"))
-  dokka  {
+  dokka {
     dependsOn(main.classesTaskName)
     jdkVersion = 8
     outputFormat = "html"
@@ -396,7 +396,7 @@ gradlePlugin {
       description = "Configures and sets up a Gradle project for development and testing of a Jenkins Pipeline shared library (https://jenkins.io/doc/book/pipeline/shared-libraries/)"
     }
     create("jenkinsIntegration") {
-      id =  "com.mkobit.jenkins.pipelines.jenkins-integration"
+      id = "com.mkobit.jenkins.pipelines.jenkins-integration"
       implementationClass = "com.mkobit.jenkins.pipelines.JenkinsIntegrationPlugin"
       displayName = "Jenkins Integration Plugin"
       description = "Tasks to retrieve information from a Jenkins instance to be aid in the development of tools with Gradle"

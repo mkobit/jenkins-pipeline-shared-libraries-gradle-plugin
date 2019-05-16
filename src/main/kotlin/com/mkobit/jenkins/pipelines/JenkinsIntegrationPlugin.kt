@@ -63,13 +63,13 @@ internal open class JenkinsIntegrationPlugin : Plugin<Project> {
           integration.downloadDirectory
             .file("idea.gdsl")
             .get()
-            .asFile.
-            writeBytes(response.body()!!.bytes())
+            .asFile
+            .writeBytes(response.body()!!.bytes())
         }
       }
     }
   }
-  
+
   private fun setupRetrieveJenkinsPluginData(integration: JenkinsIntegrationExtension, task: Task) {
     task.apply {
       description = "Downloads the Jenkins plugin data from the Jenkins instance"
@@ -139,7 +139,7 @@ internal open class JenkinsIntegrationPlugin : Plugin<Project> {
     get() = values("X-Permission-Implied-By")
 
   private val Headers.xRequiredPermission: String?
-   get() = get("X-Required-Permission")
+    get() = get("X-Required-Permission")
 
   private val Headers.xYouAreAuthenticatedAs: String?
     get() = get("X-You-Are-Authenticated-As")

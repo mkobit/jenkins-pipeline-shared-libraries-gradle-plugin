@@ -133,7 +133,7 @@ class JenkinsRebaselineToolsPlugin : Plugin<Project> {
   private fun pluginConstantReplacement(name: String, newVersion: String): Replacement {
     return Replacement(
       Regex("""(^\s+private const val $name = ")[\d\\.]+(")${'$'}"""),
-      { result -> "${result.groupValues[1]}$newVersion${result.groupValues[2]}"}
+      { result -> "${result.groupValues[1]}$newVersion${result.groupValues[2]}" }
     )
   }
 
@@ -144,7 +144,7 @@ class JenkinsRebaselineToolsPlugin : Plugin<Project> {
   private fun moduleDefinitionReplacement(groupArtifact: String, newVersion: String): Replacement {
     return Replacement(
       Regex("""($groupArtifact:)[\d\\.]+"""),
-      { result -> "${result.groupValues[1]}$newVersion"}
+      { result -> "${result.groupValues[1]}$newVersion" }
     )
   }
 

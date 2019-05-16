@@ -11,7 +11,6 @@ fun File.writeRelativeFile(vararg parentDirectory: String, fileName: String, con
   Files.write(parentPath.resolve(fileName), content.invoke().toByteArray(Charsets.UTF_8))
 }
 
-
 fun resourceText(resourceName: String): String {
   val resource = Resources.getResource(resourceName)
   return Resources.toString(resource, Charsets.UTF_8)

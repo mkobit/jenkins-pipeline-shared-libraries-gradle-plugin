@@ -1,10 +1,18 @@
+import org.jlleitschuh.gradle.ktlint.KtlintFormatTask
+
 plugins {
   `kotlin-dsl`
+  id("org.jlleitschuh.gradle.ktlint") version "8.0.0"
+
   id("com.github.ben-manes.versions") version "0.21.0"
 }
 
 repositories {
   jcenter()
+}
+
+ktlint {
+  version.set("0.32.0")
 }
 
 dependencies {
@@ -27,6 +35,16 @@ tasks {
           }
         }
       }
+    }
+  }
+
+  assemble {
+    dependsOn(withType<KtlintFormatTask>())
+  }
+
+  withType<KtlintFormatTask>().configureEach {
+    onlyIf {
+      project.hasProperty("ktlintFormatBuildSrc")
     }
   }
 

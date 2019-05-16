@@ -29,7 +29,6 @@ import java.nio.file.SimpleFileVisitor
 import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.Optional
-import java.util.logging.Logger
 import java.util.stream.Stream
 import kotlin.reflect.jvm.kotlinFunction
 
@@ -66,7 +65,7 @@ internal class MultiVersionGradleProjectTestTemplate : TestTemplateInvocationCon
           // Handle case where version is specified as 'current'
           versions.size == 1 && versions.first().toLowerCase() == "current" -> listOf(GradleVersion.current())
           versions.isNotEmpty() -> versions.map(GradleVersion::version)
-          else ->  DEFAULT_VERSIONS
+          else -> DEFAULT_VERSIONS
         }
       }
       .map { gradleVersions -> gradleVersions.map { GradleProjectInvocationContext(context.displayName, it) } }
@@ -92,7 +91,7 @@ private data class GradleProjectInvocationContext(
   private val version: GradleVersion
 ) : TestTemplateInvocationContext {
 
-  override fun getDisplayName(invocationIndex: Int): String  = "[Gradle " +
+  override fun getDisplayName(invocationIndex: Int): String = "[Gradle " +
     if (version.equals(GradleVersion.current())) {
       "${version.version} (current)"
     } else {
@@ -153,8 +152,8 @@ private class ResourceGradleProjectProviderExtension(
     parameterContext: ParameterContext,
     extensionContext: ExtensionContext
   ): Boolean {
-    return parameterContext.parameter.type == GradleRunner::class.java
-      && parameterContext.parameter.isAnnotationPresent(GradleProject::class.java)
+    return parameterContext.parameter.type == GradleRunner::class.java &&
+      parameterContext.parameter.isAnnotationPresent(GradleProject::class.java)
   }
 
   override fun resolveParameter(

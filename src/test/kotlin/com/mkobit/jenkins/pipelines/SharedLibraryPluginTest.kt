@@ -2,14 +2,10 @@ package com.mkobit.jenkins.pipelines
 
 import com.mkobit.jenkins.pipelines.codegen.GenerateJavaFile
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Condition
 import org.assertj.core.api.SoftAssertions
-import org.assertj.core.condition.AllOf.allOf
 import org.assertj.core.description.TextDescription
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
-import org.gradle.api.artifacts.Dependency
-import org.gradle.api.artifacts.ExternalModuleDependency
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
 import org.gradle.api.internal.HasConvention
 import org.gradle.api.internal.project.ProjectInternal
@@ -19,14 +15,11 @@ import org.gradle.api.tasks.GroovySourceSet
 import org.gradle.jvm.tasks.Jar
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.DynamicNode
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 import testsupport.NotImplementedYet
-import java.util.function.Predicate
 import java.util.stream.Stream
 
 internal class SharedLibraryPluginTest {
