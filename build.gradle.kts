@@ -17,7 +17,7 @@ plugins {
   `java-library`
   `java-gradle-plugin`
   id("com.gradle.plugin-publish") version "0.10.0"
-  id("com.github.ben-manes.versions") version "0.20.0"
+  id("com.github.ben-manes.versions") version "0.21.0"
   id("org.jetbrains.dokka") version "0.9.17"
   // TODO: load version from shared location
   // Only used for local publishing for testing
@@ -171,6 +171,21 @@ dependencies {
 tasks {
   wrapper{
     gradleVersion = "5.0"
+  }
+
+  dependencyUpdates {
+    val rejectPatterns = listOf("alpha", "beta", "rc", "cr", "m").map { qualifier ->
+      Regex("(?i).*[.-]$qualifier[.\\d-]*")
+    }
+    resolutionStrategy {
+      componentSelection {
+        all {
+          if (rejectPatterns.any { it.matches(candidate.version) }) {
+            reject("Release candidate")
+          }
+        }
+      }
+    }
   }
 
   withType<Jar>().configureEach {
