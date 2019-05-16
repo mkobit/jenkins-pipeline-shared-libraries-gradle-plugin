@@ -22,6 +22,12 @@ For each release, a subsection should be added for each of the following if they
 * `Removed` for now removed features.
 * `Security` in case of vulnerabilities.
 
+== UNRELEASED (YYYY/MM/DD)
+
+=== Changed
+
+* Dependency version updates
+
 == 0.8.0 (2018/11/30)
 
 This version requires at least Gradle 5.0+.
