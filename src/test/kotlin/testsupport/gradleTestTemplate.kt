@@ -49,11 +49,10 @@ internal class MultiVersionGradleProjectTestTemplate : TestTemplateInvocationCon
       setOf(
         GradleVersion.current(),
         GradleVersion.version("5.0"),
-        GradleVersion.version("5.1"),
         GradleVersion.version("5.1.1"),
         GradleVersion.version("5.2"),
-        GradleVersion.version("5.3"),
-        GradleVersion.version("5.3.1")
+        GradleVersion.version("5.3.1"),
+        GradleVersion.version("5.4.1")
       )
     }
   }
