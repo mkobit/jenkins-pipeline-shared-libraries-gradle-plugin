@@ -1,19 +1,19 @@
 import buildsrc.ProjectInfo
 import org.gradle.jvm.tasks.Jar
-import org.jetbrains.dokka.DokkaConfiguration
+import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.io.ByteArrayOutputStream
 import java.net.URL
 
 plugins {
-  id("com.gradle.build-scan") version "2.0.2"
+  id("com.gradle.build-scan") version "2.3"
   `kotlin-dsl`
   id("org.jlleitschuh.gradle.ktlint") version "8.0.0"
   `java-library`
-  id("com.gradle.plugin-publish") version "0.10.0"
+  id("com.gradle.plugin-publish") version "0.10.1"
   id("com.github.ben-manes.versions") version "0.21.0"
-  id("org.jetbrains.dokka") version "0.9.17"
+  id("org.jetbrains.dokka") version "0.9.18"
   // TODO: load version from shared location
   // Only used for local publishing for testing
   `maven-publish`
@@ -307,16 +307,15 @@ tasks {
     outputFormat = "html"
     outputDirectory = "$buildDir/javadoc"
     sourceDirs = main.kotlin.srcDirs
-    // See https://github.com/Kotlin/dokka/issues/196
-    externalDocumentationLink(delegateClosureOf<DokkaConfiguration.ExternalDocumentationLink.Builder> {
-      url = URL("https://docs.gradle.org/current/javadoc/")
-    })
-    externalDocumentationLink(delegateClosureOf<DokkaConfiguration.ExternalDocumentationLink.Builder> {
+    externalDocumentationLink {
+      url = URL("https://docs.gradle.org/${GradleVersion.current().version}/javadoc/")
+    }
+    externalDocumentationLink {
       url = URL("https://docs.oracle.com/javase/8/docs/api/")
-    })
-    externalDocumentationLink(delegateClosureOf<DokkaConfiguration.ExternalDocumentationLink.Builder> {
+    }
+    externalDocumentationLink {
       url = URL("https://square.github.io/javapoet/javadoc/javapoet/")
-    })
+    }
   }
 
   val javadocJar by creating(Jar::class) {
