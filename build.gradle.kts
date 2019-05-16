@@ -14,7 +14,6 @@ plugins {
   id("com.gradle.plugin-publish") version "0.10.1"
   id("com.github.ben-manes.versions") version "0.21.0"
   id("org.jetbrains.dokka") version "0.9.18"
-  // TODO: load version from shared location
   // Only used for local publishing for testing
   `maven-publish`
   buildsrc.`jenkins-rebaseline`
@@ -245,7 +244,7 @@ tasks {
     fileTree(it).filter { fileDetails -> fileDetails.name == "circleci" }.singleFile
   }
   val downloadCircleCiBundle by registering {
-    val downloadUrl = "https://github.com/CircleCI-Public/circleci-cli/releases/download/v0.1.4308/circleci-cli_0.1.4308_linux_amd64.tar.gz"
+    val downloadUrl = "https://github.com/CircleCI-Public/circleci-cli/releases/download/v0.1.5607/circleci-cli_0.1.5607_linux_amd64.tar.gz"
     inputs.property("url", downloadUrl)
     outputs.file(circleCiBundleDownloadLocation)
     doFirst("download archive") {
@@ -290,23 +289,25 @@ tasks {
     }
   }
 
-  val main by sourceSets
-  val sourcesJar by creating(Jar::class) {
+  val sourcesJar by registering(Jar::class) {
     group = JavaBasePlugin.DOCUMENTATION_GROUP
     description = "Assembles a JAR of the source code"
-    classifier = "sources"
-    from(main.allSource)
+    archiveClassifier.set("sources")
+    from(sourceSets.main.map { it.allSource })
   }
 
   // No Java code, so don't need the javadoc task.
   // Dokka generates our documentation.
-  remove(getByName("javadoc"))
+  javadoc {
+    enabled = false
+  }
+
   dokka {
-    dependsOn(main.classesTaskName)
+    dependsOn(sourceSets.main.map { it.classesTaskName })
     jdkVersion = 8
     outputFormat = "html"
     outputDirectory = "$buildDir/javadoc"
-    sourceDirs = main.kotlin.srcDirs
+    sourceDirs = sourceSets.main.get().kotlin.srcDirs
     externalDocumentationLink {
       url = URL("https://docs.gradle.org/${GradleVersion.current().version}/javadoc/")
     }
@@ -318,12 +319,11 @@ tasks {
     }
   }
 
-  val javadocJar by creating(Jar::class) {
-    dependsOn(dokka)
+  val javadocJar by registering(Jar::class) {
     description = "Assembles a JAR of the generated Javadoc"
     from(dokka.map { it.outputDirectory })
     group = JavaBasePlugin.DOCUMENTATION_GROUP
-    classifier = "javadoc"
+    archiveClassifier.set("javadoc")
   }
 
   assemble {
@@ -397,13 +397,12 @@ artifacts {
   add("archives", javadocJar)
 }
 
-val sharedLibraryPluginId = "com.mkobit.jenkins.pipelines.shared-library"
 gradlePlugin {
   plugins {
     // Don't get the extensions for NamedDomainObjectContainer here because we only have a NamedDomainObjectContainer
     // See https://github.com/gradle/kotlin-dsl/issues/459
     create("sharedLibrary") {
-      id = sharedLibraryPluginId
+      id = "com.mkobit.jenkins.pipelines.shared-library"
       implementationClass = "com.mkobit.jenkins.pipelines.SharedLibraryPlugin"
       displayName = "Jenkins Pipeline Shared Library Development"
       description = "Configures and sets up a Gradle project for development and testing of a Jenkins Pipeline shared library (https://jenkins.io/doc/book/pipeline/shared-libraries/)"
