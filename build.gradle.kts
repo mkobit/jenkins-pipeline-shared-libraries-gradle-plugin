@@ -1,4 +1,5 @@
 import buildsrc.ProjectInfo
+import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.jvm.tasks.Jar
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
@@ -36,8 +37,8 @@ val gitCommitSha: String by lazy {
 val SourceSet.kotlin: SourceDirectorySet
   get() = withConvention(KotlinSourceSet::class) { kotlin }
 
+fun env(key: String): String? = System.getenv(key)
 buildScan {
-  fun env(key: String): String? = System.getenv(key)
 
   termsOfServiceAgree = "yes"
   termsOfServiceUrl = "https://gradle.com/terms-of-service"
@@ -234,7 +235,12 @@ tasks {
     }
     jvmArgs("-XshowSettings:vm", "-XX:+PrintGCTimeStamps", "-XX:+UseG1GC", "-Xmx512m", "-Xms256m")
     testLogging {
-      events("skipped", "failed")
+      if (env("CI") != null) {
+        // shoot more output out so that Circle CI doesn't kill build after no output in 10 minutes
+        events(TestLogEvent.FAILED, TestLogEvent.SKIPPED, TestLogEvent.PASSED, TestLogEvent.STARTED)
+      } else {
+        events(TestLogEvent.FAILED, TestLogEvent.SKIPPED)
+      }
     }
   }
 
