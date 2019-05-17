@@ -68,16 +68,14 @@ internal class MultiVersionGradleProjectTestTemplate : TestTemplateInvocationCon
           else -> DEFAULT_VERSIONS
         }
       }
-      .map { gradleVersions -> gradleVersions.map {
-        GradleProjectInvocationContext(context.displayName,
-          it)
-      } }
+      .map { gradleVersions ->
+        gradleVersions.map { GradleProjectInvocationContext(context.displayName, it) }
+      }
       .map {
-        it.stream().distinct()
-          .map { gradleProjectContext ->
-            // Needed because of https://github.com/junit-team/junit5/issues/1226
-            gradleProjectContext as TestTemplateInvocationContext
-          }
+        it.stream().distinct().map { gradleProjectContext ->
+          // Needed because of https://github.com/junit-team/junit5/issues/1226
+          gradleProjectContext as TestTemplateInvocationContext
+        }
       }
       .orElseThrow { RuntimeException("Could not create invocation contexts") }
   }
@@ -120,9 +118,7 @@ private class FilteringGradleExecutionCondition(
   }
 
   override fun evaluateExecutionCondition(context: ExtensionContext): ConditionEvaluationResult {
-    val propertyValue = System.getProperty(VERSIONS_PROPERTY_KEY) ?: return DEFAULT_CONDITION
-
-    return when (propertyValue) {
+    return when (val propertyValue = System.getProperty(VERSIONS_PROPERTY_KEY) ?: return DEFAULT_CONDITION) {
       "all", "default" -> ConditionEvaluationResult.enabled("All tests enabled through $propertyValue filter")
       "current" -> {
         if (targetVersion.equals(GradleVersion.current())) {
@@ -219,9 +215,7 @@ private class ResourceGradleProjectProviderExtension(
       }
       val temporaryDirectory = createTempDirectory(context)
       LOGGER.debug { "Creating temporary directory for project at $temporaryDirectory" }
-      Files.walkFileTree(resourcesPath,
-        RecursiveCopyVisitor(resourcesPath,
-          temporaryDirectory))
+      Files.walkFileTree(resourcesPath, RecursiveCopyVisitor(resourcesPath, temporaryDirectory))
       temporaryDirectory
     }
   }
