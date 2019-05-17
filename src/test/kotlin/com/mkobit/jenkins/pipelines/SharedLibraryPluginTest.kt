@@ -1,9 +1,6 @@
 package com.mkobit.jenkins.pipelines
 
 import com.mkobit.jenkins.pipelines.codegen.GenerateJavaFile
-import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.SoftAssertions
-import org.assertj.core.description.TextDescription
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
@@ -12,6 +9,7 @@ import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.GroovySourceSet
+import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.jvm.tasks.Jar
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.jupiter.api.BeforeEach
@@ -19,7 +17,27 @@ import org.junit.jupiter.api.DynamicNode
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
+import strikt.api.expectThat
+import strikt.assertions.all
+import strikt.assertions.any
+import strikt.assertions.contains
+import strikt.assertions.endsWith
+import strikt.assertions.first
+import strikt.assertions.hasEntry
+import strikt.assertions.hasSize
+import strikt.assertions.isA
+import strikt.assertions.isEmpty
+import strikt.assertions.isEqualTo
+import strikt.assertions.isFalse
+import strikt.assertions.isNotBlank
+import strikt.assertions.isNotEmpty
+import strikt.assertions.isNotNull
+import strikt.assertions.isNull
+import strikt.assertions.map
+import strikt.assertions.name
 import testsupport.NotImplementedYet
+import testsupport.strikt.authority
+import testsupport.strikt.scheme
 import java.util.stream.Stream
 
 internal class SharedLibraryPluginTest {
@@ -33,128 +51,158 @@ internal class SharedLibraryPluginTest {
 
   @Test
   internal fun `Groovy plugin is applied`() {
-    assertThat(project.pluginManager.hasPlugin("groovy"))
-      .describedAs("'groovy' plugin applied")
-      .isTrue()
+    expectThat(project)
+      .get { pluginManager }
+      .assertThat("'groovy' plugin applied") { it.hasPlugin("groovy") }
   }
 
   @Test
   internal fun `JenkinsIntegrationPlugin is applied`() {
-    assertThat(project.plugins.hasPlugin(JenkinsIntegrationPlugin::class.java))
-      .describedAs("${JenkinsIntegrationPlugin::class.simpleName} is applied")
-      .isTrue()
+    expectThat(project)
+      .get { plugins }
+      .assertThat("${JenkinsIntegrationPlugin::class.simpleName} is applied") { it.hasPlugin(JenkinsIntegrationPlugin::class.java) }
   }
 
   @Test
   internal fun `Jenkins repository is added`() {
-    val repository = project.repositories.getByName(SharedLibraryPlugin.JENKINS_REPOSITORY_NAME)
-    assertThat(repository)
-      .isInstanceOf(MavenArtifactRepository::class.java)
-      .isNotNull()
-    assertThat(repository as MavenArtifactRepository)
-      .satisfies { mavenArtifactRepository ->
-        assertThat(mavenArtifactRepository.url)
-          .hasAuthority("repo.jenkins-ci.org")
-          .hasScheme("https")
-        assertThat(mavenArtifactRepository.name)
-          .`as`("Has name \"JenkinsPublic\"")
-          .isEqualTo("JenkinsPublic")
+    expectThat(project)
+      .get { repositories }
+      .get("repository named '${SharedLibraryPlugin.JENKINS_REPOSITORY_NAME}'") { getByName(SharedLibraryPlugin.JENKINS_REPOSITORY_NAME) }
+      .isA<MavenArtifactRepository>()
+      .and {
+        get { url }.and {
+          authority.isEqualTo("repo.jenkins-ci.org")
+          scheme.isEqualTo("https")
+        }
+        get { name }.isEqualTo("JenkinsPublic")
       }
   }
 
   @Test
   internal fun `sourceCompatibility is Java 8`() {
-    val convention = project.convention.getPlugin(JavaPluginConvention::class.java)
-
-    assertThat(convention.sourceCompatibility).isEqualTo(JavaVersion.VERSION_1_8)
-    assertThat(convention.targetCompatibility).isEqualTo(JavaVersion.VERSION_1_8)
+    expectThat(project)
+      .get { convention }
+      .get("Java Plugin convention") { getPlugin(JavaPluginConvention::class.java) }
+      .and {
+        get { sourceCompatibility }.isEqualTo(JavaVersion.VERSION_1_8)
+        get { targetCompatibility }.isEqualTo(JavaVersion.VERSION_1_8)
+      }
   }
 
   @Test
   internal fun `src is a Groovy source directory`() {
-    val convention = project.convention.getPlugin(JavaPluginConvention::class.java)
-    val main = convention.sourceSets.getByName("main")
-    assertThat(main).isNotNull()
-    assertThat((main as HasConvention).convention.getPlugin(GroovySourceSet::class.java).groovy.srcDirs).anySatisfy {
-      assertThat(it.endsWith("src"))
-    }
+    expectThat(project)
+      .get { extensions }
+      .get("Source Sets containers") { getByType(SourceSetContainer::class.java) }
+      .get("main") { getByName("main") }
+      .isA<HasConvention>()
+      .get { convention }
+      .get { getPlugin(GroovySourceSet::class.java) }
+      .get { groovy }
+      .get { srcDirs }
+      .any {
+        name.endsWith("src")
+      }
+//    val convention = project.convention.getPlugin(JavaPluginConvention::class.java)
+//    val main = convention.sourceSets.getByName("main")
+//    expectThat(main).isNotNull()
+//    expectThat((main as HasConvention).convention.getPlugin(GroovySourceSet::class.java).groovy.srcDirs).anySatisfy {
+//      expectThat(it.endsWith("src"))
+//    }
   }
 
   @Test
   internal fun `vars is a Groovy source directory`() {
-    val convention = project.convention.getPlugin(JavaPluginConvention::class.java)
-    val main = convention.sourceSets.getByName("main")
-    assertThat(main).isNotNull()
-    assertThat((main as HasConvention).convention.getPlugin(GroovySourceSet::class.java).groovy.srcDirs).anySatisfy {
-      assertThat(it.endsWith("vars"))
-    }
+    expectThat(project)
+      .get { extensions }
+      .get("Source Sets containers") { getByType(SourceSetContainer::class.java) }
+      .get("main") { getByName("main") }
+      .isA<HasConvention>()
+      .get { convention }
+      .get { getPlugin(GroovySourceSet::class.java) }
+      .get { groovy }
+      .get { srcDirs }
+      .any {
+        name.endsWith("vars")
+      }
   }
 
   @Test
-  internal fun `src is a resources directory`() {
-    val convention = project.convention.getPlugin(JavaPluginConvention::class.java)
-    val main = convention.sourceSets.getByName("main")
-    assertThat(main).isNotNull()
-    assertThat(main.resources.srcDirs).hasOnlyOneElementSatisfying {
-      assertThat(it.endsWith("resources"))
-    }
+  internal fun `resources is a resources source directory`() {
+    expectThat(project)
+      .get { extensions }
+      .get("Source Sets containers") { getByType(SourceSetContainer::class.java) }
+      .get("main") { getByName("main") }
+      .get { resources }
+      .get { srcDirs }
+      .hasSize(1)
+      .first()
+      .and {
+        name.endsWith("resources")
+      }
   }
 
   @Test
   internal fun `main has no Java sources`() {
-    val convention = project.convention.getPlugin(JavaPluginConvention::class.java)
-    val main = convention.sourceSets.getByName("main")
-    assertThat(main).isNotNull()
-    assertThat(main.java.srcDirs).isEmpty()
+    expectThat(project)
+      .get { extensions }
+      .get("Source Sets containers") { getByType(SourceSetContainer::class.java) }
+      .get("main") { getByName("main") }
+      .get { java }
+      .get { srcDirs }
+      .isEmpty()
   }
 
   @Test
   internal fun `main implementation configuration extends from Shared Library Groovy configuration`() {
-    val implementation = project.configurations.getByName("implementation")
-
-    assertThat(implementation.extendsFrom.map { it.name })
+    expectThat(project)
+      .get { configurations }
+      .get { getByName("implementation") }
+      .get { extendsFrom }
+      .map { it.name }
       .contains("sharedLibraryGroovy")
   }
 
   @Test
   internal fun `integrationTest task sets the system property for the buildDirectory`() {
-    val integrationTest = project.tasks.getByName("integrationTest")
-
-    assertThat(integrationTest).isNotNull().isInstanceOf(org.gradle.api.tasks.testing.Test::class.java)
-    assertThat((integrationTest as org.gradle.api.tasks.testing.Test).systemProperties).hasEntrySatisfying("buildDirectory") {
-      assertThat(it).isEqualTo(project.buildDir.absolutePath)
-    }
+    expectThat(project)
+      .get { tasks }
+      .get { getByName("integrationTest") }
+      .isA<org.gradle.api.tasks.testing.Test>()
+      .get { systemProperties }
+      .hasEntry("buildDirectory", project.buildDir.absolutePath)
   }
 
   @Test
   internal fun `integrationTest task is in the verification group`() {
-    val integrationTest = project.tasks.getByName("integrationTest")
-
-    assertThat(integrationTest).isNotNull().isInstanceOf(org.gradle.api.tasks.testing.Test::class.java)
-    assertThat(integrationTest.group).isEqualTo(JavaBasePlugin.VERIFICATION_GROUP)
-    assertThat(integrationTest.description).isNotNull()
+    expectThat(project)
+      .get { tasks }
+      .get { getByName("integrationTest") }
+      .isA<org.gradle.api.tasks.testing.Test>()
+      .and {
+        get { group }.isEqualTo(JavaBasePlugin.VERIFICATION_GROUP)
+        get { description }.isNotBlank()
+      }
   }
 
   @Test
   internal fun `groovydocJar task is created`() {
-    val groovydocJar = project.tasks.getByName("groovydocJar")
-    assertThat(groovydocJar).satisfies {
-      assertThat(it)
-        .isNotNull()
-        .isInstanceOf(Jar::class.java)
-      assertThat(it.description).isNotEmpty()
-    }
+    expectThat(project)
+      .get { tasks }
+      .get { getByName("groovydocJar") }
+      .isA<Jar>()
+      .get { description }
+      .isNotBlank()
   }
 
   @Test
   internal fun `sourcesJar task is created`() {
-    val sourcesJar = project.tasks.getByName("sourcesJar")
-    assertThat(sourcesJar).satisfies {
-      assertThat(it)
-        .isNotNull()
-        .isInstanceOf(Jar::class.java)
-      assertThat(it.description).isNotEmpty()
-    }
+    expectThat(project)
+      .get { tasks }
+      .get { getByName("sourcesJar") }
+      .isA<Jar>()
+      .get { description }
+      .isNotBlank()
   }
 
   @TestFactory
@@ -175,29 +223,26 @@ internal class SharedLibraryPluginTest {
 
     return configurations.entries.stream()
       .map { (key, value) ->
-        DynamicTest.dynamicTest("for $value has a description and is not visible") {
-          val configuration = project.configurations.getByName(key)
-          SoftAssertions.assertSoftly {
-            val description = TextDescription("Configuration '%s'", key)
-            assertThat(configuration)
-              .describedAs(description)
-              .isNotNull
-            assertThat(configuration.description).describedAs(description).isNotEmpty()
-            assertThat(configuration.isVisible).describedAs(description).isFalse()
-          }
+        DynamicTest.dynamicTest("configuration $value has a description and is not visible") {
+          expectThat(project)
+            .get { this.configurations }
+            .get("configuration $key") { getByName(key) }
+            .and {
+              get { description }.isNotNull().isNotBlank()
+              get { isVisible }.isFalse()
+            }
         }
       }
   }
 
   @Test
   internal fun `code generation tasks do not have a group`() {
-    val generationTasks = project.tasks.withType(GenerateJavaFile::class.java)
-
-    assertThat(generationTasks)
-      .isNotEmpty
-      .allSatisfy {
-        assertThat(it.group)
-          .`as`("Group is not set for ${GenerateJavaFile::class} tasks")
+    expectThat(project)
+      .get { tasks }
+      .get { withType(GenerateJavaFile::class.java) }
+      .isNotEmpty()
+      .all {
+        get { group as String? } // why is this cast needed?!
           .isNull()
       }
   }

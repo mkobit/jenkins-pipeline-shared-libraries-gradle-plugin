@@ -1,15 +1,20 @@
 package com.mkobit.jenkins.pipelines
 
-import com.mkobit.gradle.test.assertj.GradleAssertions.assertThat
 import com.mkobit.gradle.test.kotlin.testkit.runner.build
 import com.mkobit.gradle.test.kotlin.testkit.runner.buildAndFail
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestTemplate
+import strikt.api.expectThat
+import strikt.assertions.isNotNull
+import strikt.gradle.testkit.isFailed
+import strikt.gradle.testkit.isSuccess
+import strikt.gradle.testkit.task
 import testsupport.ForGradleVersions
 import testsupport.GradleProject
 import testsupport.NotImplementedYet
+import testsupport.expectDoesNotThrow
 
 @ForGradleVersions
 class MainSourceIntegrationTest {
@@ -18,35 +23,40 @@ class MainSourceIntegrationTest {
   internal fun `main Groovy code is compiled`(@GradleProject(["projects", "basic-groovy-library"]) gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.build("compileGroovy")
 
-    assertThat(buildResult)
-      .withFailMessage("Build output: %s", buildResult.output)
-      .hasTaskSuccessAtPath(":compileGroovy")
+    expectThat(buildResult)
+      .task(":compileGroovy")
+      .isNotNull()
+      .isSuccess()
   }
 
   @TestTemplate
   internal fun `can unit test code in src`(@GradleProject(["projects", "basic-groovy-library"]) gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.build("test")
 
-    assertThat(buildResult)
-      .withFailMessage("Build output: %s", buildResult.output)
-      .hasTaskSuccessAtPath(":test")
+    expectThat(buildResult)
+      .task(":test")
+      .isNotNull()
+      .isSuccess()
   }
 
   @TestTemplate
   internal fun `compilation fails for invalid Groovy code in src`(@GradleProject(["projects", "invalid-src-groovy"]) gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.buildAndFail("compileGroovy")
 
-    assertThat(buildResult)
-      .withFailMessage("Build output: %s", buildResult.output)
-      .hasTaskFailedAtPath(":compileGroovy")
+    expectThat(buildResult)
+      .task(":compileGroovy")
+      .isNotNull()
+      .isFailed()
   }
 
   @TestTemplate
   internal fun `compilation fails for invalid Groovy code in vars`(@GradleProject(["projects", "invalid-vars-groovy"]) gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.buildAndFail("compileGroovy")
 
-    assertThat(buildResult)
-      .hasTaskFailedAtPath(":compileGroovy")
+    expectThat(buildResult)
+      .task(":compileGroovy")
+      .isNotNull()
+      .isFailed()
   }
 
   @NotImplementedYet
@@ -56,27 +66,35 @@ class MainSourceIntegrationTest {
 
   @TestTemplate
   internal fun `@Grab can be used in source code compilation`(@GradleProject(["projects", "source-with-@grab"]) gradleRunner: GradleRunner) {
-    gradleRunner.build("compileGroovy")
+    expectDoesNotThrow {
+      gradleRunner.build("compileGroovy")
+    }
   }
 
   @TestTemplate
   internal fun `Groovydoc JAR can be generated`(@GradleProject(["projects", "basic-groovy-library"]) gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.build("groovydocJar")
 
-    assertThat(buildResult)
-      .hasTaskSuccessAtPath(":groovydocJar")
+    expectThat(buildResult)
+      .task(":groovydocJar")
+      .isNotNull()
+      .isSuccess()
   }
 
   @TestTemplate
   internal fun `Groovy sources JAR can be generated`(@GradleProject(["projects", "basic-groovy-library"]) gradleRunner: GradleRunner) {
     val buildResult: BuildResult = gradleRunner.build("sourcesJar")
 
-    assertThat(buildResult)
-      .hasTaskSuccessAtPath(":sourcesJar")
+    expectThat(buildResult)
+      .task(":sourcesJar")
+      .isNotNull()
+      .isSuccess()
   }
 
   @TestTemplate
   internal fun `can use Jenkins core and plugin classes in main library code`(@GradleProject(["projects", "global-library-using-jenkins-plugin-classes"]) gradleRunner: GradleRunner) {
-    gradleRunner.build("compileGroovy")
+    expectDoesNotThrow {
+      gradleRunner.build("compileGroovy")
+    }
   }
 }

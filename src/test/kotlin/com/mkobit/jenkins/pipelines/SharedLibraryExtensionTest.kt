@@ -1,12 +1,14 @@
 package com.mkobit.jenkins.pipelines
 
 import com.nhaarman.mockitokotlin2.mock
-import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.SoftAssertions
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import strikt.api.expect
+import strikt.api.expectThat
+import strikt.assertions.isEqualTo
+import testsupport.strikt.value
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 internal class SharedLibraryExtensionTest {
@@ -31,13 +33,16 @@ internal class SharedLibraryExtensionTest {
 
   @Test
   internal fun `default versions can be retrieved`() {
-    softlyAssert {
-      assertThat(sharedLibraryExtension.coreVersion.get()).isEqualTo(INITIAL_CORE_VERSION)
-      assertThat(sharedLibraryExtension.testHarnessVersion.get()).isEqualTo(
-        INITIAL_TEST_HARNESS_VERSION)
-      assertThat(sharedLibraryExtension.pipelineTestUnitVersion.get()).isEqualTo(
-        INITIAL_PIPELINE_UNIT_VERSION
-      )
+    expect {
+      that(sharedLibraryExtension.coreVersion)
+        .value
+        .isEqualTo(INITIAL_CORE_VERSION)
+      that(sharedLibraryExtension.testHarnessVersion)
+        .value
+        .isEqualTo(INITIAL_TEST_HARNESS_VERSION)
+      that(sharedLibraryExtension.pipelineTestUnitVersion)
+        .value
+        .isEqualTo(INITIAL_PIPELINE_UNIT_VERSION)
     }
   }
 
@@ -45,26 +50,24 @@ internal class SharedLibraryExtensionTest {
   internal fun `can set Jenkins core version`() {
     sharedLibraryExtension.coreVersion.set("newCoreVersion")
 
-    assertThat(sharedLibraryExtension.coreVersion.get()).isEqualTo("newCoreVersion")
+    expectThat(sharedLibraryExtension.coreVersion)
+      .value
+      .isEqualTo("newCoreVersion")
   }
 
   @Test
   internal fun `can set PipelineTestUnit version`() {
     sharedLibraryExtension.pipelineTestUnitVersion.set("newPipelineTestUnitVersion")
 
-    assertThat(sharedLibraryExtension.pipelineTestUnitVersion.get()).isEqualTo("newPipelineTestUnitVersion")
+    expectThat(sharedLibraryExtension.pipelineTestUnitVersion)
+      .value
+      .isEqualTo("newPipelineTestUnitVersion")
   }
 
   @Test
   internal fun `can set Jenkins Test Harness version`() {
     sharedLibraryExtension.testHarnessVersion.set("newTestHarnessVersion")
 
-    assertThat(sharedLibraryExtension.testHarnessVersion.get()).isEqualTo("newTestHarnessVersion")
-  }
-
-  private fun softlyAssert(assertions: SoftAssertions.() -> Unit) {
-    val softAssertions = SoftAssertions()
-    softAssertions.assertions()
-    softAssertions.assertAll()
+    expectThat(sharedLibraryExtension.testHarnessVersion).value.isEqualTo("newTestHarnessVersion")
   }
 }
