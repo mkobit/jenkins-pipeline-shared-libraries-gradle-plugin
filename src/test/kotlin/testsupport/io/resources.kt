@@ -1,4 +1,4 @@
-package testsupport
+package testsupport.io
 
 import com.google.common.io.Resources
 

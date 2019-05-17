@@ -35,7 +35,7 @@ import strikt.assertions.isNotNull
 import strikt.assertions.isNull
 import strikt.assertions.map
 import strikt.assertions.name
-import testsupport.NotImplementedYet
+import testsupport.junit.NotImplementedYet
 import testsupport.strikt.authority
 import testsupport.strikt.scheme
 import java.util.stream.Stream

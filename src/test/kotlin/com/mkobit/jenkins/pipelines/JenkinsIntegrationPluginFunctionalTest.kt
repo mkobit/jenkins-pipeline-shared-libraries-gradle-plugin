@@ -20,11 +20,11 @@ import strikt.assertions.isEqualTo
 import strikt.assertions.isRegularFile
 import strikt.assertions.resolve
 import strikt.gradle.testkit.output
-import testsupport.ForGradleVersions
-import testsupport.GradleProject
-import testsupport.NotImplementedYet
-import testsupport.UseMockServer
-import testsupport.loadResource
+import testsupport.junit.ForGradleVersions
+import testsupport.junit.GradleProject
+import testsupport.junit.NotImplementedYet
+import testsupport.junit.UseMockServer
+import testsupport.io.loadResource
 import testsupport.strikt.allOf
 import java.nio.file.Paths
 

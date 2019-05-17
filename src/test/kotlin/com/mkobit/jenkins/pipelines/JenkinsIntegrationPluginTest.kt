@@ -10,7 +10,7 @@ import strikt.api.expectThat
 import strikt.assertions.isA
 import strikt.assertions.isEqualTo
 import strikt.assertions.isNotNull
-import testsupport.expectDoesNotThrow
+import testsupport.assertj.expectDoesNotThrow
 import testsupport.strikt.isPresent
 import testsupport.strikt.value
 

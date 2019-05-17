@@ -1,4 +1,4 @@
-package testsupport
+package testsupport.junit
 
 import org.junit.jupiter.api.extension.BeforeTestExecutionCallback
 import org.junit.jupiter.api.extension.ExtendWith

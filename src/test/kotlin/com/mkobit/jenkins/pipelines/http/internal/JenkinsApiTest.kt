@@ -11,7 +11,7 @@ import strikt.api.expectThat
 import strikt.assertions.containsExactly
 import strikt.assertions.endsWith
 import strikt.assertions.isEqualTo
-import testsupport.UseMockServer
+import testsupport.junit.UseMockServer
 
 @UseMockServer
 internal class JenkinsApiTest {

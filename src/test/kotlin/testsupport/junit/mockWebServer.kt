@@ -1,4 +1,4 @@
-package testsupport
+package testsupport.junit
 
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.jupiter.api.extension.AfterEachCallback

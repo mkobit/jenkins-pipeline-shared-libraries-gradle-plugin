@@ -11,10 +11,10 @@ import strikt.assertions.isNotNull
 import strikt.gradle.testkit.isFailed
 import strikt.gradle.testkit.isSuccess
 import strikt.gradle.testkit.task
-import testsupport.ForGradleVersions
-import testsupport.GradleProject
-import testsupport.NotImplementedYet
-import testsupport.expectDoesNotThrow
+import testsupport.junit.ForGradleVersions
+import testsupport.junit.GradleProject
+import testsupport.junit.NotImplementedYet
+import testsupport.assertj.expectDoesNotThrow
 
 @ForGradleVersions
 class MainSourceIntegrationTest {

@@ -1,4 +1,4 @@
-package testsupport
+package testsupport.assertj
 
 import org.assertj.core.api.Assertions.assertThatCode
 

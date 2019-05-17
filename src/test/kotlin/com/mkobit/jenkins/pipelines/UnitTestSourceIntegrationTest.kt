@@ -13,8 +13,8 @@ import strikt.assertions.isNull
 import strikt.gradle.testkit.isSuccess
 import strikt.gradle.testkit.output
 import strikt.gradle.testkit.task
-import testsupport.ForGradleVersions
-import testsupport.GradleProject
+import testsupport.junit.ForGradleVersions
+import testsupport.junit.GradleProject
 
 @ForGradleVersions
 internal class UnitTestSourceIntegrationTest {

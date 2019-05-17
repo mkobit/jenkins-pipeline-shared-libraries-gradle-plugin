@@ -1,4 +1,4 @@
-package testsupport
+package testsupport.junit
 
 import com.google.common.io.Resources
 import com.mkobit.gradle.test.kotlin.testkit.runner.projectDirPath
@@ -68,7 +68,10 @@ internal class MultiVersionGradleProjectTestTemplate : TestTemplateInvocationCon
           else -> DEFAULT_VERSIONS
         }
       }
-      .map { gradleVersions -> gradleVersions.map { GradleProjectInvocationContext(context.displayName, it) } }
+      .map { gradleVersions -> gradleVersions.map {
+        GradleProjectInvocationContext(context.displayName,
+          it)
+      } }
       .map {
         it.stream().distinct()
           .map { gradleProjectContext ->
@@ -216,7 +219,9 @@ private class ResourceGradleProjectProviderExtension(
       }
       val temporaryDirectory = createTempDirectory(context)
       LOGGER.debug { "Creating temporary directory for project at $temporaryDirectory" }
-      Files.walkFileTree(resourcesPath, RecursiveCopyVisitor(resourcesPath, temporaryDirectory))
+      Files.walkFileTree(resourcesPath,
+        RecursiveCopyVisitor(resourcesPath,
+          temporaryDirectory))
       temporaryDirectory
     }
   }
