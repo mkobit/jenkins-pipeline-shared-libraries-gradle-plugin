@@ -3,6 +3,7 @@ package testsupport.junit
 import com.google.common.io.Resources
 import com.mkobit.gradle.test.kotlin.testkit.runner.projectDirPath
 import com.mkobit.gradle.test.kotlin.testkit.runner.stacktrace
+import mu.KotlinLogging
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.util.GradleVersion
 import org.junit.jupiter.api.extension.AfterTestExecutionCallback
@@ -28,7 +29,6 @@ import java.nio.file.SimpleFileVisitor
 import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.Optional
-import java.util.logging.Logger
 import java.util.stream.Stream
 import kotlin.reflect.jvm.kotlinFunction
 
@@ -144,7 +144,7 @@ private class ResourceGradleProjectProviderExtension(
 ) : ParameterResolver, AfterTestExecutionCallback {
 
   companion object {
-    private val LOGGER = Logger.getLogger("${ResourceGradleProjectProviderExtension::class.qualifiedName}")
+    private val LOGGER = KotlinLogging.logger { }
   }
 
   override fun supportsParameter(
@@ -177,7 +177,7 @@ private class ResourceGradleProjectProviderExtension(
   override fun afterTestExecution(context: ExtensionContext) {
     val store = getStore(context)
     val temporaryPath: Path? = store.get(context, Path::class.java)
-    LOGGER.fine { "Cleaning up directory at $temporaryPath" }
+    LOGGER.debug { "Cleaning up directory at $temporaryPath" }
     temporaryPath?.let {
       Files.walkFileTree(it, RecursiveDeleteVisitor())
     }
@@ -203,7 +203,7 @@ private class ResourceGradleProjectProviderExtension(
         val resourcePathToClass = testClass.kotlin.qualifiedName!!.replace(".", "/")
         "$resourcePathToClass${File.separator}$resourcePathToMethod"
       }
-    LOGGER.fine { "Loading Gradle project resources from classpath at $rootResourceDirectoryName for test ${context.uniqueId}" }
+    LOGGER.debug { "Loading Gradle project resources from classpath at $rootResourceDirectoryName for test ${context.uniqueId}" }
     return Resources.getResource(rootResourceDirectoryName).let {
       // This probably won't work for JAR or other protocols, so don't even try
       if (it.protocol != "file") {
@@ -214,7 +214,7 @@ private class ResourceGradleProjectProviderExtension(
         throw ParameterResolutionException("Resource at $resourcesPath is not a directory")
       }
       val temporaryDirectory = createTempDirectory(context)
-      LOGGER.fine { "Creating temporary directory for project at $temporaryDirectory" }
+      LOGGER.debug { "Creating temporary directory for project at $temporaryDirectory" }
       Files.walkFileTree(resourcesPath, RecursiveCopyVisitor(resourcesPath, temporaryDirectory))
       temporaryDirectory
     }
@@ -242,7 +242,7 @@ private class ResourceGradleProjectProviderExtension(
     override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult {
       val targetPath = to.resolve(from.relativize(dir))
       if (!Files.exists(targetPath)) {
-        LOGGER.fine { "Creating directory at $targetPath" }
+        LOGGER.debug { "Creating directory at $targetPath" }
         Files.createDirectory(targetPath)
       }
       return FileVisitResult.CONTINUE
@@ -250,7 +250,7 @@ private class ResourceGradleProjectProviderExtension(
 
     override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
       val targetPath = to.resolve(from.relativize(file))
-      LOGGER.fine { "Copying file from $to to $targetPath" }
+      LOGGER.debug { "Copying file from $to to $targetPath" }
       Files.copy(file, targetPath, StandardCopyOption.REPLACE_EXISTING)
       return FileVisitResult.CONTINUE
     }
@@ -258,14 +258,14 @@ private class ResourceGradleProjectProviderExtension(
 
   private class RecursiveDeleteVisitor : SimpleFileVisitor<Path>() {
     override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
-      LOGGER.fine { "Deleting file $file" }
+      LOGGER.debug { "Deleting file $file" }
       Files.delete(file)
       return FileVisitResult.CONTINUE
     }
 
     override fun postVisitDirectory(dir: Path, exc: IOException?): FileVisitResult {
       if (exc == null) {
-        LOGGER.fine { "Deleting directory $dir" }
+        LOGGER.debug { "Deleting directory $dir" }
         Files.delete(dir)
         return FileVisitResult.CONTINUE
       }
