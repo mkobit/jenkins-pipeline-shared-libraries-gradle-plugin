@@ -229,7 +229,7 @@ tasks {
   test {
     useJUnitPlatform()
     systemProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager")
-    findProperty("gradleTestVersions")?.let {
+    project.findProperty("gradleTestVersions")?.let {
       // Will rerun some tests unfortunately using this method, but helps with CI
       systemProperty("testsupport.ForGradleVersions.versions", it)
     }
@@ -237,7 +237,7 @@ tasks {
     testLogging {
       if (env("CI") != null) {
         // shoot more output out so that Circle CI doesn't kill build after no output in 10 minutes
-        events(TestLogEvent.FAILED, TestLogEvent.SKIPPED, TestLogEvent.PASSED, TestLogEvent.STARTED)
+        events(TestLogEvent.FAILED, TestLogEvent.SKIPPED, TestLogEvent.PASSED)
       } else {
         events(TestLogEvent.FAILED, TestLogEvent.SKIPPED)
       }
