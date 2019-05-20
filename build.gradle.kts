@@ -231,7 +231,7 @@ tasks {
     systemProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager")
     project.findProperty("gradleTestVersions")?.let {
       // Will rerun some tests unfortunately using this method, but helps with CI
-      systemProperty("testsupport.ForGradleVersions.versions", it)
+      systemProperty("testsupport.junit.ForGradleVersions.versions", it)
     }
     jvmArgs("-XshowSettings:vm", "-XX:+PrintGCTimeStamps", "-XX:+UseG1GC", "-Xmx512m", "-Xms256m")
     testLogging {
