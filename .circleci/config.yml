@@ -15,10 +15,13 @@ commands:
       submit-build-scan:
         type: boolean
         default: false
+      max-workers:
+        type: integer
+        default: 1
     steps:
       - run:
           name: Run Gradle Build
-          command: ./gradlew build -P gradleTestVersions="<< parameters.gradle-test-versions >>" --max-workers 2 --stacktrace<<# parameters.submit-build-scan >> --scan<</ parameters.submit-build-scan >>
+          command: ./gradlew build -P gradleTestVersions="<< parameters.gradle-test-versions >>" --max-workers << parameters.max-workers >> --stacktrace<<# parameters.submit-build-scan >> --scan<</ parameters.submit-build-scan >>
       - store_test_results:
           path: ~/build-working-directory/build/test-results/
   restore-home-cache:
