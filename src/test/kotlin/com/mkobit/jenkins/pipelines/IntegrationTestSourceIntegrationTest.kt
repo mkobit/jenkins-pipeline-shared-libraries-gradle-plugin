@@ -1,38 +1,43 @@
 package com.mkobit.jenkins.pipelines
 
-import com.mkobit.gradle.test.assertj.GradleAssertions.assertThat
 import com.mkobit.gradle.test.kotlin.testkit.runner.build
 import com.mkobit.gradle.test.kotlin.testkit.runner.info
 import com.mkobit.gradle.test.kotlin.testkit.runner.quiet
-import org.assertj.core.api.Assertions.allOf
-import org.assertj.core.api.Assertions.anyOf
-import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatCode
-import org.assertj.core.api.Assertions.not
 import org.gradle.api.artifacts.Configuration
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestTemplate
-import testsupport.ForGradleVersions
-import testsupport.GradleProject
-import testsupport.IntelliJSupport
-import testsupport.Issue
-import testsupport.NotImplementedYet
-import testsupport.condition
-import testsupport.softlyAssert
+import strikt.api.expectThat
+import strikt.assertions.all
+import strikt.assertions.contains
+import strikt.assertions.endsWith
+import strikt.assertions.isEmpty
+import strikt.assertions.isNotEmpty
+import strikt.assertions.isNotNull
+import strikt.assertions.none
+import strikt.gradle.testkit.isSuccess
+import strikt.gradle.testkit.output
+import strikt.gradle.testkit.task
+import strikt.gradle.testkit.tasks
+import testsupport.junit.ForGradleVersions
+import testsupport.junit.GradleProject
+import testsupport.junit.IntelliJSupport
+import testsupport.junit.Issue
+import testsupport.junit.NotImplementedYet
+import testsupport.assertj.expectDoesNotThrow
+import testsupport.strikt.allOf
+import testsupport.strikt.anyOf
 import java.util.regex.Pattern
-import org.junit.jupiter.params.provider.Arguments.of as argumentsOf
 
 @ForGradleVersions
 internal class IntegrationTestSourceIntegrationTest {
 
   @TestTemplate
   internal fun `can execute dependencies task`(@GradleProject(["projects", "only-plugins-block"]) gradleRunner: GradleRunner) {
-    assertThatCode {
+    expectDoesNotThrow {
       gradleRunner.build("dependencies")
-    }.doesNotThrowAnyException()
+    }
   }
 
   @TestTemplate
@@ -41,13 +46,12 @@ internal class IntegrationTestSourceIntegrationTest {
       quiet = true
     }.build("showResolvedIntegrationTestCompileClasspathArtifacts")
 
-    softlyAssert {
-      assertThat(buildResult.output.trim().split(System.lineSeparator())).isNotEmpty.allSatisfy {
-        assertThat(it)
-          .doesNotEndWith("@hpi")
-          .doesNotEndWith("@jpi")
-          .endsWith("@jar")
-      }
+    expectThat(buildResult) {
+      output.get { trim().split(System.lineSeparator()) }
+        .isNotEmpty()
+        .none { endsWith("@hpi") }
+        .none { endsWith("@jpi") }
+        .all { endsWith("@jar") }
     }
   }
 
@@ -55,19 +59,19 @@ internal class IntegrationTestSourceIntegrationTest {
   internal fun `integrationTest runtimeOnly configuration contains only HPI, JPI, and WAR artifacts`(@GradleProject(["projects", "show-configuration-states"]) gradleRunner: GradleRunner) {
     val buildResult = gradleRunner.build("--quiet", "showResolvedIntegrationTestRuntimeOnlyArtifacts")
 
-    softlyAssert(buildResult) {
-      outputSatisfies {
-        assertThat(it.trim().split(System.lineSeparator()))
-          .isNotEmpty
-          .allSatisfy {
-            val hpi = condition<String>(".hpi extension") { it.endsWith("@hpi") }
-            val jpi = condition<String>(".jpi extension") { it.endsWith("@jpi") }
-            val war = condition<String>(".war extension") { it.endsWith("@war") }
-            val jenkinsWar = condition<String>("Jenkins WAR group and module") { it.contains("org.jenkins-ci.main:jenkins-war") }
-            assertThat(it)
-              .has(anyOf(allOf(war, jenkinsWar), hpi, jpi))
+    expectThat(buildResult) {
+      output.get { trim().split(System.lineSeparator()) }
+        .isNotEmpty()
+        .all {
+          anyOf {
+            endsWith("@hpi")
+            endsWith("@jpi")
+            allOf {
+              contains("org.jenkins-ci.main:jenkins-war")
+              endsWith("@war")
+            }
           }
-      }
+        }
     }
   }
 
@@ -75,16 +79,22 @@ internal class IntegrationTestSourceIntegrationTest {
   internal fun `JenkinsPipelineUnit is not available in the integrationTest compile classpath`(@GradleProject(["projects", "show-configuration-states"]) gradleRunner: GradleRunner) {
     val buildResult = gradleRunner.build("--quiet", "showResolvedIntegrationTestCompileClasspathArtifacts")
 
-    softlyAssert(buildResult) {
-      outputSatisfies {
-        assertThat(it.trim().split(System.lineSeparator()))
-          .isNotEmpty
-          .allSatisfy {
-            val group = condition<String>("Jenkins Pipeline Unit group: com.lesfurets") { it.contains("com.lesfurets:") }
-            val module = condition<String>("Jenkins Pipeline Unit module: jenkins-pipeline-unit") { it.contains(":jenkins-pipeline-unit:") }
-            assertThat(it).has(not(anyOf(group, module)))
+    expectThat(buildResult) {
+      output.get { trim().split(System.lineSeparator()) }
+        .isNotEmpty()
+        .all {
+          not {
+            anyOf {
+              contains("com.lesfurets:")
+              allOf {
+                // Jenkins Pipeline Unit group: com.lesfurets
+                contains("org.jenkins-ci.main:jenkins-war")
+                // Jenkins Pipeline Unit module: jenkins-pipeline-unit
+                contains(":jenkins-pipeline-unit:")
+              }
+            }
           }
-      }
+        }
     }
   }
 
@@ -94,10 +104,11 @@ internal class IntegrationTestSourceIntegrationTest {
       info = true
     }.build("compileIntegrationTestGroovy")
 
-    assertThat(buildResult)
+    expectThat(buildResult)
       .describedAs("integrationTestCompileGroovy task outcome")
-      .withFailMessage("Build output: %s", buildResult.output)
-      .hasTaskSuccessAtPath(":compileIntegrationTestGroovy")
+      .task(":compileIntegrationTestGroovy")
+      .isNotNull()
+      .isSuccess()
   }
 
   @TestTemplate
@@ -106,9 +117,10 @@ internal class IntegrationTestSourceIntegrationTest {
       info = true
     }.build("integrationTest")
 
-    assertThat(buildResult)
-      .withFailMessage("Build output: %s", buildResult.output)
-      .hasTaskSuccessAtPath(":integrationTest")
+    expectThat(buildResult)
+      .task(":integrationTest")
+      .isNotNull()
+      .isSuccess()
   }
 
   @TestTemplate
@@ -118,10 +130,15 @@ internal class IntegrationTestSourceIntegrationTest {
       info = true
     }.build("integrationTest")
 
-    assertThat(buildResult)
-      .outputDoesNotContain("Caused: java.lang.NoClassDefFoundError: org/jenkinsci/main/modules/sshd/SshCommandFactory")
-      .outputDoesNotContain("Caused: com.google.inject.ProvisionException: Unable to provision, see the following errors:")
-      .outputDoesNotMatch(Pattern.compile(".*\\sERROR\\s.*", Pattern.DOTALL))
+    expectThat(buildResult)
+      .output
+      .and {
+        not {
+          contains("Caused: java.lang.NoClassDefFoundError: org/jenkinsci/main/modules/sshd/SshCommandFactory")
+          contains("Caused: com.google.inject.ProvisionException: Unable to provision, see the following errors:")
+          contains(Pattern.compile(".*\\sERROR\\s.*", Pattern.DOTALL).toRegex())
+        }
+      }
   }
 
   @TestTemplate
@@ -130,9 +147,10 @@ internal class IntegrationTestSourceIntegrationTest {
       info = true
     }.build("integrationTest")
 
-    assertThat(buildResult)
-      .withFailMessage("Build output: %s", buildResult.output)
-      .hasTaskSuccessAtPath(":integrationTest")
+    expectThat(buildResult)
+      .task(":integrationTest")
+      .isNotNull()
+      .isSuccess()
   }
 
   @TestTemplate
@@ -141,9 +159,10 @@ internal class IntegrationTestSourceIntegrationTest {
       info = true
     }.build("integrationTest")
 
-    assertThat(buildResult)
-      .withFailMessage("Build output: %s", buildResult.output)
-      .hasTaskSuccessAtPath(":integrationTest")
+    expectThat(buildResult)
+      .task(":integrationTest")
+      .isNotNull()
+      .isSuccess()
   }
 
   @TestTemplate
@@ -152,19 +171,19 @@ internal class IntegrationTestSourceIntegrationTest {
       info = true
     }
 
-    assertThat(gradleRunner.build("integrationTest"))
-      .tasksWithOutcomeSatisfy(TaskOutcome.SUCCESS) {
-        assertThat(it).isNotEmpty
-      }.tasksWithOutcomeSatisfy(TaskOutcome.UP_TO_DATE) {
-        assertThat(it).isEmpty()
-      }
+    expectThat(gradleRunner.build("integrationTest")) {
+      tasks(TaskOutcome.SUCCESS)
+        .isNotEmpty()
+      tasks(TaskOutcome.UP_TO_DATE)
+        .isEmpty()
+    }
 
-    assertThat(gradleRunner.build("integrationTest"))
-      .tasksWithOutcomeSatisfy(TaskOutcome.SUCCESS) {
-        assertThat(it).isEmpty()
-      }.tasksWithOutcomeSatisfy(TaskOutcome.UP_TO_DATE) {
-        assertThat(it).isNotEmpty
-      }
+    expectThat(gradleRunner.build("integrationTest")) {
+      tasks(TaskOutcome.SUCCESS)
+        .isEmpty()
+      tasks(TaskOutcome.UP_TO_DATE)
+        .isNotEmpty()
+    }
   }
 
   @NotImplementedYet
@@ -183,51 +202,50 @@ internal class IntegrationTestSourceIntegrationTest {
   internal fun `no configurations are resolved if no build tasks are executed`(@GradleProject(["projects", "show-configuration-states"]) gradleRunner: GradleRunner) {
     val buildResult = gradleRunner.build("--quiet", "printConfigurationStates")
 
-    assertThat(buildResult).outputSatisfies { output ->
-      assertThat(output.trim().split(System.lineSeparator())).allSatisfy { line ->
-        assertThat(line).endsWith(Configuration.State.UNRESOLVED.name)
+    expectThat(buildResult)
+      .output.get { trim().split(System.lineSeparator()) }
+      .all {
+        endsWith(Configuration.State.UNRESOLVED.name)
       }
-    }
   }
 
   @TestTemplate
   internal fun `Groovy DSL extension configuration`(@GradleProject(["projects", "gradle-configuration-groovy"]) gradleRunner: GradleRunner) {
-    assertThatCode {
+    expectDoesNotThrow {
       gradleRunner.apply {
         info = true
       }.build()
-    }.doesNotThrowAnyException()
+    }
   }
 
   @TestTemplate
   fun `Kotlin DSL extension configuration`(@GradleProject(["projects", "gradle-configuration-kotlin"]) gradleRunner: GradleRunner) {
-    assertThatCode {
+    expectDoesNotThrow {
       gradleRunner.apply {
         info = true
       }.build()
-    }.doesNotThrowAnyException()
+    }
   }
 
   @TestTemplate
   internal fun `"check" lifecycle task executes "integrationTest"`(@GradleProject(["projects", "only-plugins-block"]) gradleRunner: GradleRunner) {
     val buildResult = gradleRunner.build("check")
 
-    assertThat(buildResult)
-      .hasTaskAtPath(":test")
-      .hasTaskAtPath(":integrationTest")
+    expectThat(buildResult) {
+      task(":test").isNotNull()
+      task(":integrationTest").isNotNull()
+    }
   }
 
   @TestTemplate
   internal fun `generated sources can be used in Java and Groovy integration tests`(@GradleProject(["projects", "basic-generated-sources-usage"]) gradleRunner: GradleRunner) {
-    gradleRunner.build("integrationTest", "--tests", "*LocalLibraryUsageFromGroovyTest").let {
-      assertThat(it)
-        .outputContains("com.mkobit.LocalLibraryUsageFromGroovyTest > createRetriever STARTED")
-    }
+    expectThat(gradleRunner.build("integrationTest", "--tests", "*LocalLibraryUsageFromGroovyTest"))
+      .output
+      .contains("com.mkobit.LocalLibraryUsageFromGroovyTest > createRetriever STARTED")
 
-    gradleRunner.build("integrationTest", "--tests", "*LocalLibraryUsageFromJavaTest").let {
-      assertThat(it)
-        .outputContains("com.mkobit.LocalLibraryUsageFromJavaTest > createRetriever STARTED")
-    }
+    expectThat(gradleRunner.build("integrationTest", "--tests", "*LocalLibraryUsageFromJavaTest"))
+      .output
+      .contains("com.mkobit.LocalLibraryUsageFromJavaTest > createRetriever STARTED")
   }
 
   @TestTemplate
@@ -235,24 +253,31 @@ internal class IntegrationTestSourceIntegrationTest {
   fun `generated sources can be consumed in a @JenkinsRule`(@GradleProject(["projects", "generated-sources-JenkinsRule-usage"]) gradleRunner: GradleRunner) {
     val buildResult = gradleRunner.build("check")
 
-    assertThat(buildResult)
-      .outputContains("com.mkobit.LocalLibraryJenkinsRuleUsageTest > noopTest STANDARD_ERROR")
-      .outputDoesNotContain("Failed to save")
-      .outputDoesNotContain("Refusing to marshal")
-      .outputDoesNotContain("might be dangerous, so rejecting; see https://jenkins.io/redirect/class-filter/")
+    expectThat(buildResult)
+      .output
+      .and {
+        contains("com.mkobit.LocalLibraryJenkinsRuleUsageTest > noopTest STANDARD_ERROR")
+        not { contains("Failed to save") }
+        not { contains("Refusing to marshal") }
+        not { contains("might be dangerous, so rejecting; see https://jenkins.io/redirect/class-filter/") }
+      }
   }
 
   @TestTemplate
   internal fun `can integration test library code that makes use of Jenkins core and plugin classes`(@GradleProject(["projects", "global-library-using-jenkins-plugin-classes"]) gradleRunner: GradleRunner) {
     val buildResult = gradleRunner.build("integrationTest")
-    assertThat(buildResult)
-      .outputContains("com.mkobit.LibraryUsingJenkinsClassesIntegrationTest > can use Jenkins core classes STARTED")
-      .outputContains("com.mkobit.LibraryUsingJenkinsClassesIntegrationTest > can use plugin classes STARTED")
+
+    expectThat(buildResult)
+      .output
+      .contains("com.mkobit.LibraryUsingJenkinsClassesIntegrationTest > can use Jenkins core classes STARTED")
+      .contains("com.mkobit.LibraryUsingJenkinsClassesIntegrationTest > can use plugin classes STARTED")
   }
 
   @TestTemplate
   internal fun `@Grab in source library can be integration tested`(@GradleProject(["projects", "source-with-@grab"]) gradleRunner: GradleRunner) {
-    gradleRunner.build("integrationTest")
+    expectDoesNotThrow {
+      gradleRunner.build("integrationTest")
+    }
   }
 
   @NotImplementedYet

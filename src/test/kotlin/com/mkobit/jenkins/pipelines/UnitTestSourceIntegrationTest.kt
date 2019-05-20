@@ -1,15 +1,20 @@
 package com.mkobit.jenkins.pipelines
 
-import com.mkobit.gradle.test.assertj.GradleAssertions.assertThat
 import com.mkobit.gradle.test.kotlin.testkit.runner.build
 import com.mkobit.gradle.test.kotlin.testkit.runner.info
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
-import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.TestTemplate
-import testsupport.ForGradleVersions
-import testsupport.GradleProject
+import strikt.api.expectThat
+import strikt.assertions.contains
+import strikt.assertions.isNotNull
+import strikt.assertions.isNull
+import strikt.gradle.testkit.isSuccess
+import strikt.gradle.testkit.output
+import strikt.gradle.testkit.task
+import testsupport.junit.ForGradleVersions
+import testsupport.junit.GradleProject
 
 @ForGradleVersions
 internal class UnitTestSourceIntegrationTest {
@@ -20,8 +25,10 @@ internal class UnitTestSourceIntegrationTest {
       info = true
     }.build("test")
 
-    assertThat(buildResult)
-      .hasTaskAtPathWithOutcome(":test", TaskOutcome.SUCCESS)
+    expectThat(buildResult)
+      .task(":test")
+      .isNotNull()
+      .isSuccess()
   }
 
   @TestTemplate
@@ -30,30 +37,38 @@ internal class UnitTestSourceIntegrationTest {
       info = true
     }.build("test")
 
-    assertThat(buildResult)
-      .doesNotHaveTaskAtPath(":integrationTest")
-      .hasTaskAtPath(":test")
+    expectThat(buildResult)
+      .task(":integrationTest")
+      .isNull()
   }
 
   @Disabled("@Grab does not seem to be working with tests in Gradle. See https://stackoverflow.com/questions/16471096/any-alternative-to-grabconfig and https://stackoverflow.com/questions/4611230/no-suitable-classloader-found-for-grab")
   @TestTemplate
   internal fun `can test @Grab using source can be unit tested normally`(@GradleProject(["projects", "source-with-@grab"]) gradleRunner: GradleRunner) {
     val buildResult = gradleRunner.build("test", "--tests", "*GrabUsingLibraryTest*")
-    assertThat(buildResult)
-      .hasTaskSuccessAtPath(":test")
+
+    expectThat(buildResult)
+      .task(":test")
+      .isNotNull()
+      .isSuccess()
   }
 
   @TestTemplate
   internal fun `can run tests that do not use the source code used by @Grab`(@GradleProject(["projects", "source-with-@grab"]) gradleRunner: GradleRunner) {
     val buildResult = gradleRunner.build("test", "--tests", "*NonGrabUsingTest*")
-    assertThat(buildResult)
-      .hasTaskSuccessAtPath(":test")
+
+    expectThat(buildResult)
+      .task(":test")
+      .isNotNull()
+      .isSuccess()
   }
 
   @TestTemplate
   internal fun `can test library code that makes use of Jenkins core and plugin classes`(@GradleProject(["projects", "global-library-using-jenkins-plugin-classes"]) gradleRunner: GradleRunner) {
     val buildResult = gradleRunner.build("test")
-    assertThat(buildResult)
-      .outputContains("com.mkobit.LibraryUsingJenkinsClassesTest > throws exception for null constructor STARTED")
+
+    expectThat(buildResult)
+      .output
+      .contains("com.mkobit.LibraryUsingJenkinsClassesTest > throws exception for null constructor STARTED")
   }
 }

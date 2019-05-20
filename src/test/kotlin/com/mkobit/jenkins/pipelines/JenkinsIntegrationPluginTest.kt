@@ -2,11 +2,17 @@ package com.mkobit.jenkins.pipelines
 
 import com.mkobit.jenkins.pipelines.http.AnonymousAuthentication
 import com.mkobit.jenkins.pipelines.http.BasicAuthentication
-import org.assertj.core.api.Assertions.assertThat
 import org.gradle.api.Project
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import strikt.api.expectThat
+import strikt.assertions.isA
+import strikt.assertions.isEqualTo
+import strikt.assertions.isNotNull
+import testsupport.assertj.expectDoesNotThrow
+import testsupport.strikt.isPresent
+import testsupport.strikt.value
 
 internal class JenkinsIntegrationPluginTest {
 
@@ -21,38 +27,43 @@ internal class JenkinsIntegrationPluginTest {
   @Test
   internal fun `jenkinsIntegration extension is created`() {
     val extension = project.extensions.findByName("jenkinsIntegration")
-    assertThat(extension)
+    expectThat(extension)
       .isNotNull()
-      .isInstanceOf(JenkinsIntegrationExtension::class.java)
+      .isA<JenkinsIntegrationExtension>()
   }
 
   @Test
   internal fun `integration extension has default values`() {
     val extension = project.extensions.findByType(JenkinsIntegrationExtension::class.java)
-    assertThat(extension).isNotNull()
-    assertThat(extension!!).satisfies {
-      assertThat(it.baseUrl.isPresent)
-        .describedAs("Instance URL is absent")
-        .isFalse()
-      assertThat(it.authentication.get())
-        .describedAs("Anonymous authentication is the default")
-        .isSameAs(AnonymousAuthentication)
-    }
+    expectThat(extension)
+      .isNotNull()
+      .and {
+        get("Instance URL is absent") { baseUrl }.not { isPresent() }
+        get("Anonymous authentication is the default") { authentication }
+          .value
+          .isEqualTo(AnonymousAuthentication)
+      }
   }
 
   @Test
   internal fun `can specify alternate credential providers in extension`() {
     val basicAuth = BasicAuthentication("username", "password")
-    val extension = project.extensions.findByType(JenkinsIntegrationExtension::class.java)
-    assertThat(extension).isNotNull()
-    extension!!.authentication.set(project.provider { basicAuth })
-    assertThat(extension.authentication.get()).isEqualTo(basicAuth)
+    val extension = project.extensions.findByType(JenkinsIntegrationExtension::class.java)?.apply {
+      authentication.set(project.provider { basicAuth })
+    }
+    expectThat(extension)
+      .isNotNull()
+      .and {
+        get { authentication }
+          .value
+          .isEqualTo(basicAuth)
+      }
   }
 
   @Test
   internal fun `download GDSL task exists`() {
-    assertThat(project.tasks.findByPath(":retrieveJenkinsGdsl"))
-      .describedAs("Download GDSL task exists")
-      .isNotNull()
+    expectDoesNotThrow {
+      project.tasks.named("retrieveJenkinsGdsl")
+    }
   }
 }

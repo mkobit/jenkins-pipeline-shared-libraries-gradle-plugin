@@ -28,7 +28,7 @@ commands:
           name: Generate cache key
           command: |
             mkdir -p build
-            find settings.gradle.kts build.gradle.kts gradle buildSrc/src buildSrc/build.gradle.kts -type f -exec sha256sum '{}' \; | tee build/circle-ci-key.txt
+            find settings.gradle.kts build.gradle.kts gradle buildSrc/src buildSrc/buildSrc.gradle.kts buildSrc/settings.gradle.kts -type f -exec sha256sum '{}' \; | tee build/circle-ci-key.txt
       - restore_cache:
           keys:
             - v2-home-cache-{{ checksum "build/circle-ci-key.txt" }}
@@ -40,7 +40,7 @@ commands:
           name: Generate cache key
           command: |
             mkdir -p build
-            find settings.gradle.kts build.gradle.kts gradle buildSrc/src buildSrc/build.gradle.kts -type f -exec sha256sum '{}' \; | tee build/circle-ci-key.txt
+            find settings.gradle.kts build.gradle.kts gradle buildSrc/src buildSrc/buildSrc.gradle.kts buildSrc/settings.gradle.kts -type f -exec sha256sum '{}' \; | tee build/circle-ci-key.txt
       - save_cache:
           paths:
             - ~/.gradle
@@ -58,7 +58,7 @@ shared-steps:
       name: Show Java Version
 
 jobs:
-  check:
+  check-current:
     executor: java-8
     steps:
       - checkout
@@ -74,15 +74,6 @@ jobs:
             - build/*
             - buildSrc/.gradle/*
             - buildSrc/build/*
-  test-gradle-5_1:
-    executor: java-8
-    steps:
-      - checkout
-      - restore-home-cache
-      - attach_workspace:
-          at: ~/build-working-directory
-      - gradle-build:
-          gradle-test-versions: "5.1"
   test-gradle-5_1_1:
     executor: java-8
     steps:
@@ -101,7 +92,7 @@ jobs:
           at: ~/build-working-directory
       - gradle-build:
           gradle-test-versions: "5.2"
-  test-gradle-5_3:
+  test-gradle-5_3_1:
     executor: java-8
     steps:
       - checkout
@@ -109,19 +100,31 @@ jobs:
       - attach_workspace:
           at: ~/build-working-directory
       - gradle-build:
-          gradle-test-versions: "5.3"
+          gradle-test-versions: "5.3.1"
+  test-gradle-5_4_1:
+    executor: java-8
+    steps:
+      - checkout
+      - restore-home-cache
+      - attach_workspace:
+          at: ~/build-working-directory
+      - gradle-build:
+          gradle-test-versions: "5.4.1"
 
 workflows:
   version: 2
   build:
     jobs:
-      - check
+      - check-current
       - test-gradle-5_1_1:
           requires:
-            - check
-      - test-gradle-5_1:
-          requires:
-            - check
+            - check-current
       - test-gradle-5_2:
           requires:
-            - check
+            - check-current
+      - test-gradle-5_3_1:
+          requires:
+            - check-current
+      - test-gradle-5_4_1:
+          requires:
+            - check-current

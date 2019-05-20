@@ -13,7 +13,6 @@ import org.gradle.api.artifacts.dsl.RepositoryHandler
 import org.gradle.api.file.ProjectLayout
 import org.gradle.api.file.SourceDirectorySet
 import org.gradle.api.model.ObjectFactory
-import org.gradle.api.plugins.ExtensionContainer
 import org.gradle.api.plugins.GroovyPlugin
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.GroovySourceSet
@@ -24,7 +23,8 @@ import org.gradle.api.tasks.javadoc.Groovydoc
 import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.tasks.Jar
 // @formatter:off
-import org.gradle.kotlin.dsl.* // * import easiest to handle https://github.com/gradle/kotlin-dsl/issues/564
+// * import easiest to handle https://github.com/gradle/kotlin-dsl/issues/564
+import org.gradle.kotlin.dsl.* // ktlint-disable no-wildcard-imports
 // @formatter:on
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import javax.inject.Inject

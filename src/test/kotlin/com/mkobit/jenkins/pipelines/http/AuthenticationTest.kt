@@ -1,11 +1,14 @@
 package com.mkobit.jenkins.pipelines.http
 
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import strikt.api.expectThat
+import strikt.assertions.hasEntry
+import strikt.assertions.isEmpty
 import java.util.Base64
 
 internal class AuthenticationTest {
+
   private companion object {
     private const val USERNAME = "mkobit"
     private const val PASSWORD = "this is the password"
@@ -16,8 +19,8 @@ internal class AuthenticationTest {
     @Test
     internal fun `headers are present`() {
       val authentication = BasicAuthentication(USERNAME, PASSWORD)
-      assertThat(authentication.headers())
-        .containsEntry("Authentication", "Basic ${Base64.getEncoder().encodeToString("$USERNAME:$PASSWORD".toByteArray())}")
+      expectThat(authentication.headers())
+        .hasEntry("Authentication", "Basic ${Base64.getEncoder().encodeToString("$USERNAME:$PASSWORD".toByteArray())}")
     }
   }
 
@@ -26,8 +29,8 @@ internal class AuthenticationTest {
     @Test
     internal fun `headers are present`() {
       val authentication = ApiTokenAuthentication(USERNAME, PASSWORD)
-      assertThat(authentication.headers())
-        .containsEntry("Authentication", "Basic ${Base64.getEncoder().encodeToString("$USERNAME:$PASSWORD".toByteArray())}")
+      expectThat(authentication.headers())
+        .hasEntry("Authentication", "Basic ${Base64.getEncoder().encodeToString("$USERNAME:$PASSWORD".toByteArray())}")
     }
   }
 
@@ -35,7 +38,7 @@ internal class AuthenticationTest {
   inner class AnonymousAuthenticationTest {
     @Test
     internal fun `headers are absent`() {
-      assertThat(AnonymousAuthentication.headers())
+      expectThat(AnonymousAuthentication.headers())
         .isEmpty()
     }
   }

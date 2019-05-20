@@ -6,9 +6,12 @@ import com.mkobit.jenkins.pipelines.http.BasicAuthentication
 import okhttp3.Credentials
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import testsupport.UseMockServer
+import strikt.api.expectThat
+import strikt.assertions.containsExactly
+import strikt.assertions.endsWith
+import strikt.assertions.isEqualTo
+import testsupport.junit.UseMockServer
 
 @UseMockServer
 internal class JenkinsApiTest {
@@ -20,8 +23,8 @@ internal class JenkinsApiTest {
 
     downloadGdsl(server.url("jenkins"), AnonymousAuthentication)
     val request = server.takeRequest()
-    assertThat(request.method).isEqualTo("GET")
-    assertThat(request.path).endsWith("pipeline-syntax/gdsl")
+    expectThat(request.method).isEqualTo("GET")
+    expectThat(request.path).endsWith("pipeline-syntax/gdsl")
   }
 
   @Test
@@ -31,10 +34,12 @@ internal class JenkinsApiTest {
 
     retrievePluginManagerData(server.url("jenkins"), AnonymousAuthentication)
     val request = server.takeRequest()
-    assertThat(request.method).isEqualTo("GET")
-    assertThat(request.requestUrl).satisfies {
-      assertThat(it.pathSegments()).containsExactly("jenkins", "pluginManager", "api", "json")
-      assertThat(it.queryParameter("depth")).isEqualTo("2")
+    expectThat(request) {
+      get { method }.isEqualTo("GET")
+      get { requestUrl }.and {
+        get { pathSegments() }.containsExactly("jenkins", "pluginManager", "api", "json")
+        get("query parameter depth") { queryParameter("depth") }.isEqualTo("2")
+      }
     }
   }
 
@@ -45,8 +50,12 @@ internal class JenkinsApiTest {
 
     connect(server.url("jenkins"), AnonymousAuthentication)
     val request = server.takeRequest()
-    assertThat(request.requestUrl.pathSegments()).containsExactly("jenkins")
-    assertThat(request.method).isEqualTo("HEAD")
+    expectThat(request) {
+      get { method }.isEqualTo("HEAD")
+      get { requestUrl }.and {
+        get { pathSegments() }.containsExactly("jenkins")
+      }
+    }
   }
 
   @Test
@@ -58,8 +67,10 @@ internal class JenkinsApiTest {
 
     retrievePluginManagerData(server.url("jenkins"), basic)
     val request = server.takeRequest()
-    assertThat(request.headers).satisfies {
-      assertThat(it["Authentication"]).isEqualTo(Credentials.basic(basic.username, basic.password))
+    expectThat(request) {
+      get { headers }.and {
+        get { get("Authentication") }.isEqualTo(Credentials.basic(basic.username, basic.password))
+      }
     }
   }
 
@@ -72,8 +83,10 @@ internal class JenkinsApiTest {
 
     retrievePluginManagerData(server.url("jenkins"), token)
     val request = server.takeRequest()
-    assertThat(request.headers).satisfies {
-      assertThat(it["Authentication"]).isEqualTo(Credentials.basic(token.username, token.apiToken))
+    expectThat(request) {
+      get { headers }.and {
+        get { get("Authentication") }.isEqualTo(Credentials.basic(token.username, token.apiToken))
+      }
     }
   }
 }

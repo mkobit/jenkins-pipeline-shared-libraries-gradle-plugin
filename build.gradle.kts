@@ -1,25 +1,20 @@
-import buildsrc.DependencyInfo
 import buildsrc.ProjectInfo
-import com.gradle.publish.PluginConfig
-import com.gradle.publish.PublishPlugin
-import org.gradle.api.internal.HasConvention
+import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.jvm.tasks.Jar
-import org.jetbrains.dokka.DokkaConfiguration
-import org.jetbrains.dokka.gradle.DokkaTask
+import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.io.ByteArrayOutputStream
 import java.net.URL
 
 plugins {
-  id("com.gradle.build-scan") version "2.0.2"
+  id("com.gradle.build-scan") version "2.3"
   `kotlin-dsl`
+  id("org.jlleitschuh.gradle.ktlint") version "8.0.0"
   `java-library`
-  `java-gradle-plugin`
-  id("com.gradle.plugin-publish") version "0.10.0"
-  id("com.github.ben-manes.versions") version "0.20.0"
-  id("org.jetbrains.dokka") version "0.9.17"
-  // TODO: load version from shared location
+  id("com.gradle.plugin-publish") version "0.10.1"
+  id("com.github.ben-manes.versions") version "0.21.0"
+  id("org.jetbrains.dokka") version "0.9.18"
   // Only used for local publishing for testing
   `maven-publish`
   buildsrc.`jenkins-rebaseline`
@@ -42,8 +37,8 @@ val gitCommitSha: String by lazy {
 val SourceSet.kotlin: SourceDirectorySet
   get() = withConvention(KotlinSourceSet::class) { kotlin }
 
+fun env(key: String): String? = System.getenv(key)
 buildScan {
-  fun env(key: String): String? = System.getenv(key)
 
   termsOfServiceAgree = "yes"
   termsOfServiceUrl = "https://gradle.com/terms-of-service"
@@ -89,6 +84,10 @@ repositories {
   jcenter()
 }
 
+ktlint {
+  version.set("0.32.0")
+}
+
 configurations {
   // This is very similar to the dependency resolution used in the plugin implementation.
   // It is mainly used to get IDEA autocompletion and for use it caching dependencies in Circle CI
@@ -119,28 +118,43 @@ configurations {
         jenkinsPlugins.resolve()
       }
     }
+    resolutionStrategy.eachDependency {
+      when (requested.group) {
+        "com.squareup.okhttp3" -> useVersion("3.14.1")
+        "dev.minutest" -> useVersion("1.7.0")
+        "org.junit.jupiter" -> useVersion("5.4.2")
+        "org.junit.platform" -> useVersion("1.4.2")
+        "io.strikt" -> useVersion("0.20.1")
+        "org.apache.logging.log4j" -> useVersion("2.11.2")
+      }
+    }
   }
 }
 
 dependencies {
   api(gradleApi())
-  api(DependencyInfo.javapoet)
-  implementation(DependencyInfo.kotlinLogging)
-  implementation(DependencyInfo.okHttpClient)
+  api("com.squareup:javapoet:1.11.1")
+  implementation("io.github.microutils:kotlin-logging:1.6.26")
+  implementation("com.squareup.okhttp3:okhttp")
   testImplementation(kotlin("reflect"))
-  testImplementation(DependencyInfo.assertJCore)
-  testImplementation(DependencyInfo.assertJGradle)
-  testImplementation(DependencyInfo.gradleTestKotlinExtensions)
-  testImplementation(DependencyInfo.guava)
-  testImplementation(DependencyInfo.mockito)
-  testImplementation(DependencyInfo.mockitoKotlin)
-  testImplementation(DependencyInfo.okHttpMockServer)
-  DependencyInfo.junitTestImplementationArtifacts.forEach {
-    testImplementation(it)
-  }
-  DependencyInfo.junitTestRuntimeOnlyArtifacts.forEach {
-    testRuntimeOnly(it)
-  }
+  testImplementation("org.assertj:assertj-core:3.12.2")
+  testImplementation("com.mkobit.gradle.test:assertj-gradle:0.2.0")
+  testImplementation("com.mkobit.gradle.test:gradle-test-kotlin-extensions:0.6.0")
+  testImplementation("com.google.guava:guava:27.1-jre")
+  testImplementation("org.mockito:mockito-core:2.27.0")
+  testImplementation("com.nhaarman.mockitokotlin2:mockito-kotlin:2.1.0")
+  testImplementation("com.squareup.okhttp3:mockwebserver")
+
+  testImplementation("io.strikt:strikt-core")
+  testImplementation("io.strikt:strikt-gradle")
+
+  testImplementation("dev.minutest:minutest")
+  testImplementation("org.junit.jupiter:junit-jupiter-api")
+  testImplementation("org.junit.jupiter:junit-jupiter-params")
+
+  testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+  testRuntimeOnly("org.apache.logging.log4j:log4j-core")
+  testRuntimeOnly("org.apache.logging.log4j:log4j-jul")
 
   // These are used for code completion in the pipelineTestResources to more easily facilitate writing tests
   // against the libraries that are used.
@@ -169,8 +183,23 @@ dependencies {
 }
 
 tasks {
-  wrapper{
-    gradleVersion = "5.0"
+  wrapper {
+    gradleVersion = "5.4.1"
+  }
+
+  dependencyUpdates {
+    val rejectPatterns = listOf("alpha", "beta", "rc", "cr", "m").map { qualifier ->
+      Regex("(?i).*[.-]$qualifier[.\\d-]*")
+    }
+    resolutionStrategy {
+      componentSelection {
+        all {
+          if (rejectPatterns.any { it.matches(candidate.version) }) {
+            reject("Release candidate")
+          }
+        }
+      }
+    }
   }
 
   withType<Jar>().configureEach {
@@ -200,13 +229,18 @@ tasks {
   test {
     useJUnitPlatform()
     systemProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager")
-    findProperty("gradleTestVersions")?.let {
+    project.findProperty("gradleTestVersions")?.let {
       // Will rerun some tests unfortunately using this method, but helps with CI
-      systemProperty("testsupport.ForGradleVersions.versions", it)
+      systemProperty("testsupport.junit.ForGradleVersions.versions", it)
     }
     jvmArgs("-XshowSettings:vm", "-XX:+PrintGCTimeStamps", "-XX:+UseG1GC", "-Xmx512m", "-Xms256m")
     testLogging {
-      events("skipped", "failed")
+      if (env("CI") != null) {
+        // shoot more output out so that Circle CI doesn't kill build after no output in 10 minutes
+        events(TestLogEvent.FAILED, TestLogEvent.SKIPPED, TestLogEvent.PASSED)
+      } else {
+        events(TestLogEvent.FAILED, TestLogEvent.SKIPPED)
+      }
     }
   }
 
@@ -216,7 +250,7 @@ tasks {
     fileTree(it).filter { fileDetails -> fileDetails.name == "circleci" }.singleFile
   }
   val downloadCircleCiBundle by registering {
-    val downloadUrl = "https://github.com/CircleCI-Public/circleci-cli/releases/download/v0.1.4308/circleci-cli_0.1.4308_linux_amd64.tar.gz"
+    val downloadUrl = "https://github.com/CircleCI-Public/circleci-cli/releases/download/v0.1.5607/circleci-cli_0.1.5607_linux_amd64.tar.gz"
     inputs.property("url", downloadUrl)
     outputs.file(circleCiBundleDownloadLocation)
     doFirst("download archive") {
@@ -261,41 +295,41 @@ tasks {
     }
   }
 
-  val main by sourceSets
-  val sourcesJar by creating(Jar::class) {
+  val sourcesJar by registering(Jar::class) {
     group = JavaBasePlugin.DOCUMENTATION_GROUP
     description = "Assembles a JAR of the source code"
-    classifier = "sources"
-    from(main.allSource)
+    archiveClassifier.set("sources")
+    from(sourceSets.main.map { it.allSource })
   }
 
   // No Java code, so don't need the javadoc task.
   // Dokka generates our documentation.
-  remove(getByName("javadoc"))
-  dokka  {
-    dependsOn(main.classesTaskName)
+  javadoc {
+    enabled = false
+  }
+
+  dokka {
+    dependsOn(sourceSets.main.map { it.classesTaskName })
     jdkVersion = 8
     outputFormat = "html"
     outputDirectory = "$buildDir/javadoc"
-    sourceDirs = main.kotlin.srcDirs
-    // See https://github.com/Kotlin/dokka/issues/196
-    externalDocumentationLink(delegateClosureOf<DokkaConfiguration.ExternalDocumentationLink.Builder> {
-      url = URL("https://docs.gradle.org/current/javadoc/")
-    })
-    externalDocumentationLink(delegateClosureOf<DokkaConfiguration.ExternalDocumentationLink.Builder> {
+    sourceDirs = sourceSets.main.get().kotlin.srcDirs
+    externalDocumentationLink {
+      url = URL("https://docs.gradle.org/${GradleVersion.current().version}/javadoc/")
+    }
+    externalDocumentationLink {
       url = URL("https://docs.oracle.com/javase/8/docs/api/")
-    })
-    externalDocumentationLink(delegateClosureOf<DokkaConfiguration.ExternalDocumentationLink.Builder> {
+    }
+    externalDocumentationLink {
       url = URL("https://square.github.io/javapoet/javadoc/javapoet/")
-    })
+    }
   }
 
-  val javadocJar by creating(Jar::class) {
-    dependsOn(dokka)
+  val javadocJar by registering(Jar::class) {
     description = "Assembles a JAR of the generated Javadoc"
     from(dokka.map { it.outputDirectory })
     group = JavaBasePlugin.DOCUMENTATION_GROUP
-    classifier = "javadoc"
+    archiveClassifier.set("javadoc")
   }
 
   assemble {
@@ -369,19 +403,18 @@ artifacts {
   add("archives", javadocJar)
 }
 
-val sharedLibraryPluginId = "com.mkobit.jenkins.pipelines.shared-library"
 gradlePlugin {
   plugins {
     // Don't get the extensions for NamedDomainObjectContainer here because we only have a NamedDomainObjectContainer
     // See https://github.com/gradle/kotlin-dsl/issues/459
     create("sharedLibrary") {
-      id = sharedLibraryPluginId
+      id = "com.mkobit.jenkins.pipelines.shared-library"
       implementationClass = "com.mkobit.jenkins.pipelines.SharedLibraryPlugin"
       displayName = "Jenkins Pipeline Shared Library Development"
       description = "Configures and sets up a Gradle project for development and testing of a Jenkins Pipeline shared library (https://jenkins.io/doc/book/pipeline/shared-libraries/)"
     }
     create("jenkinsIntegration") {
-      id =  "com.mkobit.jenkins.pipelines.jenkins-integration"
+      id = "com.mkobit.jenkins.pipelines.jenkins-integration"
       implementationClass = "com.mkobit.jenkins.pipelines.JenkinsIntegrationPlugin"
       displayName = "Jenkins Integration Plugin"
       description = "Tasks to retrieve information from a Jenkins instance to be aid in the development of tools with Gradle"
