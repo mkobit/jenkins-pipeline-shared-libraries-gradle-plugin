@@ -28,6 +28,10 @@ For each release, a subsection should be added for each of the following if they
 
 * Dependency version updates
 
+=== Fixed
+
+* The header key for both API token authentication and basic authentication was is now `Authorization` instead of the incorrect `Authentication`
+
 == 0.8.0 (2018/11/30)
 
 This version requires at least Gradle 5.0+.
