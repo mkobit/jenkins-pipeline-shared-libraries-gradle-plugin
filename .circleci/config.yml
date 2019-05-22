@@ -7,7 +7,22 @@ executors:
     - image: circleci/openjdk:8-jdk
 
 commands:
-  gradle-build:
+  gradle:
+    description: Runs './gradlew' command with the provided command
+    parameters:
+      command:
+        type: string
+        default: build
+      submit-build-scan:
+        type: boolean
+        default: false
+    steps:
+      - run:
+          name: Run Gradle Command
+          command: ./gradlew << parameters.command >><<# parameters.submit-build-scan >> --scan<</ parameters.submit-build-scan >> --stacktrace
+      - store_test_results:
+          path: ~/build-working-directory/build/test-results/
+  gradle-build-for-version:
     description: Runs './gradlew build' testing against the provided version
     parameters:
       gradle-test-versions:
@@ -16,11 +31,9 @@ commands:
         type: boolean
         default: false
     steps:
-      - run:
-          name: Run Gradle Build
-          command: ./gradlew build -P gradleTestVersions="<< parameters.gradle-test-versions >>" --max-workers 2 --stacktrace<<# parameters.submit-build-scan >> --scan<</ parameters.submit-build-scan >>
-      - store_test_results:
-          path: ~/build-working-directory/build/test-results/
+      - gradle:
+          command: build -P gradleTestVersions="<< parameters.gradle-test-versions >>" --max-workers 2 --stacktrace<
+          submit-build-scan: << parameters.submit-build-scan >>
   restore-home-cache:
     description: Restores the Gradle home cache.
     steps:
@@ -48,14 +61,14 @@ commands:
           when: always
 
 # TODO: this is an artifact of determining why some builds fail with OOM on Circle CI
-shared-steps:
-  show-java-info: &show-java-info
-    run:
-      command: |
-        java -XshowSettings:vm -XX:+PrintCommandLineFlags -version
-        java -XshowSettings:vm -XX:+PrintCommandLineFlags -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -version
-        javac -version
-      name: Show Java Version
+#shared-steps:
+#  show-java-info: &show-java-info
+#    run:
+#      command: |
+#        java -XshowSettings:vm -XX:+PrintCommandLineFlags -version
+#        java -XshowSettings:vm -XX:+PrintCommandLineFlags -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -version
+#        javac -version
+#      name: Show Java Version
 
 jobs:
   check-current:
@@ -63,7 +76,7 @@ jobs:
     steps:
       - checkout
       - restore-home-cache
-      - gradle-build:
+      - gradle-build-for-version:
           submit-build-scan: true
           gradle-test-versions: current
       - save-home-cache
@@ -81,7 +94,7 @@ jobs:
       - restore-home-cache
       - attach_workspace:
           at: ~/build-working-directory
-      - gradle-build:
+      - gradle-build-for-version:
           gradle-test-versions: "5.1.1"
   test-gradle-5_2:
     executor: java-8
@@ -90,7 +103,7 @@ jobs:
       - restore-home-cache
       - attach_workspace:
           at: ~/build-working-directory
-      - gradle-build:
+      - gradle-build-for-version:
           gradle-test-versions: "5.2"
   test-gradle-5_3_1:
     executor: java-8
@@ -99,7 +112,7 @@ jobs:
       - restore-home-cache
       - attach_workspace:
           at: ~/build-working-directory
-      - gradle-build:
+      - gradle-build-for-version:
           gradle-test-versions: "5.3.1"
   test-gradle-5_4_1:
     executor: java-8
@@ -108,23 +121,38 @@ jobs:
       - restore-home-cache
       - attach_workspace:
           at: ~/build-working-directory
-      - gradle-build:
+      - gradle-build-for-version:
           gradle-test-versions: "5.4.1"
 
 workflows:
   version: 2
   build:
     jobs:
-      - check-current
+      - check-current:
+        filters:
+          tags:
+            only: /^\d+\.\d+\.\d+/
       - test-gradle-5_1_1:
+          filters:
+            tags:
+              only: /^\d+\.\d+\.\d+/
           requires:
             - check-current
       - test-gradle-5_2:
+          filters:
+            tags:
+              only: /^\d+\.\d+\.\d+/
           requires:
             - check-current
       - test-gradle-5_3_1:
+          filters:
+            tags:
+              only: /^\d+\.\d+\.\d+/
           requires:
             - check-current
       - test-gradle-5_4_1:
+          filters:
+            tags:
+              only: /^\d+\.\d+\.\d+/
           requires:
             - check-current
