@@ -9,18 +9,23 @@ import java.net.URL
 
 plugins {
   id("com.gradle.build-scan") version "2.3"
+
   `kotlin-dsl`
-  id("org.jlleitschuh.gradle.ktlint") version "8.0.0"
   `java-library`
-  id("com.gradle.plugin-publish") version "0.10.1"
-  id("com.github.ben-manes.versions") version "0.21.0"
-  id("org.jetbrains.dokka") version "0.9.18"
-  // Only used for local publishing for testing
+
+  id("org.jlleitschuh.gradle.ktlint") version "8.0.0"
+
+  id("nebula.release") version "10.1.1"
   `maven-publish`
+  id("com.gradle.plugin-publish") version "0.10.1"
+  id("org.jetbrains.dokka") version "0.9.18"
+
+  id("com.github.ben-manes.versions") version "0.21.0"
+
+  // Only used for local publishing for testing
   buildsrc.`jenkins-rebaseline`
 }
 
-version = "0.8.0"
 group = "com.mkobit.jenkins.pipelines"
 description = "Gradle plugins for Jenkins Shared libraries usage"
 
@@ -336,63 +341,19 @@ tasks {
     dependsOn(sourcesJar, javadocJar)
   }
 
-  val gitDirtyCheck by creating {
-    doFirst {
-      val output = ByteArrayOutputStream().use {
-        exec {
-          commandLine("git", "status", "--porcelain")
-          standardOutput = it
-        }
-        it.toString(Charsets.UTF_8.name()).trim()
-      }
-      if (output.isNotBlank()) {
-        throw GradleException("Workspace is dirty:\n$output")
-      }
-    }
-  }
-
-  val docVersionChecks by creating {
-    group = PublishingPlugin.PUBLISH_TASK_GROUP
-    description = "Checks if the repository documentation is up-to-date for the version $version"
-    val changeLog = file("CHANGELOG.adoc")
-    inputs.file(changeLog)
-    // Output is just used for up-to-date checking
-    outputs.dir(file("$buildDir/repositoryDocumentation"))
-    doFirst {
-      changeLog.bufferedReader().use { it.readLines() }.let { lines ->
-        val changelogLineRegex = Regex("^== ${version.toString().replace(".", "\\.")} \\(\\d{4}\\/\\d{2}\\/\\d{2}\\)\$")
-        val changelogSectionMatch = lines.any { line -> changelogLineRegex.matches(line) }
-        if (!changelogSectionMatch) {
-          throw GradleException("$changeLog does not contain section for $version")
-        }
-      }
-    }
-  }
-
-  // TODO: use a better release plugin
-  val gitTag by creating(Exec::class) {
-    group = PublishingPlugin.PUBLISH_TASK_GROUP
-    description = "Tags the local repository with version ${project.version}"
-    commandLine("git", "tag", "--sign", "--annotate", project.version, "--message", "Gradle created tag for ${project.version}")
-  }
-
   publishPlugins {
-    dependsOn(gitDirtyCheck)
-    mustRunAfter(login, docVersionChecks)
+    mustRunAfter(login)
   }
 
-  val pushGitTag by creating(Exec::class) {
-    dependsOn(gitDirtyCheck)
-    description = "Pushes Git tag ${project.version} to origin"
-    group = PublishingPlugin.PUBLISH_TASK_GROUP
-    mustRunAfter(publishPlugins, gitTag, docVersionChecks)
-    commandLine("git", "push", "origin", "refs/tags/${project.version}")
+  prepare {
+    // disable Git upstream checks
+    enabled = false
   }
 
-  register("release") {
-    group = PublishingPlugin.PUBLISH_TASK_GROUP
-    description = "Publishes the plugin to the Gradle plugin portal and pushes up a Git tag for the current commit"
-    dependsOn(docVersionChecks, publishPlugins, pushGitTag, gitTag, gitDirtyCheck, "build")
+  (release) {
+    // disabled to not push git tag
+    enabled = false
+    dependsOn(publishPlugins, build)
   }
 }
 
