@@ -3,14 +3,20 @@ package com.mkobit.jenkins.pipelines
 import com.mkobit.jenkins.pipelines.http.AnonymousAuthentication
 import com.mkobit.jenkins.pipelines.http.BasicAuthentication
 import org.gradle.api.Project
+import org.gradle.api.Task
+import org.gradle.api.tasks.TaskContainer
+import org.gradle.kotlin.dsl.apply
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestFactory
 import strikt.api.expectThat
 import strikt.assertions.isA
 import strikt.assertions.isEqualTo
 import strikt.assertions.isNotNull
+import strikt.assertions.isNullOrBlank
 import testsupport.assertj.expectDoesNotThrow
+import testsupport.minutest.testFactory
 import testsupport.strikt.isPresent
 import testsupport.strikt.value
 
@@ -21,7 +27,7 @@ internal class JenkinsIntegrationPluginTest {
   @BeforeEach
   internal fun setUp() {
     project = ProjectBuilder.builder().build()
-    project.pluginManager.apply(JenkinsIntegrationPlugin::class.java)
+    project.apply<JenkinsIntegrationPlugin>()
   }
 
   @Test
@@ -64,6 +70,35 @@ internal class JenkinsIntegrationPluginTest {
   internal fun `download GDSL task exists`() {
     expectDoesNotThrow {
       project.tasks.named("retrieveJenkinsGdsl")
+    }
+  }
+
+  @TestFactory
+  internal fun `plugin tasks`() = testFactory<Project> {
+    fixture {
+      val project = ProjectBuilder.builder().build()
+      project.apply<JenkinsIntegrationPlugin>()
+      project
+    }
+
+    derivedContext<TaskContainer>("task") {
+      deriveFixture { tasks }
+      listOf(
+        "retrieveJenkinsGdsl",
+        "retrieveJenkinsVersion",
+        "retrieveJenkinsPluginData"
+      ).forEach { name ->
+        derivedContext<Task?>("with name $name") {
+          deriveFixture { findByName(name) }
+          test("exists") {
+            expectThat(fixture).isNotNull()
+          }
+
+          test("group is not blank") {
+            expectThat(fixture).isNotNull().get { group }.not { isNullOrBlank() }
+          }
+        }
+      }
     }
   }
 }

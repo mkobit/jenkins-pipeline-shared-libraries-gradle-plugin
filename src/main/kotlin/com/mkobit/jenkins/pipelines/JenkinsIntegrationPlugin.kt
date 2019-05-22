@@ -21,6 +21,7 @@ internal open class JenkinsIntegrationPlugin : Plugin<Project> {
   companion object {
     private val LOGGER = KotlinLogging.logger {}
     private const val EXTENSION_NAME = "jenkinsIntegration"
+    private const val RETRIEVAL_TASK_GROUP = "Jenkins retrieve metadata"
   }
   override fun apply(target: Project) {
     target.run {
@@ -51,7 +52,7 @@ internal open class JenkinsIntegrationPlugin : Plugin<Project> {
   private fun setupRetrieveJenkinsGdsl(integration: JenkinsIntegrationExtension, task: Task) {
     task.apply {
       description = "Downloads the Jenkins Pipeline GDSL from the Jenkins instance"
-      group = "Jenkins retrieve metadata"
+      group = RETRIEVAL_TASK_GROUP
       inputs.property("url", integration.baseUrl)
       outputs.file(integration.downloadDirectory.file("idea.gdsl"))
       outputs.upToDateWhen { false }
@@ -74,7 +75,7 @@ internal open class JenkinsIntegrationPlugin : Plugin<Project> {
   private fun setupRetrieveJenkinsPluginData(integration: JenkinsIntegrationExtension, task: Task) {
     task.apply {
       description = "Downloads the Jenkins plugin data from the Jenkins instance"
-      group = "Jenkins retrieve metadata"
+      group = RETRIEVAL_TASK_GROUP
       inputs.property("url", integration.baseUrl)
       outputs.file(integration.downloadDirectory.file("plugins.json"))
       outputs.upToDateWhen { false }
@@ -116,7 +117,7 @@ internal open class JenkinsIntegrationPlugin : Plugin<Project> {
   private fun setupRetrieveJenkinsVersion(integration: JenkinsIntegrationExtension, task: Task) {
     task.apply {
       description = "Retrieves the version from the Jenkins instance"
-      group = "Jenkins retrieve metadata"
+      group = RETRIEVAL_TASK_GROUP
       inputs.property("url", integration.baseUrl)
       outputs.file(integration.downloadDirectory.file("core-version.txt"))
       outputs.upToDateWhen { false }
