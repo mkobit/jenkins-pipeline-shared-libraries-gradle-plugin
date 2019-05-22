@@ -66,13 +66,6 @@ internal class JenkinsIntegrationPluginTest {
       }
   }
 
-  @Test
-  internal fun `download GDSL task exists`() {
-    expectDoesNotThrow {
-      project.tasks.named("retrieveJenkinsGdsl")
-    }
-  }
-
   @TestFactory
   internal fun `plugin tasks`() = testFactory<Project> {
     fixture {
