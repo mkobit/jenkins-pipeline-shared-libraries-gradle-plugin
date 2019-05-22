@@ -15,7 +15,6 @@ import strikt.assertions.isA
 import strikt.assertions.isEqualTo
 import strikt.assertions.isNotNull
 import strikt.assertions.isNullOrBlank
-import testsupport.assertj.expectDoesNotThrow
 import testsupport.minutest.testFactory
 import testsupport.strikt.isPresent
 import testsupport.strikt.value
