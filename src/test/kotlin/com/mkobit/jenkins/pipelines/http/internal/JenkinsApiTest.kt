@@ -69,7 +69,7 @@ internal class JenkinsApiTest {
     val request = server.takeRequest()
     expectThat(request) {
       get { headers }.and {
-        get { get("Authentication") }.isEqualTo(Credentials.basic(basic.username, basic.password))
+        get { get("Authorization") }.isEqualTo(Credentials.basic(basic.username, basic.password))
       }
     }
   }
@@ -85,7 +85,7 @@ internal class JenkinsApiTest {
     val request = server.takeRequest()
     expectThat(request) {
       get { headers }.and {
-        get { get("Authentication") }.isEqualTo(Credentials.basic(token.username, token.apiToken))
+        get { get("Authorization") }.isEqualTo(Credentials.basic(token.username, token.apiToken))
       }
     }
   }

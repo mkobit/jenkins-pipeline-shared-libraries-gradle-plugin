@@ -20,7 +20,7 @@ internal class AuthenticationTest {
     internal fun `headers are present`() {
       val authentication = BasicAuthentication(USERNAME, PASSWORD)
       expectThat(authentication.headers())
-        .hasEntry("Authentication", "Basic ${Base64.getEncoder().encodeToString("$USERNAME:$PASSWORD".toByteArray())}")
+        .hasEntry("Authorization", "Basic ${Base64.getEncoder().encodeToString("$USERNAME:$PASSWORD".toByteArray())}")
     }
   }
 
@@ -30,7 +30,7 @@ internal class AuthenticationTest {
     internal fun `headers are present`() {
       val authentication = ApiTokenAuthentication(USERNAME, PASSWORD)
       expectThat(authentication.headers())
-        .hasEntry("Authentication", "Basic ${Base64.getEncoder().encodeToString("$USERNAME:$PASSWORD".toByteArray())}")
+        .hasEntry("Authorization", "Basic ${Base64.getEncoder().encodeToString("$USERNAME:$PASSWORD".toByteArray())}")
     }
   }
 
