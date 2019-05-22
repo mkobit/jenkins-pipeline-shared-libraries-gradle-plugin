@@ -341,10 +341,6 @@ tasks {
     dependsOn(sourcesJar, javadocJar)
   }
 
-  publishPlugins {
-    mustRunAfter(login)
-  }
-
   prepare {
     // disable Git upstream checks
     enabled = false
