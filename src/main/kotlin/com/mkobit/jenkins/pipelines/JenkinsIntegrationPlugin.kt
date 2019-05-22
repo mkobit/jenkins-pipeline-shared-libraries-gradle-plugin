@@ -51,6 +51,7 @@ internal open class JenkinsIntegrationPlugin : Plugin<Project> {
   private fun setupRetrieveJenkinsGdsl(integration: JenkinsIntegrationExtension, task: Task) {
     task.apply {
       description = "Downloads the Jenkins Pipeline GDSL from the Jenkins instance"
+      group = "Jenkins retrieve metadata"
       inputs.property("url", integration.baseUrl)
       outputs.file(integration.downloadDirectory.file("idea.gdsl"))
       outputs.upToDateWhen { false }
@@ -73,6 +74,7 @@ internal open class JenkinsIntegrationPlugin : Plugin<Project> {
   private fun setupRetrieveJenkinsPluginData(integration: JenkinsIntegrationExtension, task: Task) {
     task.apply {
       description = "Downloads the Jenkins plugin data from the Jenkins instance"
+      group = "Jenkins retrieve metadata"
       inputs.property("url", integration.baseUrl)
       outputs.file(integration.downloadDirectory.file("plugins.json"))
       outputs.upToDateWhen { false }
@@ -114,6 +116,7 @@ internal open class JenkinsIntegrationPlugin : Plugin<Project> {
   private fun setupRetrieveJenkinsVersion(integration: JenkinsIntegrationExtension, task: Task) {
     task.apply {
       description = "Retrieves the version from the Jenkins instance"
+      group = "Jenkins retrieve metadata"
       inputs.property("url", integration.baseUrl)
       outputs.file(integration.downloadDirectory.file("core-version.txt"))
       outputs.upToDateWhen { false }
