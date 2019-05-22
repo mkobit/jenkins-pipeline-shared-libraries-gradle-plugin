@@ -27,6 +27,59 @@ For each release, a subsection should be added for each of the following if they
 === Changed
 
 * Dependency version updates
+* Updated default versions:
++
+[cols="3*",options="header"]
+|===
+|Component
+|From
+|To
+
+|Core
+|2.138.3
+|2.164.3
+
+|Test Harness
+|2.44
+|2.49
+
+|Workflow API Plugin
+|2.33
+|2.34
+
+|Workflow Basic Steps Plugin
+|2.13
+|2.16
+
+|Workflow CPS Plugin
+|2.61
+|2.68
+
+|Workflow Durable Task Step Plugin
+|2.26
+|2.30
+
+|Workflow Global CPS Library Plugin
+|2.12
+|2.13
+
+|Workflow Multibranch Plugin
+|2.20
+|2.21
+
+|Workflow Step API Plugin
+|2.16
+|2.19
+
+|Workflow Job Plugin
+|2.29
+|2.32
+
+|Workflow Support Plugin
+|2.23
+|3.3
+
+|===
 
 === Fixed
 
