@@ -44,8 +44,8 @@ commands:
             find settings.gradle.kts build.gradle.kts gradle buildSrc/src buildSrc/buildSrc.gradle.kts buildSrc/settings.gradle.kts -type f -exec sha256sum '{}' \; | tee build/circle-ci-key.txt
       - restore_cache:
           keys:
-            - v2-home-cache-{{ checksum "build/circle-ci-key.txt" }}
-            - v2-home-cache-
+            - v3-home-cache-{{ checksum "build/circle-ci-key.txt" }}
+            - v3-home-cache-
   save-home-cache:
     description: Saves the Gradle home cache
     steps:
@@ -57,7 +57,7 @@ commands:
       - save_cache:
           paths:
             - ~/.gradle
-          key: v2-home-cache-{{ checksum "build/circle-ci-key.txt" }}
+          key: v3-home-cache-{{ checksum "build/circle-ci-key.txt" }}
           when: always
 
 # TODO: this is an artifact of determining why some builds fail with OOM on Circle CI
