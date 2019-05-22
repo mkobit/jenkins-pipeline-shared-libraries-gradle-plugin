@@ -23,7 +23,7 @@ interface Authentication {
  * @property password the password for the [username]
  */
 data class BasicAuthentication(val username: String, val password: String) : Authentication {
-  override fun headers(): Map<String, String> = mapOf("Authentication" to Credentials.basic(username, password))
+  override fun headers(): Map<String, String> = mapOf("Authorization" to Credentials.basic(username, password))
 }
 
 /**
@@ -32,7 +32,7 @@ data class BasicAuthentication(val username: String, val password: String) : Aut
  * @property apiToken the API token for the [username]
  */
 data class ApiTokenAuthentication(val username: String, val apiToken: String) : Authentication {
-  override fun headers(): Map<String, String> = mapOf("Authentication" to Credentials.basic(username, apiToken))
+  override fun headers(): Map<String, String> = mapOf("Authorization" to Credentials.basic(username, apiToken))
 }
 
 /**
