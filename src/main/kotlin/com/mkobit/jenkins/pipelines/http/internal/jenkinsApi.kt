@@ -9,7 +9,6 @@ import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.Route
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
@@ -26,14 +25,6 @@ private class BasicAuthHeaderInterceptor(private val authentication: Authenticat
       chain.request()
     }
     chain.proceed(request)
-  }
-
-  fun authenticate(route: Route?, response: Response?): Request? = authentication.headers().let { headers ->
-    if (headers.isEmpty()) {
-      null
-    } else {
-      Request.Builder().headers(Headers.of(headers)).build()
-    }
   }
 }
 
