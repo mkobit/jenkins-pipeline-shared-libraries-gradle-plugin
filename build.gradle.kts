@@ -139,7 +139,7 @@ dependencies {
   testImplementation(kotlin("reflect"))
   testImplementation("org.assertj:assertj-core:3.12.2")
   testImplementation("com.mkobit.gradle.test:assertj-gradle:0.2.0")
-  testImplementation("com.mkobit.gradle.test:gradle-test-kotlin-extensions:0.6.0")
+  testImplementation("com.mkobit.gradle.test:gradle-test-kotlin-extensions:0.7.0")
   testImplementation("com.google.guava:guava:27.1-jre")
   testImplementation("org.mockito:mockito-core:2.27.0")
   testImplementation("com.nhaarman.mockitokotlin2:mockito-kotlin:2.1.0")
