@@ -135,7 +135,7 @@ dependencies {
   api(gradleApi())
   api("com.squareup:javapoet:1.11.1")
   implementation("io.github.microutils:kotlin-logging:1.6.26")
-  implementation("com.squareup.okhttp3:okhttp:3.12.0")
+  implementation("com.squareup.okhttp3:okhttp")
   testImplementation(kotlin("reflect"))
   testImplementation("org.assertj:assertj-core:3.12.2")
   testImplementation("com.mkobit.gradle.test:assertj-gradle:0.2.0")
