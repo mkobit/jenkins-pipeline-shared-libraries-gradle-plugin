@@ -184,6 +184,7 @@ workflows:
             - check-current
       - publish:
           requires:
+            - check-current
             - test-gradle-5_0
             - test-gradle-5_1_1
             - test-gradle-5_2
