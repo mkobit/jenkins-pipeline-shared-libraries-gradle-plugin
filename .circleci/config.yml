@@ -153,29 +153,29 @@ workflows:
           tags:
             only: /^\d+\.\d+\.\d+/
       - test-gradle-5_0:
+          requires:
+            - check-current
           filters:
             tags:
               only: /^\d+\.\d+\.\d+/
-          requires:
-            - check-current
       - test-gradle-5_1_1:
+          requires:
+            - check-current
           filters:
             tags:
               only: /^\d+\.\d+\.\d+/
-          requires:
-            - check-current
       - test-gradle-5_2:
+          requires:
+            - check-current
           filters:
             tags:
               only: /^\d+\.\d+\.\d+/
-          requires:
-            - check-current
       - test-gradle-5_3_1:
+          requires:
+            - check-current
           filters:
             tags:
               only: /^\d+\.\d+\.\d+/
-          requires:
-            - check-current
       - test-gradle-5_4_1:
           filters:
             tags:
@@ -184,7 +184,6 @@ workflows:
             - check-current
       - publish:
           requires:
-            - check-current
             - test-gradle-5_0
             - test-gradle-5_1_1
             - test-gradle-5_2
