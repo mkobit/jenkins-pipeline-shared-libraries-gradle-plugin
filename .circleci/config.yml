@@ -146,6 +146,7 @@ jobs:
 workflows:
   version: 2
   build:
+    # See https://circleci.com/docs/2.0/workflows/#using-contexts-and-filtering-in-your-workflows for filtering
     jobs:
       - check-current:
         filters:
