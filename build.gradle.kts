@@ -125,8 +125,7 @@ configurations {
     }
     resolutionStrategy.eachDependency {
       when (requested.group) {
-//        Commented out for now due to https://github.com/gradle/gradle/issues/9565
-//        "com.squareup.okhttp3" -> useVersion("3.14.1")
+        "com.squareup.okhttp3" -> useVersion("3.14.1")
         "dev.minutest" -> useVersion("1.7.0")
         "org.junit.jupiter" -> useVersion("5.4.2")
         "org.junit.platform" -> useVersion("1.4.2")
@@ -138,11 +137,10 @@ configurations {
 }
 
 dependencies {
-  val okHttpVersion = "3.14.1"
   api(gradleApi())
   api("com.squareup:javapoet:1.11.1")
   implementation("io.github.microutils:kotlin-logging:1.6.26")
-  implementation("com.squareup.okhttp3:okhttp:$okHttpVersion")
+  implementation("com.squareup.okhttp3:okhttp")
   testImplementation(kotlin("reflect"))
   testImplementation("org.assertj:assertj-core:3.12.2")
   testImplementation("com.mkobit.gradle.test:assertj-gradle:0.2.0")
@@ -150,7 +148,7 @@ dependencies {
   testImplementation("com.google.guava:guava:27.1-jre")
   testImplementation("org.mockito:mockito-core:2.27.0")
   testImplementation("com.nhaarman.mockitokotlin2:mockito-kotlin:2.1.0")
-  testImplementation("com.squareup.okhttp3:mockwebserver:$okHttpVersion")
+  testImplementation("com.squareup.okhttp3:mockwebserver")
 
   testImplementation("io.strikt:strikt-core")
   testImplementation("io.strikt:strikt-gradle")
@@ -377,6 +375,21 @@ gradlePlugin {
       implementationClass = "com.mkobit.jenkins.pipelines.JenkinsIntegrationPlugin"
       displayName = "Jenkins Integration Plugin"
       description = "Tasks to retrieve information from a Jenkins instance to be aid in the development of tools with Gradle"
+    }
+  }
+}
+
+afterEvaluate {
+  // https://github.com/gradle/gradle/issues/9565
+  publishing {
+    publications {
+      getByName("pluginMaven", MavenPublication::class) {
+        versionMapping {
+          allVariants {
+            fromResolutionOf("runtimeClasspath")
+          }
+        }
+      }
     }
   }
 }
