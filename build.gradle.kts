@@ -379,6 +379,21 @@ gradlePlugin {
   }
 }
 
+afterEvaluate {
+  // https://github.com/gradle/gradle/issues/9565
+  publishing {
+    publications {
+      getByName("pluginMaven", MavenPublication::class) {
+        versionMapping {
+          allVariants {
+            fromResolutionOf("runtimeClasspath")
+          }
+        }
+      }
+    }
+  }
+}
+
 pluginBundle {
   vcsUrl = ProjectInfo.projectUrl
   tags = listOf("jenkins", "pipeline", "shared library", "global library")
