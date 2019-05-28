@@ -24,6 +24,13 @@ For each release, a subsection should be added for each of the following if they
 
 == UNRELEASED (YYYY/MM/DD)
 
+== 0.9.1 (2019/05/28)
+
+=== Fixed
+
+* POM file missing `okhttp` library version.
+  This was caused by link:https://github.com/gradle/gradle/issues/9565[gradle/gradle#9565].
+
 == 0.9.0 (2019/05/22)
 
 === Changed
