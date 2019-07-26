@@ -4,7 +4,11 @@ executors:
   java-8:
     working_directory: ~/build-working-directory
     docker:
-    - image: circleci/openjdk:8-jdk
+      - image: circleci/openjdk:8-jdk
+  java-11:
+    working_directory: ~/build-working-directory
+    docker:
+      - image: circleci/openjdk:11-jdk
 
 commands:
   gradle:
@@ -87,6 +91,16 @@ jobs:
             - build/*
             - buildSrc/.gradle/*
             - buildSrc/build/*
+  test-current-java-11:
+    executor: java-11
+    steps:
+      - checkout
+      - restore-home-cache
+      - attach_workspace:
+          at: ~/build-working-directory
+      - gradle-build-for-version:
+          submit-build-scan: true
+          gradle-test-versions: current
   test-gradle-5_0:
     executor: java-8
     steps:
@@ -161,45 +175,58 @@ workflows:
         filters:
           tags:
             only: /^\d+\.\d+\.\d+/
+      - test-current-java-11:
+          requires:
+            - check-current
+          filters:
+            tags:
+              only: /^\d+\.\d+\.\d+/
       - test-gradle-5_0:
           requires:
             - check-current
+            - test-current-java-11
           filters:
             tags:
               only: /^\d+\.\d+\.\d+/
       - test-gradle-5_1_1:
           requires:
             - check-current
+            - test-current-java-11
           filters:
             tags:
               only: /^\d+\.\d+\.\d+/
       - test-gradle-5_2:
           requires:
             - check-current
+            - test-current-java-11
           filters:
             tags:
               only: /^\d+\.\d+\.\d+/
       - test-gradle-5_3_1:
           requires:
             - check-current
+            - test-current-java-11
           filters:
             tags:
               only: /^\d+\.\d+\.\d+/
       - test-gradle-5_4_1:
+          requires:
+            - check-current
+            - test-current-java-11
           filters:
             tags:
               only: /^\d+\.\d+\.\d+/
-          requires:
-            - check-current
       - test-gradle-5_5_1:
+          requires:
+            - check-current
+            - test-current-java-11
           filters:
             tags:
               only: /^\d+\.\d+\.\d+/
-          requires:
-            - check-current
       - publish:
           requires:
             - check-current
+            - test-current-java-11
             - test-gradle-5_0
             - test-gradle-5_1_1
             - test-gradle-5_2
