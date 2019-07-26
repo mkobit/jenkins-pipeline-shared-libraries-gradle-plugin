@@ -47,7 +47,7 @@ commands:
           name: Generate cache key
           command: |
             mkdir -p build
-            find settings.gradle.kts build.gradle.kts gradle buildSrc/src buildSrc/buildSrc.gradle.kts buildSrc/settings.gradle.kts -type f -exec sha256sum '{}' \; | tee build/circle-ci-key.txt
+            find gradle.properties settings.gradle.kts build.gradle.kts gradle buildSrc/src buildSrc/buildSrc.gradle.kts buildSrc/settings.gradle.kts -type f -exec sha256sum '{}' \; | tee build/circle-ci-key.txt
       - restore_cache:
           keys:
             - v3-home-cache-{{ checksum "build/circle-ci-key.txt" }}
@@ -59,7 +59,7 @@ commands:
           name: Generate cache key
           command: |
             mkdir -p build
-            find settings.gradle.kts build.gradle.kts gradle buildSrc/src buildSrc/buildSrc.gradle.kts buildSrc/settings.gradle.kts -type f -exec sha256sum '{}' \; | tee build/circle-ci-key.txt
+            find gradle.properties settings.gradle.kts build.gradle.kts gradle buildSrc/src buildSrc/buildSrc.gradle.kts buildSrc/settings.gradle.kts -type f -exec sha256sum '{}' \; | tee build/circle-ci-key.txt
       - save_cache:
           paths:
             - ~/.gradle
