@@ -66,16 +66,6 @@ commands:
           key: v3-home-cache-{{ checksum "build/circle-ci-key.txt" }}
           when: always
 
-# TODO: this is an artifact of determining why some builds fail with OOM on Circle CI
-#shared-steps:
-#  show-java-info: &show-java-info
-#    run:
-#      command: |
-#        java -XshowSettings:vm -XX:+PrintCommandLineFlags -version
-#        java -XshowSettings:vm -XX:+PrintCommandLineFlags -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -version
-#        javac -version
-#      name: Show Java Version
-
 jobs:
   check-current:
     executor: java-8
