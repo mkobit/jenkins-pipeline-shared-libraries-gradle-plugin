@@ -7,6 +7,8 @@ executors:
       - image: circleci/openjdk:8-jdk
   java-11:
     working_directory: ~/build-working-directory
+    environment:
+      LC_ALL: en_us.UTF-8 # Override the default locale in the container. This is due to log4j2 formatter instantiation errors when 'LC_ALL: C.UTF-8' is used - https://issues.apache.org/jira/browse/LOG4J2-2435
     docker:
       - image: circleci/openjdk:11-jdk
 
