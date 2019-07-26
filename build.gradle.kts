@@ -127,10 +127,10 @@ configurations {
       when (requested.group) {
         "com.squareup.okhttp3" -> useVersion("3.14.1")
         "dev.minutest" -> useVersion("1.7.0")
-        "org.junit.jupiter" -> useVersion("5.4.2")
-        "org.junit.platform" -> useVersion("1.4.2")
-        "io.strikt" -> useVersion("0.20.1")
-        "org.apache.logging.log4j" -> useVersion("2.11.2")
+        "org.junit.jupiter" -> useVersion("5.5.1")
+        "org.junit.platform" -> useVersion("1.5.1")
+        "io.strikt" -> useVersion("0.21.1")
+        "org.apache.logging.log4j" -> useVersion("2.12.0")
       }
     }
   }
@@ -141,13 +141,11 @@ dependencies {
   api("com.squareup:javapoet:1.11.1")
   implementation("io.github.microutils:kotlin-logging:1.6.26")
   implementation("com.squareup.okhttp3:okhttp")
+
   testImplementation(kotlin("reflect"))
-  testImplementation("org.assertj:assertj-core:3.12.2")
-  testImplementation("com.mkobit.gradle.test:assertj-gradle:0.2.0")
   testImplementation("com.mkobit.gradle.test:gradle-test-kotlin-extensions:0.7.0")
+  testImplementation("io.mockk:mockk:1.9.3")
   testImplementation("com.google.guava:guava:27.1-jre")
-  testImplementation("org.mockito:mockito-core:2.27.0")
-  testImplementation("com.nhaarman.mockitokotlin2:mockito-kotlin:2.1.0")
   testImplementation("com.squareup.okhttp3:mockwebserver")
 
   testImplementation("io.strikt:strikt-core")
