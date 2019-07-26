@@ -347,7 +347,7 @@ tasks {
   }
 
   (release) {
-    // disabled to not push git tag
+    // disable git tag push
     enabled = false
     dependsOn(publishPlugins, build)
   }
