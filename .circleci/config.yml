@@ -132,6 +132,15 @@ jobs:
           at: ~/build-working-directory
       - gradle-build-for-version:
           gradle-test-versions: "5.4.1"
+  test-gradle-5_5_1:
+    executor: java-8
+    steps:
+      - checkout
+      - restore-home-cache
+      - attach_workspace:
+          at: ~/build-working-directory
+      - gradle-build-for-version:
+          gradle-test-versions: "5.5.1"
   publish:
     executor: java-8
     steps:
@@ -182,6 +191,12 @@ workflows:
               only: /^\d+\.\d+\.\d+/
           requires:
             - check-current
+      - test-gradle-5_5_1:
+          filters:
+            tags:
+              only: /^\d+\.\d+\.\d+/
+          requires:
+            - check-current
       - publish:
           requires:
             - check-current
@@ -190,6 +205,7 @@ workflows:
             - test-gradle-5_2
             - test-gradle-5_3_1
             - test-gradle-5_4_1
+            - test-gradle-5_5_1
           filters:
             tags:
               only: /^\d+\.\d+\.\d+/
