@@ -43,7 +43,7 @@ open class GenerateJavaFile @Inject constructor(
    * The root directory to create the source file in.
    */
   @get:OutputDirectory
-  val srcDir: DirectoryProperty = projectLayout.directoryProperty()
+  val srcDir: DirectoryProperty = objectFactory.directoryProperty()
 
   /**
    * The destination of the Java file.
