@@ -8,6 +8,7 @@ import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestTemplate
+import strikt.api.expectCatching
 import strikt.api.expectThat
 import strikt.assertions.all
 import strikt.assertions.contains
@@ -16,6 +17,7 @@ import strikt.assertions.isEmpty
 import strikt.assertions.isNotEmpty
 import strikt.assertions.isNotNull
 import strikt.assertions.none
+import strikt.assertions.succeeded
 import strikt.gradle.testkit.isSuccess
 import strikt.gradle.testkit.output
 import strikt.gradle.testkit.task
@@ -25,7 +27,6 @@ import testsupport.junit.GradleProject
 import testsupport.junit.IntelliJSupport
 import testsupport.junit.Issue
 import testsupport.junit.NotImplementedYet
-import testsupport.assertj.expectDoesNotThrow
 import testsupport.strikt.allOf
 import testsupport.strikt.anyOf
 import java.util.regex.Pattern
@@ -35,9 +36,9 @@ internal class IntegrationTestSourceIntegrationTest {
 
   @TestTemplate
   internal fun `can execute dependencies task`(@GradleProject(["projects", "only-plugins-block"]) gradleRunner: GradleRunner) {
-    expectDoesNotThrow {
+    expectCatching {
       gradleRunner.build("dependencies")
-    }
+    }.succeeded()
   }
 
   @TestTemplate
@@ -211,20 +212,20 @@ internal class IntegrationTestSourceIntegrationTest {
 
   @TestTemplate
   internal fun `Groovy DSL extension configuration`(@GradleProject(["projects", "gradle-configuration-groovy"]) gradleRunner: GradleRunner) {
-    expectDoesNotThrow {
+    expectCatching {
       gradleRunner.apply {
         info = true
       }.build()
-    }
+    }.succeeded()
   }
 
   @TestTemplate
   fun `Kotlin DSL extension configuration`(@GradleProject(["projects", "gradle-configuration-kotlin"]) gradleRunner: GradleRunner) {
-    expectDoesNotThrow {
+    expectCatching {
       gradleRunner.apply {
         info = true
       }.build()
-    }
+    }.succeeded()
   }
 
   @TestTemplate
@@ -275,9 +276,9 @@ internal class IntegrationTestSourceIntegrationTest {
 
   @TestTemplate
   internal fun `@Grab in source library can be integration tested`(@GradleProject(["projects", "source-with-@grab"]) gradleRunner: GradleRunner) {
-    expectDoesNotThrow {
+    expectCatching {
       gradleRunner.build("integrationTest")
-    }
+    }.succeeded()
   }
 
   @NotImplementedYet

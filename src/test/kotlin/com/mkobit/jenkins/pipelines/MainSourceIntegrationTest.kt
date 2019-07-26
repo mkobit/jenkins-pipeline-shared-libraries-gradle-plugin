@@ -6,15 +6,16 @@ import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestTemplate
+import strikt.api.expectCatching
 import strikt.api.expectThat
 import strikt.assertions.isNotNull
+import strikt.assertions.succeeded
 import strikt.gradle.testkit.isFailed
 import strikt.gradle.testkit.isSuccess
 import strikt.gradle.testkit.task
 import testsupport.junit.ForGradleVersions
 import testsupport.junit.GradleProject
 import testsupport.junit.NotImplementedYet
-import testsupport.assertj.expectDoesNotThrow
 
 @ForGradleVersions
 class MainSourceIntegrationTest {
@@ -66,9 +67,9 @@ class MainSourceIntegrationTest {
 
   @TestTemplate
   internal fun `@Grab can be used in source code compilation`(@GradleProject(["projects", "source-with-@grab"]) gradleRunner: GradleRunner) {
-    expectDoesNotThrow {
+    expectCatching {
       gradleRunner.build("compileGroovy")
-    }
+    }.succeeded()
   }
 
   @TestTemplate
@@ -93,8 +94,8 @@ class MainSourceIntegrationTest {
 
   @TestTemplate
   internal fun `can use Jenkins core and plugin classes in main library code`(@GradleProject(["projects", "global-library-using-jenkins-plugin-classes"]) gradleRunner: GradleRunner) {
-    expectDoesNotThrow {
+    expectCatching {
       gradleRunner.build("compileGroovy")
-    }
+    }.succeeded()
   }
 }

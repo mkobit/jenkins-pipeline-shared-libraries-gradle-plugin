@@ -1,6 +1,6 @@
 package com.mkobit.jenkins.pipelines
 
-import com.nhaarman.mockitokotlin2.mock
+import io.mockk.mockk
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -27,7 +27,7 @@ internal class SharedLibraryExtensionTest {
       project.initializedProperty(INITIAL_CORE_VERSION),
       project.initializedProperty(INITIAL_PIPELINE_UNIT_VERSION),
       project.initializedProperty(INITIAL_TEST_HARNESS_VERSION),
-      mock()
+      mockk()
     )
   }
 
