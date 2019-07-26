@@ -13,9 +13,9 @@ plugins {
   `kotlin-dsl`
   `java-library`
 
-  id("org.jlleitschuh.gradle.ktlint") version "8.0.0"
+  id("org.jlleitschuh.gradle.ktlint") version "8.2.0"
 
-  id("nebula.release") version "10.1.1"
+  id("nebula.release") version "11.1.0"
   `maven-publish`
   id("com.gradle.plugin-publish") version "0.10.1"
   id("org.jetbrains.dokka") version "0.9.18"
