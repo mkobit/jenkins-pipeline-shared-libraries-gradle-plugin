@@ -30,7 +30,7 @@ internal open class JenkinsIntegrationPlugin : Plugin<Project> {
         JenkinsIntegrationExtension::class.java,
         objects.property<URL>(),
         objects.property<Authentication>().apply { set(AnonymousAuthentication) },
-        layout.directoryProperty(layout.buildDirectory.dir("jenkinsIntegrationDownloads"))
+        objects.directoryProperty().apply { set(layout.buildDirectory.dir("jenkinsIntegrationDownloads")) }
       )
 
       tasks {
