@@ -4,7 +4,6 @@ import com.squareup.javapoet.JavaFile
 import mu.KotlinLogging
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
-import org.gradle.api.file.ProjectLayout
 import org.gradle.api.file.RegularFile
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
@@ -21,7 +20,6 @@ import javax.inject.Inject
  * Generates a Java file into the [srcDir].
  */
 open class GenerateJavaFile @Inject constructor(
-  projectLayout: ProjectLayout,
   objectFactory: ObjectFactory
 ) : DefaultTask() {
 
