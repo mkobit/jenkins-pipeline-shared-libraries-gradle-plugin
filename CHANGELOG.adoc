@@ -24,6 +24,12 @@ For each release, a subsection should be added for each of the following if they
 
 == UNRELEASED (YYYY/MM/DD)
 
+== 0.10.1 (2019/07/30)
+
+=== Changed
+
+* Remove usage of deprecated `layout.directoryProperty` in `JenkinsIntegrationPlugin`
+
 == 0.10.0 (2019/07/26)
 
 * Java 11 compatibility with Java 11 compatible Jenkins versions and plugins
