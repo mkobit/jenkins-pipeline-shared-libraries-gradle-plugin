@@ -32,6 +32,7 @@ import strikt.assertions.isFalse
 import strikt.assertions.isNotBlank
 import strikt.assertions.isNotEmpty
 import strikt.assertions.isNotNull
+import strikt.assertions.isNull
 import strikt.assertions.map
 import strikt.assertions.name
 import testsupport.junit.NotImplementedYet
@@ -241,9 +242,8 @@ internal class SharedLibraryPluginTest {
       .get { withType(GenerateJavaFile::class.java) }
       .isNotEmpty()
       .all {
-        get { group }
-          .isNotBlank()
-//          .isNull()
+        get { group as String? } // not sure why it is not nullable right now
+          .isNull()
       }
   }
 
