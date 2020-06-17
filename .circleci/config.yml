@@ -269,6 +269,48 @@ workflows:
           filters:
             tags:
               only: /^\d+\.\d+\.\d+/
+      - test-gradle-5_6_4:
+          requires:
+            - check-current
+            - test-current-java-11
+          filters:
+            tags:
+              only: /^\d+\.\d+\.\d+/
+      - test-gradle-6_0_1:
+          requires:
+            - check-current
+            - test-current-java-11
+          filters:
+            tags:
+              only: /^\d+\.\d+\.\d+/
+      - test-gradle-6_1_1:
+          requires:
+            - check-current
+            - test-current-java-11
+          filters:
+            tags:
+              only: /^\d+\.\d+\.\d+/
+      - test-gradle-6_2_2:
+          requires:
+            - check-current
+            - test-current-java-11
+          filters:
+            tags:
+              only: /^\d+\.\d+\.\d+/
+      - test-gradle-6_3:
+          requires:
+            - check-current
+            - test-current-java-11
+          filters:
+            tags:
+              only: /^\d+\.\d+\.\d+/
+      - test-gradle-6_4_1:
+          requires:
+            - check-current
+            - test-current-java-11
+          filters:
+            tags:
+              only: /^\d+\.\d+\.\d+/
       - publish:
           requires:
             - check-current
