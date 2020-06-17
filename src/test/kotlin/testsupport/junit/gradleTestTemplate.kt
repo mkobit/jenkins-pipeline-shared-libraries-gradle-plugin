@@ -52,7 +52,14 @@ internal class MultiVersionGradleProjectTestTemplate : TestTemplateInvocationCon
         GradleVersion.version("5.2"),
         GradleVersion.version("5.3.1"),
         GradleVersion.version("5.4.1"),
-        GradleVersion.version("5.5.1")
+        GradleVersion.version("5.5.1"),
+        GradleVersion.version("5.6.4"),
+        GradleVersion.version("6.0.1"),
+        GradleVersion.version("6.1.1"),
+        GradleVersion.version("6.2.2"),
+        GradleVersion.version("6.3"),
+        GradleVersion.version("6.4.1"),
+        GradleVersion.version("6.5")
       )
     }
   }
@@ -185,8 +192,11 @@ private class ResourceGradleProjectProviderExtension(
   }
 
   private fun getStore(context: ExtensionContext): ExtensionContext.Store {
-    return context.getStore(ExtensionContext.Namespace.create(
-      ResourceGradleProjectProviderExtension::class.java, context))
+    return context.getStore(
+      ExtensionContext.Namespace.create(
+        ResourceGradleProjectProviderExtension::class.java, context
+      )
+    )
   }
 
   private fun loadGradleProject(parameterContext: ParameterContext, context: ExtensionContext): Path {

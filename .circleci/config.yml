@@ -147,6 +147,60 @@ jobs:
           at: ~/build-working-directory
       - gradle-build-for-version:
           gradle-test-versions: "5.5.1"
+  test-gradle-5_6_4:
+    executor: java-8
+    steps:
+      - checkout
+      - restore-home-cache
+      - attach_workspace:
+          at: ~/build-working-directory
+      - gradle-build-for-version:
+          gradle-test-versions: "5.6.4"
+  test-gradle-6_0_1:
+    executor: java-8
+    steps:
+      - checkout
+      - restore-home-cache
+      - attach_workspace:
+          at: ~/build-working-directory
+      - gradle-build-for-version:
+          gradle-test-versions: "6.0.1"
+  test-gradle-6_1_1:
+    executor: java-8
+    steps:
+      - checkout
+      - restore-home-cache
+      - attach_workspace:
+          at: ~/build-working-directory
+      - gradle-build-for-version:
+          gradle-test-versions: "6.1.1"
+  test-gradle-6_2_2:
+    executor: java-8
+    steps:
+      - checkout
+      - restore-home-cache
+      - attach_workspace:
+          at: ~/build-working-directory
+      - gradle-build-for-version:
+          gradle-test-versions: "6.2.2"
+  test-gradle-6_3:
+    executor: java-8
+    steps:
+      - checkout
+      - restore-home-cache
+      - attach_workspace:
+          at: ~/build-working-directory
+      - gradle-build-for-version:
+          gradle-test-versions: "6.3"
+  test-gradle-6_4_1:
+    executor: java-8
+    steps:
+      - checkout
+      - restore-home-cache
+      - attach_workspace:
+          at: ~/build-working-directory
+      - gradle-build-for-version:
+          gradle-test-versions: "6.4.1"
   publish:
     executor: java-8
     steps:
@@ -225,6 +279,12 @@ workflows:
             - test-gradle-5_3_1
             - test-gradle-5_4_1
             - test-gradle-5_5_1
+            - test-gradle-5_6_4
+            - test-gradle-6_0_1
+            - test-gradle-6_1_1
+            - test-gradle-6_2_2
+            - test-gradle-6_3
+            - test-gradle-6_4_1
           filters:
             tags:
               only: /^\d+\.\d+\.\d+/

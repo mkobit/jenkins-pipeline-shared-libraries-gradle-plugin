@@ -20,11 +20,11 @@ import strikt.assertions.isEqualTo
 import strikt.assertions.isRegularFile
 import strikt.assertions.resolve
 import strikt.gradle.testkit.output
+import testsupport.io.loadResource
 import testsupport.junit.ForGradleVersions
 import testsupport.junit.GradleProject
 import testsupport.junit.NotImplementedYet
 import testsupport.junit.UseMockServer
-import testsupport.io.loadResource
 import testsupport.strikt.allOf
 import java.nio.file.Paths
 
@@ -83,7 +83,8 @@ internal class JenkinsIntegrationPluginFunctionalTest {
   @Test
   internal fun `a useful error message is displayed when invalid authentication is used to retrieve the global security whitelist`(
     @GradleProject(
-["projects", "only-plugins-block"]) gradleRunner: GradleRunner,
+      ["projects", "only-plugins-block"]
+    ) gradleRunner: GradleRunner,
     server: MockWebServer
   ) {
   }
@@ -92,7 +93,8 @@ internal class JenkinsIntegrationPluginFunctionalTest {
   @TestTemplate
   internal fun `a useful error message is displayed when user has insufficient privileges to retrieve the global security whitelist`(
     @GradleProject(
-["projects", "only-plugins-block"]) gradleRunner: GradleRunner,
+      ["projects", "only-plugins-block"]
+    ) gradleRunner: GradleRunner,
     server: MockWebServer
   ) {
   }
@@ -121,16 +123,19 @@ internal class JenkinsIntegrationPluginFunctionalTest {
   @TestTemplate
   internal fun `a useful error message is displayed when user has insufficient privileges to retrieve the list of plugins`(
     @GradleProject(
-["projects", "only-plugins-block"]) gradleRunner: GradleRunner,
+      ["projects", "only-plugins-block"]
+    ) gradleRunner: GradleRunner,
     server: MockWebServer
   ) {
-    server.enqueue(MockResponse().apply {
-      setResponseCode(403)
-      setHeader("X-You-Are-Authenticated-As", "mkobit")
-      setHeader("X-Required-Permission", "hudson.model.Hudson.Read")
-      addHeader("X-Permission-Implied-By", "hudson.security.Permission.GenericRead")
-      addHeader("X-Permission-Implied-By", "hudson.model.Hudson.Administer")
-      setBody("""
+    server.enqueue(
+      MockResponse().apply {
+        setResponseCode(403)
+        setHeader("X-You-Are-Authenticated-As", "mkobit")
+        setHeader("X-Required-Permission", "hudson.model.Hudson.Read")
+        addHeader("X-Permission-Implied-By", "hudson.security.Permission.GenericRead")
+        addHeader("X-Permission-Implied-By", "hudson.model.Hudson.Administer")
+        setBody(
+          """
         <html><head><meta http-equiv='refresh' content='1;url=/login?from=%2FpluginManager%2Fapi%2Fjson%3Fdepth%3D2'/><script>window.location.replace('/login?from=%2FpluginManager%2Fapi%2Fjson%3Fdepth%3D2');</script></head><body style='background-color:white; color:white;'>
 
 
@@ -145,8 +150,10 @@ internal class JenkinsIntegrationPluginFunctionalTest {
         -->
 
         </body></html>
-      """.trimIndent())
-    })
+          """.trimIndent()
+        )
+      }
+    )
     server.start()
 
     gradleRunner.setupIntegrationExtension(server, BasicAuthentication("mkobit", "hunter2"))
@@ -168,12 +175,15 @@ internal class JenkinsIntegrationPluginFunctionalTest {
   @TestTemplate
   internal fun `a useful error message is displayed when invalid authentication is used to retrieve the list of plugins`(
     @GradleProject(
-["projects", "only-plugins-block"]) gradleRunner: GradleRunner,
+      ["projects", "only-plugins-block"]
+    ) gradleRunner: GradleRunner,
     server: MockWebServer
   ) {
-    server.enqueue(MockResponse().apply {
-      setResponseCode(401)
-      setBody("""
+    server.enqueue(
+      MockResponse().apply {
+        setResponseCode(401)
+        setBody(
+          """
           <html>
           <head>
           <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
@@ -182,8 +192,10 @@ internal class JenkinsIntegrationPluginFunctionalTest {
           <body><h2>HTTP ERROR 401</h2>
           <p>Problem accessing /pluginManager/api/json. Reason:
           <pre>    Invalid password/token for user: mkobit</pre></p><hr><a href="http://eclipse.org/jetty">Powered by Jetty:// 9.4.z-SNAPSHOT</a><hr/>
-      """.trimIndent())
-    })
+          """.trimIndent()
+        )
+      }
+    )
     server.start()
 
     gradleRunner.setupIntegrationExtension(server, BasicAuthentication("mkobit", "hunter2"))
@@ -201,16 +213,18 @@ internal class JenkinsIntegrationPluginFunctionalTest {
     server: MockWebServer
   ) {
     val version = "2.89.4"
-    server.enqueue(MockResponse().apply {
-      setResponseCode(401)
-      setHeader("X-Hudson", "1.395")
-      setHeader("X-Jenkins", version)
-      setHeader("X-Jenkins-Session", "4d661237")
-      setHeader("X-Hudson-CLI-Port", "40877")
-      setHeader("X-Jenkins-CLI-Port", "40877")
-      setHeader("X-Jenkins-CLI2-Port", "40877")
-      setHeader("X-You-Are-Authenticated-As", "anonymous")
-    })
+    server.enqueue(
+      MockResponse().apply {
+        setResponseCode(401)
+        setHeader("X-Hudson", "1.395")
+        setHeader("X-Jenkins", version)
+        setHeader("X-Jenkins-Session", "4d661237")
+        setHeader("X-Hudson-CLI-Port", "40877")
+        setHeader("X-Jenkins-CLI-Port", "40877")
+        setHeader("X-Jenkins-CLI2-Port", "40877")
+        setHeader("X-You-Are-Authenticated-As", "anonymous")
+      }
+    )
     server.start()
 
     gradleRunner.setupIntegrationExtension(server, BasicAuthentication("mkobit", "hunter2"))
@@ -250,13 +264,15 @@ internal class JenkinsIntegrationPluginFunctionalTest {
     setupProjectDir {
       "build.gradle"(content = Original) {
         appendNewline()
-        append("""
+        append(
+          """
           jenkinsIntegration {
             baseUrl = new java.net.URL('${server.url("jenkins").url()}')
             downloadDirectory = layout.buildDirectory.dir('${downloadDirectory.fileName}')
             $authenticationText
           }
-        """.trimIndent())
+          """.trimIndent()
+        )
       }
     }
   }
