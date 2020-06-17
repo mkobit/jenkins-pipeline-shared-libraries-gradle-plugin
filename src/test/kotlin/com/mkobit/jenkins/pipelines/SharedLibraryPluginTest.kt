@@ -32,7 +32,6 @@ import strikt.assertions.isFalse
 import strikt.assertions.isNotBlank
 import strikt.assertions.isNotEmpty
 import strikt.assertions.isNotNull
-import strikt.assertions.isNull
 import strikt.assertions.map
 import strikt.assertions.name
 import testsupport.junit.NotImplementedYet
