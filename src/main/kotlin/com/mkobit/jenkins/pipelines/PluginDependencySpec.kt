@@ -82,8 +82,8 @@ open class PluginDependencySpec @Inject constructor(
       workflowScmStepPluginDependency(),
       workflowStepApiPluginDependency(),
       workflowSupportPluginDependency()
-    ).map {
-      it.map { PluginDependency.fromString(it) }
+    ).map { provider ->
+      provider.map { PluginDependency.fromString(it) }
     }.forEach { dependencies.add(it) }
 
     return dependencies

@@ -9,9 +9,9 @@ import strikt.assertions.isEqualTo
 
 internal class PluginDependencyTest {
   @ParameterizedTest
-  @ValueSource(strings = arrayOf("", "::", " : : ", "group", "group:name:", ":name:version", "group::version", "group:name:version:thing"))
+  @ValueSource(strings = ["", "::", " : : ", "group", "group:name:", ":name:version", "group::version", "group:name:version:thing"])
   internal fun `throws exception when constructing from invalid dependency notation`(notation: String) {
-    expectThrows<IllegalArgumentException>() {
+    expectThrows<IllegalArgumentException> {
       PluginDependency.fromString(notation)
     }
   }

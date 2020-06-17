@@ -104,7 +104,7 @@ internal open class JenkinsIntegrationPlugin : Plugin<Project> {
               else -> "Error downloading plugin data ${response.statusLineAsMessage}"
             }
             val errorMessage = listOf(errorSubject, userDetails, requiredPermission, permissionImpliedBy)
-              .filter { it != null }
+              .filterNotNull()
               .joinToString(System.lineSeparator())
             throw GradleException(errorMessage)
           }

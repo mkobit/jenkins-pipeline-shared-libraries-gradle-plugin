@@ -242,8 +242,9 @@ internal class SharedLibraryPluginTest {
       .get { withType(GenerateJavaFile::class.java) }
       .isNotEmpty()
       .all {
-        get { group as String? } // why is this cast needed?!
-          .isNull()
+        get { group }
+          .isNotBlank()
+//          .isNull()
       }
   }
 
