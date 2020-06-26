@@ -57,8 +57,10 @@ internal open class JenkinsIntegrationPlugin : Plugin<Project> {
       outputs.file(integration.downloadDirectory.file("idea.gdsl"))
       outputs.upToDateWhen { false }
       doLast {
-        downloadGdsl(HttpUrl.get(
-          integration.baseUrl.get())!!,
+        downloadGdsl(
+          HttpUrl.get(
+            integration.baseUrl.get()
+          )!!,
           integration.authentication.getOrElse(AnonymousAuthentication)
         ).use { response ->
           if (!response.isSuccessful) throw GradleException("Error retrieving GDSL. ${response.statusLineAsMessage}")
@@ -80,8 +82,10 @@ internal open class JenkinsIntegrationPlugin : Plugin<Project> {
       outputs.file(integration.downloadDirectory.file("plugins.json"))
       outputs.upToDateWhen { false }
       doLast {
-        retrievePluginManagerData(HttpUrl.get(
-          integration.baseUrl.get())!!,
+        retrievePluginManagerData(
+          HttpUrl.get(
+            integration.baseUrl.get()
+          )!!,
           integration.authentication.getOrElse(AnonymousAuthentication)
         ).use { response ->
           if (!response.isSuccessful) {
@@ -100,7 +104,7 @@ internal open class JenkinsIntegrationPlugin : Plugin<Project> {
               else -> "Error downloading plugin data ${response.statusLineAsMessage}"
             }
             val errorMessage = listOf(errorSubject, userDetails, requiredPermission, permissionImpliedBy)
-              .filter { it != null }
+              .filterNotNull()
               .joinToString(System.lineSeparator())
             throw GradleException(errorMessage)
           }
@@ -122,8 +126,10 @@ internal open class JenkinsIntegrationPlugin : Plugin<Project> {
       outputs.file(integration.downloadDirectory.file("core-version.txt"))
       outputs.upToDateWhen { false }
       doLast {
-        connect(HttpUrl.get(
-          integration.baseUrl.get())!!,
+        connect(
+          HttpUrl.get(
+            integration.baseUrl.get()
+          )!!,
           integration.authentication.getOrElse(AnonymousAuthentication)
         ).use { response ->
           val version = response.header("X-Jenkins") ?: throw GradleException("Could not retrieve Jenkins version ${response.statusLineAsMessage}")

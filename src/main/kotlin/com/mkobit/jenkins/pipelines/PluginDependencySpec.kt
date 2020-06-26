@@ -72,18 +72,18 @@ open class PluginDependencySpec @Inject constructor(
     val dependencies: ListProperty<PluginDependency> = objectFactory.listProperty<PluginDependency>().empty()
     dependencies.addAll(additionalDependencies)
     listOf(
-        workflowApiPluginDependency(),
-        workflowBasicStepsPluginDependency(),
-        workflowCpsPluginDependency(),
-        workflowDurableTaskStepPluginDependency(),
-        workflowGlobalCpsLibraryPluginDependency(),
-        workflowJobPluginDependency(),
-        workflowMultibranchPluginDependency(),
-        workflowScmStepPluginDependency(),
-        workflowStepApiPluginDependency(),
-        workflowSupportPluginDependency()
-    ).map {
-      it.map { PluginDependency.fromString(it) }
+      workflowApiPluginDependency(),
+      workflowBasicStepsPluginDependency(),
+      workflowCpsPluginDependency(),
+      workflowDurableTaskStepPluginDependency(),
+      workflowGlobalCpsLibraryPluginDependency(),
+      workflowJobPluginDependency(),
+      workflowMultibranchPluginDependency(),
+      workflowScmStepPluginDependency(),
+      workflowStepApiPluginDependency(),
+      workflowSupportPluginDependency()
+    ).map { provider ->
+      provider.map { PluginDependency.fromString(it) }
     }.forEach { dependencies.add(it) }
 
     return dependencies

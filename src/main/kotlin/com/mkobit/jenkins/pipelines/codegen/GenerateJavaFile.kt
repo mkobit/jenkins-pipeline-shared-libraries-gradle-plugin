@@ -50,9 +50,11 @@ open class GenerateJavaFile @Inject constructor(
   @Suppress("UNUSED")
   @get:OutputFile
   val destination: Provider<RegularFile> = srcDir.let { dir ->
-    dir.file(javaFile.map {
-      it.packageName.split(".") + listOf("${it.typeSpec.name}.java")
-    }.map { it.joinToString(separator = File.separator) })
+    dir.file(
+      javaFile.map {
+        it.packageName.split(".") + listOf("${it.typeSpec.name}.java")
+      }.map { it.joinToString(separator = File.separator) }
+    )
   }
 
   companion object {

@@ -7,7 +7,6 @@ import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import org.gradle.kotlin.dsl.property
@@ -27,7 +26,6 @@ open class DownloadFile @Inject constructor(
   @get:Input
   val downloadPath: Property<String> = objectFactory.property()
 
-  @get:Optional
   @get:Internal
   val upToDateDuration: Property<Duration> = objectFactory.property()
 

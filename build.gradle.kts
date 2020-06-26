@@ -8,19 +8,17 @@ import java.io.ByteArrayOutputStream
 import java.net.URL
 
 plugins {
-  id("com.gradle.build-scan") version "2.3"
-
   `kotlin-dsl`
   `java-library`
 
-  id("org.jlleitschuh.gradle.ktlint") version "8.2.0"
+  id("org.jlleitschuh.gradle.ktlint") version "9.2.1"
 
   id("nebula.release") version "11.1.0"
   `maven-publish`
   id("com.gradle.plugin-publish") version "0.10.1"
   id("org.jetbrains.dokka") version "0.9.18"
 
-  id("com.github.ben-manes.versions") version "0.21.0"
+  id("com.github.ben-manes.versions") version "0.28.0"
 
   // Only used for local publishing for testing
   buildsrc.`jenkins-rebaseline`
@@ -90,7 +88,7 @@ repositories {
 }
 
 ktlint {
-  version.set("0.32.0")
+  version.set("0.37.2")
 }
 
 configurations {
@@ -138,14 +136,14 @@ configurations {
 
 dependencies {
   api(gradleApi())
-  api("com.squareup:javapoet:1.11.1")
-  implementation("io.github.microutils:kotlin-logging:1.6.26")
+  api("com.squareup:javapoet:1.12.1")
+  implementation("io.github.microutils:kotlin-logging:1.7.10")
   implementation("com.squareup.okhttp3:okhttp")
 
   testImplementation(kotlin("reflect"))
   testImplementation("com.mkobit.gradle.test:gradle-test-kotlin-extensions:0.7.0")
-  testImplementation("io.mockk:mockk:1.9.3")
-  testImplementation("com.google.guava:guava:27.1-jre")
+  testImplementation("io.mockk:mockk:1.10.0")
+  testImplementation("com.google.guava:guava:29.0-jre")
   testImplementation("com.squareup.okhttp3:mockwebserver")
 
   testImplementation("io.strikt:strikt-core")
@@ -163,31 +161,31 @@ dependencies {
   // against the libraries that are used.
   val pipelineTestResources by sourceSets.getting
   pipelineTestResources.compileOnlyConfigurationName("com.lesfurets:jenkins-pipeline-unit:1.1")
-  pipelineTestResources.compileOnlyConfigurationName("org.jenkins-ci.main:jenkins-test-harness:2.54")
+  pipelineTestResources.compileOnlyConfigurationName("org.jenkins-ci.main:jenkins-test-harness:2.64")
   pipelineTestResources.compileOnlyConfigurationName("org.codehaus.groovy:groovy:2.4.12")
   val jenkinsPluginDependencies = listOf(
-    "org.jenkins-ci.plugins.workflow:workflow-api:2.35",
-    "org.jenkins-ci.plugins.workflow:workflow-basic-steps:2.18",
-    "org.jenkins-ci.plugins.workflow:workflow-cps:2.72",
-    "org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:2.14",
-    "org.jenkins-ci.plugins.workflow:workflow-durable-task-step:2.32",
-    "org.jenkins-ci.plugins.workflow:workflow-job:2.33",
+    "org.jenkins-ci.plugins.workflow:workflow-api:2.40",
+    "org.jenkins-ci.plugins.workflow:workflow-basic-steps:2.20",
+    "org.jenkins-ci.plugins.workflow:workflow-cps:2.80",
+    "org.jenkins-ci.plugins.workflow:workflow-cps-global-lib:2.16",
+    "org.jenkins-ci.plugins.workflow:workflow-durable-task-step:2.35",
+    "org.jenkins-ci.plugins.workflow:workflow-job:2.39",
     "org.jenkins-ci.plugins.workflow:workflow-multibranch:2.21",
-    "org.jenkins-ci.plugins.workflow:workflow-scm-step:2.9",
-    "org.jenkins-ci.plugins.workflow:workflow-step-api:2.20",
-    "org.jenkins-ci.plugins.workflow:workflow-support:3.3"
+    "org.jenkins-ci.plugins.workflow:workflow-scm-step:2.11",
+    "org.jenkins-ci.plugins.workflow:workflow-step-api:2.22",
+    "org.jenkins-ci.plugins.workflow:workflow-support:3.5"
   )
   jenkinsPluginDependencies.forEach {
     "jenkinsPlugins"(it)
   }
-  "jenkinsPlugins"("org.jenkins-ci.main:jenkins-core:2.176.2") {
+  "jenkinsPlugins"("org.jenkins-ci.main:jenkins-core:2.222.4") {
     isTransitive = false
   }
 }
 
 tasks {
   wrapper {
-    gradleVersion = "5.5.1"
+    gradleVersion = "6.5"
   }
 
   dependencyUpdates {
@@ -211,10 +209,12 @@ tasks {
       into("META-INF")
     }
     manifest {
-      attributes(mapOf(
-        "Build-Revision" to gitCommitSha,
-        "Implementation-Version" to project.version
-      ))
+      attributes(
+        mapOf(
+          "Build-Revision" to gitCommitSha,
+          "Implementation-Version" to project.version
+        )
+      )
     }
   }
 

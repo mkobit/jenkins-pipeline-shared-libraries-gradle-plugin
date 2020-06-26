@@ -27,7 +27,8 @@ private class MockWebServerExtension : BeforeEachCallback, AfterEachCallback, Pa
     getOrCreateMockWebServer(extensionContext)
 
   private fun storeKeyFor(context: ExtensionContext) = ExtensionContext.Namespace.create(
-    context.requiredTestClass, context.testInstance, context.testMethod)
+    context.requiredTestClass, context.testInstance, context.testMethod
+  )
 
   private fun getOrCreateMockWebServer(context: ExtensionContext) =
     getStoreFor(context).getOrComputeIfAbsent(storeKeyFor(context), { MockWebServer() }, MockWebServer::class.java)
