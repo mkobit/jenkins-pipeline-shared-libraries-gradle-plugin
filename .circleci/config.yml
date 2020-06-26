@@ -38,7 +38,7 @@ commands:
         default: false
     steps:
       - gradle:
-          command: build -P gradleTestVersions="<< parameters.gradle-test-versions >>" --max-workers 2 --stacktrace
+          command: build -P gradleTestVersions="<< parameters.gradle-test-versions >>" --max-workers 1 --stacktrace
           submit-build-scan: << parameters.submit-build-scan >>
   restore-home-cache:
     description: Restores the Gradle home cache.
