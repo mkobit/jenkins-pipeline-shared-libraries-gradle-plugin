@@ -35,6 +35,7 @@ import strikt.assertions.isNotNull
 import strikt.assertions.isNull
 import strikt.assertions.map
 import strikt.assertions.name
+import testsupport.junit.Issue
 import testsupport.junit.NotImplementedYet
 import testsupport.strikt.authority
 import testsupport.strikt.scheme
@@ -64,9 +65,13 @@ internal class SharedLibraryPluginTest {
   }
 
   @Test
+  @Issue("https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/101")
   internal fun `Jenkins repository is added`() {
     expectThat(project)
       .get { repositories }
+      .and {
+        get { size }.describedAs("a single repository is added").isEqualTo(1)
+      }
       .get("repository named '${SharedLibraryPlugin.JENKINS_REPOSITORY_NAME}'") { getByName(SharedLibraryPlugin.JENKINS_REPOSITORY_NAME) }
       .isA<MavenArtifactRepository>()
       .and {

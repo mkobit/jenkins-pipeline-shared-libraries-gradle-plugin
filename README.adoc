@@ -181,9 +181,23 @@ NOTE: Due to link:https://github.com/gradle/kotlin-dsl/issues/380[kotlin-dsl/380
 
 == Limitations/Restrictions
 
+=== Jenkins Public Default Repository
+
+The repository at https://repo.jenkins-ci.org is added to the repository list to retrieve the Jenkins artifacts.
+This decision was made to simplify first use by new consumers.
+
+If you do not wish to use this default, remove the repository after applying the plugin.
+
+[source, kotlin]
+----
+repositories.removeIf { it.name == "JenkinsPublic" }
+----
+
+Then, you can add your own repository in normal Gradle fashion.
+
 === Consuming the Gradle Configurations
 
 There are several configurations that are created to group the different types of Jenkins dependencies used in this plugin.
 It is not recommended that you consume/`extendsFrom` these configurations as they may be changed underneath.
-It is instead recommended to use the configurations for each source set and make alterations to them (like link:https://docs.gradle.org/current/javadoc/org/gradle/api/tasks/SourceSet.html#getImplementationConfigurationName--[`sourceSets.integrationTest.implementationConfigurationName`] and link:https://docs.gradle.org/current/javadoc/org/gradle/api/tasks/SourceSet.html#getRuntimeOnlyConfigurationName--[`sourceSets.integrationTest.runtimeOnlyConfigurationName`]).
+Instead, use the configurations for each source set and make alterations to them (like link:https://docs.gradle.org/current/javadoc/org/gradle/api/tasks/SourceSet.html#getImplementationConfigurationName--[`sourceSets.integrationTest.implementationConfigurationName`] and link:https://docs.gradle.org/current/javadoc/org/gradle/api/tasks/SourceSet.html#getRuntimeOnlyConfigurationName--[`sourceSets.integrationTest.runtimeOnlyConfigurationName`]).
 If you have a specific use case please file an issue.
