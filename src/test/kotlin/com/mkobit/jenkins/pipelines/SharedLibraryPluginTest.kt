@@ -17,6 +17,7 @@ import org.junit.jupiter.api.DynamicNode
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
+import org.junit.jupiter.api.TestReporter
 import strikt.api.expectThat
 import strikt.assertions.all
 import strikt.assertions.any
@@ -64,9 +65,13 @@ internal class SharedLibraryPluginTest {
   }
 
   @Test
-  internal fun `Jenkins repository is added`() {
+  internal fun `Jenkins repository is added`(testReporter: TestReporter) {
+    testReporter.publishEntry("issue", "https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/101")
     expectThat(project)
       .get { repositories }
+      .and {
+        get { size }.describedAs("a single repository is added").isEqualTo(1)
+      }
       .get("repository named '${SharedLibraryPlugin.JENKINS_REPOSITORY_NAME}'") { getByName(SharedLibraryPlugin.JENKINS_REPOSITORY_NAME) }
       .isA<MavenArtifactRepository>()
       .and {
