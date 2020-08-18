@@ -17,7 +17,6 @@ import org.junit.jupiter.api.DynamicNode
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
-import org.junit.jupiter.api.TestReporter
 import strikt.api.expectThat
 import strikt.assertions.all
 import strikt.assertions.any
@@ -36,6 +35,7 @@ import strikt.assertions.isNotNull
 import strikt.assertions.isNull
 import strikt.assertions.map
 import strikt.assertions.name
+import testsupport.junit.Issue
 import testsupport.junit.NotImplementedYet
 import testsupport.strikt.authority
 import testsupport.strikt.scheme
@@ -65,8 +65,8 @@ internal class SharedLibraryPluginTest {
   }
 
   @Test
-  internal fun `Jenkins repository is added`(testReporter: TestReporter) {
-    testReporter.publishEntry("issue", "https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/101")
+  @Issue("https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/101")
+  internal fun `Jenkins repository is added`() {
     expectThat(project)
       .get { repositories }
       .and {
