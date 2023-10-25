@@ -27,6 +27,7 @@ import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.* // ktlint-disable no-wildcard-imports
 // @formatter:on
 import org.gradle.language.base.plugins.LifecycleBasePlugin
+import org.gradle.util.GradleVersion
 import javax.inject.Inject
 
 open class SharedLibraryPlugin @Inject constructor(
@@ -293,11 +294,16 @@ open class SharedLibraryPlugin @Inject constructor(
    * Sets up Groovydoc JAR and source JAR tasks.
    */
   private fun Project.setupDocumentationTasks() {
+    val hasArchiveClassifier = GradleVersion.current() >= GradleVersion.version("5.1")
     tasks {
       register<Jar>("sourcesJar") {
         description = "Creates a JAR of the source"
         description = "Assemble the sources JAR"
-        classifier = "sources"
+        if (hasArchiveClassifier) {
+          archiveClassifier.set("sources")
+        } else {
+          classifier = "sources"
+        }
         from(java.sourceSets.main.allSource)
       }
       val groovydoc = named<Groovydoc>(GroovyPlugin.GROOVYDOC_TASK_NAME)
@@ -305,7 +311,11 @@ open class SharedLibraryPlugin @Inject constructor(
         description = "Creates a JAR of the Groovydoc"
         dependsOn(groovydoc)
         description = "Assemble the Groovydoc JAR"
-        classifier = "javadoc"
+        if (hasArchiveClassifier) {
+          archiveClassifier.set("javadoc")
+        } else {
+          classifier = "javadoc"
+        }
       }
     }
   }
