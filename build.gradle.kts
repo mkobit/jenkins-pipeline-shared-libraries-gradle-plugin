@@ -1,27 +1,26 @@
 import buildsrc.ProjectInfo
+import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.testing.logging.TestLogEvent
-import org.gradle.jvm.tasks.Jar
-import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
+import org.jetbrains.dokka.gradle.DokkaTask
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import java.io.ByteArrayOutputStream
 import java.net.URL
 
 plugins {
   `kotlin-dsl`
   `java-library`
-
-  id("org.jlleitschuh.gradle.ktlint") version "10.0.0"
-
-  id("nebula.release") version "17.1.0"
   `maven-publish`
-  id("com.gradle.plugin-publish") version "0.10.1"
-  id("org.jetbrains.dokka") version "2.0.0"
-
-  id("com.github.ben-manes.versions") version "0.51.0"
 
   // Only used for local publishing for testing
   buildsrc.`jenkins-rebaseline`
+
+  alias(libs.plugins.ktlint)
+  alias(libs.plugins.nebula.release)
+  alias(libs.plugins.gradlePluginPublish)
+  alias(libs.plugins.dokka)
+  alias(libs.plugins.benManesVersions)
+
+  alias(libs.plugins.rewrite)
 }
 
 group = "com.mkobit.jenkins.pipelines"
