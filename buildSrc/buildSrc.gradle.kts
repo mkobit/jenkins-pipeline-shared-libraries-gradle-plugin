@@ -4,7 +4,7 @@ plugins {
   `kotlin-dsl`
   id("org.jlleitschuh.gradle.ktlint") version "10.0.0"
 
-  id("com.github.ben-manes.versions") version "0.21.0"
+  id("com.github.ben-manes.versions") version "0.51.0"
 }
 
 repositories {
