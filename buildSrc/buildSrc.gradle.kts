@@ -2,7 +2,7 @@ import org.jlleitschuh.gradle.ktlint.KtlintFormatTask
 
 plugins {
   `kotlin-dsl`
-  id("org.jlleitschuh.gradle.ktlint") version "8.0.0"
+  id("org.jlleitschuh.gradle.ktlint") version "10.0.0"
 
   id("com.github.ben-manes.versions") version "0.21.0"
 }
@@ -39,10 +39,10 @@ tasks {
   }
 
   assemble {
-    dependsOn(withType<KtlintFormatTask>())
+    dependsOn(withType<org.jlleitschuh.gradle.ktlint.tasks.KtLintFormatTask>())
   }
 
-  withType<KtlintFormatTask>().configureEach {
+  withType<org.jlleitschuh.gradle.ktlint.tasks.KtLintFormatTask>().configureEach {
     onlyIf {
       project.hasProperty("ktlintFormatBuildSrc")
     }

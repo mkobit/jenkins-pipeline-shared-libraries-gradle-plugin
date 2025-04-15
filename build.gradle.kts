@@ -11,7 +11,7 @@ plugins {
   `kotlin-dsl`
   `java-library`
 
-  id("org.jlleitschuh.gradle.ktlint") version "9.2.1"
+  id("org.jlleitschuh.gradle.ktlint") version "10.0.0"
 
   id("nebula.release") version "17.1.0"
   `maven-publish`
