@@ -1,0 +1,166 @@
+[versions]
+# Project & Build Tools
+gradlePluginPublish = "1.2.1"
+gradleBenManesVersions = "0.51.0"
+kotlin = "1.9.23" # Ensure this matches your project's Kotlin version
+ktlint = "12.2.0"
+nebula-release = "17.1.0" # Check for newer nebula-release versions
+dokka = "1.9.20" # Example: Using Dokka 1.x series. Adjust if you are on 2.x
+
+# Core Libraries
+groovy = "2.4.12" # Note: Jenkins environment often dictates this. Check compatibility.
+guava = "33.2.0-jre"
+javapoet = "1.13.0"
+kotlinLogging = "3.0.5"
+okhttp = "4.12.0"
+
+# Testing Frameworks
+junitJupiter = "5.10.2"
+junitPlatform = "1.10.2"
+minutest = "2.2.0"
+mockk = "1.13.10"
+strikt = "0.31.0"
+
+# https://repo.jenkins-ci.org/public/com/lesfurets/jenkins-pipeline-unit
+# https://mvnrepository.com/artifact/com.lesfurets/jenkins-pipeline-unit?repo=jenkins-releases
+jenkinsPipelineUnit = "1.26"
+
+# https://repo.jenkins-ci.org/public/org/jenkins-ci/main/jenkins-test-harness
+# https://mvnrepository.com/artifact/org.jenkins-ci.main/jenkins-test-harness
+jenkinsTestHarness = "2414.v185474555e66"
+
+# Logging Implementation
+log4j = "2.23.1"
+
+# Jenkins (Core & Plugins - check for latest compatible versions)
+jenkinsCore = "2.440.3" # Example - Check latest LTS or weekly compatible with plugins
+
+# https://plugins.jenkins.io/workflow-api/releases
+# https://mvnrepository.com/artifact/org.jenkins-ci.plugins.workflow/workflow-api
+jenkinsWorkflowApi = "1363.v03f731255494"
+
+# https://plugins.jenkins.io/workflow-basic-steps/releases
+# https://mvnrepository.com/artifact/org.jenkins-ci.plugins.workflow/workflow-basic-steps
+jenkinsWorkflowBasicSteps = "1079.vce64b_a_929c5a_"
+
+# https://plugins.jenkins.io/workflow-cps-global-lib/releases
+# https://mvnrepository.com/artifact/org.jenkins-ci.plugins.workflow/workflow-cps-global-lib
+# (DEPRECATED) TODO: Replace with https://plugins.jenkins.io/pipeline-groovy-lib/
+jenkinsWorkflowCpsGlobalLib = "612.v55f2f80781ef"
+
+# https://plugins.jenkins.io/workflow-durable-task-step/releases
+# https://mvnrepository.com/artifact/org.jenkins-ci.plugins.workflow/workflow-durable-task-step
+jenkinsWorkflowDurableTaskStep = "1398.vf6c9e89e5988"
+
+# https://plugins.jenkins.io/workflow-job/releases
+# https://mvnrepository.com/artifact/org.jenkins-ci.plugins.workflow/workflow-job
+jenkinsWorkflowJob = "1400.v7fd111b_ec82f"
+
+# https://plugins.jenkins.io/workflow-multibranch/releases
+# https://mvnrepository.com/artifact/org.jenkins-ci.plugins.workflow/workflow-multibranch
+jenkinsWorkflowMultibranch = "791.v28fb_f74dfca_e"
+
+# https://plugins.jenkins.io/
+# https://mvnrepository
+jenkinsWorkflowScmStep = "427.v4ca_6512e7df1"
+
+# https://plugins.jenkins.io/workflow-step-api/releases
+# https://mvnrepository.com/artifact/org.jenkins-ci.plugins.workflow/workflow-step-api
+jenkinsWorkflowStepApi = "657.v03b_e8115821b_"
+
+# https://plugins.jenkins.io/workflow-support/releases
+# https://mvnrepository.com/artifact/org.jenkins-ci.plugins.workflow/workflow-support
+jenkinsWorkflowSupport = "907.v6713a_ed8a_573"
+
+# https://plugins.jenkins.io/workflow-cps/releases
+# https://mvnrepository.com/artifact/org.jenkins-ci.plugins.workflow/workflow-cps
+jenkinsWorkflowCps = "3996.va_f5c1799f978"
+
+
+
+# --- Libraries ---
+[libraries]
+# Square libs
+javapoet = { module = "com.squareup:javapoet", version.ref = "javapoet" }
+# OkHttp (using a nested table for related artifacts)
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+okhttp-mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver", version.ref = "okhttp" }
+
+# Google libs
+guava = { module = "com.google.guava:guava", version.ref = "guava" }
+
+# Kotlin specific
+kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlin" }
+kotlin-logging = { module = "io.github.microutils:kotlin-logging-jvm", version.ref = "kotlinLogging" } # Note: artifactId might change based on version/platform
+
+# Groovy (Often needed for Jenkins testing/interaction)
+groovy-core = { module = "org.codehaus.groovy:groovy", version.ref = "groovy" }
+
+# Testing - JUnit Platform & Jupiter Engine
+test-junit-jupiter = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junitJupiter" }
+test-junit-jupiter-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junitJupiter" }
+test-junit-jupiter-params = { group = "org.junit.jupiter", name = "junit-jupiter-params", version.ref = "junitJupiter" }
+test-junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher", version.ref = "junitPlatform" } # If needed
+
+# Testing - Other Frameworks & Assertion/Mocking Libraries
+test-minutest = { module = "dev.minutest:minutest", version.ref = "minutest" }
+test-mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+test-strikt-core = { module = "io.strikt:strikt-core", version.ref = "strikt" }
+test-strikt-jvm = { module = "io.strikt:strikt-jvm", version.ref = "strikt" }
+test-strikt-gradle = { module = "io.strikt:strikt-gradle", version.ref = "strikt" }
+
+# Logging Implementation (Runtime)
+logging-log4j-core = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" }
+logging-log4j-jul = { module = "org.apache.logging.log4j:log4j-jul", version.ref = "log4j" }
+
+# Jenkins - Testing Utilities
+jenkins-pipelineUnit = { module = "com.lesfurets:jenkins-pipeline-unit", version.ref = "jenkinsPipelineUnit" }
+jenkins-testHarness = { module = "org.jenkins-ci.main:jenkins-test-harness", version.ref = "jenkinsTestHarness" }
+
+# Jenkins - Core & Important Plugins (used for compilation/testing typically)
+jenkins-core = { module = "org.jenkins-ci.main:jenkins-core", version.ref = "jenkinsCore" }
+# Jenkins Workflow Plugins (Grouped by convention)
+jenkins-plugin-workflowApi = { module = "org.jenkins-ci.plugins.workflow:workflow-api", version.ref = "jenkinsWorkflowApi" }
+jenkins-plugin-workflowBasicSteps = { module = "org.jenkins-ci.plugins.workflow:workflow-basic-steps", version.ref = "jenkinsWorkflowBasicSteps" }
+jenkins-plugin-workflowCps = { module = "org.jenkins-ci.plugins.workflow:workflow-cps", version.ref = "jenkinsWorkflowCps" }
+jenkins-plugin-workflowCpsGlobalLib = { module = "org.jenkins-ci.plugins.workflow:workflow-cps-global-lib", version.ref = "jenkinsWorkflowCpsGlobalLib" }
+jenkins-plugin-workflowDurableTaskStep = { module = "org.jenkins-ci.plugins.workflow:workflow-durable-task-step", version.ref = "jenkinsWorkflowDurableTaskStep" }
+jenkins-plugin-workflowJob = { module = "org.jenkins-ci.plugins.workflow:workflow-job", version.ref = "jenkinsWorkflowJob" }
+jenkins-plugin-workflowMultibranch = { module = "org.jenkins-ci.plugins.workflow:workflow-multibranch", version.ref = "jenkinsWorkflowMultibranch" }
+jenkins-plugin-workflowScmStep = { module = "org.jenkins-ci.plugins.workflow:workflow-scm-step", version.ref = "jenkinsWorkflowScmStep" }
+jenkins-plugin-workflowStepApi = { module = "org.jenkins-ci.plugins.workflow:workflow-step-api", version.ref = "jenkinsWorkflowStepApi" }
+jenkins-plugin-workflowSupport = { module = "org.jenkins-ci.plugins.workflow:workflow-support", version.ref = "jenkinsWorkflowSupport" }
+
+
+# --- Plugins ---
+[plugins]
+# Build Logic & Language
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+# embedded-kotlin / kotlin-dsl are applied directly, no alias needed usually
+
+# Build Tools & Quality
+benManesVersions = { id = "com.github.ben-manes.versions", version.ref = "gradleBenManesVersions" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
+
+# Publishing & Release
+gradlePluginPublish = { id = "com.gradle.plugin-publish", version.ref = "gradlePluginPublish" }
+nebula-release = { id = "nebula.release", version.ref = "nebula-release" }
+
+[bundles]
+test-junit = ["test-junit-jupiter", "test-junit-jupiter-params"]
+test-junitRuntime = ["test-junit-jupiter-engine"]
+test-strikt = ["test-strikt-core", "test-strikt-gradle", "test-strikt-jvm"]
+logging-runtime = ["logging-log4j-core", "logging-log4j-jul"]
+jenkins-workflowPlugins = [
+  "jenkins-plugin-workflowApi",
+  "jenkins-plugin-workflowBasicSteps",
+  "jenkins-plugin-workflowCps",
+  "jenkins-plugin-workflowCpsGlobalLib",
+  "jenkins-plugin-workflowDurableTaskStep",
+  "jenkins-plugin-workflowJob",
+  "jenkins-plugin-workflowMultibranch",
+  "jenkins-plugin-workflowScmStep",
+  "jenkins-plugin-workflowStepApi",
+  "jenkins-plugin-workflowSupport",
+]
