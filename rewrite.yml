@@ -1,0 +1,20 @@
+type: specs.openrewrite.org/v1beta/recipe
+name: com.mkobit.FormatRefactorCleanup
+description: Recipes bundle to keep the code tidy
+recipeList:
+  - org.openrewrite.java.RemoveUnusedImports
+  - org.openrewrite.java.OrderImports
+  - org.openrewrite.java.recipes.BlankLinesAroundFieldsWithAnnotations
+  - org.openrewrite.java.testing.cleanup.BestPractices
+  - org.openrewrite.groovy.format.AutoFormat
+  - org.openrewrite.jenkins.AddPluginsBom
+  - org.openrewrite.kotlin.FindKotlinSources:
+      markCompilationUnits: false
+  - org.openrewrite.kotlin.cleanup.EqualsMethodUsage
+  - org.openrewrite.kotlin.cleanup.ImplicitParameterInLambda
+  - org.openrewrite.kotlin.cleanup.RemoveLambdaArgumentParentheses
+  - org.openrewrite.kotlin.cleanup.RemoveTrailingComma
+  - org.openrewrite.kotlin.cleanup.RemoveTrailingSemicolon
+  - org.openrewrite.kotlin.cleanup.ReplaceCharToIntWithCode
+  - org.openrewrite.kotlin.cleanup.UnnecessaryTypeParentheses
+  - org.openrewrite.kotlin.format.AutoFormat
