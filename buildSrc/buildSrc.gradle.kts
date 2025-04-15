@@ -2,7 +2,9 @@ import org.jlleitschuh.gradle.ktlint.KtlintFormatTask
 
 plugins {
   `kotlin-dsl`
-  id("org.jlleitschuh.gradle.ktlint") version "10.0.0"
+  alias(libs.plugins.ktlint)
+  alias(libs.plugins.benManesVersions)
+}
 
   id("com.github.ben-manes.versions") version "0.51.0"
 }
