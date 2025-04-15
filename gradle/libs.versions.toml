@@ -14,6 +14,10 @@ javapoet = "1.13.0"
 kotlinLogging = "3.0.5"
 okhttp = "4.12.0"
 
+# HTTP/API Libraries
+jackson = "2.18.3"
+retrofit = "2.11.0"
+
 # Testing Frameworks
 junitJupiter = "5.10.2"
 junitPlatform = "1.10.2"
@@ -86,6 +90,16 @@ javapoet = { module = "com.squareup:javapoet", version.ref = "javapoet" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 okhttp-mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver", version.ref = "okhttp" }
 
+# Jackson (JSON/XML processing)
+jackson-bom = { module = "com.fasterxml.jackson:jackson-bom", version.ref = "jackson" }
+jackson-core = { module = "com.fasterxml.jackson.core:jackson-core" }
+jackson-dataformat-xml = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-xml" }
+
+# Retrofit (HTTP client)
+retrofit-bom = { module = "com.squareup.retrofit2:retrofit-bom", version.ref = "retrofit" }
+retrofit = { module = "com.squareup.retrofit2:retrofit" }
+retrofit-jackson = { module = "com.squareup.retrofit2:converter-jackson" }
+
 # Google libs
 guava = { module = "com.google.guava:guava", version.ref = "guava" }
 
@@ -148,6 +162,9 @@ gradlePluginPublish = { id = "com.gradle.plugin-publish", version.ref = "gradleP
 nebula-release = { id = "nebula.release", version.ref = "nebula-release" }
 
 [bundles]
+jackson = ["jackson-core", "jackson-dataformat-xml"]
+retrofit = ["retrofit", "retrofit-jackson"]
+rewrite-recipes = ["rewrite-groovy", "rewrite-gradle", "rewrite-jenkins", "rewrite-rewrite", "rewrite-testing", "rewrite-static-analysis"]
 test-junit = ["test-junit-jupiter", "test-junit-jupiter-params"]
 test-junitRuntime = ["test-junit-jupiter-engine"]
 test-strikt = ["test-strikt-core", "test-strikt-gradle", "test-strikt-jvm"]
