@@ -189,9 +189,10 @@ tasks {
   }
 
   dependencyUpdates {
-    val rejectPatterns = listOf("alpha", "beta", "rc", "cr", "m").map { qualifier ->
-      Regex("(?i).*[.-]$qualifier[.\\d-]*")
-    }
+    val rejectPatterns =
+      listOf("alpha", "beta", "rc", "cr", "m").map { qualifier ->
+        Regex("(?i).*[.-]$qualifier[.\\d-]*")
+      }
     resolutionStrategy {
       componentSelection {
         all {
@@ -364,7 +365,11 @@ artifacts {
   add("archives", javadocJar)
 }
 
+val pluginTags = listOf("jenkins", "pipeline", "shared library", "global library")
+
 gradlePlugin {
+  website = ProjectInfo.projectUrl
+  vcsUrl = ProjectInfo.projectUrl
   plugins {
     // Don't get the extensions for NamedDomainObjectContainer here because we only have a NamedDomainObjectContainer
     // See https://github.com/gradle/kotlin-dsl/issues/459
@@ -372,13 +377,17 @@ gradlePlugin {
       id = "com.mkobit.jenkins.pipelines.shared-library"
       implementationClass = "com.mkobit.jenkins.pipelines.SharedLibraryPlugin"
       displayName = "Jenkins Pipeline Shared Library Development"
-      description = "Configures and sets up a Gradle project for development and testing of a Jenkins Pipeline shared library (https://jenkins.io/doc/book/pipeline/shared-libraries/)"
+      description =
+        "Configures and sets up a Gradle project for development and testing of a Jenkins Pipeline shared library (https://jenkins.io/doc/book/pipeline/shared-libraries/)"
+      tags.set(pluginTags)
     }
     create("jenkinsIntegration") {
       id = "com.mkobit.jenkins.pipelines.jenkins-integration"
       implementationClass = "com.mkobit.jenkins.pipelines.JenkinsIntegrationPlugin"
       displayName = "Jenkins Integration Plugin"
-      description = "Tasks to retrieve information from a Jenkins instance to be aid in the development of tools with Gradle"
+      description =
+        "Tasks to retrieve information from a Jenkins instance to be aid in the development of tools with Gradle"
+      tags.set(pluginTags)
     }
   }
 }
@@ -398,8 +407,31 @@ afterEvaluate {
   }
 }
 
-pluginBundle {
-  vcsUrl = ProjectInfo.projectUrl
-  tags = listOf("jenkins", "pipeline", "shared library", "global library")
-  website = ProjectInfo.projectUrl
+fun env(key: String): String? = System.getenv(key)
+
+develocity {
+  buildScan {
+    termsOfUseUrl = "https://gradle.com/terms-of-service"
+    termsOfUseAgree = "yes"
+
+    if (!env("CI").isNullOrEmpty()) {
+      publishing.onlyIf { true }
+
+      logger.lifecycle("Running in CI environment, setting build scan attributes.")
+      tag("CI")
+
+      // Env variables from https://circleci.com/docs/2.0/env-vars/
+      env("CIRCLE_BRANCH")?.let { tag(it) }
+      env("CIRCLE_BUILD_NUM")?.let { value("Circle CI Build Number", it) }
+      env("CIRCLE_BUILD_URL")?.let { link("Build URL", it) }
+      env("CIRCLE_SHA1")?.let { value("Revision", it) }
+      //    Issue with Circle CI/Gradle with caret (^) in URLs
+//    see: https://discuss.gradle.org/t/build-scan-plugin-1-10-3-issue-when-using-a-url-with-a-caret/24965
+//    see: https://discuss.circleci.com/t/circle-compare-url-does-not-url-escape-caret/18464
+//    env("CIRCLE_COMPARE_URL")?.let { link("Diff", it) }
+      env("CIRCLE_REPOSITORY_URL")?.let { value("Repository", it) }
+      env("CIRCLE_PR_NUMBER")?.let { value("Pull Request Number", it) }
+      link("Repository", ProjectInfo.projectUrl)
+    }
+  }
 }
