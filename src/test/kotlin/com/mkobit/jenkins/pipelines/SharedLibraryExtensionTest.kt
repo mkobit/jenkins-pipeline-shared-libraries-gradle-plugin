@@ -23,12 +23,13 @@ internal class SharedLibraryExtensionTest {
   @BeforeEach
   internal fun setUp() {
     val project = ProjectBuilder.builder().build()
-    sharedLibraryExtension = SharedLibraryExtension(
-      project.initializedProperty(INITIAL_CORE_VERSION),
-      project.initializedProperty(INITIAL_PIPELINE_UNIT_VERSION),
-      project.initializedProperty(INITIAL_TEST_HARNESS_VERSION),
-      mockk()
-    )
+    sharedLibraryExtension =
+      SharedLibraryExtension(
+        project.initializedProperty(INITIAL_CORE_VERSION),
+        project.initializedProperty(INITIAL_PIPELINE_UNIT_VERSION),
+        project.initializedProperty(INITIAL_TEST_HARNESS_VERSION),
+        mockk()
+      )
   }
 
   @Test
