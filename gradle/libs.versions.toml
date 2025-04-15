@@ -1,7 +1,5 @@
 [versions]
 # Project & Build Tools
-kotlin = "1.9.23" # Ensure this matches your project's Kotlin version
-
 gradlePluginPublish = "1.2.1"
 gradleBenManesVersions = "0.51.0"
 ktlint = "12.2.0"
