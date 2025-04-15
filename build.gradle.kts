@@ -18,7 +18,7 @@ plugins {
   id("com.gradle.plugin-publish") version "0.10.1"
   id("org.jetbrains.dokka") version "2.0.0"
 
-  id("com.github.ben-manes.versions") version "0.28.0"
+  id("com.github.ben-manes.versions") version "0.51.0"
 
   // Only used for local publishing for testing
   buildsrc.`jenkins-rebaseline`
