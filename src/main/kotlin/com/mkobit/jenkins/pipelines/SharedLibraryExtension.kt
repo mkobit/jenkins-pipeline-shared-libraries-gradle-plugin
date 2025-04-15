@@ -19,10 +19,12 @@ SharedLibraryExtension(
   val testHarnessVersion: Property<String>,
   private val pluginDependencySpec: PluginDependencySpec
 ) {
-
   fun coreDependency(): Provider<String> = coreVersion.map { "org.jenkins-ci.main:jenkins-core:$it" }
+
   fun pipelineUnitDependency(): Provider<String> = pipelineTestUnitVersion.map { "com.lesfurets:jenkins-pipeline-unit:$it" }
+
   fun testHarnessDependency(): Provider<String> = testHarnessVersion.map { "org.jenkins-ci.main:jenkins-test-harness:$it" }
+
   // See https://issues.jenkins-ci.org/browse/JENKINS-24064 and 2.64 release notes about war-for-test not being needed in some cases
   // Also, see https://github.com/jenkinsci/jenkins/pull/2899/files
   // https://github.com/jenkinsci/plugin-pom/pull/40/files shows how the new plugin-pom does the jenkins.war generation
