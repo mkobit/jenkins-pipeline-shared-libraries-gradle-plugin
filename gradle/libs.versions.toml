@@ -1,4 +1,6 @@
 [versions]
+kotlin = "2.1.0"
+
 # Project & Build Tools
 gradlePluginPublish = "1.2.1"
 gradleBenManesVersions = "0.51.0"
