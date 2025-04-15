@@ -177,6 +177,9 @@ dependencies {
   "jenkinsPlugins"("org.jenkins-ci.main:jenkins-core:2.222.4") {
     isTransitive = false
   }
+
+  rewrite(platform(libs.rewrite.recipes.bom))
+  rewrite(libs.bundles.rewrite.recipes)
 }
 
 tasks {
