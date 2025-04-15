@@ -6,7 +6,10 @@ plugins {
   alias(libs.plugins.benManesVersions)
 }
 
-  id("com.github.ben-manes.versions") version "0.51.0"
+tasks.withType<KotlinCompile>().configureEach {
+  compilerOptions {
+    jvmTarget.set(JvmTarget.JVM_11)
+  }
 }
 
 repositories {
