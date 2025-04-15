@@ -16,7 +16,7 @@ plugins {
   id("nebula.release") version "17.1.0"
   `maven-publish`
   id("com.gradle.plugin-publish") version "0.10.1"
-  id("org.jetbrains.dokka") version "0.9.18"
+  id("org.jetbrains.dokka") version "2.0.0"
 
   id("com.github.ben-manes.versions") version "0.28.0"
 
