@@ -62,7 +62,7 @@ internal class MultiVersionGradleProjectTestTemplate : TestTemplateInvocationCon
       .map { versions ->
         when {
           // Handle a case where a version is specified as 'current'
-          versions.size == 1 && versions.first().toLowerCase() == "current" -> listOf(GradleVersion.current())
+          versions.size == 1 && versions.first().lowercase() == "current" -> listOf(GradleVersion.current())
           versions.isNotEmpty() -> versions.map(GradleVersion::version)
           else -> DEFAULT_VERSIONS
         }
@@ -119,7 +119,7 @@ private class FilteringGradleExecutionCondition(
     return when (val propertyValue = System.getProperty(VERSIONS_PROPERTY_KEY) ?: return DEFAULT_CONDITION) {
       "all", "default" -> ConditionEvaluationResult.enabled("All tests enabled through $propertyValue filter")
       "current" -> {
-        if (targetVersion.equals(GradleVersion.current())) {
+        if (targetVersion == GradleVersion.current()) {
           ConditionEvaluationResult.enabled("Target version is the current version")
         } else {
           ConditionEvaluationResult.disabled("Target version $targetVersion is not the current version ${GradleVersion.current()}")
