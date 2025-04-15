@@ -21,9 +21,14 @@ retrofit = "2.11.0"
 # Testing Frameworks
 junitJupiter = "5.10.2"
 junitPlatform = "1.10.2"
+
 minutest = "2.2.0"
 mockk = "1.13.10"
 strikt = "0.31.0"
+
+# OpenRewrite
+rewrite-plugin = "7.4.1"
+rewrite-recipes-bom = "3.6.1"
 
 # https://repo.jenkins-ci.org/public/com/lesfurets/jenkins-pipeline-unit
 # https://mvnrepository.com/artifact/com.lesfurets/jenkins-pipeline-unit?repo=jenkins-releases
@@ -81,8 +86,6 @@ jenkinsWorkflowSupport = "907.v6713a_ed8a_573"
 jenkinsWorkflowCps = "3996.va_f5c1799f978"
 
 
-
-# --- Libraries ---
 [libraries]
 # Square libs
 javapoet = { module = "com.squareup:javapoet", version.ref = "javapoet" }
@@ -145,17 +148,21 @@ jenkins-plugin-workflowScmStep = { module = "org.jenkins-ci.plugins.workflow:wor
 jenkins-plugin-workflowStepApi = { module = "org.jenkins-ci.plugins.workflow:workflow-step-api", version.ref = "jenkinsWorkflowStepApi" }
 jenkins-plugin-workflowSupport = { module = "org.jenkins-ci.plugins.workflow:workflow-support", version.ref = "jenkinsWorkflowSupport" }
 
+# OpenRewrite
+rewrite-recipes-bom = { module = "org.openrewrite.recipe:rewrite-recipe-bom", version.ref = "rewrite-recipes-bom" }
+rewrite-groovy = { module = "org.openrewrite:rewrite-groovy" }
+rewrite-gradle = { module = "org.openrewrite:rewrite-gradle" }
+rewrite-jenkins = { module = "org.openrewrite.recipe:rewrite-jenkins" }
+rewrite-rewrite = { module = "org.openrewrite.recipe:rewrite-rewrite" }
+rewrite-testing = { module = "org.openrewrite.recipe:rewrite-testing-frameworks" }
+rewrite-static-analysis = { module = "org.openrewrite.recipe:rewrite-static-analysis" }
 
-# --- Plugins ---
 [plugins]
-# Build Logic & Language
-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
-# embedded-kotlin / kotlin-dsl are applied directly, no alias needed usually
-
 # Build Tools & Quality
 benManesVersions = { id = "com.github.ben-manes.versions", version.ref = "gradleBenManesVersions" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
+rewrite = { id = "org.openrewrite.rewrite", version.ref = "rewrite-plugin" }
 
 # Publishing & Release
 gradlePluginPublish = { id = "com.gradle.plugin-publish", version.ref = "gradlePluginPublish" }
