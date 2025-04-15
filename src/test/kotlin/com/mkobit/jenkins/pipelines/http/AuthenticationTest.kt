@@ -8,7 +8,6 @@ import strikt.assertions.isEmpty
 import java.util.Base64
 
 internal class AuthenticationTest {
-
   private companion object {
     private const val USERNAME = "mkobit"
     private const val PASSWORD = "this is the password"
@@ -16,6 +15,7 @@ internal class AuthenticationTest {
 
   @Nested
   inner class BasicAuthenticationTest {
+
     @Test
     internal fun `headers are present`() {
       val authentication = BasicAuthentication(USERNAME, PASSWORD)
@@ -26,6 +26,7 @@ internal class AuthenticationTest {
 
   @Nested
   inner class ApiTokenAuthenticationTest {
+
     @Test
     internal fun `headers are present`() {
       val authentication = ApiTokenAuthentication(USERNAME, PASSWORD)
@@ -36,6 +37,7 @@ internal class AuthenticationTest {
 
   @Nested
   inner class AnonymousAuthenticationTest {
+
     @Test
     internal fun `headers are absent`() {
       expectThat(AnonymousAuthentication.headers())
