@@ -82,11 +82,6 @@ sourceSets {
   }
 }
 
-repositories {
-  maven(url = "https://repo.jenkins-ci.org/public/")
-  mavenCentral()
-}
-
 ktlint {
   coloredOutput.set(false)
   ignoreFailures.set(true)
