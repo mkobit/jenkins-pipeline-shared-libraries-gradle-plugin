@@ -10,13 +10,13 @@ import org.jlleitschuh.gradle.ktlint.tasks.KtLintFormatTask
 
   tasks.withType<KotlinCompile>().configureEach {
     compilerOptions {
-      jvmTarget.set(JvmTarget.JVM_11)
+      jvmTarget.set(JvmTarget.JVM_17)
     }
   }
 
   java {
     toolchain {
-      languageVersion.set(JavaLanguageVersion.of(11))
+      languageVersion.set(JavaLanguageVersion.of(17))
     }
   }
 
