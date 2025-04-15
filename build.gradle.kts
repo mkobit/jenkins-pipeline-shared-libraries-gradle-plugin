@@ -227,7 +227,9 @@ tasks {
   }
 
   withType<KotlinCompile>().configureEach {
-    kotlinOptions.jvmTarget = "1.8"
+    compilerOptions {
+      jvmTarget.set(JvmTarget.JVM_11)
+    }
   }
 
   test {
