@@ -238,11 +238,7 @@ tasks {
       // Will rerun some tests unfortunately using this method, but helps with CI
       systemProperty("testsupport.junit.ForGradleVersions.versions", it)
     }
-    if (JavaVersion.current() > JavaVersion.VERSION_1_8) {
-      jvmArgs("-XshowSettings:vm", "-Xlog:gc*", "-Xmx512m", "-Xms256m")
-    } else {
-      jvmArgs("-XshowSettings:vm", "-XX:+PrintGCTimeStamps", "-XX:+UseG1GC", "-Xmx512m", "-Xms256m")
-    }
+    jvmArgs("-XshowSettings:vm", "-Xlog:gc*", "-Xmx512m", "-Xms256m")
     testLogging {
       if (env("CI") != null) {
         // shoot more output out so that Circle CI doesn't kill build after no output in 10 minutes
