@@ -23,7 +23,7 @@ retrofit = "2.11.0"
 junitJupiter = "5.10.2"
 junitPlatform = "1.10.2"
 
-minutest = "2.2.0"
+minutest = "1.13.0"
 mockk = "1.13.10"
 strikt = "0.31.0"
 
@@ -109,7 +109,7 @@ guava = { module = "com.google.guava:guava", version.ref = "guava" }
 
 # Kotlin specific
 kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlin" }
-kotlin-logging = { module = "io.github.microutils:kotlin-logging-jvm", version.ref = "kotlinLogging" } # Note: artifactId might change based on version/platform
+kotlin-logging = { module = "io.github.microutils:kotlin-logging-jvm", version.ref = "kotlinLogging" }
 
 # Groovy (Often needed for Jenkins testing/interaction)
 groovy-core = { module = "org.codehaus.groovy:groovy", version.ref = "groovy" }
