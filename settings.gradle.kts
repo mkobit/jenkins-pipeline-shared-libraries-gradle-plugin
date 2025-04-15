@@ -17,7 +17,7 @@ dependencyResolutionManagement {
 }
 
 plugins {
-  id("com.gradle.enterprise") version "3.19.2"
+  id("com.gradle.develocity") version "3.19.2"
 }
 
 rootProject.name = "jenkins-pipeline-shared-libraries-gradle-plugin"
