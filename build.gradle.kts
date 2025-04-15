@@ -211,7 +211,7 @@ tasks {
     manifest {
       attributes(
         mapOf(
-          "Build-Revision" to gitCommitSha,
+          "Build-Revision" to gitCommitShaProvider.get(),
           "Implementation-Version" to project.version
         )
       )
