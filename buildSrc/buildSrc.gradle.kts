@@ -12,8 +12,10 @@ tasks.withType<KotlinCompile>().configureEach {
   }
 }
 
-repositories {
-  mavenCentral()
+java {
+  toolchain {
+    languageVersion.set(JavaLanguageVersion.of(11))
+  }
 }
 
 ktlint {
