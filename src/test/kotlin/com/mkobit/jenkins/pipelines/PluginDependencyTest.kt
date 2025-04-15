@@ -8,6 +8,7 @@ import strikt.api.expectThrows
 import strikt.assertions.isEqualTo
 
 internal class PluginDependencyTest {
+
   @ParameterizedTest
   @ValueSource(strings = ["", "::", " : : ", "group", "group:name:", ":name:version", "group::version", "group:name:version:thing"])
   internal fun `throws exception when constructing from invalid dependency notation`(notation: String) {
