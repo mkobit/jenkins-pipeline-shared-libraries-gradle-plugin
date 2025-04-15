@@ -1,18 +1,18 @@
 plugins {
-  id 'com.mkobit.jenkins.pipelines.shared-library'
+    id 'com.mkobit.jenkins.pipelines.shared-library'
 }
 
 repositories {
-  jcenter()
+    jcenter()
 }
 
 dependencies {
-  testImplementation(group: 'junit', name: 'junit', version: '4.12')
+    testImplementation(group: 'junit', name: 'junit', version: '4.12')
 }
 
 tasks.withType(Test) {
-  testLogging {
-    exceptionFormat = 'full'
-    events('started')
-  }
+    testLogging {
+        exceptionFormat = 'full'
+        events('started')
+    }
 }
