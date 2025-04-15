@@ -1,4 +1,6 @@
-import org.jlleitschuh.gradle.ktlint.KtlintFormatTask
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jlleitschuh.gradle.ktlint.tasks.KtLintFormatTask
 
 plugins {
   `kotlin-dsl`
@@ -56,10 +58,10 @@ tasks {
   }
 
   assemble {
-    dependsOn(withType<org.jlleitschuh.gradle.ktlint.tasks.KtLintFormatTask>())
+    dependsOn(withType<KtLintFormatTask>())
   }
 
-  withType<org.jlleitschuh.gradle.ktlint.tasks.KtLintFormatTask>().configureEach {
+  withType<KtLintFormatTask>().configureEach {
     onlyIf {
       project.hasProperty("ktlintFormatBuildSrc")
     }
