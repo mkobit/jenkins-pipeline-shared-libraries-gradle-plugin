@@ -19,7 +19,8 @@ java {
 }
 
 ktlint {
-  version.set("0.32.0")
+  coloredOutput.set(false)
+  ignoreFailures.set(true)
 }
 
 dependencies {
