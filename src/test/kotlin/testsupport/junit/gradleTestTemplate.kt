@@ -1,8 +1,6 @@
 package testsupport.junit
 
 import com.google.common.io.Resources
-import com.mkobit.gradle.test.kotlin.testkit.runner.projectDirPath
-import com.mkobit.gradle.test.kotlin.testkit.runner.stacktrace
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.util.GradleVersion
 import org.junit.jupiter.api.extension.AfterTestExecutionCallback
@@ -17,6 +15,8 @@ import org.junit.jupiter.api.extension.ParameterResolver
 import org.junit.jupiter.api.extension.TestTemplateInvocationContext
 import org.junit.jupiter.api.extension.TestTemplateInvocationContextProvider
 import org.junit.platform.commons.support.AnnotationSupport
+import testsupport.testkit.runner.projectDirPath
+import testsupport.testkit.runner.stacktrace
 import java.io.File
 import java.io.IOException
 import java.lang.reflect.Constructor
@@ -33,7 +33,9 @@ import java.util.stream.Stream
 import kotlin.reflect.jvm.kotlinFunction
 
 @Target(AnnotationTarget.VALUE_PARAMETER)
-annotation class GradleProject(val resourcePath: Array<String> = [])
+annotation class GradleProject(
+  val resourcePath: Array<String> = []
+)
 
 @Integration
 @ExtendWith(MultiVersionGradleProjectTestTemplate::class)
@@ -48,7 +50,7 @@ internal class MultiVersionGradleProjectTestTemplate : TestTemplateInvocationCon
       setOf(
         GradleVersion.current(),
         GradleVersion.version("7.6.4"),
-        GradleVersion.version("8.13.0"),
+        GradleVersion.version("8.13.0")
       )
     }
   }
@@ -59,28 +61,26 @@ internal class MultiVersionGradleProjectTestTemplate : TestTemplateInvocationCon
       .map { gradleVersions -> gradleVersions.versions }
       .map { versions ->
         when {
-          // Handle case where version is specified as 'current'
+          // Handle a case where a version is specified as 'current'
           versions.size == 1 && versions.first().toLowerCase() == "current" -> listOf(GradleVersion.current())
           versions.isNotEmpty() -> versions.map(GradleVersion::version)
           else -> DEFAULT_VERSIONS
         }
+      }.map { gradleVersions ->
+      gradleVersions.map { GradleProjectInvocationContext(context.displayName, it) }
+    }.map {
+      it.stream().distinct().map { gradleProjectContext ->
+        // Needed because of https://github.com/junit-team/junit5/issues/1226
+        gradleProjectContext as TestTemplateInvocationContext
       }
-      .map { gradleVersions ->
-        gradleVersions.map { GradleProjectInvocationContext(context.displayName, it) }
-      }
-      .map {
-        it.stream().distinct().map { gradleProjectContext ->
-          // Needed because of https://github.com/junit-team/junit5/issues/1226
-          gradleProjectContext as TestTemplateInvocationContext
-        }
-      }
-      .orElseThrow { RuntimeException("Could not create invocation contexts") }
+    }.orElseThrow { RuntimeException("Could not create invocation contexts") }
   }
 
   override fun supportsTestTemplate(context: ExtensionContext): Boolean = findGradleVersions(context).isPresent
 
   private fun findGradleVersions(context: ExtensionContext): Optional<ForGradleVersions> =
-    AnnotationSupport.findAnnotation(context.testMethod, ForGradleVersions::class.java)
+    AnnotationSupport
+      .findAnnotation(context.testMethod, ForGradleVersions::class.java)
       .or { AnnotationSupport.findAnnotation(context.testClass, ForGradleVersions::class.java) }
 }
 
@@ -88,18 +88,19 @@ private data class GradleProjectInvocationContext(
   private val contextDisplay: String,
   private val version: GradleVersion
 ) : TestTemplateInvocationContext {
+  override fun getDisplayName(invocationIndex: Int): String =
+    "[Gradle " +
+      if (version == GradleVersion.current()) {
+        "${version.version} (current)"
+      } else {
+        version.version
+      } + "] ⇒ $contextDisplay"
 
-  override fun getDisplayName(invocationIndex: Int): String = "[Gradle " +
-    if (version.equals(GradleVersion.current())) {
-      "${version.version} (current)"
-    } else {
-      version.version
-    } + "] ⇒ $contextDisplay"
-
-  override fun getAdditionalExtensions(): List<Extension> = listOf(
-    ResourceGradleProjectProviderExtension(version),
-    FilteringGradleExecutionCondition(version)
-  )
+  override fun getAdditionalExtensions(): List<Extension> =
+    listOf(
+      ResourceGradleProjectProviderExtension(version),
+      FilteringGradleExecutionCondition(version)
+    )
 }
 
 private class FilteringGradleExecutionCondition(
@@ -127,9 +128,13 @@ private class FilteringGradleExecutionCondition(
       else -> {
         val systemPropertyVersions = propertyValue.split(";").map(GradleVersion::version)
         if (targetVersion in systemPropertyVersions) {
-          ConditionEvaluationResult.enabled("Target version $targetVersion is in System property specified versions $systemPropertyVersions")
+          ConditionEvaluationResult.enabled(
+            "Target version $targetVersion is in System property specified versions $systemPropertyVersions"
+          )
         } else {
-          ConditionEvaluationResult.disabled("Target version $targetVersion is not in System property specified versions $systemPropertyVersions")
+          ConditionEvaluationResult.disabled(
+            "Target version $targetVersion is not in System property specified versions $systemPropertyVersions"
+          )
         }
       }
     }
@@ -138,7 +143,8 @@ private class FilteringGradleExecutionCondition(
 
 private class ResourceGradleProjectProviderExtension(
   private val gradleVersion: GradleVersion
-) : ParameterResolver, AfterTestExecutionCallback {
+) : ParameterResolver,
+  AfterTestExecutionCallback {
 
   companion object {
     private val LOGGER = Logger.getLogger("${ResourceGradleProjectProviderExtension::class.qualifiedName}")
@@ -147,10 +153,9 @@ private class ResourceGradleProjectProviderExtension(
   override fun supportsParameter(
     parameterContext: ParameterContext,
     extensionContext: ExtensionContext
-  ): Boolean {
-    return parameterContext.parameter.type == GradleRunner::class.java &&
+  ): Boolean =
+    parameterContext.parameter.type == GradleRunner::class.java &&
       parameterContext.parameter.isAnnotationPresent(GradleProject::class.java)
-  }
 
   override fun resolveParameter(
     parameterContext: ParameterContext,
@@ -180,23 +185,28 @@ private class ResourceGradleProjectProviderExtension(
     }
   }
 
-  private fun getStore(context: ExtensionContext): ExtensionContext.Store {
-    return context.getStore(
+  private fun getStore(context: ExtensionContext): ExtensionContext.Store =
+    context.getStore(
       ExtensionContext.Namespace.create(
-        ResourceGradleProjectProviderExtension::class.java, context
+        ResourceGradleProjectProviderExtension::class.java,
+        context
       )
     )
-  }
 
-  private fun loadGradleProject(parameterContext: ParameterContext, context: ExtensionContext): Path {
-    val rootResourceDirectoryName = AnnotationSupport.findAnnotation(parameterContext.parameter, GradleProject::class.java)
-      .map(GradleProject::resourcePath)
-      .flatMap {
-        when {
-          it.isNotEmpty() -> Optional.of(it.joinToString(File.separator))
-          else -> Optional.empty()
-        }
-      }.orElseGet {
+  private fun loadGradleProject(
+    parameterContext: ParameterContext,
+    context: ExtensionContext
+  ): Path {
+    val rootResourceDirectoryName =
+      AnnotationSupport
+        .findAnnotation(parameterContext.parameter, GradleProject::class.java)
+        .map(GradleProject::resourcePath)
+        .flatMap {
+          when {
+            it.isNotEmpty() -> Optional.of(it.joinToString(File.separator))
+            else -> Optional.empty()
+          }
+        }.orElseGet {
         val testMethod: Method = context.requiredTestMethod
         val resourcePathToMethod = testMethod.kotlinFunction!!.name
         val testClass: Class<*> = context.requiredTestClass
@@ -223,23 +233,31 @@ private class ResourceGradleProjectProviderExtension(
   private fun createTempDirectory(context: ExtensionContext): Path {
     fun sanitizePrefix(name: String): String = name.replace(" ", "_")
 
-    val tempDirPrefix: String = context.testMethod
-      .map { it.name }
-      .or { context.testClass.map { it.name } }
-      .or { Optional.of(context.displayName) }
-      .map { sanitizePrefix(it) }
-      .orElseGet { "default_prefix" }
+    val tempDirPrefix: String =
+      context.testMethod
+        .map { it.name }
+        .or { context.testClass.map { it.name } }
+        .or { Optional.of(context.displayName) }
+        .map { sanitizePrefix(it) }
+        .orElseGet { "default_prefix" }
 
     return Files.createTempDirectory(tempDirPrefix)
   }
 
-  private class RecursiveCopyVisitor(val from: Path, val to: Path) : SimpleFileVisitor<Path>() {
+  private class RecursiveCopyVisitor(
+    val from: Path,
+    val to: Path
+  ) : SimpleFileVisitor<Path>() {
+
     init {
       require(Files.isDirectory(from)) { "$from must be a directory" }
       require(Files.isDirectory(to)) { "$to must be a directory" }
     }
 
-    override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult {
+    override fun preVisitDirectory(
+      dir: Path,
+      attrs: BasicFileAttributes
+    ): FileVisitResult {
       val targetPath = to.resolve(from.relativize(dir))
       if (!Files.exists(targetPath)) {
         LOGGER.fine { "Creating directory at $targetPath" }
@@ -248,7 +266,10 @@ private class ResourceGradleProjectProviderExtension(
       return FileVisitResult.CONTINUE
     }
 
-    override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+    override fun visitFile(
+      file: Path,
+      attrs: BasicFileAttributes
+    ): FileVisitResult {
       val targetPath = to.resolve(from.relativize(file))
       LOGGER.fine { "Copying file from $to to $targetPath" }
       Files.copy(file, targetPath, StandardCopyOption.REPLACE_EXISTING)
@@ -257,13 +278,19 @@ private class ResourceGradleProjectProviderExtension(
   }
 
   private class RecursiveDeleteVisitor : SimpleFileVisitor<Path>() {
-    override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+    override fun visitFile(
+      file: Path,
+      attrs: BasicFileAttributes
+    ): FileVisitResult {
       LOGGER.fine { "Deleting file $file" }
       Files.delete(file)
       return FileVisitResult.CONTINUE
     }
 
-    override fun postVisitDirectory(dir: Path, exc: IOException?): FileVisitResult {
+    override fun postVisitDirectory(
+      dir: Path,
+      exc: IOException?
+    ): FileVisitResult {
       if (exc == null) {
         LOGGER.fine { "Deleting directory $dir" }
         Files.delete(dir)
@@ -274,8 +301,9 @@ private class ResourceGradleProjectProviderExtension(
   }
 }
 
-private fun <T> Optional<T>.or(supplier: () -> Optional<T>): Optional<T> = if (isPresent) {
-  this
-} else {
-  supplier()
-}
+private fun <T> Optional<T>.or(supplier: () -> Optional<T>): Optional<T> =
+  if (isPresent) {
+    this
+  } else {
+    supplier()
+  }
