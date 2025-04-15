@@ -14,9 +14,9 @@ sharedLibrary {
     pipelineTestUnitVersion = '1.1'
 }
 
-tasks.withType(Test) {
-    testLogging {
-        exceptionFormat = 'full'
-        events('started')
-    }
+tasks.withType(Test).configureEach {
+  testLogging {
+    exceptionFormat = 'full'
+    events('started')
+  }
 }
