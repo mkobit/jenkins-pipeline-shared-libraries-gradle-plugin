@@ -3,7 +3,12 @@ package com.mkobit.jenkins.pipelines
 /**
  * A Jenkins plugin dependency.
  */
-data class PluginDependency(val group: String, val name: String, val version: String) {
+data class PluginDependency(
+  val group: String,
+  val name: String,
+  val version: String
+) {
+
   companion object {
     fun fromString(notation: String): PluginDependency {
       val splitNotation = notation.split(":")
