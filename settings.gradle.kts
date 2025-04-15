@@ -1,3 +1,21 @@
+@file:Suppress("UnstableApiUsage")
+
+pluginManagement {
+  repositories {
+    mavenLocal()
+    mavenCentral()
+    gradlePluginPortal()
+  }
+}
+
+dependencyResolutionManagement {
+  repositories {
+    mavenLocal()
+    mavenCentral()
+    maven(url = "https://repo.jenkins-ci.org/public/")
+  }
+}
+
 plugins {
   id("com.gradle.enterprise") version "3.19.2"
 }
