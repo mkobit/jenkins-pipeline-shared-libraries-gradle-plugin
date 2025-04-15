@@ -24,10 +24,11 @@ ktlint {
 }
 
 dependencies {
-  implementation("com.fasterxml.jackson.core:jackson-core:2.9.9")
-  implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.9.9")
-  implementation("com.squareup.retrofit2:converter-jackson:2.5.0")
-  implementation("com.squareup.retrofit2:retrofit:2.5.0")
+  implementation(platform(libs.jackson.bom))
+  implementation(libs.bundles.jackson)
+
+  implementation(platform(libs.retrofit.bom))
+  implementation(libs.bundles.retrofit)
 }
 
 tasks {
