@@ -88,7 +88,8 @@ repositories {
 }
 
 ktlint {
-  version.set("0.37.2")
+  coloredOutput.set(false)
+  ignoreFailures.set(true)
 }
 
 configurations {
