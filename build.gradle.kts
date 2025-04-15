@@ -84,7 +84,7 @@ sourceSets {
 
 repositories {
   maven(url = "https://repo.jenkins-ci.org/public/")
-  jcenter()
+  mavenCentral()
 }
 
 ktlint {
