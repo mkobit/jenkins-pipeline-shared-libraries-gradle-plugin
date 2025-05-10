@@ -1,26 +1,32 @@
 = Jenkins Pipeline Shared Library Gradle Plugin
 :toc:
-:supports-gradle: 5.0+
+:supports-gradle: 5.0 - 6.x
+:does-not-support-gradle: ≥7.x
 :github-repo-id: jenkins-pipeline-shared-libraries-gradle-plugin
 :uri-github-releases: https://github.com/mkobit/{github-repo-id}/releases
+:uri-github-issue-105: https://github.com/mkobit/{github-repo-id}/issues/105
 :uri-jenkins-test-harness: https://github.com/jenkinsci/jenkins-test-harness.git
 :uri-jenkins-shared-library-docs: https://jenkins.io/doc/book/pipeline/shared-libraries/
 :uri-jenkins-pipeline-unit: https://github.com/lesfurets/JenkinsPipelineUnit
 :uri-consumer-example: https://github.com/mkobit/jenkins-pipeline-shared-library-example
-:uri-build-status-image: https://circleci.com/gh/mkobit/{github-repo-id}/tree/master.svg?style=svg
-:circle-ci-status-badge: image:{uri-build-status-image}["CircleCI", link="https://circleci.com/gh/mkobit/{github-repo-id}/tree/master"]
 :uri-version-badge-image: https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/com/mkobit/jenkins/pipelines/jenkins-pipeline-shared-libraries-gradle-plugin/maven-metadata.xml.svg?label=Gradle Plugin Portal
-:uri-gradle-support-badge-image: https://img.shields.io/badge/Supports%20Gradle-{supports-gradle}-blue.svg
-:supports-gradle-badge: image:{uri-gradle-support-badge-image}["Gradle Version"]
+:uri-gradle-support-badge-image: https://img.shields.io/badge/Supports%20Gradle-5.x≤Gradle<7.x-blue.svg
+:uri-gradle-unsupported-badge-image: https://img.shields.io/badge/Unsupported%20Gradle-≥7.x%2B-red.svg
+:supports-gradle-badge: image:{uri-gradle-support-badge-image}["Supported Gradle Version"]
+:unsupported-gradle-badge: image:{uri-gradle-unsupported-badge-image}["Unsupported Gradle Version"]
 :uri-gradle-plugin-portal: https://plugins.gradle.org/plugin/com.mkobit.jenkins.pipelines.shared-library
-:uri-zenhub-badge: https://raw.githubusercontent.com/ZenHubIO/support/master/zenhub-badge.png
 :version-badge: image:{uri-version-badge-image}["Plugin Version", link="{uri-gradle-plugin-portal}"]
-:zenhub-badge: image:{uri-zenhub-badge}["ZenHub Badge", link="https://www.zenhub.com/"]
 
-{circle-ci-status-badge}
+[IMPORTANT]
+====
+This plugin is currently undergoing a modernization effort tracked in link:{uri-github-issue-105}[issue #105].
+The current latest stable release (`0.10.x`) **does not support Gradle {does-not-support-gradle}**.
+Work is in progress to add support for modern Gradle, Java, and Jenkins versions.
+====
+
 {version-badge}
 {supports-gradle-badge}
-{zenhub-badge}
+{unsupported-gradle-badge}
 
 NOTE: This documentation is for the `HEAD` of the repository.
       To see documentation at a specific version see the link:{uri-github-releases}[GitHub Releases page]
