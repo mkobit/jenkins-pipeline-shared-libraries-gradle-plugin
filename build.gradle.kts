@@ -1,27 +1,26 @@
 import buildsrc.ProjectInfo
+import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.testing.logging.TestLogEvent
-import org.gradle.jvm.tasks.Jar
-import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
+import org.jetbrains.dokka.gradle.DokkaTask
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import java.io.ByteArrayOutputStream
 import java.net.URL
 
 plugins {
   `kotlin-dsl`
   `java-library`
-
-  id("org.jlleitschuh.gradle.ktlint") version "9.2.1"
-
-  id("nebula.release") version "11.1.0"
   `maven-publish`
-  id("com.gradle.plugin-publish") version "0.10.1"
-  id("org.jetbrains.dokka") version "0.9.18"
-
-  id("com.github.ben-manes.versions") version "0.28.0"
 
   // Only used for local publishing for testing
   buildsrc.`jenkins-rebaseline`
+
+  alias(libs.plugins.ktlint)
+  alias(libs.plugins.nebula.release)
+  alias(libs.plugins.gradlePluginPublish)
+  alias(libs.plugins.dokka)
+  alias(libs.plugins.benManesVersions)
+
+  alias(libs.plugins.rewrite)
 }
 
 group = "com.mkobit.jenkins.pipelines"
@@ -65,8 +64,9 @@ buildScan {
 }
 
 java {
-  sourceCompatibility = JavaVersion.VERSION_1_8
-  targetCompatibility = JavaVersion.VERSION_1_8
+  toolchain {
+    languageVersion.set(JavaLanguageVersion.of(17))
+  }
 }
 
 sourceSets {
@@ -82,13 +82,9 @@ sourceSets {
   }
 }
 
-repositories {
-  maven(url = "https://repo.jenkins-ci.org/public/")
-  jcenter()
-}
-
 ktlint {
-  version.set("0.37.2")
+  coloredOutput.set(false)
+  ignoreFailures.set(true)
 }
 
 configurations {
@@ -181,17 +177,21 @@ dependencies {
   "jenkinsPlugins"("org.jenkins-ci.main:jenkins-core:2.222.4") {
     isTransitive = false
   }
+
+  rewrite(platform(libs.rewrite.recipes.bom))
+  rewrite(libs.bundles.rewrite.recipes)
 }
 
 tasks {
   wrapper {
-    gradleVersion = "6.5"
+    gradleVersion = "7.6.4"
   }
 
   dependencyUpdates {
-    val rejectPatterns = listOf("alpha", "beta", "rc", "cr", "m").map { qualifier ->
-      Regex("(?i).*[.-]$qualifier[.\\d-]*")
-    }
+    val rejectPatterns =
+      listOf("alpha", "beta", "rc", "cr", "m").map { qualifier ->
+        Regex("(?i).*[.-]$qualifier[.\\d-]*")
+      }
     resolutionStrategy {
       componentSelection {
         all {
@@ -211,7 +211,7 @@ tasks {
     manifest {
       attributes(
         mapOf(
-          "Build-Revision" to gitCommitSha,
+          "Build-Revision" to gitCommitShaProvider.get(),
           "Implementation-Version" to project.version
         )
       )
@@ -226,7 +226,9 @@ tasks {
   }
 
   withType<KotlinCompile>().configureEach {
-    kotlinOptions.jvmTarget = "1.8"
+    compilerOptions {
+      jvmTarget.set(JvmTarget.JVM_17)
+    }
   }
 
   test {
@@ -236,11 +238,7 @@ tasks {
       // Will rerun some tests unfortunately using this method, but helps with CI
       systemProperty("testsupport.junit.ForGradleVersions.versions", it)
     }
-    if (JavaVersion.current() > JavaVersion.VERSION_1_8) {
-      jvmArgs("-XshowSettings:vm", "-Xlog:gc*", "-Xmx512m", "-Xms256m")
-    } else {
-      jvmArgs("-XshowSettings:vm", "-XX:+PrintGCTimeStamps", "-XX:+UseG1GC", "-Xmx512m", "-Xms256m")
-    }
+    jvmArgs("-XshowSettings:vm", "-Xlog:gc*", "-Xmx512m", "-Xms256m")
     testLogging {
       if (env("CI") != null) {
         // shoot more output out so that Circle CI doesn't kill build after no output in 10 minutes
@@ -362,7 +360,11 @@ artifacts {
   add("archives", javadocJar)
 }
 
+val pluginTags = listOf("jenkins", "pipeline", "shared library", "global library")
+
 gradlePlugin {
+  website = ProjectInfo.projectUrl
+  vcsUrl = ProjectInfo.projectUrl
   plugins {
     // Don't get the extensions for NamedDomainObjectContainer here because we only have a NamedDomainObjectContainer
     // See https://github.com/gradle/kotlin-dsl/issues/459
@@ -370,13 +372,17 @@ gradlePlugin {
       id = "com.mkobit.jenkins.pipelines.shared-library"
       implementationClass = "com.mkobit.jenkins.pipelines.SharedLibraryPlugin"
       displayName = "Jenkins Pipeline Shared Library Development"
-      description = "Configures and sets up a Gradle project for development and testing of a Jenkins Pipeline shared library (https://jenkins.io/doc/book/pipeline/shared-libraries/)"
+      description =
+        "Configures and sets up a Gradle project for development and testing of a Jenkins Pipeline shared library (https://jenkins.io/doc/book/pipeline/shared-libraries/)"
+      tags.set(pluginTags)
     }
     create("jenkinsIntegration") {
       id = "com.mkobit.jenkins.pipelines.jenkins-integration"
       implementationClass = "com.mkobit.jenkins.pipelines.JenkinsIntegrationPlugin"
       displayName = "Jenkins Integration Plugin"
-      description = "Tasks to retrieve information from a Jenkins instance to be aid in the development of tools with Gradle"
+      description =
+        "Tasks to retrieve information from a Jenkins instance to be aid in the development of tools with Gradle"
+      tags.set(pluginTags)
     }
   }
 }
@@ -396,8 +402,31 @@ afterEvaluate {
   }
 }
 
-pluginBundle {
-  vcsUrl = ProjectInfo.projectUrl
-  tags = listOf("jenkins", "pipeline", "shared library", "global library")
-  website = ProjectInfo.projectUrl
+fun env(key: String): String? = System.getenv(key)
+
+develocity {
+  buildScan {
+    termsOfUseUrl = "https://gradle.com/terms-of-service"
+    termsOfUseAgree = "yes"
+
+    if (!env("CI").isNullOrEmpty()) {
+      publishing.onlyIf { true }
+
+      logger.lifecycle("Running in CI environment, setting build scan attributes.")
+      tag("CI")
+
+      // Env variables from https://circleci.com/docs/2.0/env-vars/
+      env("CIRCLE_BRANCH")?.let { tag(it) }
+      env("CIRCLE_BUILD_NUM")?.let { value("Circle CI Build Number", it) }
+      env("CIRCLE_BUILD_URL")?.let { link("Build URL", it) }
+      env("CIRCLE_SHA1")?.let { value("Revision", it) }
+      //    Issue with Circle CI/Gradle with caret (^) in URLs
+//    see: https://discuss.gradle.org/t/build-scan-plugin-1-10-3-issue-when-using-a-url-with-a-caret/24965
+//    see: https://discuss.circleci.com/t/circle-compare-url-does-not-url-escape-caret/18464
+//    env("CIRCLE_COMPARE_URL")?.let { link("Diff", it) }
+      env("CIRCLE_REPOSITORY_URL")?.let { value("Repository", it) }
+      env("CIRCLE_PR_NUMBER")?.let { value("Pull Request Number", it) }
+      link("Repository", ProjectInfo.projectUrl)
+    }
+  }
 }

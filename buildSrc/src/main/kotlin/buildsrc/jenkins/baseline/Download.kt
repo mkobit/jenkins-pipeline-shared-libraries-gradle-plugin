@@ -9,5 +9,7 @@ import retrofit2.http.Url
 internal interface Download {
   @Streaming
   @GET
-  fun downloadFile(@Url fileUrl: String): Call<ResponseBody>
+  fun downloadFile(
+    @Url fileUrl: String,
+  ): Call<ResponseBody>
 }

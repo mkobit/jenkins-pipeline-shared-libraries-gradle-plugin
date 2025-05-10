@@ -19,9 +19,11 @@ import javax.inject.Inject
 /**
  * Generates a Java file into the [srcDir].
  */
-open class GenerateJavaFile @Inject constructor(
-  objectFactory: ObjectFactory
-) : DefaultTask() {
+open class GenerateJavaFile
+  @Inject
+  constructor(
+    objectFactory: ObjectFactory
+  ) : DefaultTask() {
 
   /**
    * [JavaFile] to write.
@@ -49,13 +51,15 @@ open class GenerateJavaFile @Inject constructor(
   // Used to give Gradle information about output content
   @Suppress("UNUSED")
   @get:OutputFile
-  val destination: Provider<RegularFile> = srcDir.let { dir ->
-    dir.file(
-      javaFile.map {
-        it.packageName.split(".") + listOf("${it.typeSpec.name}.java")
-      }.map { it.joinToString(separator = File.separator) }
-    )
-  }
+  val destination: Provider<RegularFile> =
+    srcDir.let { dir ->
+      dir.file(
+        javaFile
+          .map {
+            it.packageName.split(".") + listOf("${it.typeSpec.name}.java")
+          }.map { it.joinToString(separator = File.separator) }
+      )
+    }
 
   companion object {
     private val LOGGER = KotlinLogging.logger {}

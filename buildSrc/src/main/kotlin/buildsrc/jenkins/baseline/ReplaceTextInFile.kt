@@ -13,10 +13,10 @@ import org.gradle.kotlin.dsl.listProperty
 import java.nio.file.Files
 import javax.inject.Inject
 
-open class ReplaceTextInFile @Inject constructor(
-  objectFactory: ObjectFactory
-) : DefaultTask() {
+open class ReplaceTextInFile
 
+@Inject
+constructor(objectFactory: ObjectFactory) : DefaultTask() {
   @get:Nested
   val replacements: ListProperty<Replacement> = objectFactory.listProperty<Replacement>().empty()
 
@@ -28,9 +28,13 @@ open class ReplaceTextInFile @Inject constructor(
     val path = targetFile.get().asFile.toPath()
     val allReplacements = replacements.get()
     val lines = Files.readAllLines(path, Charsets.UTF_8)
-    val newLines = lines.map { line ->
-      allReplacements.foldRight(line, { replacement, acc -> replacement.patternAsRegex.replace(acc, replacement.replacement) })
-    }
+    val newLines =
+      lines.map { line ->
+        allReplacements.foldRight(
+          line,
+          { replacement, acc -> replacement.patternAsRegex.replace(acc, replacement.replacement) },
+        )
+      }
     if (lines == newLines) {
       didWork = false
     } else {
@@ -41,9 +45,8 @@ open class ReplaceTextInFile @Inject constructor(
 
 data class Replacement(
   @get:Input val pattern: String,
-  @get:Internal val replacement: (MatchResult) -> CharSequence
+  @get:Internal val replacement: (MatchResult) -> CharSequence,
 ) {
-
   constructor(regex: Regex, replacement: (MatchResult) -> CharSequence) : this(regex.pattern, replacement)
 
   @get:Internal

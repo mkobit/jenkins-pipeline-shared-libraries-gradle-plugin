@@ -1,7 +1,5 @@
 package com.mkobit.jenkins.pipelines
 
-import com.mkobit.gradle.test.kotlin.testkit.runner.build
-import com.mkobit.gradle.test.kotlin.testkit.runner.buildAndFail
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.jupiter.api.Test
@@ -9,6 +7,7 @@ import org.junit.jupiter.api.TestTemplate
 import strikt.api.expectCatching
 import strikt.api.expectThat
 import strikt.assertions.isNotNull
+import strikt.assertions.isSuccess
 import strikt.assertions.succeeded
 import strikt.gradle.testkit.isFailed
 import strikt.gradle.testkit.isSuccess
@@ -16,12 +15,16 @@ import strikt.gradle.testkit.task
 import testsupport.junit.ForGradleVersions
 import testsupport.junit.GradleProject
 import testsupport.junit.NotImplementedYet
+import testsupport.testkit.runner.build
+import testsupport.testkit.runner.buildAndFail
 
 @ForGradleVersions
 class MainSourceIntegrationTest {
 
   @TestTemplate
-  internal fun `main Groovy code is compiled`(@GradleProject(["projects", "basic-groovy-library"]) gradleRunner: GradleRunner) {
+  internal fun `main Groovy code is compiled`(
+    @GradleProject(["projects", "basic-groovy-library"]) gradleRunner: GradleRunner
+  ) {
     val buildResult: BuildResult = gradleRunner.build("compileGroovy")
 
     expectThat(buildResult)
@@ -31,7 +34,9 @@ class MainSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `can unit test code in src`(@GradleProject(["projects", "basic-groovy-library"]) gradleRunner: GradleRunner) {
+  internal fun `can unit test code in src`(
+    @GradleProject(["projects", "basic-groovy-library"]) gradleRunner: GradleRunner
+  ) {
     val buildResult: BuildResult = gradleRunner.build("test")
 
     expectThat(buildResult)
@@ -41,7 +46,9 @@ class MainSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `compilation fails for invalid Groovy code in src`(@GradleProject(["projects", "invalid-src-groovy"]) gradleRunner: GradleRunner) {
+  internal fun `compilation fails for invalid Groovy code in src`(
+    @GradleProject(["projects", "invalid-src-groovy"]) gradleRunner: GradleRunner
+  ) {
     val buildResult: BuildResult = gradleRunner.buildAndFail("compileGroovy")
 
     expectThat(buildResult)
@@ -51,7 +58,9 @@ class MainSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `compilation fails for invalid Groovy code in vars`(@GradleProject(["projects", "invalid-vars-groovy"]) gradleRunner: GradleRunner) {
+  internal fun `compilation fails for invalid Groovy code in vars`(
+    @GradleProject(["projects", "invalid-vars-groovy"]) gradleRunner: GradleRunner
+  ) {
     val buildResult: BuildResult = gradleRunner.buildAndFail("compileGroovy")
 
     expectThat(buildResult)
@@ -66,14 +75,18 @@ class MainSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `@Grab can be used in source code compilation`(@GradleProject(["projects", "source-with-@grab"]) gradleRunner: GradleRunner) {
+  internal fun `@Grab can be used in source code compilation`(
+    @GradleProject(["projects", "source-with-@grab"]) gradleRunner: GradleRunner
+  ) {
     expectCatching {
       gradleRunner.build("compileGroovy")
     }.succeeded()
   }
 
   @TestTemplate
-  internal fun `Groovydoc JAR can be generated`(@GradleProject(["projects", "basic-groovy-library"]) gradleRunner: GradleRunner) {
+  internal fun `Groovydoc JAR can be generated`(
+    @GradleProject(["projects", "basic-groovy-library"]) gradleRunner: GradleRunner
+  ) {
     val buildResult: BuildResult = gradleRunner.build("groovydocJar")
 
     expectThat(buildResult)
@@ -83,7 +96,9 @@ class MainSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `Groovy sources JAR can be generated`(@GradleProject(["projects", "basic-groovy-library"]) gradleRunner: GradleRunner) {
+  internal fun `Groovy sources JAR can be generated`(
+    @GradleProject(["projects", "basic-groovy-library"]) gradleRunner: GradleRunner
+  ) {
     val buildResult: BuildResult = gradleRunner.build("sourcesJar")
 
     expectThat(buildResult)
@@ -93,9 +108,11 @@ class MainSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `can use Jenkins core and plugin classes in main library code`(@GradleProject(["projects", "global-library-using-jenkins-plugin-classes"]) gradleRunner: GradleRunner) {
+  internal fun `can use Jenkins core and plugin classes in main library code`(
+    @GradleProject(["projects", "global-library-using-jenkins-plugin-classes"]) gradleRunner: GradleRunner
+  ) {
     expectCatching {
       gradleRunner.build("compileGroovy")
-    }.succeeded()
+    }.isSuccess()
   }
 }

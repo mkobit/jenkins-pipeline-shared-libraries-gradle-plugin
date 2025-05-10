@@ -11,7 +11,10 @@ import org.junit.jupiter.api.extension.ParameterResolver
 @ExtendWith(MockWebServerExtension::class)
 annotation class UseMockServer
 
-private class MockWebServerExtension : BeforeEachCallback, AfterEachCallback, ParameterResolver {
+private class MockWebServerExtension :
+  BeforeEachCallback,
+  AfterEachCallback,
+  ParameterResolver {
   override fun beforeEach(context: ExtensionContext) {
     getOrCreateMockWebServer(context)
   }
@@ -20,15 +23,22 @@ private class MockWebServerExtension : BeforeEachCallback, AfterEachCallback, Pa
     remoteMockWebServer(context)
   }
 
-  override fun supportsParameter(parameterContext: ParameterContext, extensionContext: ExtensionContext): Boolean =
-    parameterContext.parameter.type == MockWebServer::class.java
+  override fun supportsParameter(
+    parameterContext: ParameterContext,
+    extensionContext: ExtensionContext
+  ): Boolean = parameterContext.parameter.type == MockWebServer::class.java
 
-  override fun resolveParameter(parameterContext: ParameterContext, extensionContext: ExtensionContext): Any =
-    getOrCreateMockWebServer(extensionContext)
+  override fun resolveParameter(
+    parameterContext: ParameterContext,
+    extensionContext: ExtensionContext
+  ): Any = getOrCreateMockWebServer(extensionContext)
 
-  private fun storeKeyFor(context: ExtensionContext) = ExtensionContext.Namespace.create(
-    context.requiredTestClass, context.testInstance, context.testMethod
-  )
+  private fun storeKeyFor(context: ExtensionContext) =
+    ExtensionContext.Namespace.create(
+      context.requiredTestClass,
+      context.testInstance,
+      context.testMethod
+    )
 
   private fun getOrCreateMockWebServer(context: ExtensionContext) =
     getStoreFor(context).getOrComputeIfAbsent(storeKeyFor(context), { MockWebServer() }, MockWebServer::class.java)

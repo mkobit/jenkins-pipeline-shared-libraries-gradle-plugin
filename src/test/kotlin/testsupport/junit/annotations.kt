@@ -12,6 +12,6 @@ internal annotation class Integration
 @Tag("intellij-support")
 @Target(
   AnnotationTarget.CLASS,
-  AnnotationTarget.FUNCTION
+  AnnotationTarget.FUNCTION,
 )
 annotation class IntelliJSupport

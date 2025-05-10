@@ -4,37 +4,17 @@ import com.mkobit.jenkins.pipelines.codegen.GenerateJavaFile
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
-import org.gradle.api.internal.HasConvention
 import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.api.plugins.JavaBasePlugin
-import org.gradle.api.plugins.JavaPluginConvention
-import org.gradle.api.tasks.GroovySourceSet
+import org.gradle.api.plugins.JavaPluginExtension
+import org.gradle.api.tasks.GroovySourceDirectorySet
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.jvm.tasks.Jar
 import org.gradle.testfixtures.ProjectBuilder
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.DynamicNode
-import org.junit.jupiter.api.DynamicTest
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestFactory
+import org.junit.jupiter.api.*
 import strikt.api.expectThat
-import strikt.assertions.all
-import strikt.assertions.any
-import strikt.assertions.contains
-import strikt.assertions.endsWith
-import strikt.assertions.first
-import strikt.assertions.hasEntry
-import strikt.assertions.hasSize
-import strikt.assertions.isA
-import strikt.assertions.isEmpty
-import strikt.assertions.isEqualTo
-import strikt.assertions.isFalse
-import strikt.assertions.isNotBlank
-import strikt.assertions.isNotEmpty
-import strikt.assertions.isNotNull
-import strikt.assertions.isNull
-import strikt.assertions.map
-import strikt.assertions.name
+import strikt.assertions.*
+import strikt.java.name
 import testsupport.junit.Issue
 import testsupport.junit.NotImplementedYet
 import testsupport.strikt.authority
@@ -71,8 +51,7 @@ internal class SharedLibraryPluginTest {
       .get { repositories }
       .and {
         get { size }.describedAs("a single repository is added").isEqualTo(1)
-      }
-      .get("repository named '${SharedLibraryPlugin.JENKINS_REPOSITORY_NAME}'") { getByName(SharedLibraryPlugin.JENKINS_REPOSITORY_NAME) }
+      }.get("repository named '${SharedLibraryPlugin.JENKINS_REPOSITORY_NAME}'") { getByName(SharedLibraryPlugin.JENKINS_REPOSITORY_NAME) }
       .isA<MavenArtifactRepository>()
       .and {
         get { url }.and {
@@ -84,13 +63,13 @@ internal class SharedLibraryPluginTest {
   }
 
   @Test
-  internal fun `sourceCompatibility is Java 8`() {
+  internal fun `sourceCompatibility is Java 17`() {
     expectThat(project)
-      .get { convention }
-      .get("Java Plugin convention") { getPlugin(JavaPluginConvention::class.java) }
+      .get { extensions }
+      .get("Java Plugin extension") { getByType(JavaPluginExtension::class.java) }
       .and {
-        get { sourceCompatibility }.isEqualTo(JavaVersion.VERSION_1_8)
-        get { targetCompatibility }.isEqualTo(JavaVersion.VERSION_1_8)
+        get { sourceCompatibility }.isEqualTo(JavaVersion.VERSION_17)
+        get { targetCompatibility }.isEqualTo(JavaVersion.VERSION_17)
       }
   }
 
@@ -100,18 +79,16 @@ internal class SharedLibraryPluginTest {
       .get { extensions }
       .get("Source Sets containers") { getByType(SourceSetContainer::class.java) }
       .get("main") { getByName("main") }
-      .isA<HasConvention>()
-      .get { convention }
-      .get { getPlugin(GroovySourceSet::class.java) }
-      .get { groovy }
+      .get { extensions }
+      .get { getByType(GroovySourceDirectorySet::class.java) }
       .get { srcDirs }
       .any {
         name.endsWith("src")
       }
-//    val convention = project.convention.getPlugin(JavaPluginConvention::class.java)
+//    val convention = project.convention.getByType(JavaPluginConvention::class.java)
 //    val main = convention.sourceSets.getByName("main")
 //    expectThat(main).isNotNull()
-//    expectThat((main as HasConvention).convention.getPlugin(GroovySourceSet::class.java).groovy.srcDirs).anySatisfy {
+//    expectThat((main as HasConvention).convention.getByType(GroovySourceSet::class.java).groovy.srcDirs).anySatisfy {
 //      expectThat(it.endsWith("src"))
 //    }
   }
@@ -122,10 +99,8 @@ internal class SharedLibraryPluginTest {
       .get { extensions }
       .get("Source Sets containers") { getByType(SourceSetContainer::class.java) }
       .get("main") { getByName("main") }
-      .isA<HasConvention>()
-      .get { convention }
-      .get { getPlugin(GroovySourceSet::class.java) }
-      .get { groovy }
+      .get { extensions }
+      .get { getByType(GroovySourceDirectorySet::class.java) }
       .get { srcDirs }
       .any {
         name.endsWith("vars")
@@ -175,7 +150,7 @@ internal class SharedLibraryPluginTest {
       .get { getByName("integrationTest") }
       .isA<org.gradle.api.tasks.testing.Test>()
       .get { systemProperties }
-      .hasEntry("buildDirectory", project.buildDir.absolutePath)
+      .hasEntry("buildDirectory", project.layout.buildDirectory.get().asFile.absolutePath)
   }
 
   @Test
@@ -212,21 +187,23 @@ internal class SharedLibraryPluginTest {
 
   @TestFactory
   internal fun `configuration setup`(): Stream<DynamicNode> {
-    val configurations = mapOf(
-      "jenkinsPlugins" to "Jenkins Plugins",
-      "jenkinsPipelineUnitTestLibraries" to "Jenkins Pipeline Unit dependencies",
-      "jenkinsPluginHpisAndJpis" to "Jenkins plugins HPI and JPI dependencies",
-      "jenkinsPluginLibraries" to "Jenkins plugins JAR dependencies",
-      "jenkinsCoreLibraries" to "Jenkins core dependencies",
-      "jenkinsTestLibraries" to "Jenkins test dependencies",
-      "sharedLibraryGroovy" to "Shared Library Groovy",
-      "sharedLibraryIvy" to "Ivy (@Grab support)",
-      "jenkinsWar" to "Jenkins WAR and modules bundle",
-      "jenkinsModules" to "Only Jenkins WAR modules",
-      "jenkinsOnlyWarExtension" to "Only Jenkins WAR bundle"
-    )
+    val configurations =
+      mapOf(
+        "jenkinsPlugins" to "Jenkins Plugins",
+        "jenkinsPipelineUnitTestLibraries" to "Jenkins Pipeline Unit dependencies",
+        "jenkinsPluginHpisAndJpis" to "Jenkins plugins HPI and JPI dependencies",
+        "jenkinsPluginLibraries" to "Jenkins plugins JAR dependencies",
+        "jenkinsCoreLibraries" to "Jenkins core dependencies",
+        "jenkinsTestLibraries" to "Jenkins test dependencies",
+        "sharedLibraryGroovy" to "Shared Library Groovy",
+        "sharedLibraryIvy" to "Ivy (@Grab support)",
+        "jenkinsWar" to "Jenkins WAR and modules bundle",
+        "jenkinsModules" to "Only Jenkins WAR modules",
+        "jenkinsOnlyWarExtension" to "Only Jenkins WAR bundle"
+      )
 
-    return configurations.entries.stream()
+    return configurations.entries
+      .stream()
       .map { (key, value) ->
         DynamicTest.dynamicTest("configuration $value has a description and is not visible") {
           expectThat(project)

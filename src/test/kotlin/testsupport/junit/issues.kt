@@ -7,11 +7,14 @@ import org.junit.platform.commons.support.AnnotationSupport
 
 @ExtendWith(IssueExtension::class)
 @Target(AnnotationTarget.FUNCTION)
-annotation class Issue(val url: String)
+annotation class Issue(
+  val url: String
+)
 
 private class IssueExtension : BeforeTestExecutionCallback {
   override fun beforeTestExecution(context: ExtensionContext) {
-    AnnotationSupport.findAnnotation(context.testMethod, Issue::class.java)
+    AnnotationSupport
+      .findAnnotation(context.testMethod, Issue::class.java)
       .map { it.url }
       .ifPresent { context.publishReportEntry("issue", it) }
   }

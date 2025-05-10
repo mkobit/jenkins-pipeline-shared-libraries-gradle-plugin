@@ -1,7 +1,25 @@
-plugins {
-  id("com.gradle.enterprise") version "3.3.4"
-}
+@file:Suppress("UnstableApiUsage")
 
-rootProject.name = "jenkins-pipeline-shared-libraries-gradle-plugin"
+  pluginManagement {
+    repositories {
+      mavenLocal()
+      mavenCentral()
+      gradlePluginPortal()
+    }
+  }
 
-apply(from = file("gradle/buildCache.settings.gradle.kts"))
+  dependencyResolutionManagement {
+    repositories {
+      mavenLocal()
+      mavenCentral()
+      maven(url = "https://repo.jenkins-ci.org/public/")
+    }
+  }
+
+  plugins {
+    id("com.gradle.develocity") version "3.19.2"
+  }
+
+  rootProject.name = "jenkins-pipeline-shared-libraries-gradle-plugin"
+
+  apply(from = file("gradle/buildCache.settings.gradle.kts"))

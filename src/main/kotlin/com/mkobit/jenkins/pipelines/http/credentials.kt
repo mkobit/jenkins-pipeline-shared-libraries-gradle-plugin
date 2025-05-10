@@ -10,6 +10,7 @@ import okhttp3.Credentials
  * @see AnonymousAuthentication
  */
 interface Authentication {
+
   /**
    * Provides the headers for preemptive authentication.
    */
@@ -17,12 +18,15 @@ interface Authentication {
 }
 
 /**
- * Basic authentication authentication.
+ * Basic authentication.
  * It is generally preferred to use an API key [ApiTokenAuthentication].
  * @property username the username to authenticate with
  * @property password the password for the [username]
  */
-data class BasicAuthentication(val username: String, val password: String) : Authentication {
+data class BasicAuthentication(
+  val username: String,
+  val password: String
+) : Authentication {
   override fun headers(): Map<String, String> = mapOf("Authorization" to Credentials.basic(username, password))
 }
 
@@ -31,7 +35,10 @@ data class BasicAuthentication(val username: String, val password: String) : Aut
  * @property username the username to authenticate with
  * @property apiToken the API token for the [username]
  */
-data class ApiTokenAuthentication(val username: String, val apiToken: String) : Authentication {
+data class ApiTokenAuthentication(
+  val username: String,
+  val apiToken: String
+) : Authentication {
   override fun headers(): Map<String, String> = mapOf("Authorization" to Credentials.basic(username, apiToken))
 }
 

@@ -1,35 +1,35 @@
 plugins {
-  id 'com.mkobit.jenkins.pipelines.shared-library'
+    id 'com.mkobit.jenkins.pipelines.shared-library'
 }
 
 repositories {
-  jcenter()
+    mavenCentral()
 }
 
-tasks.create('showResolvedIntegrationTestCompileClasspathArtifacts') {
-  doFirst {
-    final configuration = configurations.getByName(sourceSets.getByName('integrationTest').compileClasspathConfigurationName)
-    configuration.resolvedConfiguration.resolvedArtifacts.each {
-      println("Resolved Artifact for ${configuration.name}: ${it.moduleVersion}@${it.extension}")
+tasks.register('showResolvedIntegrationTestCompileClasspathArtifacts') {
+    doFirst {
+        final   configuration = configurations.getByName(sourceSets.getByName('integrationTest').compileClasspathConfigurationName)
+        configuration.resolvedConfiguration.resolvedArtifacts.each {
+            println("Resolved Artifact for ${configuration.name}: ${it.moduleVersion}@${it.extension}")
+        }
     }
-  }
 }
 
-tasks.create('showResolvedIntegrationTestRuntimeOnlyArtifacts') {
-  // We can't resolve the runtimeOnly configuration directly, so extendFrom
-  final configuration = configurations.create('customRuntimeOnlyExtender')
-  configuration.extendsFrom(configurations.getByName(sourceSets.getByName('integrationTest').runtimeOnlyConfigurationName))
-  doFirst {
-    configuration.resolvedConfiguration.resolvedArtifacts.each {
-      println("Resolved Artifact for ${configuration.name}: ${it.moduleVersion}@${it.extension}")
+tasks.register('showResolvedIntegrationTestRuntimeOnlyArtifacts') {
+    // We can't resolve the runtimeOnly configuration directly, so extendFrom
+    final   configuration = configurations.create('customRuntimeOnlyExtender')
+    configuration.extendsFrom(configurations.getByName(sourceSets.getByName('integrationTest').runtimeOnlyConfigurationName))
+    doFirst {
+        configuration.resolvedConfiguration.resolvedArtifacts.each {
+            println("Resolved Artifact for ${configuration.name}: ${it.moduleVersion}@${it.extension}")
+        }
     }
-  }
 }
 
-tasks.create('printConfigurationStates') {
-  doFirst {
-    configurations.each {
-      println("Configuration ${it.name} state: ${it.state}")
+tasks.register('printConfigurationStates') {
+    doFirst {
+        configurations.each {
+            println("Configuration ${it.name} state: ${it.state}")
+        }
     }
-  }
 }

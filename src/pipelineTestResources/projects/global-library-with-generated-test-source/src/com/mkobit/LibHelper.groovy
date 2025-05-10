@@ -4,6 +4,7 @@ import com.cloudbees.groovy.cps.NonCPS
 
 class LibHelper {
   private script
+
   LibHelper(script) {
     this.script = script
   }
@@ -14,6 +15,8 @@ class LibHelper {
 
   @NonCPS
   List<Integer> increment(List<Integer> ints) {
-    return ints.collect { it + 1 }
+    return ints.collect {
+      it + 1
+    }
   }
 }

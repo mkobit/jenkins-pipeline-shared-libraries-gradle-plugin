@@ -1,9 +1,5 @@
 package com.mkobit.jenkins.pipelines
 
-import com.mkobit.gradle.test.kotlin.io.Original
-import com.mkobit.gradle.test.kotlin.testkit.runner.build
-import com.mkobit.gradle.test.kotlin.testkit.runner.buildAndFail
-import com.mkobit.gradle.test.kotlin.testkit.runner.setupProjectDir
 import com.mkobit.jenkins.pipelines.http.AnonymousAuthentication
 import com.mkobit.jenkins.pipelines.http.ApiTokenAuthentication
 import com.mkobit.jenkins.pipelines.http.Authentication
@@ -14,24 +10,30 @@ import org.gradle.testkit.runner.GradleRunner
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestTemplate
 import strikt.api.expectThat
-import strikt.assertions.allBytes
 import strikt.assertions.contains
 import strikt.assertions.isEqualTo
-import strikt.assertions.isRegularFile
-import strikt.assertions.resolve
 import strikt.gradle.testkit.output
+import strikt.java.allBytes
+import strikt.java.isRegularFile
+import strikt.java.resolve
 import testsupport.io.loadResource
 import testsupport.junit.ForGradleVersions
 import testsupport.junit.GradleProject
 import testsupport.junit.NotImplementedYet
 import testsupport.junit.UseMockServer
 import testsupport.strikt.allOf
+import testsupport.testkit.runner.Original
+import testsupport.testkit.runner.append
+import testsupport.testkit.runner.appendNewline
+import testsupport.testkit.runner.build
+import testsupport.testkit.runner.buildAndFail
+import testsupport.testkit.runner.invoke
+import testsupport.testkit.runner.setupProjectDir
 import java.nio.file.Paths
 
 @UseMockServer
 @ForGradleVersions(["current"])
 internal class JenkinsIntegrationPluginFunctionalTest {
-
   companion object {
     // The path to where download files are saved.
     private val downloadDirectory = Paths.get("build", "jenkinsFunctionalTest")
@@ -48,7 +50,10 @@ internal class JenkinsIntegrationPluginFunctionalTest {
 
     gradleRunner.setupIntegrationExtension(server)
 
-    expectThat(gradleRunner.build("retrieveJenkinsGdsl"))
+    val buildResult = gradleRunner.build("retrieveJenkinsGdsl")
+    val projectDir = gradleRunner.projectDir.toPath()
+
+    expectThat(buildResult)
       .get { projectDir }
       .resolve(downloadDirectory)
       .resolve("idea.gdsl")
@@ -76,14 +81,16 @@ internal class JenkinsIntegrationPluginFunctionalTest {
 
   @NotImplementedYet
   @TestTemplate
-  internal fun `can retrieve the global security whitelist`(@GradleProject gradleRunner: GradleRunner) {
+  internal fun `can retrieve the global security whitelist`(
+    @GradleProject gradleRunner: GradleRunner
+  ) {
   }
 
   @NotImplementedYet
   @Test
   internal fun `a useful error message is displayed when invalid authentication is used to retrieve the global security whitelist`(
     @GradleProject(
-      ["projects", "only-plugins-block"]
+      ["projects", "only-plugins-block"],
     ) gradleRunner: GradleRunner,
     server: MockWebServer
   ) {
@@ -93,7 +100,7 @@ internal class JenkinsIntegrationPluginFunctionalTest {
   @TestTemplate
   internal fun `a useful error message is displayed when user has insufficient privileges to retrieve the global security whitelist`(
     @GradleProject(
-      ["projects", "only-plugins-block"]
+      ["projects", "only-plugins-block"],
     ) gradleRunner: GradleRunner,
     server: MockWebServer
   ) {
@@ -110,7 +117,10 @@ internal class JenkinsIntegrationPluginFunctionalTest {
 
     gradleRunner.setupIntegrationExtension(server)
 
-    expectThat(gradleRunner.build("retrieveJenkinsPluginData"))
+    val buildResult = gradleRunner.build("retrieveJenkinsPluginData")
+    val projectDir = gradleRunner.projectDir.toPath()
+
+    expectThat(buildResult)
       .get { projectDir }
       .resolve(downloadDirectory)
       .resolve("plugins.json")
@@ -123,7 +133,7 @@ internal class JenkinsIntegrationPluginFunctionalTest {
   @TestTemplate
   internal fun `a useful error message is displayed when user has insufficient privileges to retrieve the list of plugins`(
     @GradleProject(
-      ["projects", "only-plugins-block"]
+      ["projects", "only-plugins-block"],
     ) gradleRunner: GradleRunner,
     server: MockWebServer
   ) {
@@ -136,20 +146,20 @@ internal class JenkinsIntegrationPluginFunctionalTest {
         addHeader("X-Permission-Implied-By", "hudson.model.Hudson.Administer")
         setBody(
           """
-        <html><head><meta http-equiv='refresh' content='1;url=/login?from=%2FpluginManager%2Fapi%2Fjson%3Fdepth%3D2'/><script>window.location.replace('/login?from=%2FpluginManager%2Fapi%2Fjson%3Fdepth%3D2');</script></head><body style='background-color:white; color:white;'>
+          <html><head><meta http-equiv='refresh' content='1;url=/login?from=%2FpluginManager%2Fapi%2Fjson%3Fdepth%3D2'/><script>window.location.replace('/login?from=%2FpluginManager%2Fapi%2Fjson%3Fdepth%3D2');</script></head><body style='background-color:white; color:white;'>
 
 
-        Authentication required
-        <!--
-        You are authenticated as: mkobit
-        Groups that you are in:
+          Authentication required
+          <!--
+          You are authenticated as: mkobit
+          Groups that you are in:
 
-        Permission you need to have (but didn't): hudson.model.Hudson.Read
-         ... which is implied by: hudson.security.Permission.GenericRead
-         ... which is implied by: hudson.model.Hudson.Administer
-        -->
+          Permission you need to have (but didn't): hudson.model.Hudson.Read
+           ... which is implied by: hudson.security.Permission.GenericRead
+           ... which is implied by: hudson.model.Hudson.Administer
+          -->
 
-        </body></html>
+          </body></html>
           """.trimIndent()
         )
       }
@@ -175,7 +185,7 @@ internal class JenkinsIntegrationPluginFunctionalTest {
   @TestTemplate
   internal fun `a useful error message is displayed when invalid authentication is used to retrieve the list of plugins`(
     @GradleProject(
-      ["projects", "only-plugins-block"]
+      ["projects", "only-plugins-block"],
     ) gradleRunner: GradleRunner,
     server: MockWebServer
   ) {
@@ -229,7 +239,10 @@ internal class JenkinsIntegrationPluginFunctionalTest {
 
     gradleRunner.setupIntegrationExtension(server, BasicAuthentication("mkobit", "hunter2"))
 
-    expectThat(gradleRunner.build("retrieveJenkinsVersion"))
+    val buildResult = gradleRunner.build("retrieveJenkinsVersion")
+    val projectDir = gradleRunner.projectDir.toPath()
+
+    expectThat(buildResult)
       .get { projectDir }
       .resolve(downloadDirectory)
       .resolve("core-version.txt")
@@ -239,28 +252,20 @@ internal class JenkinsIntegrationPluginFunctionalTest {
       .isEqualTo(version)
   }
 
-  @NotImplementedYet
-  @TestTemplate
-  internal fun `a useful error message is displayed when the the Jenkins version cannot be retrieved`(@GradleProject gradleRunner: GradleRunner) {
-  }
+  private fun GradleRunner.setupIntegrationExtension(
+    server: MockWebServer,
+    authentication: Authentication? = null
+  ) {
+    val authenticationText =
+      when (authentication) {
+        is AnonymousAuthentication -> throw IllegalArgumentException(
+          "AnonymousAuthentication should not be tested against since it is the default",
+        )
 
-  @NotImplementedYet
-  @TestTemplate
-  internal fun `can retrieve the list of global library configurations`(@GradleProject gradleRunner: GradleRunner) {
-  }
-
-  @NotImplementedYet
-  @TestTemplate
-  internal fun `a useful error message is displayed when user has insufficient privileges to retrieve the global library configurations`(@GradleProject gradleRunner: GradleRunner) {
-  }
-
-  private fun GradleRunner.setupIntegrationExtension(server: MockWebServer, authentication: Authentication? = null) {
-    val authenticationText = when (authentication) {
-      is AnonymousAuthentication -> throw IllegalArgumentException("AnonymousAuthentication should not be tested against since it is the default")
-      is BasicAuthentication -> "providers.provider { com.mkobit.jenkins.pipelines.http.BasicAuthentication('${authentication.username}', '${authentication.password}') }"
-      is ApiTokenAuthentication -> "providers.provider { com.mkobit.jenkins.pipelines.http.ApiTokenAuthentication('${authentication.username}', '${authentication.apiToken}') }"
-      else -> ""
-    }
+        is BasicAuthentication -> "providers.provider { com.mkobit.jenkins.pipelines.http.BasicAuthentication('${authentication.username}', '${authentication.password}') }"
+        is ApiTokenAuthentication -> "providers.provider { com.mkobit.jenkins.pipelines.http.ApiTokenAuthentication('${authentication.username}', '${authentication.apiToken}') }"
+        else -> ""
+      }
     setupProjectDir {
       "build.gradle"(content = Original) {
         appendNewline()
@@ -275,5 +280,26 @@ internal class JenkinsIntegrationPluginFunctionalTest {
         )
       }
     }
+  }
+
+  @NotImplementedYet
+  @TestTemplate
+  internal fun `a useful error message is displayed when the the Jenkins version cannot be retrieved`(
+    @GradleProject gradleRunner: GradleRunner
+  ) {
+  }
+
+  @NotImplementedYet
+  @TestTemplate
+  internal fun `can retrieve the list of global library configurations`(
+    @GradleProject gradleRunner: GradleRunner
+  ) {
+  }
+
+  @NotImplementedYet
+  @TestTemplate
+  internal fun `a useful error message is displayed when user has insufficient privileges to retrieve the global library configurations`(
+    @GradleProject gradleRunner: GradleRunner
+  ) {
   }
 }

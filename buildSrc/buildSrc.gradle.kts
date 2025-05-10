@@ -1,69 +1,112 @@
-import org.jlleitschuh.gradle.ktlint.KtlintFormatTask
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jlleitschuh.gradle.ktlint.tasks.KtLintFormatTask
 
-plugins {
-  `kotlin-dsl`
-  id("org.jlleitschuh.gradle.ktlint") version "8.0.0"
+  plugins {
+    `kotlin-dsl`
+    alias(libs.plugins.ktlint)
+    alias(libs.plugins.benManesVersions)
+  }
 
-  id("com.github.ben-manes.versions") version "0.21.0"
-}
-
-repositories {
-  jcenter()
-}
-
-ktlint {
-  version.set("0.32.0")
-}
-
-dependencies {
-  implementation("com.fasterxml.jackson.core:jackson-core:2.9.9")
-  implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.9.9")
-  implementation("com.squareup.retrofit2:converter-jackson:2.5.0")
-  implementation("com.squareup.retrofit2:retrofit:2.5.0")
-}
-
-tasks {
-  dependencyUpdates {
-    val rejectPatterns = listOf("alpha", "beta", "rc", "cr", "m").map { qualifier ->
-      Regex("(?i).*[.-]$qualifier[.\\d-]*")
+  tasks.withType<KotlinCompile>().configureEach {
+    compilerOptions {
+      jvmTarget.set(JvmTarget.JVM_17)
     }
-    resolutionStrategy {
-      componentSelection {
-        all {
-          if (rejectPatterns.any { it.matches(candidate.version) }) {
-            reject("Release candidate")
-          }
+  }
+
+  java {
+    toolchain {
+      languageVersion.set(JavaLanguageVersion.of(17))
+    }
+  }
+
+  ktlint {
+    coloredOutput.set(false)
+    ignoreFailures.set(true)
+  }
+
+  dependencies {
+    implementation(platform(libs.jackson.bom))
+    implementation(libs.bundles.jackson)
+
+    implementation(platform(libs.retrofit.bom))
+    implementation(libs.bundles.retrofit)
+  }
+
+  tasks {
+    dependencyUpdates {
+      rejectVersionIf {
+        // Don't reject stable releases when the current version is unstable
+        if (isNonStable(currentVersion) && !isNonStable(candidate.version)) {
+          return@rejectVersionIf false
         }
+
+        // Reject unstable versions
+        isNonStable(candidate.version)
+      }
+
+      // Optional: specify an output format
+      outputFormatter = "html,json"
+      outputDir = "build/reports/dependency-updates"
+      reportfileName = "dependencies"
+
+      // Optional: check for Gradle updates
+      checkForGradleUpdate = true
+
+      // Optional: Stability for a Gradle update channel
+      gradleReleaseChannel = "current"
+    }
+
+    assemble {
+      dependsOn(withType<KtLintFormatTask>())
+    }
+
+    withType<KtLintFormatTask>().configureEach {
+      onlyIf {
+        project.hasProperty("ktlintFormatBuildSrc")
+      }
+    }
+
+    dependencyUpdates {
+      onlyIf { project.hasProperty("updateBuildSrc") }
+    }
+
+    build {
+      dependsOn(dependencyUpdates)
+    }
+  }
+
+  gradlePlugin {
+    plugins.invoke {
+      // Don't get the extensions for NamedDomainObjectContainer here because we only have a NamedDomainObjectContainer
+      // See https://github.com/gradle/kotlin-dsl/issues/459
+      register("sharedLibrary") {
+        id = "buildsrc.jenkins-rebaseline"
+        implementationClass = "buildsrc.jenkins.baseline.JenkinsRebaselineToolsPlugin"
       }
     }
   }
 
-  assemble {
-    dependsOn(withType<KtlintFormatTask>())
-  }
+  /**
+   * Determines if a version string represents a non-stable (preview) version.
+   * This improved function checks for common unstable version patterns:
+   * - Contains alpha, beta, rc, cr, m, dev, snapshot (case-insensitive)
+   * - Contains "SNAPSHOT" suffix
+   * - Contains number followed by non-digit non-dot (e.g. 1.2.0-M1)
+   * - Doesn't contain RELEASE, FINAL, GA (case-insensitive)
+   */
+  fun isNonStable(version: String): Boolean {
+    val stableKeywords = listOf("RELEASE", "FINAL", "GA")
+    val stableKeywordRegex = stableKeywords.joinToString("|") { "(?i).*$it.*" }.toRegex()
 
-  withType<KtlintFormatTask>().configureEach {
-    onlyIf {
-      project.hasProperty("ktlintFormatBuildSrc")
+    val unstableKeywords = listOf("alpha", "beta", "rc", "cr", "m", "dev", "preview", "eap", "snapshot")
+    val unstableKeywordRegex = unstableKeywords.joinToString("|") { "(?i).*[.-]$it[.\\d-]*" }.toRegex()
+
+    if (stableKeywordRegex.matches(version)) {
+      return false
     }
-  }
 
-  dependencyUpdates {
-    onlyIf { project.hasProperty("updateBuildSrc") }
+    return unstableKeywordRegex.matches(version)
+      || "(?i).*-SNAPSHOT.*".toRegex().matches(version)
+      || "^[0-9,.v-]+(-r)?$".toRegex().matches(version).not()
   }
-
-  build {
-    dependsOn(dependencyUpdates)
-  }
-}
-
-gradlePlugin {
-  plugins.invoke {
-    // Don't get the extensions for NamedDomainObjectContainer here because we only have a NamedDomainObjectContainer
-    // See https://github.com/gradle/kotlin-dsl/issues/459
-    register("sharedLibrary") {
-      id = "buildsrc.jenkins-rebaseline"
-      implementationClass = "buildsrc.jenkins.baseline.JenkinsRebaselineToolsPlugin"
-    }
-  }
-}

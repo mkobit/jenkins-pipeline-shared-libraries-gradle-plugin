@@ -64,7 +64,7 @@ plugins {
 [source, groovy]
 ----
 repositories {
-  jcenter()
+  mavenCentral()
 }
 
 dependencies {

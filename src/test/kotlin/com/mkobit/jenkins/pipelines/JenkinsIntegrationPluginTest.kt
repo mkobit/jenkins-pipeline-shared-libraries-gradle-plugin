@@ -20,7 +20,6 @@ import testsupport.strikt.isPresent
 import testsupport.strikt.value
 
 internal class JenkinsIntegrationPluginTest {
-
   private lateinit var project: Project
 
   @BeforeEach
@@ -53,9 +52,10 @@ internal class JenkinsIntegrationPluginTest {
   @Test
   internal fun `can specify alternate credential providers in extension`() {
     val basicAuth = BasicAuthentication("username", "password")
-    val extension = project.extensions.findByType(JenkinsIntegrationExtension::class.java)?.apply {
-      authentication.set(project.provider { basicAuth })
-    }
+    val extension =
+      project.extensions.findByType(JenkinsIntegrationExtension::class.java)?.apply {
+        authentication.set(project.provider { basicAuth })
+      }
     expectThat(extension)
       .isNotNull()
       .and {
@@ -66,31 +66,32 @@ internal class JenkinsIntegrationPluginTest {
   }
 
   @TestFactory
-  internal fun `plugin tasks`() = testFactory<Project> {
-    fixture {
-      val project = ProjectBuilder.builder().build()
-      project.apply<JenkinsIntegrationPlugin>()
-      project
-    }
+  internal fun `plugin tasks`() =
+    testFactory<Project> {
+      fixture {
+        val project = ProjectBuilder.builder().build()
+        project.apply<JenkinsIntegrationPlugin>()
+        project
+      }
 
-    derivedContext<TaskContainer>("task") {
-      deriveFixture { tasks }
-      listOf(
-        "retrieveJenkinsGdsl",
-        "retrieveJenkinsVersion",
-        "retrieveJenkinsPluginData"
-      ).forEach { name ->
-        derivedContext<Task?>("with name $name") {
-          deriveFixture { findByName(name) }
-          test("exists") {
-            expectThat(fixture).isNotNull()
-          }
+      derivedContext<TaskContainer>("task") {
+        deriveFixture { tasks }
+        listOf(
+          "retrieveJenkinsGdsl",
+          "retrieveJenkinsVersion",
+          "retrieveJenkinsPluginData"
+        ).forEach { name ->
+          derivedContext<Task?>("with name $name") {
+            deriveFixture { findByName(name) }
+            test("exists") {
+              expectThat(fixture).isNotNull()
+            }
 
-          test("group is not blank") {
-            expectThat(fixture).isNotNull().get { group }.not { isNullOrBlank() }
+            test("group is not blank") {
+              expectThat(fixture).isNotNull().get { group }.not { isNullOrBlank() }
+            }
           }
         }
       }
     }
-  }
 }
