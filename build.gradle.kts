@@ -128,7 +128,7 @@ configurations {
         "dev.minutest" -> useVersion("1.13.0")
         "org.junit.jupiter" -> useVersion("5.5.1")
         "org.junit.platform" -> useVersion("1.5.1")
-        "io.strikt" -> useVersion("0.21.1")
+        "io.strikt" -> useVersion("0.28.2")
         "org.apache.logging.log4j" -> useVersion("2.12.0")
       }
     }
