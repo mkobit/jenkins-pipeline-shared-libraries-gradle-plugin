@@ -143,7 +143,7 @@ dependencies {
   implementation("com.squareup.okhttp3:okhttp")
 
   testImplementation(kotlin("reflect"))
-  testImplementation("com.mkobit.gradle.test:gradle-test-kotlin-extensions:0.7.0")
+  testImplementation("com.github.mkobit:gradle-test-kotlin-extensions:0.7.0")
   testImplementation("io.mockk:mockk:1.10.0")
   testImplementation("com.google.guava:guava:29.0-jre")
   testImplementation("com.squareup.okhttp3:mockwebserver")
