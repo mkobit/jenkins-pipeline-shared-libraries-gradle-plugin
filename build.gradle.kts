@@ -130,6 +130,7 @@ configurations {
         "org.junit.platform" -> useVersion("1.5.1")
         "io.strikt" -> useVersion("0.28.2")
         "org.apache.logging.log4j" -> useVersion("2.12.0")
+        "com.christophsturm" -> useVersion("0.1.3")
       }
     }
   }
