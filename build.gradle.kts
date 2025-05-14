@@ -83,8 +83,9 @@ sourceSets {
 }
 
 repositories {
-  maven(url = "https://repo.jenkins-ci.org/public/")
-  jcenter()
+  mavenCentral()
+  maven { url = uri("https://jitpack.io") }
+  maven { url = uri("https://repo.jenkins-ci.org/public/") }
 }
 
 ktlint {
