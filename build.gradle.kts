@@ -125,7 +125,7 @@ configurations {
     resolutionStrategy.eachDependency {
       when (requested.group) {
         "com.squareup.okhttp3" -> useVersion("3.14.1")
-        "dev.minutest" -> useVersion("1.7.0")
+        "dev.minutest" -> useVersion("1.13.0")
         "org.junit.jupiter" -> useVersion("5.5.1")
         "org.junit.platform" -> useVersion("1.5.1")
         "io.strikt" -> useVersion("0.21.1")
