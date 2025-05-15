@@ -38,7 +38,8 @@ internal class AuthenticationTest {
   inner class AnonymousAuthenticationTest {
     @Test
     internal fun `headers are absent`() {
-      expectThat(AnonymousAuthentication.headers()).isEmpty()
+      expectThat(AnonymousAuthentication.headers())
+        .isEmpty()
     }
   }
 }
