@@ -130,7 +130,7 @@ configurations {
         "dev.minutest" -> useVersion("1.13.0")
         "org.junit.jupiter" -> useVersion("5.5.1")
         "org.junit.platform" -> useVersion("1.5.1")
-        "io.strikt" -> useVersion("0.28.2")
+        "io.strikt" -> useVersion("0.31.0")
         "org.apache.logging.log4j" -> useVersion("2.12.0")
         "com.christophsturm" -> useVersion("0.1.3")
       }
@@ -153,6 +153,7 @@ dependencies {
   testImplementation("com.squareup.okhttp3:mockwebserver")
 
   testImplementation("io.strikt:strikt-core")
+  testImplementation("io.strikt:strikt-jvm")
   testImplementation("io.strikt:strikt-gradle")
 
   testImplementation("dev.minutest:minutest")
