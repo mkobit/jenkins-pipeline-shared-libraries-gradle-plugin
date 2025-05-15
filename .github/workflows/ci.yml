@@ -48,8 +48,19 @@ jobs:
             gradle-java8-
             gradle-
 
-      - name: Build & Test
-        run: ./gradlew build -P gradleTestVersions="current" --scan --stacktrace --max-workers 1
+      - name: Build
+        run: ./gradlew assemble -P gradleTestVersions="current" --scan --stacktrace --max-workers 1
+
+      - name: Run Tests
+        run: ./gradlew test -P gradleTestVersions="current" --scan --stacktrace --max-workers 1
+
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v5
+        if: always()
+        with:
+          report_paths: '**/build/test-results/test/TEST-*.xml'
+          detailed_summary: true
+          include_passed: true
 
       - name: Upload test results
         if: always()
@@ -73,7 +84,6 @@ jobs:
           java-version: 11
           distribution: temurin
 
-      # For Java 11 + Current Gradle
       - name: Cache Gradle
         uses: actions/cache@v4
         with:
@@ -86,8 +96,19 @@ jobs:
             gradle-java11-
             gradle-
 
-      - name: Build & Test
-        run: ./gradlew build -P gradleTestVersions="current" --scan --stacktrace --max-workers 1
+      - name: Build
+        run: ./gradlew assemble -P gradleTestVersions="current" --scan --stacktrace --max-workers 1
+
+      - name: Run Tests
+        run: ./gradlew test -P gradleTestVersions="current" --scan --stacktrace --max-workers 1
+
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v5
+        if: always()
+        with:
+          report_paths: '**/build/test-results/test/TEST-*.xml'
+          detailed_summary: true
+          include_passed: true
 
       - name: Upload test results
         if: always()
@@ -138,8 +159,19 @@ jobs:
             gradle-java8-
             gradle-
 
-      - name: Build & Test (Gradle ${{ matrix.gradle }})
-        run: ./gradlew build -P gradleTestVersions="${{ matrix.gradle }}" --stacktrace --max-workers 1
+      - name: Build (Gradle ${{ matrix.gradle }})
+        run: ./gradlew assemble -P gradleTestVersions="${{ matrix.gradle }}" --scan --stacktrace --max-workers 1
+
+      - name: Run Tests (Gradle ${{ matrix.gradle }})
+        run: ./gradlew test -P gradleTestVersions="${{ matrix.gradle }}" --scan --stacktrace --max-workers 1
+
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v5
+        if: always()
+        with:
+          report_paths: '**/build/test-results/test/TEST-*.xml'
+          detailed_summary: true
+          include_passed: true
 
       - name: Upload test results
         if: always()
