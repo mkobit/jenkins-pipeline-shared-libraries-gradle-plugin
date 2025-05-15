@@ -34,7 +34,7 @@ import strikt.assertions.isNotEmpty
 import strikt.assertions.isNotNull
 import strikt.assertions.isNull
 import strikt.assertions.map
-import strikt.assertions.name
+import strikt.java.name
 import testsupport.junit.Issue
 import testsupport.junit.NotImplementedYet
 import testsupport.strikt.authority

@@ -14,12 +14,12 @@ import org.gradle.testkit.runner.GradleRunner
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestTemplate
 import strikt.api.expectThat
-import strikt.assertions.allBytes
 import strikt.assertions.contains
 import strikt.assertions.isEqualTo
-import strikt.assertions.isRegularFile
-import strikt.assertions.resolve
 import strikt.gradle.testkit.output
+import strikt.java.allBytes
+import strikt.java.isRegularFile
+import strikt.java.resolve
 import testsupport.io.loadResource
 import testsupport.junit.ForGradleVersions
 import testsupport.junit.GradleProject
