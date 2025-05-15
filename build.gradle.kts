@@ -190,7 +190,7 @@ dependencies {
 
 tasks {
   wrapper {
-    gradleVersion = "6.7"
+    gradleVersion = "6.8"
   }
 
   dependencyUpdates {
