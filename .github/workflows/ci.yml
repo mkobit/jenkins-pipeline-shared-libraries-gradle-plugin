@@ -55,7 +55,7 @@ jobs:
         run: ./gradlew test -P gradleTestVersions="current" --scan --stacktrace
 
       - name: Publish Test Report
-        uses: mikepenz/action-junit-report@v5
+        uses: mikepenz/action-junit-report@cf701569b05ccdd861a76b8607a66d76f6fd4857 # v5
         if: always()
         with:
           report_paths: '**/build/test-results/test/TEST-*.xml'
@@ -103,7 +103,7 @@ jobs:
         run: ./gradlew test -P gradleTestVersions="current" --scan --stacktrace
 
       - name: Publish Test Report
-        uses: mikepenz/action-junit-report@v5
+        uses: mikepenz/action-junit-report@cf701569b05ccdd861a76b8607a66d76f6fd4857 # v5
         if: always()
         with:
           report_paths: '**/build/test-results/test/TEST-*.xml'
@@ -166,7 +166,7 @@ jobs:
         run: ./gradlew test -P gradleTestVersions="${{ matrix.gradle }}" --scan --stacktrace
 
       - name: Publish Test Report
-        uses: mikepenz/action-junit-report@v5
+        uses: mikepenz/action-junit-report@cf701569b05ccdd861a76b8607a66d76f6fd4857 # v5
         if: always()
         with:
           report_paths: '**/build/test-results/test/TEST-*.xml'
