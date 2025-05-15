@@ -8,8 +8,6 @@ import java.io.ByteArrayOutputStream
 import java.net.URL
 
 plugins {
-  kotlin("jvm") version "1.4.32"
-
   `kotlin-dsl`
   `java-library`
 
