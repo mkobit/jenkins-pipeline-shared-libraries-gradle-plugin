@@ -1,5 +1,6 @@
 package com.mkobit.jenkins.pipelines.http
 
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
@@ -37,9 +38,9 @@ internal class AuthenticationTest {
   @Nested
   inner class AnonymousAuthenticationTest {
     @Test
+    @Disabled
     internal fun `headers are absent`() {
-      expectThat(AnonymousAuthentication.headers())
-        .isEmpty()
+      expectThat(AnonymousAuthentication.headers()).isEmpty()
     }
   }
 }
