@@ -8,16 +8,15 @@ import org.gradle.api.tasks.TaskContainer
 import org.gradle.kotlin.dsl.apply
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 import strikt.api.expectThat
 import strikt.assertions.isA
 import strikt.assertions.isEqualTo
+import strikt.assertions.isFalse
 import strikt.assertions.isNotNull
 import strikt.assertions.isNullOrBlank
 import testsupport.minutest.testFactory
-import testsupport.strikt.isPresent
 import testsupport.strikt.value
 
 internal class JenkinsIntegrationPluginTest {
@@ -39,13 +38,12 @@ internal class JenkinsIntegrationPluginTest {
   }
 
   @Test
-  @Disabled
   internal fun `integration extension has default values`() {
     val extension = project.extensions.findByType(JenkinsIntegrationExtension::class.java)
     expectThat(extension)
       .isNotNull()
       .and {
-        get("Instance URL is absent") { baseUrl }.not { isPresent() }
+        get("Instance URL is absent") { baseUrl.isPresent }.isFalse()
         get("Anonymous authentication is the default") { authentication }
           .value
           .isEqualTo(AnonymousAuthentication)
