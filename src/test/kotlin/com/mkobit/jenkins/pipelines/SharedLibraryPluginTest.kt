@@ -13,7 +13,6 @@ import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.jvm.tasks.Jar
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DynamicNode
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
@@ -96,7 +95,6 @@ internal class SharedLibraryPluginTest {
   }
 
   @Test
-  @Disabled
   internal fun `src is a Groovy source directory`() {
     expectThat(project)
       .get { extensions }
@@ -119,7 +117,6 @@ internal class SharedLibraryPluginTest {
   }
 
   @Test
-  @Disabled
   internal fun `vars is a Groovy source directory`() {
     expectThat(project)
       .get { extensions }
@@ -136,7 +133,6 @@ internal class SharedLibraryPluginTest {
   }
 
   @Test
-  @Disabled
   internal fun `resources is a resources source directory`() {
     expectThat(project)
       .get { extensions }
@@ -152,7 +148,6 @@ internal class SharedLibraryPluginTest {
   }
 
   @Test
-  @Disabled
   internal fun `main has no Java sources`() {
     expectThat(project)
       .get { extensions }
@@ -246,7 +241,6 @@ internal class SharedLibraryPluginTest {
   }
 
   @Test
-  @Disabled
   internal fun `code generation tasks do not have a group`() {
     expectThat(project)
       .get { tasks }
