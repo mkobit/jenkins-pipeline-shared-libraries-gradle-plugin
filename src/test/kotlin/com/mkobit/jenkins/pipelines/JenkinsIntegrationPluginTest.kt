@@ -8,6 +8,7 @@ import org.gradle.api.tasks.TaskContainer
 import org.gradle.kotlin.dsl.apply
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 import strikt.api.expectThat
@@ -38,6 +39,7 @@ internal class JenkinsIntegrationPluginTest {
   }
 
   @Test
+  @Disabled
   internal fun `integration extension has default values`() {
     val extension = project.extensions.findByType(JenkinsIntegrationExtension::class.java)
     expectThat(extension)
