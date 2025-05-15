@@ -8,6 +8,8 @@ import java.io.ByteArrayOutputStream
 import java.net.URL
 
 plugins {
+  kotlin("jvm") version "1.4.32"
+
   `kotlin-dsl`
   `java-library`
 
@@ -139,6 +141,8 @@ configurations {
 dependencies {
   api(gradleApi())
   api("com.squareup:javapoet:1.12.1")
+
+  implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.4.32"))
   implementation("io.github.microutils:kotlin-logging:1.7.10")
   implementation("com.squareup.okhttp3:okhttp")
 
