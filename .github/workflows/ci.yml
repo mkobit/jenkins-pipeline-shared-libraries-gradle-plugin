@@ -49,10 +49,10 @@ jobs:
             gradle-
 
       - name: Build
-        run: ./gradlew assemble -P gradleTestVersions="current" --scan --stacktrace --max-workers 1
+        run: ./gradlew assemble -P gradleTestVersions="current" --scan --stacktrace --max-workers=auto
 
       - name: Run Tests
-        run: ./gradlew test -P gradleTestVersions="current" --scan --stacktrace --max-workers 1
+        run: ./gradlew test -P gradleTestVersions="current" --scan --stacktrace --max-workers=auto
 
       - name: Publish Test Report
         uses: mikepenz/action-junit-report@v5
@@ -97,10 +97,10 @@ jobs:
             gradle-
 
       - name: Build
-        run: ./gradlew assemble -P gradleTestVersions="current" --scan --stacktrace --max-workers 1
+        run: ./gradlew assemble -P gradleTestVersions="current" --scan --stacktrace --max-workers=auto
 
       - name: Run Tests
-        run: ./gradlew test -P gradleTestVersions="current" --scan --stacktrace --max-workers 1
+        run: ./gradlew test -P gradleTestVersions="current" --scan --stacktrace --max-workers=auto
 
       - name: Publish Test Report
         uses: mikepenz/action-junit-report@v5
@@ -160,10 +160,10 @@ jobs:
             gradle-
 
       - name: Build (Gradle ${{ matrix.gradle }})
-        run: ./gradlew assemble -P gradleTestVersions="${{ matrix.gradle }}" --scan --stacktrace --max-workers 1
+        run: ./gradlew assemble -P gradleTestVersions="${{ matrix.gradle }}" --scan --stacktrace --max-workers=auto
 
       - name: Run Tests (Gradle ${{ matrix.gradle }})
-        run: ./gradlew test -P gradleTestVersions="${{ matrix.gradle }}" --scan --stacktrace --max-workers 1
+        run: ./gradlew test -P gradleTestVersions="${{ matrix.gradle }}" --scan --stacktrace --max-workers=auto
 
       - name: Publish Test Report
         uses: mikepenz/action-junit-report@v5
