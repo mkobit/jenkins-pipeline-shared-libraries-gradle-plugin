@@ -36,6 +36,11 @@ jobs:
           java-version: 8
           distribution: temurin
 
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@06832c7b30a0129d7fb559bcc6e43d26f6374244 # v4.3.1
+        with:
+          gradle-version: wrapper
+
       - name: Cache Gradle
         uses: actions/cache@v4
         with:
@@ -83,6 +88,11 @@ jobs:
         with:
           java-version: 11
           distribution: temurin
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@06832c7b30a0129d7fb559bcc6e43d26f6374244 # v4.3.1
+        with:
+          gradle-version: wrapper
 
       - name: Cache Gradle
         uses: actions/cache@v4
@@ -145,6 +155,11 @@ jobs:
         with:
           java-version: 8
           distribution: temurin
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@06832c7b30a0129d7fb559bcc6e43d26f6374244 # v4.3.1
+        with:
+          gradle-version: wrapper
 
       - name: Cache Gradle
         uses: actions/cache@v4
