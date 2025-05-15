@@ -20,6 +20,7 @@ concurrency:
 
 jobs:
   wait-for-ci:
+    name: Wait for CI
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -29,7 +30,7 @@ jobs:
           ref: ${{ github.ref }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 15
-          running-workflow-name: "Publish to Gradle Plugin Portal"
+          running-workflow-name: Wait for CI
           verbose: true
           # Don't specify check-name or check-regexp to wait for ALL checks
           # except the current workflow (specified by running-workflow-name)
