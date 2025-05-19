@@ -83,8 +83,9 @@ sourceSets {
 }
 
 repositories {
-  maven(url = "https://repo.jenkins-ci.org/public/")
-  jcenter()
+  mavenCentral()
+  maven { url = uri("https://jitpack.io") }
+  maven { url = uri("https://repo.jenkins-ci.org/public/") }
 }
 
 ktlint {
@@ -124,11 +125,12 @@ configurations {
     resolutionStrategy.eachDependency {
       when (requested.group) {
         "com.squareup.okhttp3" -> useVersion("3.14.1")
-        "dev.minutest" -> useVersion("1.7.0")
+        "dev.minutest" -> useVersion("1.13.0")
         "org.junit.jupiter" -> useVersion("5.5.1")
         "org.junit.platform" -> useVersion("1.5.1")
-        "io.strikt" -> useVersion("0.21.1")
+        "io.strikt" -> useVersion("0.31.0")
         "org.apache.logging.log4j" -> useVersion("2.12.0")
+        "com.christophsturm" -> useVersion("0.1.3")
       }
     }
   }
@@ -137,16 +139,19 @@ configurations {
 dependencies {
   api(gradleApi())
   api("com.squareup:javapoet:1.12.1")
+
+  implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.4.32"))
   implementation("io.github.microutils:kotlin-logging:1.7.10")
   implementation("com.squareup.okhttp3:okhttp")
 
   testImplementation(kotlin("reflect"))
-  testImplementation("com.mkobit.gradle.test:gradle-test-kotlin-extensions:0.7.0")
+  testImplementation("com.github.mkobit:gradle-test-kotlin-extensions:0.7.0")
   testImplementation("io.mockk:mockk:1.10.0")
   testImplementation("com.google.guava:guava:29.0-jre")
   testImplementation("com.squareup.okhttp3:mockwebserver")
 
   testImplementation("io.strikt:strikt-core")
+  testImplementation("io.strikt:strikt-jvm")
   testImplementation("io.strikt:strikt-gradle")
 
   testImplementation("dev.minutest:minutest")
@@ -185,7 +190,7 @@ dependencies {
 
 tasks {
   wrapper {
-    gradleVersion = "6.5"
+    gradleVersion = "6.8"
   }
 
   dependencyUpdates {

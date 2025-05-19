@@ -13,10 +13,10 @@ import org.junit.jupiter.api.TestFactory
 import strikt.api.expectThat
 import strikt.assertions.isA
 import strikt.assertions.isEqualTo
+import strikt.assertions.isFalse
 import strikt.assertions.isNotNull
 import strikt.assertions.isNullOrBlank
 import testsupport.minutest.testFactory
-import testsupport.strikt.isPresent
 import testsupport.strikt.value
 
 internal class JenkinsIntegrationPluginTest {
@@ -43,7 +43,7 @@ internal class JenkinsIntegrationPluginTest {
     expectThat(extension)
       .isNotNull()
       .and {
-        get("Instance URL is absent") { baseUrl }.not { isPresent() }
+        get("Instance URL is absent") { baseUrl.isPresent }.isFalse()
         get("Anonymous authentication is the default") { authentication }
           .value
           .isEqualTo(AnonymousAuthentication)
