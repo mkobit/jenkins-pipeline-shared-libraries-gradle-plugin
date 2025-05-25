@@ -42,26 +42,8 @@ val SourceSet.kotlin: SourceDirectorySet
 
 fun env(key: String): String? = System.getenv(key)
 buildScan {
-
   termsOfServiceAgree = "yes"
   termsOfServiceUrl = "https://gradle.com/terms-of-service"
-
-  // Env variables from https://circleci.com/docs/2.0/env-vars/
-  if (env("CI") != null) {
-    logger.lifecycle("Running in CI environment, setting build scan attributes.")
-    tag("CI")
-    env("CIRCLE_BRANCH")?.let { tag(it) }
-    env("CIRCLE_BUILD_NUM")?.let { value("Circle CI Build Number", it) }
-    env("CIRCLE_BUILD_URL")?.let { link("Build URL", it) }
-    env("CIRCLE_SHA1")?.let { value("Revision", it) }
-    //    Issue with Circle CI/Gradle with caret (^) in URLs
-//    see: https://discuss.gradle.org/t/build-scan-plugin-1-10-3-issue-when-using-a-url-with-a-caret/24965
-//    see: https://discuss.circleci.com/t/circle-compare-url-does-not-url-escape-caret/18464
-//    env("CIRCLE_COMPARE_URL")?.let { link("Diff", it) }
-    env("CIRCLE_REPOSITORY_URL")?.let { value("Repository", it) }
-    env("CIRCLE_PR_NUMBER")?.let { value("Pull Request Number", it) }
-    link("Repository", ProjectInfo.projectUrl)
-  }
 }
 
 java {
@@ -94,7 +76,7 @@ ktlint {
 
 configurations {
   // This is very similar to the dependency resolution used in the plugin implementation.
-  // It is mainly used to get IDEA autocompletion and for use it caching dependencies in Circle CI
+  // It is mainly used to get IDEA autocompletion and for use it caching dependencies
   // These are used for code completion in the pipelineTestResources to more easily facilitate writing tests
   // against the libraries that are used.
   val pipelineTestResources by sourceSets.getting
@@ -245,65 +227,6 @@ tasks {
       jvmArgs("-XshowSettings:vm", "-Xlog:gc*", "-Xmx512m", "-Xms256m")
     } else {
       jvmArgs("-XshowSettings:vm", "-XX:+PrintGCTimeStamps", "-XX:+UseG1GC", "-Xmx512m", "-Xms256m")
-    }
-    testLogging {
-      if (env("CI") != null) {
-        // shoot more output out so that Circle CI doesn't kill build after no output in 10 minutes
-        events(TestLogEvent.FAILED, TestLogEvent.SKIPPED, TestLogEvent.PASSED)
-      } else {
-        events(TestLogEvent.FAILED, TestLogEvent.SKIPPED)
-      }
-    }
-  }
-
-  val circleCiBundleDownloadLocation = layout.buildDirectory.file("circle/circleci.tar.gz")
-  val circleCiBundleUnpackLocation = layout.buildDirectory.dir("circle/circle-unpacked")
-  val circleCiScriptDestination = circleCiBundleUnpackLocation.map {
-    fileTree(it).filter { fileDetails -> fileDetails.name == "circleci" }.singleFile
-  }
-  val downloadCircleCiBundle by registering {
-    val downloadUrl = "https://github.com/CircleCI-Public/circleci-cli/releases/download/v0.1.5607/circleci-cli_0.1.5607_linux_amd64.tar.gz"
-    inputs.property("url", downloadUrl)
-    outputs.file(circleCiBundleDownloadLocation)
-    doFirst("download archive") {
-      ant.invokeMethod("get", mapOf("src" to downloadUrl, "dest" to circleCiBundleDownloadLocation.map { it.asFile }.get()))
-    }
-  }
-
-  val unpackCircleCi by registering {
-    dependsOn(downloadCircleCiBundle)
-    inputs.file(circleCiBundleDownloadLocation)
-    outputs.dir(circleCiBundleUnpackLocation)
-    doFirst("unpack archive") {
-      copy {
-        from(tarTree(resources.gzip(circleCiBundleDownloadLocation.map { it.asFile }.get())))
-        into(circleCiBundleUnpackLocation)
-      }
-      ant.invokeMethod("chmod", mapOf("file" to circleCiScriptDestination.get(), "perm" to "+x"))
-    }
-  }
-
-  register("checkCircleConfig") {
-    description = "Checks that the Circle configuration is valid"
-    dependsOn(unpackCircleCi)
-    doFirst("execute circle config validate") {
-      exec {
-        executable(circleCiScriptDestination.get())
-        args("config", "validate", "-c", file(".circleci/config.yml"))
-      }
-    }
-  }
-
-  register("circleCiBuild") {
-    description = "Runs a build using the local Circle CI configuration"
-    // Fails with workflows - https://discuss.circleci.com/t/command-line-support-for-workflows/14510
-    enabled = false
-    dependsOn(unpackCircleCi)
-    doFirst("execute circle build") {
-      exec {
-        executable(circleCiScriptDestination.get())
-        args("build")
-      }
     }
   }
 
