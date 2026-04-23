@@ -2,6 +2,7 @@ plugins {
   `kotlin-dsl`
   id("com.gradle.plugin-publish") version "2.1.1"
   id("com.diffplug.spotless") version "8.4.0"
+  id("org.openrewrite.rewrite") version "6.26.0"
 }
 
 group = "com.mkobit.jenkins.pipelines"
@@ -34,25 +35,26 @@ gradlePlugin {
   }
 }
 
+rewrite {
+  activeRecipe("org.openrewrite.gradle.MigrateToGradle9")
+}
+
 dependencies {
   api(gradleApi())
-  implementation("io.github.oshai:kotlin-logging-jvm:7.0.0")
-  implementation("com.squareup.okhttp3:okhttp:4.12.0")
+  implementation(libs.kotlin.logging)
+  implementation(libs.okhttp)
 
   testImplementation(kotlin("reflect"))
-  testImplementation("io.mockk:mockk:1.13.12")
-  testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
-  testImplementation("io.kotest:kotest-assertions-core:5.9.1")
-  testImplementation("io.kotest:kotest-framework-datatest:5.9.1")
-  testImplementation("org.junit.jupiter:junit-jupiter-api")
-  testImplementation("org.junit.jupiter:junit-jupiter-params")
-  testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+  testImplementation(libs.mockk)
+  testImplementation(libs.okhttp.mockwebserver)
+  testImplementation(libs.kotest.assertions)
+  testImplementation(libs.kotest.datatest)
 }
 
 testing {
   suites {
     val test by getting(JvmTestSuite::class) {
-      useJUnitJupiter()
+      useJUnitJupiter(libs.versions.junit.jupiter.get())
     }
   }
 }
@@ -64,6 +66,6 @@ spotless {
   }
   kotlinGradle {
     ktlint()
-    target("*.gradle.kts", "buildSrc/**/*.gradle.kts")
+    target("*.gradle.kts")
   }
 }
