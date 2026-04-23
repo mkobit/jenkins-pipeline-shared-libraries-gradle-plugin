@@ -18,7 +18,6 @@ import java.util.stream.Stream
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 internal class PluginDependencySpecTest {
-
   private lateinit var pluginDependencySpec: PluginDependencySpec
 
   companion object {
@@ -37,53 +36,54 @@ internal class PluginDependencySpecTest {
   @BeforeEach
   internal fun setUp() {
     val project = ProjectBuilder.builder().build()
-    pluginDependencySpec = PluginDependencySpec(
-      project.initializedProperty(INITIAL_WORKFLOW_API_PLUGIN_VERSION),
-      project.initializedProperty(INITIAL_WORKFLOW_BASIC_STEPS_PLUGIN_VERSION),
-      project.initializedProperty(INITIAL_WORKFLOW_CPS_PLUGIN_VERSION),
-      project.initializedProperty(INITIAL_WORKFLOW_DURABLE_TASK_STEP_PLUGIN_VERSION),
-      project.initializedProperty(INITIAL_WORKFLOW_CPS_GLOBAL_LIB_VERSION),
-      project.initializedProperty(INITIAL_WORKFLOW_JOB_PLUGIN_VERSION),
-      project.initializedProperty(INITIAL_WORKFLOW_MULTIBRANCH_PLUGIN_VERSION),
-      project.initializedProperty(INITIAL_WORKFLOW_SCM_STEP_PLUGIN_VERSION),
-      project.initializedProperty(INITIAL_WORKFLOW_STEP_API_PLUGIN_VERSION),
-      project.initializedProperty(INITIAL_WORKFLOW_SUPPORT_PLUGIN_VERSION),
-      project.objects
-    )
+    pluginDependencySpec =
+      PluginDependencySpec(
+        project.initializedProperty(INITIAL_WORKFLOW_API_PLUGIN_VERSION),
+        project.initializedProperty(INITIAL_WORKFLOW_BASIC_STEPS_PLUGIN_VERSION),
+        project.initializedProperty(INITIAL_WORKFLOW_CPS_PLUGIN_VERSION),
+        project.initializedProperty(INITIAL_WORKFLOW_DURABLE_TASK_STEP_PLUGIN_VERSION),
+        project.initializedProperty(INITIAL_WORKFLOW_CPS_GLOBAL_LIB_VERSION),
+        project.initializedProperty(INITIAL_WORKFLOW_JOB_PLUGIN_VERSION),
+        project.initializedProperty(INITIAL_WORKFLOW_MULTIBRANCH_PLUGIN_VERSION),
+        project.initializedProperty(INITIAL_WORKFLOW_SCM_STEP_PLUGIN_VERSION),
+        project.initializedProperty(INITIAL_WORKFLOW_STEP_API_PLUGIN_VERSION),
+        project.initializedProperty(INITIAL_WORKFLOW_SUPPORT_PLUGIN_VERSION),
+        project.objects,
+      )
   }
 
   @Test
   internal fun `default versions can be retrieved`() {
     expect {
       that(pluginDependencySpec.workflowApiPluginVersion).value.isEqualTo(
-        INITIAL_WORKFLOW_API_PLUGIN_VERSION
+        INITIAL_WORKFLOW_API_PLUGIN_VERSION,
       )
       that(pluginDependencySpec.workflowBasicStepsPluginVersion).value.isEqualTo(
-        INITIAL_WORKFLOW_BASIC_STEPS_PLUGIN_VERSION
+        INITIAL_WORKFLOW_BASIC_STEPS_PLUGIN_VERSION,
       )
       that(pluginDependencySpec.workflowCpsPluginVersion).value.isEqualTo(
-        INITIAL_WORKFLOW_CPS_PLUGIN_VERSION
+        INITIAL_WORKFLOW_CPS_PLUGIN_VERSION,
       )
       that(pluginDependencySpec.workflowDurableTaskStepPluginVersion).value.isEqualTo(
-        INITIAL_WORKFLOW_DURABLE_TASK_STEP_PLUGIN_VERSION
+        INITIAL_WORKFLOW_DURABLE_TASK_STEP_PLUGIN_VERSION,
       )
       that(pluginDependencySpec.workflowCpsGlobalLibraryPluginVersion).value.isEqualTo(
-        INITIAL_WORKFLOW_CPS_GLOBAL_LIB_VERSION
+        INITIAL_WORKFLOW_CPS_GLOBAL_LIB_VERSION,
       )
       that(pluginDependencySpec.workflowJobPluginVersion).value.isEqualTo(
-        INITIAL_WORKFLOW_JOB_PLUGIN_VERSION
+        INITIAL_WORKFLOW_JOB_PLUGIN_VERSION,
       )
       that(pluginDependencySpec.workflowMultibranchPluginVersion).value.isEqualTo(
-        INITIAL_WORKFLOW_MULTIBRANCH_PLUGIN_VERSION
+        INITIAL_WORKFLOW_MULTIBRANCH_PLUGIN_VERSION,
       )
       that(pluginDependencySpec.workflowScmStepPluginVersion).value.isEqualTo(
-        INITIAL_WORKFLOW_SCM_STEP_PLUGIN_VERSION
+        INITIAL_WORKFLOW_SCM_STEP_PLUGIN_VERSION,
       )
       that(pluginDependencySpec.workflowStepApiPluginVersion).value.isEqualTo(
-        INITIAL_WORKFLOW_STEP_API_PLUGIN_VERSION
+        INITIAL_WORKFLOW_STEP_API_PLUGIN_VERSION,
       )
       that(pluginDependencySpec.workflowSupportPluginVersion).value.isEqualTo(
-        INITIAL_WORKFLOW_SUPPORT_PLUGIN_VERSION
+        INITIAL_WORKFLOW_SUPPORT_PLUGIN_VERSION,
       )
     }
   }
@@ -182,7 +182,11 @@ internal class PluginDependencySpecTest {
 
   @ParameterizedTest(name = "{0} with artifact Id {1}")
   @MethodSource("requiredPlugins")
-  internal fun `plugin dependency includes`(@Suppress("UNUSED") pluginName: String, artifactId: String, version: String) {
+  internal fun `plugin dependency includes`(
+    @Suppress("UNUSED") pluginName: String,
+    artifactId: String,
+    version: String,
+  ) {
     val pluginDependencies = pluginDependencySpec.pluginDependencies()
 
     expectThat(pluginDependencies)
@@ -196,8 +200,8 @@ internal class PluginDependencySpecTest {
   }
 
   @Suppress("UNUSED")
-  private fun requiredPlugins(): Stream<Arguments> {
-    return Stream.of(
+  private fun requiredPlugins(): Stream<Arguments> =
+    Stream.of(
       // TODO: should we include scm-api?
 //      Arguments.of("SCM API Plugin", "scm-api"),
       Arguments.of("Workflow API Plugin", "workflow-api", INITIAL_WORKFLOW_API_PLUGIN_VERSION),
@@ -208,7 +212,6 @@ internal class PluginDependencySpecTest {
       Arguments.of("Workflow Multibranch Plugin", "workflow-multibranch", INITIAL_WORKFLOW_MULTIBRANCH_PLUGIN_VERSION),
       Arguments.of("Workflow SCM Step Plugin", "workflow-scm-step", INITIAL_WORKFLOW_SCM_STEP_PLUGIN_VERSION),
       Arguments.of("Workflow Step API Plugin", "workflow-step-api", INITIAL_WORKFLOW_STEP_API_PLUGIN_VERSION),
-      Arguments.of("Workflow Support Plugin", "workflow-support", INITIAL_WORKFLOW_SUPPORT_PLUGIN_VERSION)
+      Arguments.of("Workflow Support Plugin", "workflow-support", INITIAL_WORKFLOW_SUPPORT_PLUGIN_VERSION),
     )
-  }
 }

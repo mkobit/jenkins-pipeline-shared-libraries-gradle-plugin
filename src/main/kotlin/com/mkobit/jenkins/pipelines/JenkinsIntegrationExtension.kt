@@ -13,5 +13,5 @@ import java.net.URL
 open class JenkinsIntegrationExtension(
   val baseUrl: Property<URL>,
   val authentication: Property<Authentication>,
-  val downloadDirectory: DirectoryProperty
+  val downloadDirectory: DirectoryProperty,
 )

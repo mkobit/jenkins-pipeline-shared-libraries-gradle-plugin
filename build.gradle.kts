@@ -54,7 +54,10 @@ dependencies {
 testing {
   suites {
     val test by getting(JvmTestSuite::class) {
-      useJUnitJupiter(libs.versions.junit.jupiter.get())
+      useJUnitJupiter(
+        libs.versions.junit.jupiter
+          .get(),
+      )
     }
   }
 }
@@ -62,7 +65,8 @@ testing {
 spotless {
   kotlin {
     ktlint()
-    target("src/**/*.kt")
+    // TODO(M3): expand to src/**/*.kt once test sources are rewritten
+    target("src/main/**/*.kt")
   }
   kotlinGradle {
     ktlint()

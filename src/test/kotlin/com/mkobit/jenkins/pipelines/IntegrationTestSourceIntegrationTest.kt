@@ -33,22 +33,28 @@ import java.util.regex.Pattern
 
 @ForGradleVersions
 internal class IntegrationTestSourceIntegrationTest {
-
   @TestTemplate
-  internal fun `can execute dependencies task`(@GradleProject(["projects", "only-plugins-block"]) gradleRunner: GradleRunner) {
+  internal fun `can execute dependencies task`(
+    @GradleProject(["projects", "only-plugins-block"]) gradleRunner: GradleRunner,
+  ) {
     expectCatching {
       gradleRunner.build("dependencies")
     }.succeeded()
   }
 
   @TestTemplate
-  internal fun `integrationTest compile classpath does not contain any HPI or JPI artifacts`(@GradleProject(["projects", "show-configuration-states"]) gradleRunner: GradleRunner) {
-    val buildResult = gradleRunner.apply {
-      quiet = true
-    }.build("showResolvedIntegrationTestCompileClasspathArtifacts")
+  internal fun `integrationTest compile classpath does not contain any HPI or JPI artifacts`(
+    @GradleProject(["projects", "show-configuration-states"]) gradleRunner: GradleRunner,
+  ) {
+    val buildResult =
+      gradleRunner
+        .apply {
+          quiet = true
+        }.build("showResolvedIntegrationTestCompileClasspathArtifacts")
 
     expectThat(buildResult) {
-      output.get { trim().split(System.lineSeparator()) }
+      output
+        .get { trim().split(System.lineSeparator()) }
         .isNotEmpty()
         .none { endsWith("@hpi") }
         .none { endsWith("@jpi") }
@@ -57,11 +63,14 @@ internal class IntegrationTestSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `integrationTest runtimeOnly configuration contains only HPI, JPI, and WAR artifacts`(@GradleProject(["projects", "show-configuration-states"]) gradleRunner: GradleRunner) {
+  internal fun `integrationTest runtimeOnly configuration contains only HPI, JPI, and WAR artifacts`(
+    @GradleProject(["projects", "show-configuration-states"]) gradleRunner: GradleRunner,
+  ) {
     val buildResult = gradleRunner.build("--quiet", "showResolvedIntegrationTestRuntimeOnlyArtifacts")
 
     expectThat(buildResult) {
-      output.get { trim().split(System.lineSeparator()) }
+      output
+        .get { trim().split(System.lineSeparator()) }
         .isNotEmpty()
         .all {
           anyOf {
@@ -77,11 +86,14 @@ internal class IntegrationTestSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `JenkinsPipelineUnit is not available in the integrationTest compile classpath`(@GradleProject(["projects", "show-configuration-states"]) gradleRunner: GradleRunner) {
+  internal fun `JenkinsPipelineUnit is not available in the integrationTest compile classpath`(
+    @GradleProject(["projects", "show-configuration-states"]) gradleRunner: GradleRunner,
+  ) {
     val buildResult = gradleRunner.build("--quiet", "showResolvedIntegrationTestCompileClasspathArtifacts")
 
     expectThat(buildResult) {
-      output.get { trim().split(System.lineSeparator()) }
+      output
+        .get { trim().split(System.lineSeparator()) }
         .isNotEmpty()
         .all {
           not {
@@ -100,10 +112,14 @@ internal class IntegrationTestSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `can compile integration test sources that use Jenkins libraries`(@GradleProject(["projects", "import-jenkins-classes"]) gradleRunner: GradleRunner) {
-    val buildResult = gradleRunner.apply {
-      info = true
-    }.build("compileIntegrationTestGroovy")
+  internal fun `can compile integration test sources that use Jenkins libraries`(
+    @GradleProject(["projects", "import-jenkins-classes"]) gradleRunner: GradleRunner,
+  ) {
+    val buildResult =
+      gradleRunner
+        .apply {
+          info = true
+        }.build("compileIntegrationTestGroovy")
 
     expectThat(buildResult)
       .describedAs("integrationTestCompileGroovy task outcome")
@@ -113,10 +129,14 @@ internal class IntegrationTestSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `can run tests using @JenkinsRule in integration tests`(@GradleProject(["projects", "basic-JenkinsRule-usage"]) gradleRunner: GradleRunner) {
-    val buildResult = gradleRunner.apply {
-      info = true
-    }.build("integrationTest")
+  internal fun `can run tests using @JenkinsRule in integration tests`(
+    @GradleProject(["projects", "basic-JenkinsRule-usage"]) gradleRunner: GradleRunner,
+  ) {
+    val buildResult =
+      gradleRunner
+        .apply {
+          info = true
+        }.build("integrationTest")
 
     expectThat(buildResult)
       .task(":integrationTest")
@@ -126,10 +146,14 @@ internal class IntegrationTestSourceIntegrationTest {
 
   @TestTemplate
   @Issue("https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/23")
-  internal fun `no startup exceptions for tests`(@GradleProject(["projects", "basic-JenkinsRule-usage"]) gradleRunner: GradleRunner) {
-    val buildResult = gradleRunner.apply {
-      info = true
-    }.build("integrationTest")
+  internal fun `no startup exceptions for tests`(
+    @GradleProject(["projects", "basic-JenkinsRule-usage"]) gradleRunner: GradleRunner,
+  ) {
+    val buildResult =
+      gradleRunner
+        .apply {
+          info = true
+        }.build("integrationTest")
 
     expectThat(buildResult)
       .output
@@ -143,10 +167,14 @@ internal class IntegrationTestSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `WorkflowJob can be created and executed in integration tests`(@GradleProject(["projects", "basic-WorkflowJob-usage"]) gradleRunner: GradleRunner) {
-    val buildResult = gradleRunner.apply {
-      info = true
-    }.build("integrationTest")
+  internal fun `WorkflowJob can be created and executed in integration tests`(
+    @GradleProject(["projects", "basic-WorkflowJob-usage"]) gradleRunner: GradleRunner,
+  ) {
+    val buildResult =
+      gradleRunner
+        .apply {
+          info = true
+        }.build("integrationTest")
 
     expectThat(buildResult)
       .task(":integrationTest")
@@ -155,10 +183,14 @@ internal class IntegrationTestSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `can set up Global Pipeline Library and use them in an integration test`(@GradleProject(["projects", "global-library-with-generated-test-source"]) gradleRunner: GradleRunner) {
-    val buildResult = gradleRunner.apply {
-      info = true
-    }.build("integrationTest")
+  internal fun `can set up Global Pipeline Library and use them in an integration test`(
+    @GradleProject(["projects", "global-library-with-generated-test-source"]) gradleRunner: GradleRunner,
+  ) {
+    val buildResult =
+      gradleRunner
+        .apply {
+          info = true
+        }.build("integrationTest")
 
     expectThat(buildResult)
       .task(":integrationTest")
@@ -167,7 +199,9 @@ internal class IntegrationTestSourceIntegrationTest {
   }
 
   @TestTemplate
-  fun `run integrationTest repeatedly then tasks are up-to-date`(@GradleProject(["projects", "basic-groovy-library"]) gradleRunner: GradleRunner) {
+  fun `run integrationTest repeatedly then tasks are up-to-date`(
+    @GradleProject(["projects", "basic-groovy-library"]) gradleRunner: GradleRunner,
+  ) {
     gradleRunner.apply {
       info = true
     }
@@ -200,36 +234,47 @@ internal class IntegrationTestSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `no configurations are resolved if no build tasks are executed`(@GradleProject(["projects", "show-configuration-states"]) gradleRunner: GradleRunner) {
+  internal fun `no configurations are resolved if no build tasks are executed`(
+    @GradleProject(["projects", "show-configuration-states"]) gradleRunner: GradleRunner,
+  ) {
     val buildResult = gradleRunner.build("--quiet", "printConfigurationStates")
 
     expectThat(buildResult)
-      .output.get { trim().split(System.lineSeparator()) }
+      .output
+      .get { trim().split(System.lineSeparator()) }
       .all {
         endsWith(Configuration.State.UNRESOLVED.name)
       }
   }
 
   @TestTemplate
-  internal fun `Groovy DSL extension configuration`(@GradleProject(["projects", "gradle-configuration-groovy"]) gradleRunner: GradleRunner) {
+  internal fun `Groovy DSL extension configuration`(
+    @GradleProject(["projects", "gradle-configuration-groovy"]) gradleRunner: GradleRunner,
+  ) {
     expectCatching {
-      gradleRunner.apply {
-        info = true
-      }.build()
+      gradleRunner
+        .apply {
+          info = true
+        }.build()
     }.succeeded()
   }
 
   @TestTemplate
-  fun `Kotlin DSL extension configuration`(@GradleProject(["projects", "gradle-configuration-kotlin"]) gradleRunner: GradleRunner) {
+  fun `Kotlin DSL extension configuration`(
+    @GradleProject(["projects", "gradle-configuration-kotlin"]) gradleRunner: GradleRunner,
+  ) {
     expectCatching {
-      gradleRunner.apply {
-        info = true
-      }.build()
+      gradleRunner
+        .apply {
+          info = true
+        }.build()
     }.succeeded()
   }
 
   @TestTemplate
-  internal fun `"check" lifecycle task executes "integrationTest"`(@GradleProject(["projects", "only-plugins-block"]) gradleRunner: GradleRunner) {
+  internal fun `"check" lifecycle task executes "integrationTest"`(
+    @GradleProject(["projects", "only-plugins-block"]) gradleRunner: GradleRunner,
+  ) {
     val buildResult = gradleRunner.build("check")
 
     expectThat(buildResult) {
@@ -239,7 +284,9 @@ internal class IntegrationTestSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `generated sources can be used in Java and Groovy integration tests`(@GradleProject(["projects", "basic-generated-sources-usage"]) gradleRunner: GradleRunner) {
+  internal fun `generated sources can be used in Java and Groovy integration tests`(
+    @GradleProject(["projects", "basic-generated-sources-usage"]) gradleRunner: GradleRunner,
+  ) {
     expectThat(gradleRunner.build("integrationTest", "--tests", "*LocalLibraryUsageFromGroovyTest"))
       .output
       .contains("com.mkobit.LocalLibraryUsageFromGroovyTest > createRetriever STARTED")
@@ -251,7 +298,9 @@ internal class IntegrationTestSourceIntegrationTest {
 
   @TestTemplate
   @Issue("https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/61")
-  fun `generated sources can be consumed in a @JenkinsRule`(@GradleProject(["projects", "generated-sources-JenkinsRule-usage"]) gradleRunner: GradleRunner) {
+  fun `generated sources can be consumed in a @JenkinsRule`(
+    @GradleProject(["projects", "generated-sources-JenkinsRule-usage"]) gradleRunner: GradleRunner,
+  ) {
     val buildResult = gradleRunner.build("check")
 
     expectThat(buildResult)
@@ -265,7 +314,9 @@ internal class IntegrationTestSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `can integration test library code that makes use of Jenkins core and plugin classes`(@GradleProject(["projects", "global-library-using-jenkins-plugin-classes"]) gradleRunner: GradleRunner) {
+  internal fun `can integration test library code that makes use of Jenkins core and plugin classes`(
+    @GradleProject(["projects", "global-library-using-jenkins-plugin-classes"]) gradleRunner: GradleRunner,
+  ) {
     val buildResult = gradleRunner.build("integrationTest")
 
     expectThat(buildResult)
@@ -275,7 +326,9 @@ internal class IntegrationTestSourceIntegrationTest {
   }
 
   @TestTemplate
-  internal fun `@Grab in source library can be integration tested`(@GradleProject(["projects", "source-with-@grab"]) gradleRunner: GradleRunner) {
+  internal fun `@Grab in source library can be integration tested`(
+    @GradleProject(["projects", "source-with-@grab"]) gradleRunner: GradleRunner,
+  ) {
     expectCatching {
       gradleRunner.build("integrationTest")
     }.succeeded()

@@ -15,7 +15,6 @@ import testsupport.junit.UseMockServer
 
 @UseMockServer
 internal class JenkinsApiTest {
-
   @Test
   internal fun `retrieve GDSL`(server: MockWebServer) {
     server.enqueue(MockResponse())

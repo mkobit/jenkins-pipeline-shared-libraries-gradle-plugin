@@ -71,8 +71,7 @@ internal class SharedLibraryPluginTest {
       .get { repositories }
       .and {
         get { size }.describedAs("a single repository is added").isEqualTo(1)
-      }
-      .get("repository named '${SharedLibraryPlugin.JENKINS_REPOSITORY_NAME}'") { getByName(SharedLibraryPlugin.JENKINS_REPOSITORY_NAME) }
+      }.get("repository named '${SharedLibraryPlugin.JENKINS_REPOSITORY_NAME}'") { getByName(SharedLibraryPlugin.JENKINS_REPOSITORY_NAME) }
       .isA<MavenArtifactRepository>()
       .and {
         get { url }.and {
@@ -212,21 +211,23 @@ internal class SharedLibraryPluginTest {
 
   @TestFactory
   internal fun `configuration setup`(): Stream<DynamicNode> {
-    val configurations = mapOf(
-      "jenkinsPlugins" to "Jenkins Plugins",
-      "jenkinsPipelineUnitTestLibraries" to "Jenkins Pipeline Unit dependencies",
-      "jenkinsPluginHpisAndJpis" to "Jenkins plugins HPI and JPI dependencies",
-      "jenkinsPluginLibraries" to "Jenkins plugins JAR dependencies",
-      "jenkinsCoreLibraries" to "Jenkins core dependencies",
-      "jenkinsTestLibraries" to "Jenkins test dependencies",
-      "sharedLibraryGroovy" to "Shared Library Groovy",
-      "sharedLibraryIvy" to "Ivy (@Grab support)",
-      "jenkinsWar" to "Jenkins WAR and modules bundle",
-      "jenkinsModules" to "Only Jenkins WAR modules",
-      "jenkinsOnlyWarExtension" to "Only Jenkins WAR bundle"
-    )
+    val configurations =
+      mapOf(
+        "jenkinsPlugins" to "Jenkins Plugins",
+        "jenkinsPipelineUnitTestLibraries" to "Jenkins Pipeline Unit dependencies",
+        "jenkinsPluginHpisAndJpis" to "Jenkins plugins HPI and JPI dependencies",
+        "jenkinsPluginLibraries" to "Jenkins plugins JAR dependencies",
+        "jenkinsCoreLibraries" to "Jenkins core dependencies",
+        "jenkinsTestLibraries" to "Jenkins test dependencies",
+        "sharedLibraryGroovy" to "Shared Library Groovy",
+        "sharedLibraryIvy" to "Ivy (@Grab support)",
+        "jenkinsWar" to "Jenkins WAR and modules bundle",
+        "jenkinsModules" to "Only Jenkins WAR modules",
+        "jenkinsOnlyWarExtension" to "Only Jenkins WAR bundle",
+      )
 
-    return configurations.entries.stream()
+    return configurations.entries
+      .stream()
       .map { (key, value) ->
         DynamicTest.dynamicTest("configuration $value has a description and is not visible") {
           expectThat(project)

@@ -8,7 +8,6 @@ import strikt.assertions.isEmpty
 import java.util.Base64
 
 internal class AuthenticationTest {
-
   private companion object {
     private const val USERNAME = "mkobit"
     private const val PASSWORD = "this is the password"
