@@ -39,12 +39,6 @@ dependencies {
   api(gradleApi())
   implementation(libs.kotlin.logging)
   implementation(libs.okhttp)
-
-  testImplementation(kotlin("reflect"))
-  testImplementation(libs.mockk)
-  testImplementation(libs.okhttp.mockwebserver)
-  testImplementation(libs.kotest.assertions)
-  testImplementation(libs.kotest.runner)
 }
 
 testing {
@@ -54,6 +48,12 @@ testing {
         libs.versions.junit.jupiter
           .get(),
       )
+      dependencies {
+        implementation(libs.mockk)
+        implementation(libs.okhttp.mockwebserver)
+        implementation(libs.kotest.assertions)
+        implementation(libs.kotest.runner)
+      }
     }
   }
 }
