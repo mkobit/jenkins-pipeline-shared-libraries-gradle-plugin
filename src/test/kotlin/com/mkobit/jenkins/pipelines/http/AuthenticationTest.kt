@@ -1,10 +1,9 @@
 package com.mkobit.jenkins.pipelines.http
 
+import io.kotest.matchers.maps.shouldBeEmpty
+import io.kotest.matchers.maps.shouldContain
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import strikt.api.expectThat
-import strikt.assertions.hasEntry
-import strikt.assertions.isEmpty
 import java.util.Base64
 
 internal class AuthenticationTest {
@@ -18,8 +17,10 @@ internal class AuthenticationTest {
     @Test
     internal fun `headers are present`() {
       val authentication = BasicAuthentication(USERNAME, PASSWORD)
-      expectThat(authentication.headers())
-        .hasEntry("Authorization", "Basic ${Base64.getEncoder().encodeToString("$USERNAME:$PASSWORD".toByteArray())}")
+      authentication.headers().shouldContain(
+        "Authorization",
+        "Basic ${Base64.getEncoder().encodeToString("$USERNAME:$PASSWORD".toByteArray())}",
+      )
     }
   }
 
@@ -28,8 +29,10 @@ internal class AuthenticationTest {
     @Test
     internal fun `headers are present`() {
       val authentication = ApiTokenAuthentication(USERNAME, PASSWORD)
-      expectThat(authentication.headers())
-        .hasEntry("Authorization", "Basic ${Base64.getEncoder().encodeToString("$USERNAME:$PASSWORD".toByteArray())}")
+      authentication.headers().shouldContain(
+        "Authorization",
+        "Basic ${Base64.getEncoder().encodeToString("$USERNAME:$PASSWORD".toByteArray())}",
+      )
     }
   }
 
@@ -37,8 +40,7 @@ internal class AuthenticationTest {
   inner class AnonymousAuthenticationTest {
     @Test
     internal fun `headers are absent`() {
-      expectThat(AnonymousAuthentication.headers())
-        .isEmpty()
+      AnonymousAuthentication.headers().shouldBeEmpty()
     }
   }
 }
