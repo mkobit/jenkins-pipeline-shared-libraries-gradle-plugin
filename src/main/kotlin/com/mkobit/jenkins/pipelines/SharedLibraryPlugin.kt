@@ -68,6 +68,12 @@ open class SharedLibraryPlugin
       // component so that artifact-type-aware resolution selects the right published file
       // (JAR for compilation, HPI for the embedded Jenkins runtime) without any extraction.
       dependencies.components.all(JenkinsPluginRule::class.java)
+      // Allow JAR producers to satisfy HPI/JPI consumer requests so that plain-JAR transitive
+      // dependencies (asm, caffeine, groovy-sandbox, etc.) don't fail resolution when the
+      // jenkinsPluginHpis configuration propagates artifactType=hpi transitively.
+      dependencies.attributesSchema.attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE) {
+        compatibilityRules.add(JpiCompatibilityRule::class.java)
+      }
 
       val dependencyHandler = dependencies
 
@@ -180,10 +186,17 @@ open class SharedLibraryPlugin
         getByName(integrationTestSourceSet.implementationConfigurationName) {
           extendsFrom(testHarness)
         }
-        getByName(integrationTestSourceSet.runtimeOnlyConfigurationName) {
-          extendsFrom(configurations.getByName(JENKINS_PLUGIN_HPIS_CONFIGURATION))
-        }
       }
+
+      // Use a lenient view so plain-JAR transitive deps (asm, caffeine, etc.) are silently
+      // skipped rather than failing resolution when artifactType=hpi is requested.
+      val hpiFiles =
+        configurations
+          .getByName(JENKINS_PLUGIN_HPIS_CONFIGURATION)
+          .incoming
+          .artifactView { isLenient = true }
+          .artifacts
+          .artifactFiles
 
       tasks {
         val integrationTest =
@@ -193,7 +206,7 @@ open class SharedLibraryPlugin
             group = LifecycleBasePlugin.VERIFICATION_GROUP
             description = "Runs tests with the jenkins-test-harness"
             testClassesDirs = integrationTestSourceSet.output.classesDirs
-            classpath = integrationTestSourceSet.runtimeClasspath
+            classpath = integrationTestSourceSet.runtimeClasspath + hpiFiles
             systemProperty(
               "buildDirectory",
               projectLayout.buildDirectory.map { it.asFile.absolutePath },
