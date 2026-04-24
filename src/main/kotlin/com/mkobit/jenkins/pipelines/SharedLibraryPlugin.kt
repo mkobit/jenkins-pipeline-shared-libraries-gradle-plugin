@@ -5,7 +5,6 @@ package com.mkobit.jenkins.pipelines
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition
 import org.gradle.api.file.ProjectLayout
 import org.gradle.api.file.SourceDirectorySet
@@ -63,6 +62,7 @@ open class SharedLibraryPlugin
       }
     }
 
+    @Suppress("DEPRECATION")
     private fun Project.setupJenkinsPluginConfiguration() {
       // CMR stamps artifactType on the compile/runtime variants of every Jenkins plugin
       // component so that artifact-type-aware resolution selects the right published file
@@ -79,9 +79,7 @@ open class SharedLibraryPlugin
 
       // User-facing bucket — consumers declare jenkinsPlugin(...) here
       val jenkinsPlugin =
-        configurations.create(JENKINS_PLUGIN_CONFIGURATION) {
-          isCanBeResolved = false
-          isCanBeConsumed = false
+        configurations.dependencyScope(JENKINS_PLUGIN_CONFIGURATION) {
           description = "Jenkins HPI/JPI plugin dependencies for shared library compilation and testing"
         }
 
@@ -94,7 +92,7 @@ open class SharedLibraryPlugin
         isCanBeConsumed = false
         isVisible = false
         description = "Jenkins plugin JARs + jenkins-core for shared library compilation and unit tests"
-        extendsFrom(jenkinsPlugin)
+        extendsFrom(jenkinsPlugin.get())
         withDependencies {
           dependencyHandler.add(name, "org.jenkins-ci.main:jenkins-core:$DEFAULT_CORE_VERSION")
         }
@@ -109,7 +107,7 @@ open class SharedLibraryPlugin
         isCanBeConsumed = false
         isVisible = false
         description = "Jenkins plugin HPI archives for embedded Jenkins runtime (integration tests)"
-        extendsFrom(jenkinsPlugin)
+        extendsFrom(jenkinsPlugin.get())
         attributes {
           attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, "hpi")
         }
@@ -127,6 +125,7 @@ open class SharedLibraryPlugin
       }
     }
 
+    @Suppress("DEPRECATION")
     private fun Project.setupUnitTest() {
       val dependencyHandler = dependencies
       val test =
@@ -139,24 +138,23 @@ open class SharedLibraryPlugin
           compileClasspath += pluginClasspath
           runtimeClasspath += pluginClasspath
         }
-      configurations {
-        val pipelineUnit =
-          create(UNIT_TESTING_LIBRARY_CONFIGURATION) {
-            isCanBeResolved = true
-            isCanBeConsumed = false
-            isVisible = false
-            description = "JenkinsPipelineUnit library for shared library unit tests"
-            withDependencies {
-              LOGGER.debug { "Adding JenkinsPipelineUnit to configuration $name" }
-              dependencyHandler.add(name, sharedLibraryExtension.pipelineUnitDependency().get())
-            }
+      val pipelineUnit =
+        configurations.create(UNIT_TESTING_LIBRARY_CONFIGURATION) {
+          isCanBeResolved = true
+          isCanBeConsumed = false
+          isVisible = false
+          description = "JenkinsPipelineUnit library for shared library unit tests"
+          withDependencies {
+            LOGGER.debug { "Adding JenkinsPipelineUnit to configuration $name" }
+            dependencyHandler.add(name, sharedLibraryExtension.pipelineUnitDependency().get())
           }
-        getByName(test.implementationConfigurationName) {
-          extendsFrom(pipelineUnit)
         }
+      configurations.getByName(test.implementationConfigurationName) {
+        extendsFrom(pipelineUnit)
       }
     }
 
+    @Suppress("DEPRECATION")
     private fun Project.setupIntegrationTest() {
       val dependencyHandler = dependencies
       val integrationTestSourceSet =
@@ -171,21 +169,19 @@ open class SharedLibraryPlugin
           runtimeClasspath += pluginClasspath
         }
 
-      configurations {
-        val testHarness =
-          create(TEST_HARNESS_CONFIGURATION) {
-            isCanBeResolved = true
-            isCanBeConsumed = false
-            isVisible = false
-            description = "jenkins-test-harness and its transitive dependencies"
-            withDependencies {
-              LOGGER.debug { "Adding jenkins-test-harness to configuration $name" }
-              dependencyHandler.add(name, sharedLibraryExtension.testHarnessDependency().get())
-            }
+      val testHarness =
+        configurations.create(TEST_HARNESS_CONFIGURATION) {
+          isCanBeResolved = true
+          isCanBeConsumed = false
+          isVisible = false
+          description = "jenkins-test-harness and its transitive dependencies"
+          withDependencies {
+            LOGGER.debug { "Adding jenkins-test-harness to configuration $name" }
+            dependencyHandler.add(name, sharedLibraryExtension.testHarnessDependency().get())
           }
-        getByName(integrationTestSourceSet.implementationConfigurationName) {
-          extendsFrom(testHarness)
         }
+      configurations.getByName(integrationTestSourceSet.implementationConfigurationName) {
+        extendsFrom(testHarness)
       }
 
       // Use a lenient view so plain-JAR transitive deps (asm, caffeine, etc.) are silently
@@ -219,6 +215,7 @@ open class SharedLibraryPlugin
       }
     }
 
+    @Suppress("DEPRECATION")
     private fun Project.setupIvyGrabSupport() {
       val ivy =
         configurations.create(IVY_CONFIGURATION) {
@@ -279,10 +276,4 @@ open class SharedLibraryPlugin
 
     private val SourceSet.groovy: SourceDirectorySet
       get() = extensions.getByType(GroovySourceDirectorySet::class.java)
-
-    private fun Configuration.defaultJenkinsConfigurationSetup(canBeResolved: Boolean = false) {
-      isCanBeResolved = canBeResolved
-      isVisible = false
-      isCanBeConsumed = false
-    }
   }

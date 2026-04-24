@@ -11,48 +11,53 @@ import org.gradle.api.Project
 import org.gradle.kotlin.dsl.apply
 import org.gradle.testfixtures.ProjectBuilder
 
-internal class JenkinsIntegrationPluginTest : DescribeSpec({
-  lateinit var project: Project
+internal class JenkinsIntegrationPluginTest :
+  DescribeSpec({
+    lateinit var project: Project
 
-  beforeTest {
-    project = ProjectBuilder.builder().build()
-    project.apply<JenkinsIntegrationPlugin>()
-  }
-
-  describe("jenkinsIntegration extension") {
-    it("is registered") {
-      project.extensions.findByName("jenkinsIntegration")
-        .shouldNotBeNull()
-        .shouldBeInstanceOf<JenkinsIntegrationExtension>()
+    beforeTest {
+      project = ProjectBuilder.builder().build()
+      project.apply<JenkinsIntegrationPlugin>()
     }
 
-    it("has no base URL by default") {
-      val ext = project.extensions.findByType(JenkinsIntegrationExtension::class.java).shouldNotBeNull()
-      ext.baseUrl.isPresent shouldBe false
-    }
-
-    it("uses anonymous authentication by default") {
-      val ext = project.extensions.findByType(JenkinsIntegrationExtension::class.java).shouldNotBeNull()
-      ext.authentication.get() shouldBe AnonymousAuthentication
-    }
-
-    it("accepts an alternate authentication provider") {
-      val basicAuth = BasicAuthentication("username", "password")
-      val ext = project.extensions.findByType(JenkinsIntegrationExtension::class.java).shouldNotBeNull()
-      ext.authentication.set(project.provider { basicAuth })
-      ext.authentication.get() shouldBe basicAuth
-    }
-  }
-
-  listOf("retrieveJenkinsGdsl", "retrieveJenkinsVersion", "retrieveJenkinsPluginData").forEach { taskName ->
-    describe("task '$taskName'") {
+    describe("jenkinsIntegration extension") {
       it("is registered") {
-        project.tasks.findByName(taskName).shouldNotBeNull()
+        project.extensions
+          .findByName("jenkinsIntegration")
+          .shouldNotBeNull()
+          .shouldBeInstanceOf<JenkinsIntegrationExtension>()
       }
 
-      it("has a non-blank group") {
-        project.tasks.findByName(taskName)?.group.shouldNotBeBlank()
+      it("has no base URL by default") {
+        val ext = project.extensions.findByType(JenkinsIntegrationExtension::class.java).shouldNotBeNull()
+        ext.baseUrl.isPresent shouldBe false
+      }
+
+      it("uses anonymous authentication by default") {
+        val ext = project.extensions.findByType(JenkinsIntegrationExtension::class.java).shouldNotBeNull()
+        ext.authentication.get() shouldBe AnonymousAuthentication
+      }
+
+      it("accepts an alternate authentication provider") {
+        val basicAuth = BasicAuthentication("username", "password")
+        val ext = project.extensions.findByType(JenkinsIntegrationExtension::class.java).shouldNotBeNull()
+        ext.authentication.set(project.provider { basicAuth })
+        ext.authentication.get() shouldBe basicAuth
       }
     }
-  }
-})
+
+    listOf("retrieveJenkinsGdsl", "retrieveJenkinsVersion", "retrieveJenkinsPluginData").forEach { taskName ->
+      describe("task '$taskName'") {
+        it("is registered") {
+          project.tasks.findByName(taskName).shouldNotBeNull()
+        }
+
+        it("has a non-blank group") {
+          project.tasks
+            .findByName(taskName)
+            ?.group
+            .shouldNotBeBlank()
+        }
+      }
+    }
+  })

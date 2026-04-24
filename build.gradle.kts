@@ -66,8 +66,8 @@ tasks.wrapper {
 spotless {
   kotlin {
     ktlint()
-    // TODO(M3): expand to src/**/*.kt once test sources are rewritten
-    target("src/main/**/*.kt")
+    target("src/**/*.kt")
+    targetExclude("src/integrationTest/**/*.kt")
   }
   kotlinGradle {
     ktlint()
