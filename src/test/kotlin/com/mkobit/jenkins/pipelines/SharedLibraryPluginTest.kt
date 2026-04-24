@@ -77,8 +77,6 @@ internal class SharedLibraryPluginTest :
       listOf(
         "jenkinsPluginClasspath",
         "jenkinsPluginHpis",
-        "jenkinsPipelineUnit",
-        "jenkinsTestHarness",
         "sharedLibraryIvy",
       ).forEach { name ->
         describe(name) {
@@ -122,5 +120,4 @@ internal class SharedLibraryPluginTest :
 
     xit("Jenkins Global Library plugin implementation and HPI dependencies are added") {}
     xit("resources directory is available for GDSL support in IntelliJ") {}
-    xit("integrationTestPipelineResources is available on integrationRuntimeOnly classpath") {}
   })

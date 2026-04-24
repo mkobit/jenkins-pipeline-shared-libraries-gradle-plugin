@@ -2,14 +2,12 @@
 
 package com.mkobit.jenkins.pipelines
 
-import io.github.oshai.kotlinlogging.KotlinLogging
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition
 import org.gradle.api.file.ProjectLayout
-import org.gradle.api.file.SourceDirectorySet
-import org.gradle.api.model.ObjectFactory
 import org.gradle.api.plugins.GroovyPlugin
+import org.gradle.api.plugins.jvm.JvmTestSuite
 import org.gradle.api.tasks.GroovySourceDirectorySet
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
@@ -19,30 +17,24 @@ import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.*
 import org.gradle.language.base.plugins.LifecycleBasePlugin
+import org.gradle.testing.base.TestingExtension
 import javax.inject.Inject
 
 open class SharedLibraryPlugin
   @Inject
   constructor(
     private val projectLayout: ProjectLayout,
-    private val objectFactory: ObjectFactory,
   ) : Plugin<Project> {
     companion object {
-      private val LOGGER = KotlinLogging.logger {}
-      private const val SHARED_LIBRARY_EXTENSION_NAME = "sharedLibrary"
-      private const val TEST_ROOT_PATH = "test"
       private const val DEFAULT_JENKINS_PIPELINE_UNIT_VERSION = "1.29"
       private const val DEFAULT_TEST_HARNESS_VERSION = "2.50"
       private const val DEFAULT_CORE_VERSION = "2.479.1"
 
-      private const val INTEGRATION_TEST_SOURCE_SET = "integrationTest"
-      private const val INTEGRATION_TEST_TASK = "integrationTest"
+      private const val INTEGRATION_TEST_SUITE = "integrationTest"
 
       private const val JENKINS_PLUGIN_CONFIGURATION = "jenkinsPlugin"
       private const val JENKINS_PLUGIN_CLASSPATH_CONFIGURATION = "jenkinsPluginClasspath"
       private const val JENKINS_PLUGIN_HPIS_CONFIGURATION = "jenkinsPluginHpis"
-      private const val UNIT_TESTING_LIBRARY_CONFIGURATION = "jenkinsPipelineUnit"
-      private const val TEST_HARNESS_CONFIGURATION = "jenkinsTestHarness"
 
       private const val IVY_CONFIGURATION = "sharedLibraryIvy"
       private const val IVY_COORDINATES = "org.apache.ivy:ivy:2.4.0"
@@ -52,11 +44,9 @@ open class SharedLibraryPlugin
       target.run {
         apply<GroovyPlugin>()
         apply<JenkinsIntegrationPlugin>()
-        setupSharedLibraryExtension()
         setupJenkinsPluginConfiguration()
         setupMain()
-        setupUnitTest()
-        setupIntegrationTest()
+        setupTestSuites()
         setupDocumentationTasks()
         setupIvyGrabSupport()
       }
@@ -64,35 +54,29 @@ open class SharedLibraryPlugin
 
     @Suppress("DEPRECATION")
     private fun Project.setupJenkinsPluginConfiguration() {
-      // CMR stamps artifactType on the compile/runtime variants of every Jenkins plugin
-      // component so that artifact-type-aware resolution selects the right published file
-      // (JAR for compilation, HPI for the embedded Jenkins runtime) without any extraction.
       dependencies.components.all(JenkinsPluginRule::class.java)
-      // Allow JAR producers to satisfy HPI/JPI consumer requests so that plain-JAR transitive
-      // dependencies (asm, caffeine, groovy-sandbox, etc.) don't fail resolution when the
-      // jenkinsPluginHpis configuration propagates artifactType=hpi transitively.
       dependencies.attributesSchema.attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE) {
         compatibilityRules.add(JpiCompatibilityRule::class.java)
       }
 
       val dependencyHandler = dependencies
 
-      // User-facing bucket — consumers declare jenkinsPlugin(...) here
+      // Eagerly created so the Kotlin DSL generates the jenkinsPlugin(...) typed accessor at sync time.
       val jenkinsPlugin =
-        configurations.dependencyScope(JENKINS_PLUGIN_CONFIGURATION) {
+        configurations.create(JENKINS_PLUGIN_CONFIGURATION) {
+          isCanBeResolved = false
+          isCanBeConsumed = false
           description = "Jenkins HPI/JPI plugin dependencies for shared library compilation and testing"
         }
 
-      // Internal: resolves plugin JARs + jenkins-core (provided scope); wired to compile/test classpaths.
-      // jenkins-core is added automatically because plugins declare it as <scope>provided</scope>
-      // so Gradle never pulls it transitively — but shared library Groovy compilation needs it.
-      // Version is managed by whatever BOM the consumer has declared via jenkinsPlugin(platform(...)).
+      // Internal: JARs for compilation and unit tests.
+      // jenkins-core is not in any published HPI's compile variant so it must be added explicitly.
       configurations.create(JENKINS_PLUGIN_CLASSPATH_CONFIGURATION) {
         isCanBeResolved = true
         isCanBeConsumed = false
         isVisible = false
-        description = "Jenkins plugin JARs + jenkins-core for shared library compilation and unit tests"
-        extendsFrom(jenkinsPlugin.get())
+        description = "Jenkins plugin JARs + jenkins-core for compilation and unit tests"
+        extendsFrom(jenkinsPlugin)
         withDependencies {
           dependencyHandler.add(name, "org.jenkins-ci.main:jenkins-core:$DEFAULT_CORE_VERSION")
         }
@@ -101,13 +85,13 @@ open class SharedLibraryPlugin
         }
       }
 
-      // Internal: resolves raw HPI archives; wired to integration test runtime for JenkinsRule
+      // Internal: raw HPI archives for the embedded Jenkins runtime used by JenkinsRule.
       configurations.create(JENKINS_PLUGIN_HPIS_CONFIGURATION) {
         isCanBeResolved = true
         isCanBeConsumed = false
         isVisible = false
         description = "Jenkins plugin HPI archives for embedded Jenkins runtime (integration tests)"
-        extendsFrom(jenkinsPlugin.get())
+        extendsFrom(jenkinsPlugin)
         attributes {
           attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, "hpi")
         }
@@ -125,67 +109,11 @@ open class SharedLibraryPlugin
       }
     }
 
-    @Suppress("DEPRECATION")
-    private fun Project.setupUnitTest() {
-      val dependencyHandler = dependencies
-      val test =
-        sourceSets.test.apply {
-          val unitTestDirectory = "$TEST_ROOT_PATH/unit"
-          java.setSrcDirs(listOf("$unitTestDirectory/java"))
-          groovy.setSrcDirs(listOf("$unitTestDirectory/groovy"))
-          resources.setSrcDirs(listOf("$unitTestDirectory/resources"))
-          val pluginClasspath = configurations.getByName(JENKINS_PLUGIN_CLASSPATH_CONFIGURATION)
-          compileClasspath += pluginClasspath
-          runtimeClasspath += pluginClasspath
-        }
-      val pipelineUnit =
-        configurations.create(UNIT_TESTING_LIBRARY_CONFIGURATION) {
-          isCanBeResolved = true
-          isCanBeConsumed = false
-          isVisible = false
-          description = "JenkinsPipelineUnit library for shared library unit tests"
-          withDependencies {
-            LOGGER.debug { "Adding JenkinsPipelineUnit to configuration $name" }
-            dependencyHandler.add(name, sharedLibraryExtension.pipelineUnitDependency().get())
-          }
-        }
-      configurations.getByName(test.implementationConfigurationName) {
-        extendsFrom(pipelineUnit)
-      }
-    }
+    private fun Project.setupTestSuites() {
+      val pluginClasspath = configurations.getByName(JENKINS_PLUGIN_CLASSPATH_CONFIGURATION)
 
-    @Suppress("DEPRECATION")
-    private fun Project.setupIntegrationTest() {
-      val dependencyHandler = dependencies
-      val integrationTestSourceSet =
-        sourceSets.create(INTEGRATION_TEST_SOURCE_SET) {
-          description = "Integration test source set for shared library"
-          val integrationTestDirectory = "$TEST_ROOT_PATH/integration"
-          java.setSrcDirs(listOf("$integrationTestDirectory/java"))
-          groovy.setSrcDirs(listOf("$integrationTestDirectory/groovy"))
-          resources.setSrcDirs(listOf("$integrationTestDirectory/resources"))
-          val pluginClasspath = configurations.getByName(JENKINS_PLUGIN_CLASSPATH_CONFIGURATION)
-          compileClasspath += pluginClasspath
-          runtimeClasspath += pluginClasspath
-        }
-
-      val testHarness =
-        configurations.create(TEST_HARNESS_CONFIGURATION) {
-          isCanBeResolved = true
-          isCanBeConsumed = false
-          isVisible = false
-          description = "jenkins-test-harness and its transitive dependencies"
-          withDependencies {
-            LOGGER.debug { "Adding jenkins-test-harness to configuration $name" }
-            dependencyHandler.add(name, sharedLibraryExtension.testHarnessDependency().get())
-          }
-        }
-      configurations.getByName(integrationTestSourceSet.implementationConfigurationName) {
-        extendsFrom(testHarness)
-      }
-
-      // Use a lenient view so plain-JAR transitive deps (asm, caffeine, etc.) are silently
-      // skipped rather than failing resolution when artifactType=hpi is requested.
+      // Lenient view so plain-JAR transitives that don't publish HPI are silently skipped
+      // rather than failing resolution when artifactType=hpi is requested globally.
       val hpiFiles =
         configurations
           .getByName(JENKINS_PLUGIN_HPIS_CONFIGURATION)
@@ -194,24 +122,63 @@ open class SharedLibraryPlugin
           .artifacts
           .artifactFiles
 
-      tasks {
-        val integrationTest =
-          register<Test>(INTEGRATION_TEST_TASK) {
-            dependsOn(sourceSets.main.classesTaskName)
-            mustRunAfter("test")
-            group = LifecycleBasePlugin.VERIFICATION_GROUP
-            description = "Runs tests with the jenkins-test-harness"
-            testClassesDirs = integrationTestSourceSet.output.classesDirs
-            classpath = integrationTestSourceSet.runtimeClasspath + hpiFiles
-            systemProperty(
-              "buildDirectory",
-              projectLayout.buildDirectory.map { it.asFile.absolutePath },
-            )
-            shouldRunAfter("test")
+      val srcDir =
+        projectLayout.projectDirectory
+          .dir("src")
+          .asFile.absolutePath
+      val varsDir =
+        projectLayout.projectDirectory
+          .dir("vars")
+          .asFile.absolutePath
+      val resourcesDir =
+        projectLayout.projectDirectory
+          .dir("resources")
+          .asFile.absolutePath
+
+      extensions.configure<TestingExtension> {
+        suites {
+          val test by getting(JvmTestSuite::class) {
+            useJUnitJupiter()
+            sources.apply {
+              java.setSrcDirs(emptyList<Any>())
+              groovy.setSrcDirs(listOf("test/unit/groovy"))
+              resources.setSrcDirs(listOf("test/unit/resources"))
+              compileClasspath += pluginClasspath
+              runtimeClasspath += pluginClasspath
+            }
+            dependencies {
+              implementation("com.lesfurets:jenkins-pipeline-unit:$DEFAULT_JENKINS_PIPELINE_UNIT_VERSION")
+            }
           }
-        named(LifecycleBasePlugin.CHECK_TASK_NAME) {
-          dependsOn(integrationTest)
+
+          val integrationTest by registering(JvmTestSuite::class) {
+            sources.apply {
+              java.setSrcDirs(emptyList<Any>())
+              groovy.setSrcDirs(listOf("test/integration/groovy"))
+              resources.setSrcDirs(listOf("test/integration/resources"))
+              compileClasspath += pluginClasspath
+              runtimeClasspath += pluginClasspath
+            }
+            dependencies {
+              implementation("org.jenkins-ci.main:jenkins-test-harness:$DEFAULT_TEST_HARNESS_VERSION")
+            }
+            targets.all {
+              testTask.configure {
+                mustRunAfter(test)
+                description = "Runs integration tests against an embedded Jenkins runtime"
+                classpath += hpiFiles
+                systemProperty("test.library.src", srcDir)
+                systemProperty("test.library.vars", varsDir)
+                systemProperty("test.library.resources", resourcesDir)
+              }
+            }
+          }
         }
+      }
+
+      val integrationTestSuite = the<TestingExtension>().suites.named(INTEGRATION_TEST_SUITE)
+      tasks.named(LifecycleBasePlugin.CHECK_TASK_NAME) {
+        dependsOn(integrationTestSuite)
       }
     }
 
@@ -229,7 +196,7 @@ open class SharedLibraryPlugin
         withType<GroovyCompile>().configureEach {
           groovyClasspath += ivy
         }
-        "test"(Test::class) {
+        withType<Test>().configureEach {
           classpath += ivy
         }
       }
@@ -251,29 +218,12 @@ open class SharedLibraryPlugin
       }
     }
 
-    private fun Project.setupSharedLibraryExtension() {
-      val pipelineTestUnitVersion = initializedProperty(DEFAULT_JENKINS_PIPELINE_UNIT_VERSION)
-      val testHarnessVersion = initializedProperty(DEFAULT_TEST_HARNESS_VERSION)
-      extensions.create(
-        SHARED_LIBRARY_EXTENSION_NAME,
-        SharedLibraryExtension::class,
-        pipelineTestUnitVersion,
-        testHarnessVersion,
-      )
-    }
-
-    private val Project.sharedLibraryExtension: SharedLibraryExtension
-      get() = the()
-
     private val Project.sourceSets: SourceSetContainer
       get() = the()
 
     private val SourceSetContainer.main: SourceSet
       get() = getByName("main")
 
-    private val SourceSetContainer.test: SourceSet
-      get() = getByName("test")
-
-    private val SourceSet.groovy: SourceDirectorySet
+    private val SourceSet.groovy: org.gradle.api.file.SourceDirectorySet
       get() = extensions.getByType(GroovySourceDirectorySet::class.java)
   }
