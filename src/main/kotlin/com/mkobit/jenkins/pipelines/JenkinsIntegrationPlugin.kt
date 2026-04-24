@@ -5,7 +5,6 @@ import com.mkobit.jenkins.pipelines.http.Authentication
 import com.mkobit.jenkins.pipelines.http.internal.connect
 import com.mkobit.jenkins.pipelines.http.internal.downloadGdsl
 import com.mkobit.jenkins.pipelines.http.internal.retrievePluginManagerData
-import io.github.oshai.kotlinlogging.KotlinLogging
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -20,7 +19,6 @@ import java.net.URL
 
 internal open class JenkinsIntegrationPlugin : Plugin<Project> {
   companion object {
-    private val LOGGER = KotlinLogging.logger {}
     private const val EXTENSION_NAME = "jenkinsIntegration"
     private const val RETRIEVAL_TASK_GROUP = "Jenkins retrieve metadata"
   }

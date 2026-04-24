@@ -137,14 +137,17 @@ open class SharedLibraryPlugin
 
       extensions.configure<TestingExtension> {
         suites {
+          withType<JvmTestSuite>().configureEach {
+            sources.compileClasspath += pluginClasspath
+            sources.runtimeClasspath += pluginClasspath
+          }
+
           val test by getting(JvmTestSuite::class) {
             useJUnitJupiter()
             sources.apply {
               java.setSrcDirs(emptyList<Any>())
               groovy.setSrcDirs(listOf("test/unit/groovy"))
               resources.setSrcDirs(listOf("test/unit/resources"))
-              compileClasspath += pluginClasspath
-              runtimeClasspath += pluginClasspath
             }
             dependencies {
               implementation("com.lesfurets:jenkins-pipeline-unit:$DEFAULT_JENKINS_PIPELINE_UNIT_VERSION")
@@ -156,8 +159,6 @@ open class SharedLibraryPlugin
               java.setSrcDirs(emptyList<Any>())
               groovy.setSrcDirs(listOf("test/integration/groovy"))
               resources.setSrcDirs(listOf("test/integration/resources"))
-              compileClasspath += pluginClasspath
-              runtimeClasspath += pluginClasspath
             }
             dependencies {
               implementation("org.jenkins-ci.main:jenkins-test-harness:$DEFAULT_TEST_HARNESS_VERSION")
