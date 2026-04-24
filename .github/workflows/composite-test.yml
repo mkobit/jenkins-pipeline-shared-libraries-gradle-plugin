@@ -1,0 +1,45 @@
+name: Composite build test
+
+on:
+  workflow_run:
+    workflows:
+      - Build
+    types:
+      - completed
+    branches:
+      - the-phoenix-project
+
+permissions: {}
+
+jobs:
+  composite-test:
+    name: Validate plugin against example (Java 17, Gradle 9.x)
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout plugin
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
+        with:
+          path: plugin
+
+      - name: Checkout example
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
+        with:
+          repository: mkobit/jenkins-pipeline-shared-library-example
+          ref: the-phoenix-project
+          path: example
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa25c6d5e5a9  # v4
+        with:
+          java-version: '17'
+          distribution: temurin
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@06832c7b30a0129d7fb559bcc6e43d26f6374244  # v4.3.1
+
+      - name: Build example against local plugin
+        working-directory: example
+        run: ./gradlew --include-build ../plugin compileGroovy
