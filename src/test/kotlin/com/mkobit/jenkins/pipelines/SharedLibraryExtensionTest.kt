@@ -1,43 +1,44 @@
 package com.mkobit.jenkins.pipelines
 
+import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import org.gradle.testfixtures.ProjectBuilder
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
 
-internal class SharedLibraryExtensionTest {
-  private lateinit var sharedLibraryExtension: SharedLibraryExtension
-
-  companion object {
-    private const val INITIAL_PIPELINE_UNIT_VERSION = "3.0"
-    private const val INITIAL_TEST_HARNESS_VERSION = "4.0"
-  }
-
-  @BeforeEach
-  internal fun setUp() {
+internal class SharedLibraryExtensionTest : DescribeSpec({
+  fun extension(
+    pipelineUnit: String = "3.0",
+    testHarness: String = "4.0",
+  ): SharedLibraryExtension {
     val project = ProjectBuilder.builder().build()
-    sharedLibraryExtension =
-      SharedLibraryExtension(
-        project.initializedProperty(INITIAL_PIPELINE_UNIT_VERSION),
-        project.initializedProperty(INITIAL_TEST_HARNESS_VERSION),
-      )
+    return SharedLibraryExtension(
+      project.initializedProperty(pipelineUnit),
+      project.initializedProperty(testHarness),
+    )
   }
 
-  @Test
-  internal fun `default versions can be retrieved`() {
-    sharedLibraryExtension.pipelineTestUnitVersion.get() shouldBe INITIAL_PIPELINE_UNIT_VERSION
-    sharedLibraryExtension.testHarnessVersion.get() shouldBe INITIAL_TEST_HARNESS_VERSION
+  describe("default versions") {
+    val ext = extension()
+
+    it("exposes the pipeline unit version") {
+      ext.pipelineTestUnitVersion.get() shouldBe "3.0"
+    }
+
+    it("exposes the test harness version") {
+      ext.testHarnessVersion.get() shouldBe "4.0"
+    }
   }
 
-  @Test
-  internal fun `can set PipelineTestUnit version`() {
-    sharedLibraryExtension.pipelineTestUnitVersion.set("newPipelineTestUnitVersion")
-    sharedLibraryExtension.pipelineTestUnitVersion.get() shouldBe "newPipelineTestUnitVersion"
-  }
+  describe("mutable versions") {
+    it("can override the pipeline unit version") {
+      val ext = extension()
+      ext.pipelineTestUnitVersion.set("newPipelineVersion")
+      ext.pipelineTestUnitVersion.get() shouldBe "newPipelineVersion"
+    }
 
-  @Test
-  internal fun `can set Jenkins Test Harness version`() {
-    sharedLibraryExtension.testHarnessVersion.set("newTestHarnessVersion")
-    sharedLibraryExtension.testHarnessVersion.get() shouldBe "newTestHarnessVersion"
+    it("can override the test harness version") {
+      val ext = extension()
+      ext.testHarnessVersion.set("newTestHarnessVersion")
+      ext.testHarnessVersion.get() shouldBe "newTestHarnessVersion"
+    }
   }
-}
+})

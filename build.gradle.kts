@@ -44,7 +44,7 @@ dependencies {
   testImplementation(libs.mockk)
   testImplementation(libs.okhttp.mockwebserver)
   testImplementation(libs.kotest.assertions)
-  testImplementation(libs.kotest.datatest)
+  testImplementation(libs.kotest.runner)
 }
 
 testing {

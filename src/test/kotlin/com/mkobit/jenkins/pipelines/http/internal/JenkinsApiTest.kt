@@ -3,32 +3,34 @@ package com.mkobit.jenkins.pipelines.http.internal
 import com.mkobit.jenkins.pipelines.http.AnonymousAuthentication
 import com.mkobit.jenkins.pipelines.http.ApiTokenAuthentication
 import com.mkobit.jenkins.pipelines.http.BasicAuthentication
+import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldEndWith
 import okhttp3.Credentials
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
-import org.junit.jupiter.api.Test
-import testsupport.junit.UseMockServer
 
-@UseMockServer
-internal class JenkinsApiTest {
-  @Test
-  internal fun `retrieve GDSL`(server: MockWebServer) {
+internal class JenkinsApiTest : DescribeSpec({
+  lateinit var server: MockWebServer
+
+  beforeTest {
+    server = MockWebServer()
     server.enqueue(MockResponse())
     server.start()
+  }
 
+  afterTest {
+    server.shutdown()
+  }
+
+  it("retrieve GDSL sends GET to pipeline-syntax/gdsl") {
     downloadGdsl(server.url("jenkins"), AnonymousAuthentication)
     val request = server.takeRequest()
     request.method shouldBe "GET"
     request.path shouldEndWith "pipeline-syntax/gdsl"
   }
 
-  @Test
-  internal fun `plugin manager plugins`(server: MockWebServer) {
-    server.enqueue(MockResponse())
-    server.start()
-
+  it("plugin manager request targets the correct path with depth parameter") {
     retrievePluginManagerData(server.url("jenkins"), AnonymousAuthentication)
     val request = server.takeRequest()
     request.method shouldBe "GET"
@@ -36,36 +38,24 @@ internal class JenkinsApiTest {
     request.requestUrl!!.queryParameter("depth") shouldBe "2"
   }
 
-  @Test
-  internal fun `head request against base URL`(server: MockWebServer) {
-    server.enqueue(MockResponse())
-    server.start()
-
+  it("connect sends HEAD to the base URL") {
     connect(server.url("jenkins"), AnonymousAuthentication)
     val request = server.takeRequest()
     request.method shouldBe "HEAD"
     request.requestUrl!!.pathSegments shouldBe listOf("jenkins")
   }
 
-  @Test
-  internal fun `basic authentication headers`(server: MockWebServer) {
-    server.enqueue(MockResponse())
-    server.start()
+  describe("authentication headers") {
+    it("BasicAuthentication sends a Basic Authorization header") {
+      val basic = BasicAuthentication("mkobit", "hunter2")
+      retrievePluginManagerData(server.url("jenkins"), basic)
+      server.takeRequest().headers["Authorization"] shouldBe Credentials.basic(basic.username, basic.password)
+    }
 
-    val basic = BasicAuthentication("mkobit", "hunter2")
-    retrievePluginManagerData(server.url("jenkins"), basic)
-    val request = server.takeRequest()
-    request.headers["Authorization"] shouldBe Credentials.basic(basic.username, basic.password)
+    it("ApiTokenAuthentication sends a Basic Authorization header") {
+      val token = ApiTokenAuthentication("mkobit", "0123456789abcdef")
+      retrievePluginManagerData(server.url("jenkins"), token)
+      server.takeRequest().headers["Authorization"] shouldBe Credentials.basic(token.username, token.apiToken)
+    }
   }
-
-  @Test
-  internal fun `token authentication headers`(server: MockWebServer) {
-    server.enqueue(MockResponse())
-    server.start()
-
-    val token = ApiTokenAuthentication("mkobit", "0123456789abcdef")
-    retrievePluginManagerData(server.url("jenkins"), token)
-    val request = server.takeRequest()
-    request.headers["Authorization"] shouldBe Credentials.basic(token.username, token.apiToken)
-  }
-}
+})
