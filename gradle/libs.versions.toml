@@ -18,6 +18,7 @@ okhttp             = { module = "com.squareup.okhttp3:okhttp",                ve
 okhttp-mockwebserver = { module = "com.squareup.okhttp3:mockwebserver",       version.ref = "okhttp" }
 
 [plugins]
-openrewrite    = { id = "org.openrewrite.rewrite",                    version.ref = "openrewrite" }
-gradle-publish = { id = "com.gradle.plugin-publish",                  version.ref = "plugin-publish" }
-spotless       = { id = "com.diffplug.spotless",                      version.ref = "spotless" }
+foojay         = { id = "org.gradle.toolchains.foojay-resolver-convention", version.ref = "foojay" }
+gradle-publish = { id = "com.gradle.plugin-publish",                        version.ref = "plugin-publish" }
+openrewrite    = { id = "org.openrewrite.rewrite",                          version.ref = "openrewrite" }
+spotless       = { id = "com.diffplug.spotless",                            version.ref = "spotless" }

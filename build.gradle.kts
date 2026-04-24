@@ -1,8 +1,8 @@
 plugins {
   `kotlin-dsl`
-  id("com.gradle.plugin-publish") version "2.1.1"
-  id("com.diffplug.spotless") version "8.4.0"
-  id("org.openrewrite.rewrite") version "6.26.0"
+  alias(libs.plugins.gradle.publish)
+  alias(libs.plugins.openrewrite)
+  alias(libs.plugins.spotless)
 }
 
 group = "com.mkobit.jenkins.pipelines"
@@ -35,10 +35,6 @@ gradlePlugin {
   }
 }
 
-rewrite {
-  activeRecipe("org.openrewrite.gradle.MigrateToGradle9")
-}
-
 dependencies {
   api(gradleApi())
   implementation(libs.kotlin.logging)
@@ -60,6 +56,11 @@ testing {
       )
     }
   }
+}
+
+tasks.wrapper {
+  gradleVersion = "9.4.1"
+  distributionType = Wrapper.DistributionType.ALL
 }
 
 spotless {
