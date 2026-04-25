@@ -121,6 +121,13 @@ open class SharedLibraryPlugin
         projectLayout.projectDirectory
           .dir("resources")
           .asFile.absolutePath
+      val libraryRoot = projectLayout.projectDirectory.asFile.absolutePath
+
+      val generateLocalLibraryFiles =
+        tasks.register<GenerateLocalLibraryFiles>("generateLocalLibraryFiles") {
+          javaOutputDir.set(layout.buildDirectory.dir("generated-src/integrationTest/java"))
+          resourcesOutputDir.set(layout.buildDirectory.dir("generated-src/integrationTest/resources"))
+        }
 
       extensions.configure<TestingExtension> {
         suites {
@@ -138,9 +145,14 @@ open class SharedLibraryPlugin
 
           val integrationTest by registering(JvmTestSuite::class) {
             sources.apply {
-              java.setSrcDirs(emptyList<Any>())
+              java.setSrcDirs(listOf(generateLocalLibraryFiles.flatMap { it.javaOutputDir }))
               groovy.setSrcDirs(listOf("test/integration/groovy"))
-              resources.setSrcDirs(listOf("test/integration/resources"))
+              resources.setSrcDirs(
+                listOf(
+                  "test/integration/resources",
+                  generateLocalLibraryFiles.flatMap { it.resourcesOutputDir },
+                ),
+              )
             }
             dependencies {
               implementation("org.jenkins-ci.main:jenkins-test-harness:$DEFAULT_TEST_HARNESS_VERSION")
@@ -150,6 +162,9 @@ open class SharedLibraryPlugin
                 mustRunAfter(test)
                 description = "Runs integration tests against an embedded Jenkins runtime"
                 classpath += hpiFiles
+                maxParallelForks = 1
+                maxHeapSize = "2g"
+                systemProperty("test.library.root", libraryRoot)
                 systemProperty("test.library.src", srcDir)
                 systemProperty("test.library.vars", varsDir)
                 systemProperty("test.library.resources", resourcesDir)

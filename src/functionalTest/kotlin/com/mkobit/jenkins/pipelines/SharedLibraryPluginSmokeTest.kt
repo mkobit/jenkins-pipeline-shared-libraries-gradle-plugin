@@ -2,6 +2,7 @@ package com.mkobit.jenkins.pipelines
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
+import io.kotest.matchers.file.shouldExist
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import org.gradle.testkit.runner.TaskOutcome
@@ -35,10 +36,30 @@ class SharedLibraryPluginSmokeTest :
         sharedLibraryProject().use { project ->
           val result = project.runner(gradleVersion).withArguments("tasks", "--all").build()
           result.output shouldContain "integrationTest"
+          result.output shouldContain "generateLocalLibraryFiles"
           result.output shouldContain "groovydocJar"
           result.output shouldContain "sourcesJar"
           result.output shouldContain "groovydoc"
           result.output shouldContain "compileGroovy"
+        }
+      }
+    }
+
+    describe("generateLocalLibraryFiles produces LocalLibraryRetriever.java and ClassFilter resource") {
+      withData(TestedGradleVersion.entries) { gradleVersion ->
+        sharedLibraryProject().use { project ->
+          val result =
+            project
+              .runner(gradleVersion)
+              .withArguments("generateLocalLibraryFiles")
+              .build()
+          result.task(":generateLocalLibraryFiles")!!.outcome shouldBe TaskOutcome.SUCCESS
+          project.dir
+            .resolve("build/generated-src/integrationTest/java/com/mkobit/jenkins/pipelines/testing/LocalLibraryRetriever.java")
+            .shouldExist()
+          project.dir
+            .resolve("build/generated-src/integrationTest/resources/META-INF/hudson.remoting.ClassFilter")
+            .shouldExist()
         }
       }
     }

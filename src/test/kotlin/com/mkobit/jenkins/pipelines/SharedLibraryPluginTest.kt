@@ -183,6 +183,27 @@ internal class SharedLibraryPluginTest :
         task.description.shouldNotBeBlank()
       }
 
+      it("integrationTest has maxParallelForks = 1") {
+        val task = project.tasks.getByName("integrationTest") as org.gradle.api.tasks.testing.Test
+        task.maxParallelForks shouldBe 1
+      }
+
+      it("integrationTest has maxHeapSize = 2g") {
+        val task = project.tasks.getByName("integrationTest") as org.gradle.api.tasks.testing.Test
+        task.maxHeapSize shouldBe "2g"
+      }
+
+      it("integrationTest injects test.library.root system property") {
+        val task = project.tasks.getByName("integrationTest") as org.gradle.api.tasks.testing.Test
+        task.systemProperties["test.library.root"] shouldBe project.projectDir.absolutePath
+      }
+
+      it("generateLocalLibraryFiles task is registered") {
+        project.tasks
+          .getByName("generateLocalLibraryFiles")
+          .shouldBeInstanceOf<GenerateLocalLibraryFiles>()
+      }
+
       it("groovydocJar is created with a description") {
         val task = project.tasks.getByName("groovydocJar")
         task.shouldBeInstanceOf<Jar>()
