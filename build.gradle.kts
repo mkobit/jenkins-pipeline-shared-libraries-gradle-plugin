@@ -55,7 +55,31 @@ testing {
         implementation(libs.kotest.runner)
       }
     }
+
+    val functionalTest by registering(JvmTestSuite::class) {
+      useJUnitJupiter(
+        libs.versions.junit.jupiter
+          .get(),
+      )
+      dependencies {
+        implementation(gradleTestKit())
+        implementation(libs.kotest.assertions)
+        implementation(libs.kotest.runner)
+      }
+      targets.all {
+        testTask.configure {
+          mustRunAfter(test)
+          // java-gradle-plugin only wires pluginUnderTestMetadata into the test suite;
+          // add it explicitly so GradleRunner.withPluginClasspath() works here.
+          classpath += files(tasks.named("pluginUnderTestMetadata"))
+        }
+      }
+    }
   }
+}
+
+tasks.named("check") {
+  dependsOn(testing.suites.named("functionalTest"))
 }
 
 tasks.wrapper {
