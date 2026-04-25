@@ -77,9 +77,11 @@ class SharedLibraryPluginResolutionTest :
               .withArguments("printResolvedArtifacts")
               .build()
 
-          val testRuntimeFiles = result.output.lines()
-            .filter { it.startsWith("testRuntime:") }
-            .map { it.removePrefix("testRuntime:") }
+          val testRuntimeFiles =
+            result.output
+              .lines()
+              .filter { it.startsWith("testRuntime:") }
+              .map { it.removePrefix("testRuntime:") }
 
           testRuntimeFiles.shouldNotBeEmpty()
           testRuntimeFiles.filter { it.startsWith("workflow-api") }.shouldNotBeEmpty()
@@ -98,9 +100,11 @@ class SharedLibraryPluginResolutionTest :
               .withArguments("printResolvedArtifacts")
               .build()
 
-          val hpiFiles = result.output.lines()
-            .filter { it.startsWith("hpis:") }
-            .map { it.removePrefix("hpis:") }
+          val hpiFiles =
+            result.output
+              .lines()
+              .filter { it.startsWith("hpis:") }
+              .map { it.removePrefix("hpis:") }
 
           hpiFiles.shouldNotBeEmpty()
           // Jenkins plugin artifacts must appear as .hpi — plain Java lib transitives may appear as .jar via JpiCompatibilityRule.
@@ -118,13 +122,17 @@ class SharedLibraryPluginResolutionTest :
               .withArguments("printResolvedArtifacts")
               .build()
 
-          val compileFiles = result.output.lines()
-            .filter { it.startsWith("compile:") }
-            .map { it.removePrefix("compile:") }
+          val compileFiles =
+            result.output
+              .lines()
+              .filter { it.startsWith("compile:") }
+              .map { it.removePrefix("compile:") }
 
-          val runtimeFiles = result.output.lines()
-            .filter { it.startsWith("runtime:") }
-            .map { it.removePrefix("runtime:") }
+          val runtimeFiles =
+            result.output
+              .lines()
+              .filter { it.startsWith("runtime:") }
+              .map { it.removePrefix("runtime:") }
 
           compileFiles.filter { it.startsWith("jenkins-core") }.shouldNotBeEmpty()
           runtimeFiles.filter { it.startsWith("jenkins-core") }.shouldBeEmpty()

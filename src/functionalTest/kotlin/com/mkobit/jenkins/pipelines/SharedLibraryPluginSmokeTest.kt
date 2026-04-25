@@ -55,41 +55,43 @@ class SharedLibraryPluginSmokeTest :
 
     describe("jenkinsPlugin configuration accepts a dependency declaration") {
       withData(TestedGradleVersion.entries) { gradleVersion ->
-        TestProjectBuilder().apply {
-          buildFile.writeText(
-            """
-            plugins {
-                id("com.mkobit.jenkins.pipelines.shared-library")
-            }
-            dependencies {
-                jenkinsPlugin("org.example:fake:1.0")
-            }
-            """.trimIndent(),
-          )
-        }.use { project ->
-          val result = project.runner(gradleVersion).withArguments("help").build()
-          result.task(":help")!!.outcome shouldBe TaskOutcome.SUCCESS
-        }
+        TestProjectBuilder()
+          .apply {
+            buildFile.writeText(
+              """
+              plugins {
+                  id("com.mkobit.jenkins.pipelines.shared-library")
+              }
+              dependencies {
+                  jenkinsPlugin("org.example:fake:1.0")
+              }
+              """.trimIndent(),
+            )
+          }.use { project ->
+            val result = project.runner(gradleVersion).withArguments("help").build()
+            result.task(":help")!!.outcome shouldBe TaskOutcome.SUCCESS
+          }
       }
     }
 
     describe("jenkinsPlugin configuration accepts a platform BOM") {
       withData(TestedGradleVersion.entries) { gradleVersion ->
-        TestProjectBuilder().apply {
-          buildFile.writeText(
-            """
-            plugins {
-                id("com.mkobit.jenkins.pipelines.shared-library")
-            }
-            dependencies {
-                jenkinsPlugin(platform("org.example:fake-bom:1.0"))
-            }
-            """.trimIndent(),
-          )
-        }.use { project ->
-          val result = project.runner(gradleVersion).withArguments("help").build()
-          result.task(":help")!!.outcome shouldBe TaskOutcome.SUCCESS
-        }
+        TestProjectBuilder()
+          .apply {
+            buildFile.writeText(
+              """
+              plugins {
+                  id("com.mkobit.jenkins.pipelines.shared-library")
+              }
+              dependencies {
+                  jenkinsPlugin(platform("org.example:fake-bom:1.0"))
+              }
+              """.trimIndent(),
+            )
+          }.use { project ->
+            val result = project.runner(gradleVersion).withArguments("help").build()
+            result.task(":help")!!.outcome shouldBe TaskOutcome.SUCCESS
+          }
       }
     }
   })

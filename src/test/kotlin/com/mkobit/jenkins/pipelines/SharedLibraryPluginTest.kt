@@ -77,30 +77,42 @@ internal class SharedLibraryPluginTest :
       }
 
       it("compileOnly extends jenkinsPlugin") {
-        project.configurations.getByName("compileOnly")
-          .extendsFrom.map { it.name }
+        project.configurations
+          .getByName("compileOnly")
+          .extendsFrom
+          .map { it.name }
           .shouldContain("jenkinsPlugin")
       }
 
       it("testImplementation extends jenkinsPlugin") {
-        project.configurations.getByName("testImplementation")
-          .extendsFrom.map { it.name }
+        project.configurations
+          .getByName("testImplementation")
+          .extendsFrom
+          .map { it.name }
           .shouldContain("jenkinsPlugin")
       }
 
       it("integrationTestImplementation extends jenkinsPlugin") {
-        project.configurations.getByName("integrationTestImplementation")
-          .extendsFrom.map { it.name }
+        project.configurations
+          .getByName("integrationTestImplementation")
+          .extendsFrom
+          .map { it.name }
           .shouldContain("jenkinsPlugin")
       }
 
       describe("jenkinsPluginHpis") {
         it("is resolvable") {
-          project.configurations.getByName("jenkinsPluginHpis").isCanBeResolved.shouldBeTrue()
+          project.configurations
+            .getByName("jenkinsPluginHpis")
+            .isCanBeResolved
+            .shouldBeTrue()
         }
 
         it("is not consumable") {
-          project.configurations.getByName("jenkinsPluginHpis").isCanBeConsumed.shouldBeFalse()
+          project.configurations
+            .getByName("jenkinsPluginHpis")
+            .isCanBeConsumed
+            .shouldBeFalse()
         }
 
         it("has a description") {
@@ -112,24 +124,28 @@ internal class SharedLibraryPluginTest :
         }
 
         it("requests hpi artifact type") {
-          val attr = project.configurations
-            .getByName("jenkinsPluginHpis")
-            .attributes
-            .getAttribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE)
+          val attr =
+            project.configurations
+              .getByName("jenkinsPluginHpis")
+              .attributes
+              .getAttribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE)
           attr shouldBe "hpi"
         }
 
         it("requests hpi jenkins artifact attribute") {
-          val attr = project.configurations
-            .getByName("jenkinsPluginHpis")
-            .attributes
-            .getAttribute(JenkinsPluginRule.JENKINS_ARTIFACT_ATTRIBUTE)
+          val attr =
+            project.configurations
+              .getByName("jenkinsPluginHpis")
+              .attributes
+              .getAttribute(JenkinsPluginRule.JENKINS_ARTIFACT_ATTRIBUTE)
           attr shouldBe "hpi"
         }
 
         it("extends jenkinsPlugin") {
-          project.configurations.getByName("jenkinsPluginHpis")
-            .extendsFrom.map { it.name }
+          project.configurations
+            .getByName("jenkinsPluginHpis")
+            .extendsFrom
+            .map { it.name }
             .shouldContain("jenkinsPlugin")
         }
       }
