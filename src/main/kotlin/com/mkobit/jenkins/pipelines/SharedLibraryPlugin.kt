@@ -154,6 +154,12 @@ open class SharedLibraryPlugin
             }
           }
 
+          // JPU 1.29 transitively brings groovy-all:2.4 which conflicts with Spock's Groovy 3 AST transform.
+          // Exclude groovy-all so the test runtime uses a single Groovy version (3.x from Spock).
+          configurations.named("testImplementation") {
+            exclude(group = "org.codehaus.groovy", module = "groovy-all")
+          }
+
           val integrationTest by registering(JvmTestSuite::class) {
             sources.apply {
               java.setSrcDirs(emptyList<Any>())
