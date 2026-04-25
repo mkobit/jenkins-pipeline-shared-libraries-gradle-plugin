@@ -28,7 +28,7 @@ open class SharedLibraryPlugin
     companion object {
       private const val DEFAULT_JENKINS_PIPELINE_UNIT_VERSION = "1.29"
       private const val DEFAULT_CORE_VERSION = "2.479.1"
-      private const val DEFAULT_TEST_HARNESS_VERSION = "2.50"
+      private const val DEFAULT_TEST_HARNESS_VERSION = "2391.v9b_3e2d3351a_2"
 
       private const val INTEGRATION_TEST_SUITE = "integrationTest"
 
