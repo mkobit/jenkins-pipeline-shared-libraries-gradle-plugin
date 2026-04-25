@@ -4,7 +4,7 @@ import org.gradle.testkit.runner.GradleRunner
 import java.io.File
 import java.nio.file.Files
 
-internal class TestProjectBuilder {
+internal class TestProjectBuilder : AutoCloseable {
   val dir: File = Files.createTempDirectory("shared-library-functional-test").toFile()
   val settingsFile: File = dir.resolve("settings.gradle.kts")
   val buildFile: File = dir.resolve("build.gradle.kts")
@@ -22,7 +22,7 @@ internal class TestProjectBuilder {
       .withGradleVersion(gradleVersion.version)
       .withPluginClasspath()
 
-  fun cleanup() {
+  override fun close() {
     dir.deleteRecursively()
   }
 }

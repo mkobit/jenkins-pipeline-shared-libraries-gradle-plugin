@@ -4,18 +4,25 @@ import org.gradle.api.artifacts.CacheableRule
 import org.gradle.api.artifacts.ComponentMetadataContext
 import org.gradle.api.artifacts.ComponentMetadataRule
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition
+import org.gradle.api.attributes.Attribute
+import org.gradle.api.attributes.Usage
+import org.gradle.api.model.ObjectFactory
+import javax.inject.Inject
 
 @CacheableRule
-abstract class JenkinsPluginRule : ComponentMetadataRule {
+abstract class JenkinsPluginRule
+  @Inject
+  constructor(
+    private val objects: ObjectFactory,
+  ) : ComponentMetadataRule {
   override fun execute(ctx: ComponentMetadataContext) {
     val id = ctx.details.id
     if (!isJenkinsPluginGroup(id.group)) return
 
-    // Compile variant: use the published .jar so downstream compile classpaths resolve
-    // the plugin's classes directly without extracting from the HPI archive.
     ctx.details.withVariant("compile") {
       attributes {
         attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, ArtifactTypeDefinition.JAR_TYPE)
+        attribute(JENKINS_ARTIFACT_ATTRIBUTE, "jar")
       }
       withFiles {
         removeAllFiles()
@@ -23,11 +30,20 @@ abstract class JenkinsPluginRule : ComponentMetadataRule {
       }
     }
 
-    // Runtime variant: use the published .hpi so the embedded Jenkins runtime
-    // (JenkinsRule) can install plugins during integration tests.
+    // Separate java-runtime variant backed by the JAR so unit test runtimeClasspaths
+    // resolve plugin classes without picking up the HPI runtime variant.
+    ctx.details.addVariant("jar-runtime", "compile") {
+      attributes {
+        attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage::class.java, Usage.JAVA_RUNTIME))
+        attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, ArtifactTypeDefinition.JAR_TYPE)
+        attribute(JENKINS_ARTIFACT_ATTRIBUTE, "jar")
+      }
+    }
+
     ctx.details.withVariant("runtime") {
       attributes {
         attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, "hpi")
+        attribute(JENKINS_ARTIFACT_ATTRIBUTE, "hpi")
       }
       withFiles {
         removeAllFiles()
@@ -37,6 +53,9 @@ abstract class JenkinsPluginRule : ComponentMetadataRule {
   }
 
   companion object {
+    val JENKINS_ARTIFACT_ATTRIBUTE: Attribute<String> =
+      Attribute.of("com.mkobit.jenkins.artifact", String::class.java)
+
     internal fun isJenkinsPluginGroup(group: String): Boolean =
       group.startsWith("org.jenkins-ci.plugins") ||
         group.startsWith("org.jenkins-ci.modules") ||

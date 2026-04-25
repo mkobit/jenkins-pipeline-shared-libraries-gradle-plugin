@@ -27,13 +27,12 @@ open class SharedLibraryPlugin
   ) : Plugin<Project> {
     companion object {
       private const val DEFAULT_JENKINS_PIPELINE_UNIT_VERSION = "1.29"
-      private const val DEFAULT_TEST_HARNESS_VERSION = "2.50"
       private const val DEFAULT_CORE_VERSION = "2.479.1"
+      private const val DEFAULT_TEST_HARNESS_VERSION = "2.50"
 
       private const val INTEGRATION_TEST_SUITE = "integrationTest"
 
       private const val JENKINS_PLUGIN_CONFIGURATION = "jenkinsPlugin"
-      private const val JENKINS_PLUGIN_CLASSPATH_CONFIGURATION = "jenkinsPluginClasspath"
       private const val JENKINS_PLUGIN_HPIS_CONFIGURATION = "jenkinsPluginHpis"
 
       private const val IVY_CONFIGURATION = "sharedLibraryIvy"
@@ -55,35 +54,21 @@ open class SharedLibraryPlugin
     @Suppress("DEPRECATION")
     private fun Project.setupJenkinsPluginConfiguration() {
       dependencies.components.all(JenkinsPluginRule::class.java)
+
       dependencies.attributesSchema.attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE) {
         compatibilityRules.add(JpiCompatibilityRule::class.java)
       }
-
-      val dependencyHandler = dependencies
+      dependencies.attributesSchema.attribute(JenkinsPluginRule.JENKINS_ARTIFACT_ATTRIBUTE) {
+        disambiguationRules.add(JenkinsArtifactDisambiguationRule::class.java)
+      }
 
       // Eagerly created so the Kotlin DSL generates the jenkinsPlugin(...) typed accessor at sync time.
-      val jenkinsPlugin =
-        configurations.create(JENKINS_PLUGIN_CONFIGURATION) {
-          isCanBeResolved = false
-          isCanBeConsumed = false
-          description = "Jenkins HPI/JPI plugin dependencies for shared library compilation and testing"
-        }
-
-      // Internal: JARs for compilation and unit tests.
-      // jenkins-core is not in any published HPI's compile variant so it must be added explicitly.
-      configurations.create(JENKINS_PLUGIN_CLASSPATH_CONFIGURATION) {
-        isCanBeResolved = true
+      configurations.create(JENKINS_PLUGIN_CONFIGURATION) {
+        isCanBeResolved = false
         isCanBeConsumed = false
-        isVisible = false
-        description = "Jenkins plugin JARs + jenkins-core for compilation and unit tests"
-        extendsFrom(jenkinsPlugin)
-        withDependencies {
-          dependencyHandler.add(name, "org.jenkins-ci.main:jenkins-core:$DEFAULT_CORE_VERSION")
-        }
-        attributes {
-          attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, ArtifactTypeDefinition.JAR_TYPE)
-        }
+        description = "Jenkins HPI/JPI plugin dependencies for shared library compilation and testing"
       }
+      dependencies.add(JENKINS_PLUGIN_CONFIGURATION, "org.jenkins-ci.main:jenkins-core:$DEFAULT_CORE_VERSION")
 
       // Internal: raw HPI archives for the embedded Jenkins runtime used by JenkinsRule.
       configurations.create(JENKINS_PLUGIN_HPIS_CONFIGURATION) {
@@ -91,9 +76,10 @@ open class SharedLibraryPlugin
         isCanBeConsumed = false
         isVisible = false
         description = "Jenkins plugin HPI archives for embedded Jenkins runtime (integration tests)"
-        extendsFrom(jenkinsPlugin)
+        extendsFrom(configurations.getByName(JENKINS_PLUGIN_CONFIGURATION))
         attributes {
           attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, "hpi")
+          attribute(JenkinsPluginRule.JENKINS_ARTIFACT_ATTRIBUTE, "hpi")
         }
       }
     }
@@ -103,14 +89,15 @@ open class SharedLibraryPlugin
         java.setSrcDirs(emptyList<String>())
         groovy.setSrcDirs(listOf("src", "vars"))
         resources.setSrcDirs(listOf("resources"))
-        val pluginClasspath = configurations.getByName(JENKINS_PLUGIN_CLASSPATH_CONFIGURATION)
-        compileClasspath += pluginClasspath
-        runtimeClasspath += pluginClasspath
+      }
+      // Jenkins APIs are compile-only for the shared library; the library runs inside Jenkins at runtime.
+      configurations.named("compileOnly") {
+        extendsFrom(configurations.getByName(JENKINS_PLUGIN_CONFIGURATION))
       }
     }
 
     private fun Project.setupTestSuites() {
-      val pluginClasspath = configurations.getByName(JENKINS_PLUGIN_CLASSPATH_CONFIGURATION)
+      val jenkinsPlugin = configurations.getByName(JENKINS_PLUGIN_CONFIGURATION)
 
       // Lenient view so plain-JAR transitives that don't publish HPI are silently skipped
       // rather than failing resolution when artifactType=hpi is requested globally.
@@ -137,11 +124,6 @@ open class SharedLibraryPlugin
 
       extensions.configure<TestingExtension> {
         suites {
-          withType<JvmTestSuite>().configureEach {
-            sources.compileClasspath += pluginClasspath
-            sources.runtimeClasspath += pluginClasspath
-          }
-
           val test by getting(JvmTestSuite::class) {
             useJUnitJupiter()
             sources.apply {
@@ -152,12 +134,6 @@ open class SharedLibraryPlugin
             dependencies {
               implementation("com.lesfurets:jenkins-pipeline-unit:$DEFAULT_JENKINS_PIPELINE_UNIT_VERSION")
             }
-          }
-
-          // JPU 1.29 transitively brings groovy-all:2.4 which conflicts with Spock's Groovy 3 AST transform.
-          // Exclude groovy-all so the test runtime uses a single Groovy version (3.x from Spock).
-          configurations.named("testImplementation") {
-            exclude(group = "org.codehaus.groovy", module = "groovy-all")
           }
 
           val integrationTest by registering(JvmTestSuite::class) {
@@ -180,6 +156,15 @@ open class SharedLibraryPlugin
               }
             }
           }
+        }
+      }
+
+      // Wire jenkinsPlugin into each suite's implementation config so variant resolution applies
+      // rather than raw FileCollection additions that bypass Gradle's dependency management.
+      the<TestingExtension>().suites.withType<JvmTestSuite>().configureEach {
+        val implConfigName = sources.implementationConfigurationName
+        this@setupTestSuites.configurations.named(implConfigName) {
+          extendsFrom(jenkinsPlugin)
         }
       }
 

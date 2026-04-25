@@ -2,6 +2,7 @@ package com.mkobit.jenkins.pipelines
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.booleans.shouldBeFalse
+import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
@@ -10,6 +11,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotBeBlank
 import io.kotest.matchers.types.shouldBeInstanceOf
 import org.gradle.api.Project
+import org.gradle.api.artifacts.type.ArtifactTypeDefinition
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.tasks.GroovySourceDirectorySet
 import org.gradle.api.tasks.SourceSetContainer
@@ -74,26 +76,86 @@ internal class SharedLibraryPluginTest :
         config.description.shouldNotBeNull().shouldNotBeBlank()
       }
 
-      listOf(
-        "jenkinsPluginClasspath",
-        "jenkinsPluginHpis",
-        "sharedLibraryIvy",
-      ).forEach { name ->
-        describe(name) {
-          it("is not consumable") {
-            project.configurations
-              .getByName(name)
-              .isCanBeConsumed
-              .shouldBeFalse()
-          }
-          it("has a description") {
-            project.configurations
-              .getByName(name)
-              .description
-              .shouldNotBeNull()
-              .shouldNotBeBlank()
-          }
+      it("compileOnly extends jenkinsPlugin") {
+        project.configurations.getByName("compileOnly")
+          .extendsFrom.map { it.name }
+          .shouldContain("jenkinsPlugin")
+      }
+
+      it("testImplementation extends jenkinsPlugin") {
+        project.configurations.getByName("testImplementation")
+          .extendsFrom.map { it.name }
+          .shouldContain("jenkinsPlugin")
+      }
+
+      it("integrationTestImplementation extends jenkinsPlugin") {
+        project.configurations.getByName("integrationTestImplementation")
+          .extendsFrom.map { it.name }
+          .shouldContain("jenkinsPlugin")
+      }
+
+      describe("jenkinsPluginHpis") {
+        it("is resolvable") {
+          project.configurations.getByName("jenkinsPluginHpis").isCanBeResolved.shouldBeTrue()
         }
+
+        it("is not consumable") {
+          project.configurations.getByName("jenkinsPluginHpis").isCanBeConsumed.shouldBeFalse()
+        }
+
+        it("has a description") {
+          project.configurations
+            .getByName("jenkinsPluginHpis")
+            .description
+            .shouldNotBeNull()
+            .shouldNotBeBlank()
+        }
+
+        it("requests hpi artifact type") {
+          val attr = project.configurations
+            .getByName("jenkinsPluginHpis")
+            .attributes
+            .getAttribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE)
+          attr shouldBe "hpi"
+        }
+
+        it("requests hpi jenkins artifact attribute") {
+          val attr = project.configurations
+            .getByName("jenkinsPluginHpis")
+            .attributes
+            .getAttribute(JenkinsPluginRule.JENKINS_ARTIFACT_ATTRIBUTE)
+          attr shouldBe "hpi"
+        }
+
+        it("extends jenkinsPlugin") {
+          project.configurations.getByName("jenkinsPluginHpis")
+            .extendsFrom.map { it.name }
+            .shouldContain("jenkinsPlugin")
+        }
+      }
+
+      describe("sharedLibraryIvy") {
+        it("is not consumable") {
+          project.configurations
+            .getByName("sharedLibraryIvy")
+            .isCanBeConsumed
+            .shouldBeFalse()
+        }
+        it("has a description") {
+          project.configurations
+            .getByName("sharedLibraryIvy")
+            .description
+            .shouldNotBeNull()
+            .shouldNotBeBlank()
+        }
+      }
+    }
+
+    describe("attribute schema") {
+      it("registers JENKINS_ARTIFACT_ATTRIBUTE disambiguation rule") {
+        val schema = project.dependencies.attributesSchema
+        val attr = JenkinsPluginRule.JENKINS_ARTIFACT_ATTRIBUTE
+        schema.hasAttribute(attr).shouldBeTrue()
       }
     }
 

@@ -23,62 +23,72 @@ class SharedLibraryPluginSmokeTest :
 
     describe("plugin application") {
       withData(TestedGradleVersion.entries) { gradleVersion ->
-        val project = sharedLibraryProject()
-        try {
+        sharedLibraryProject().use { project ->
           val result = project.runner(gradleVersion).withArguments("help").build()
           result.task(":help")!!.outcome shouldBe TaskOutcome.SUCCESS
-        } finally {
-          project.cleanup()
         }
       }
     }
 
     describe("expected tasks are registered") {
       withData(TestedGradleVersion.entries) { gradleVersion ->
-        val project = sharedLibraryProject()
-        try {
+        sharedLibraryProject().use { project ->
           val result = project.runner(gradleVersion).withArguments("tasks", "--all").build()
           result.output shouldContain "integrationTest"
           result.output shouldContain "groovydocJar"
           result.output shouldContain "sourcesJar"
-        } finally {
-          project.cleanup()
+          result.output shouldContain "groovydoc"
+          result.output shouldContain "compileGroovy"
         }
       }
     }
 
     describe("check lifecycle includes integrationTest") {
       withData(TestedGradleVersion.entries) { gradleVersion ->
-        val project = sharedLibraryProject()
-        try {
+        sharedLibraryProject().use { project ->
           val result = project.runner(gradleVersion).withArguments("check", "--dry-run").build()
           result.output shouldContain ":integrationTest"
-        } finally {
-          project.cleanup()
+          result.output shouldContain ":test"
         }
       }
     }
 
-    describe("jenkinsPlugin configuration accepts dependencies") {
+    describe("jenkinsPlugin configuration accepts a dependency declaration") {
       withData(TestedGradleVersion.entries) { gradleVersion ->
-        val project =
-          TestProjectBuilder().apply {
-            buildFile.writeText(
-              """
-              plugins {
-                  id("com.mkobit.jenkins.pipelines.shared-library")
-              }
-              dependencies {
-                  jenkinsPlugin("org.example:fake:1.0")
-              }
-              """.trimIndent(),
-            )
-          }
-        try {
+        TestProjectBuilder().apply {
+          buildFile.writeText(
+            """
+            plugins {
+                id("com.mkobit.jenkins.pipelines.shared-library")
+            }
+            dependencies {
+                jenkinsPlugin("org.example:fake:1.0")
+            }
+            """.trimIndent(),
+          )
+        }.use { project ->
           val result = project.runner(gradleVersion).withArguments("help").build()
           result.task(":help")!!.outcome shouldBe TaskOutcome.SUCCESS
-        } finally {
-          project.cleanup()
+        }
+      }
+    }
+
+    describe("jenkinsPlugin configuration accepts a platform BOM") {
+      withData(TestedGradleVersion.entries) { gradleVersion ->
+        TestProjectBuilder().apply {
+          buildFile.writeText(
+            """
+            plugins {
+                id("com.mkobit.jenkins.pipelines.shared-library")
+            }
+            dependencies {
+                jenkinsPlugin(platform("org.example:fake-bom:1.0"))
+            }
+            """.trimIndent(),
+          )
+        }.use { project ->
+          val result = project.runner(gradleVersion).withArguments("help").build()
+          result.task(":help")!!.outcome shouldBe TaskOutcome.SUCCESS
         }
       }
     }
