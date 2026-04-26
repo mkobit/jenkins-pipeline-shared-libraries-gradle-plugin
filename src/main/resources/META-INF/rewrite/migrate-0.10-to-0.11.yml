@@ -1,0 +1,67 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.mkobit.jenkins.pipelines.MigrateSharedLibraryPlugin010To011
+displayName: Migrate jenkins-pipeline-shared-libraries-gradle-plugin from 0.10.x to 0.11.x
+description: >
+  Applies automated migrations for upgrading from plugin version 0.10.x to 0.11.x.
+  The 0.11.x release is a breaking change: the sharedLibrary {} extension is removed,
+  Jenkins plugin dependencies move to dependencies { jenkinsPlugin(...) }, and the
+  minimum Gradle version is 9.0.
+  This recipe automates the version bump and configuration renames.
+  Manual steps are required for DSL restructuring; see the migration guide.
+tags:
+  - jenkins
+  - gradle
+recipeList:
+  - org.openrewrite.gradle.plugins.ChangePluginVersion:
+      pluginId: com.mkobit.jenkins.pipelines.shared-library
+      newVersion: 0.11.0
+
+  - org.openrewrite.gradle.ChangeConfiguration:
+      oldConfigurationName: sharedLibraryImplementation
+      newConfigurationName: testImplementation
+
+  - org.openrewrite.gradle.ChangeConfiguration:
+      oldConfigurationName: sharedLibraryTestImplementation
+      newConfigurationName: testImplementation
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.mkobit.jenkins.pipelines.MigrateSharedLibraryPlugin010To011Full
+displayName: Full migration of jenkins-pipeline-shared-libraries-gradle-plugin from 0.10.x to 0.11.x
+description: >
+  Combines automated migrations with guidance for manual steps.
+  After running this recipe, complete the following manual steps:
+
+  1. Remove the sharedLibrary {} extension block entirely.
+     Any coreVersion, pipelineVersion, or unitTestingVersion properties inside it are no longer used.
+
+  2. Declare Jenkins plugin dependencies via the new jenkinsPlugin configuration:
+       dependencies {
+         jenkinsPlugin(platform(libs.jenkins.bom))
+         jenkinsPlugin(libs.pipeline.groovy.lib)
+         jenkinsPlugin("org.jenkinsci.plugins:some-plugin")
+       }
+     Replace any plugin declarations previously inside sharedLibrary { plugins { plugin("...") } }.
+
+  3. Add the Jenkins Maven repository to settings.gradle.kts dependencyResolutionManagement:
+       repositories {
+         maven { url = uri("https://repo.jenkins-ci.org/public/") }
+         mavenCentral()
+       }
+
+  4. Add a Jenkins BOM to your version catalog (libs.versions.toml):
+       [versions]
+       jenkins-bom = "5054.v620b_5d2b_d5e6"
+       [libraries]
+       jenkins-bom = { module = "io.jenkins.tools.bom:bom-2.479.x", version.ref = "jenkins-bom" }
+
+  5. Rename test source directories:
+       src/test/groovy/     -> test/unit/groovy/
+       src/test/resources/  -> test/unit/resources/
+       src/integrationTest/ -> test/integration/
+tags:
+  - jenkins
+  - gradle
+recipeList:
+  - com.mkobit.jenkins.pipelines.MigrateSharedLibraryPlugin010To011
