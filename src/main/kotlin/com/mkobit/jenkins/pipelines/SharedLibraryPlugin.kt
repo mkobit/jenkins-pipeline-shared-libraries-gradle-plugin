@@ -134,7 +134,7 @@ open class SharedLibraryPlugin
           val test by getting(JvmTestSuite::class) {
             useJUnitJupiter()
             sources.apply {
-              java.setSrcDirs(emptyList<Any>())
+              java.setSrcDirs(listOf("test/unit/java"))
               groovy.setSrcDirs(listOf("test/unit/groovy"))
               resources.setSrcDirs(listOf("test/unit/resources"))
             }
@@ -145,7 +145,9 @@ open class SharedLibraryPlugin
 
           val integrationTest by registering(JvmTestSuite::class) {
             sources.apply {
-              java.setSrcDirs(listOf(generateLocalLibraryFiles.flatMap { it.javaOutputDir }))
+              java.setSrcDirs(
+                listOf("test/integration/java", generateLocalLibraryFiles.flatMap { it.javaOutputDir }),
+              )
               groovy.setSrcDirs(listOf("test/integration/groovy"))
               resources.setSrcDirs(
                 listOf(
