@@ -176,10 +176,13 @@ open class SharedLibraryPlugin
 
       // Wire jenkinsPlugin into each suite's implementation config so variant resolution applies
       // rather than raw FileCollection additions that bypass Gradle's dependency management.
+      // Also exclude groovy-all (Groovy 2.4 bundled by jenkins-core) which conflicts with Groovy 3
+      // required by Spock and modern shared library tooling.
       the<TestingExtension>().suites.withType<JvmTestSuite>().configureEach {
         val implConfigName = sources.implementationConfigurationName
         this@setupTestSuites.configurations.named(implConfigName) {
           extendsFrom(jenkinsPlugin)
+          exclude(mapOf("group" to "org.codehaus.groovy", "module" to "groovy-all"))
         }
       }
 
