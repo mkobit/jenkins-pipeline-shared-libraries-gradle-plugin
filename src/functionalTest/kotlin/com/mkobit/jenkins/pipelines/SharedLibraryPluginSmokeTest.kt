@@ -64,6 +64,20 @@ class SharedLibraryPluginSmokeTest :
       }
     }
 
+    describe("compileIntegrationTestJava depends on generateLocalLibraryFiles") {
+      withData(TestedGradleVersion.entries) { gradleVersion ->
+        sharedLibraryProject().use { project ->
+          val result =
+            project
+              .runner(gradleVersion)
+              .withArguments("compileIntegrationTestJava", "--dry-run")
+              .build()
+          result.output shouldContain ":generateLocalLibraryFiles"
+          result.output shouldContain ":compileIntegrationTestJava"
+        }
+      }
+    }
+
     describe("check lifecycle includes integrationTest") {
       withData(TestedGradleVersion.entries) { gradleVersion ->
         sharedLibraryProject().use { project ->
