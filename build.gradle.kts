@@ -65,6 +65,7 @@ testing {
         implementation(gradleTestKit())
         implementation(libs.kotest.assertions)
         implementation(libs.kotest.runner)
+        implementation(libs.okhttp.mockwebserver)
       }
       targets.all {
         testTask.configure {
