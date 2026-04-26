@@ -115,4 +115,41 @@ class SharedLibraryPluginSmokeTest :
           }
       }
     }
+
+    describe("monorepo: test.library.root resolves relative to subproject projectDir, not rootDir") {
+      withData(TestedGradleVersion.entries) { gradleVersion ->
+        TestProjectBuilder()
+          .apply {
+            settingsFile.writeText(
+              """
+              rootProject.name = "monorepo-root"
+              include(":lib")
+              """.trimIndent(),
+            )
+            buildFile.writeText("")
+            file("lib/build.gradle.kts").writeText(
+              """
+              plugins {
+                  id("com.mkobit.jenkins.pipelines.shared-library")
+              }
+              tasks.register("printLibraryRoot") {
+                  val t = tasks.named("integrationTest")
+                  doLast {
+                      val testTask = t.get() as org.gradle.api.tasks.testing.Test
+                      println("root=" + testTask.systemProperties["test.library.root"])
+                  }
+              }
+              """.trimIndent(),
+            )
+          }.use { project ->
+            val result =
+              project
+                .runner(gradleVersion)
+                .withArguments(":lib:printLibraryRoot")
+                .build()
+            val expectedRoot = project.dir.resolve("lib").absolutePath
+            result.output shouldContain "root=$expectedRoot"
+          }
+      }
+    }
   })
