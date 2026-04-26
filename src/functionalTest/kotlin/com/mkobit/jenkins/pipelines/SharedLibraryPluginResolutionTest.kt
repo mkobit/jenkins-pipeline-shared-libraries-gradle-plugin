@@ -140,6 +140,63 @@ class SharedLibraryPluginResolutionTest :
       }
     }
 
+    describe("groovy-all absent from testRuntimeClasspath and integrationTestRuntimeClasspath") {
+      withData(TestedGradleVersion.entries) { gradleVersion ->
+        TestProjectBuilder()
+          .apply {
+            settingsFile.writeText(
+              """
+              dependencyResolutionManagement {
+                  repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+                  repositories {
+                      mavenCentral()
+                      maven("https://repo.jenkins-ci.org/public/")
+                  }
+              }
+              rootProject.name = "groovy-all-exclusion-test"
+              """.trimIndent(),
+            )
+            buildFile.writeText(
+              """
+              plugins {
+                  id("com.mkobit.jenkins.pipelines.shared-library")
+              }
+              dependencies {
+                  jenkinsPlugin(platform("$JENKINS_BOM"))
+                  jenkinsPlugin("$WORKFLOW_API")
+              }
+              tasks.register("printGroovyAll") {
+                  val testRt = configurations["testRuntimeClasspath"]
+                  val integrationTestRt = configurations["integrationTestRuntimeClasspath"]
+                  doLast {
+                      testRt.resolvedConfiguration.resolvedArtifacts.forEach {
+                          println("test:" + it.file.name)
+                      }
+                      integrationTestRt.resolvedConfiguration.resolvedArtifacts.forEach {
+                          println("integration:" + it.file.name)
+                      }
+                  }
+              }
+              """.trimIndent(),
+            )
+          }.use { project ->
+            val result =
+              project
+                .runner(gradleVersion)
+                .withArguments("printGroovyAll")
+                .build()
+
+            val testFiles = result.output.lines().filter { it.startsWith("test:") }
+            val integrationFiles = result.output.lines().filter { it.startsWith("integration:") }
+
+            testFiles.shouldNotBeEmpty()
+            integrationFiles.shouldNotBeEmpty()
+            testFiles.forNone { it shouldContain "groovy-all" }
+            integrationFiles.forNone { it shouldContain "groovy-all" }
+          }
+      }
+    }
+
     describe("BOM version constraint propagates through jenkinsPlugin") {
       withData(TestedGradleVersion.entries) { gradleVersion ->
         jenkinsProject().use { project ->
