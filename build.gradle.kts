@@ -73,6 +73,14 @@ testing {
           // java-gradle-plugin only wires pluginUnderTestMetadata into the test suite;
           // add it explicitly so GradleRunner.withPluginClasspath() works here.
           classpath += files(tasks.named("pluginUnderTestMetadata"))
+          // Resolution tests hit the Jenkins Maven repo and are slow on a cold cache.
+          // Default to excluding them from the normal check so CI can run them as a
+          // separate cacheable step. Override with -Pkotest.tags=resolution (or any
+          // other Kotest tag expression) to target a specific subset.
+          systemProperty(
+            "kotest.filter.tags",
+            project.findProperty("kotest.tags") ?: "!resolution",
+          )
         }
       }
     }

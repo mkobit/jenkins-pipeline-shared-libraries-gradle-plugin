@@ -17,7 +17,7 @@ jobs:
   build:
     name: Java ${{ matrix.java }} / Gradle ${{ matrix.gradle }}
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     permissions:
       contents: read
     strategy:
@@ -41,3 +41,5 @@ jobs:
           gradle-version: ${{ matrix.gradle }}
       - name: Build
         run: gradle build --continue
+      - name: Functional tests (resolution)
+        run: gradle functionalTest --continue -Pkotest.tags=resolution

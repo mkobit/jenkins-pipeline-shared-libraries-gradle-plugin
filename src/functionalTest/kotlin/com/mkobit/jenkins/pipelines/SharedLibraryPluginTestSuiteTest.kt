@@ -6,10 +6,9 @@ import io.kotest.datatest.withData
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotContain
 import org.gradle.testkit.runner.TaskOutcome
+import testsupport.JENKINS_BOM
 import testsupport.TestProjectBuilder
 import testsupport.TestedGradleVersion
-
-private const val JENKINS_BOM = "io.jenkins.tools.bom:bom-2.479.x:5054.v620b_5d2b_d5e6"
 
 // Tests that the shared-library plugin correctly wires jenkinsPlugin JARs into
 // consumer-defined test suites across all three JVM languages.

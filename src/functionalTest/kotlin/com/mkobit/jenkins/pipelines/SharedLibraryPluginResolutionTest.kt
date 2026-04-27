@@ -10,11 +10,10 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldEndWith
 import io.kotest.matchers.string.shouldNotContain
+import testsupport.JENKINS_BOM
 import testsupport.TestProjectBuilder
 import testsupport.TestedGradleVersion
-
-private const val JENKINS_BOM = "io.jenkins.tools.bom:bom-2.479.x:5054.v620b_5d2b_d5e6"
-private const val WORKFLOW_API = "org.jenkins-ci.plugins.workflow:workflow-api"
+import testsupport.WORKFLOW_API
 
 // Resolution-tier tests hit the Jenkins Maven repo on first run (cold cache) and are fast
 // on subsequent runs once Gradle's module cache is warm.
@@ -319,6 +318,11 @@ class SharedLibraryPluginResolutionTest :
 
     describe("BOM version constraint propagates through jenkinsPlugin") {
       withData(TestedGradleVersion.entries) { gradleVersion ->
+        // workflow-api is declared without a version — the BOM must supply it.
+        // If BOM wiring is broken Gradle throws an unresolvable dependency error,
+        // which causes the runner to throw UnexpectedBuildFailure (test fails).
+        // The positive assertion is that the resolved line shows a concrete version
+        // (not an empty coordinate), proving the BOM actually constrained it.
         jenkinsProject().use { project ->
           val result =
             project
@@ -326,9 +330,9 @@ class SharedLibraryPluginResolutionTest :
               .withArguments("dependencies", "--configuration", "testRuntimeClasspath")
               .build()
 
-          // BOM pins workflow-api to a specific version; the dep output should show
-          // the BOM-selected version and not "FAILED" or an unresolved coordinate.
-          result.output shouldContain "workflow-api"
+          val workflowLine =
+            result.output.lines().firstOrNull { it.contains("workflow-api") }
+          workflowLine shouldContain Regex("workflow-api:\\d")
           result.output shouldNotContain "FAILED"
         }
       }
