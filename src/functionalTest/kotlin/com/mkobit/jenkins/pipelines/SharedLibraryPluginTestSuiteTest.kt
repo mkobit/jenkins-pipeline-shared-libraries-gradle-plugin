@@ -55,7 +55,7 @@ class SharedLibraryPluginTestSuiteTest :
               }
               """.trimIndent(),
             )
-            file("src/test/java/com/example/JenkinsApiTest.java").writeText(
+            file("test/unit/java/com/example/JenkinsApiTest.java").writeText(
               """
               package com.example;
               import hudson.model.Item;
@@ -95,7 +95,7 @@ class SharedLibraryPluginTestSuiteTest :
               }
               """.trimIndent(),
             )
-            file("src/test/groovy/com/example/JenkinsSpockTest.groovy").writeText(
+            file("test/unit/groovy/com/example/JenkinsSpockTest.groovy").writeText(
               """
               package com.example
               import hudson.model.Item

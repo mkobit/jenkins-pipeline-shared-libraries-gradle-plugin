@@ -25,7 +25,7 @@ jobs:
       matrix:
         include:
           - java: 17
-            gradle: "9.0"
+            gradle: "9.0.0"
           - java: 17
             gradle: "9.4.1"
           - java: 21

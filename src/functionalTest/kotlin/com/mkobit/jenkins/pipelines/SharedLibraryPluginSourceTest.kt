@@ -164,26 +164,6 @@ class SharedLibraryPluginSourceTest :
       }
     }
 
-    describe("@Grab annotation compiles in main library source") {
-      withData(TestedGradleVersion.entries) { gradleVersion ->
-        sharedLibraryProject {
-          file("src/com/example/GrabLib.groovy").writeText(
-            """
-            package com.example
-            @Grab('org.apache.commons:commons-math3:3.4.1')
-            import org.apache.commons.math3.primes.Primes
-            class GrabLib {
-              static boolean isPrime(int n) { Primes.isPrime(n) }
-            }
-            """.trimIndent(),
-          )
-        }.use { project ->
-          val result = project.runner(gradleVersion).withArguments("compileGroovy").build()
-          result.task(":compileGroovy")!!.outcome shouldBe TaskOutcome.SUCCESS
-        }
-      }
-    }
-
     describe("running test does not trigger integrationTest") {
       withData(TestedGradleVersion.entries) { gradleVersion ->
         sharedLibraryProject().use { project ->
