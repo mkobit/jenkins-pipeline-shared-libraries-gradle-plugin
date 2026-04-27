@@ -18,6 +18,13 @@ class SharedLibraryPluginSmokeTest :
           plugins {
               id("com.mkobit.jenkins.pipelines.shared-library")
           }
+          tasks.register("printIntegrationTestWorkingDir") {
+              val t = tasks.named("integrationTest")
+              doLast {
+                  val testTask = t.get() as org.gradle.api.tasks.testing.Test
+                  println("workingDir=" + testTask.workingDir.absolutePath)
+              }
+          }
           """.trimIndent(),
         )
       }
@@ -127,6 +134,20 @@ class SharedLibraryPluginSmokeTest :
             val result = project.runner(gradleVersion).withArguments("help").build()
             result.task(":help")!!.outcome shouldBe TaskOutcome.SUCCESS
           }
+      }
+    }
+
+    describe("integrationTest workingDir is set to the project build directory") {
+      withData(TestedGradleVersion.entries) { gradleVersion ->
+        sharedLibraryProject().use { project ->
+          val result =
+            project
+              .runner(gradleVersion)
+              .withArguments("printIntegrationTestWorkingDir")
+              .build()
+          val expectedWorkingDir = project.dir.resolve("build").absolutePath
+          result.output shouldContain "workingDir=$expectedWorkingDir"
+        }
       }
     }
 

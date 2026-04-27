@@ -6,6 +6,7 @@ import io.kotest.datatest.withData
 import io.kotest.inspectors.forNone
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldNotBeEmpty
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldEndWith
 import io.kotest.matchers.string.shouldNotContain
@@ -194,6 +195,125 @@ class SharedLibraryPluginResolutionTest :
             testFiles.forNone { it shouldContain "groovy-all" }
             integrationFiles.forNone { it shouldContain "groovy-all" }
           }
+      }
+    }
+
+    describe("jenkinsWar resolves exactly one WAR artifact") {
+      withData(TestedGradleVersion.entries) { gradleVersion ->
+        jenkinsProject().use { project ->
+          project.buildFile.appendText(
+            """
+            |
+            |tasks.register("printJenkinsWar") {
+            |    val war = configurations["jenkinsWar"]
+            |    doLast {
+            |        war.resolvedConfiguration.resolvedArtifacts.forEach {
+            |            println("war:" + it.file.name)
+            |        }
+            |    }
+            |}
+            """.trimMargin(),
+          )
+          val result =
+            project
+              .runner(gradleVersion)
+              .withArguments("printJenkinsWar")
+              .build()
+
+          val warFiles =
+            result.output
+              .lines()
+              .filter { it.startsWith("war:") }
+              .map { it.removePrefix("war:") }
+              .filter { it.endsWith(".war") }
+
+          warFiles.size shouldBe 1
+          warFiles.single() shouldContain "jenkins-war"
+        }
+      }
+    }
+
+    describe("groovy-all absent from integrationTestCompileClasspath") {
+      withData(TestedGradleVersion.entries) { gradleVersion ->
+        TestProjectBuilder()
+          .apply {
+            settingsFile.writeText(
+              """
+              dependencyResolutionManagement {
+                  repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+                  repositories {
+                      mavenCentral()
+                      maven("https://repo.jenkins-ci.org/public/")
+                  }
+              }
+              rootProject.name = "groovy-all-compile-exclusion-test"
+              """.trimIndent(),
+            )
+            buildFile.writeText(
+              """
+              plugins {
+                  id("com.mkobit.jenkins.pipelines.shared-library")
+              }
+              dependencies {
+                  jenkinsPlugin(platform("$JENKINS_BOM"))
+                  jenkinsPlugin("$WORKFLOW_API")
+              }
+              tasks.register("printCompileClasspath") {
+                  val cp = configurations["integrationTestCompileClasspath"]
+                  doLast {
+                      cp.resolvedConfiguration.resolvedArtifacts.forEach {
+                          println("compile:" + it.file.name)
+                      }
+                  }
+              }
+              """.trimIndent(),
+            )
+          }.use { project ->
+            val result =
+              project
+                .runner(gradleVersion)
+                .withArguments("printCompileClasspath")
+                .build()
+
+            val compileFiles = result.output.lines().filter { it.startsWith("compile:") }
+            compileFiles.shouldNotBeEmpty()
+            compileFiles.forNone { it shouldContain "groovy-all" }
+          }
+      }
+    }
+
+    describe("integrationTestGroovyAllRuntime contains groovy-all:2.4.x") {
+      withData(TestedGradleVersion.entries) { gradleVersion ->
+        jenkinsProject().use { project ->
+          project.buildFile.appendText(
+            """
+            |
+            |tasks.register("printGroovyAllRuntime") {
+            |    val rt = configurations["integrationTestGroovyAllRuntime"]
+            |    doLast {
+            |        rt.resolvedConfiguration.resolvedArtifacts.forEach {
+            |            println("groovyAllRuntime:" + it.file.name)
+            |        }
+            |    }
+            |}
+            """.trimMargin(),
+          )
+          val result =
+            project
+              .runner(gradleVersion)
+              .withArguments("printGroovyAllRuntime")
+              .build()
+
+          val groovyAllFiles =
+            result.output
+              .lines()
+              .filter { it.startsWith("groovyAllRuntime:") }
+              .map { it.removePrefix("groovyAllRuntime:") }
+
+          groovyAllFiles.size shouldBe 1
+          groovyAllFiles.single() shouldContain "groovy-all"
+          groovyAllFiles.single() shouldContain "2.4"
+        }
       }
     }
 
