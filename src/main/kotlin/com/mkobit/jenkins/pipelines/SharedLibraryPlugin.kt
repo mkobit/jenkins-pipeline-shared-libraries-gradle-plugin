@@ -103,7 +103,6 @@ open class SharedLibraryPlugin
       configurations.create(JENKINS_PLUGIN_HPIS_CONFIGURATION) {
         isCanBeResolved = true
         isCanBeConsumed = false
-        isVisible = false
         description = "Jenkins plugin HPI archives for embedded Jenkins runtime (integration tests)"
         extendsFrom(configurations.getByName(JENKINS_PLUGIN_CONFIGURATION))
         attributes {
@@ -116,7 +115,6 @@ open class SharedLibraryPlugin
       configurations.create(JENKINS_WAR_CONFIGURATION) {
         isCanBeResolved = true
         isCanBeConsumed = false
-        isVisible = false
         description = "Jenkins WAR file for the embedded Jenkins runtime (integration tests)"
       }
       dependencies.addProvider(JENKINS_WAR_CONFIGURATION, ext.jenkins.version.map { v -> "org.jenkins-ci.main:jenkins-war:$v@war" })
@@ -174,7 +172,6 @@ open class SharedLibraryPlugin
         configurations.create(GROOVY_ALL_RUNTIME_CONFIGURATION) {
           isCanBeResolved = true
           isCanBeConsumed = false
-          isVisible = false
         }
       dependencies.add(GROOVY_ALL_RUNTIME_CONFIGURATION, GROOVY_ALL_COORDINATES)
 
@@ -280,7 +277,6 @@ open class SharedLibraryPlugin
         configurations.create(IVY_CONFIGURATION) {
           isCanBeResolved = true
           isCanBeConsumed = false
-          isVisible = false
           description = "Ivy for @Grab support in shared library Groovy sources"
         }
       dependencies.add(ivy.name, IVY_COORDINATES)
