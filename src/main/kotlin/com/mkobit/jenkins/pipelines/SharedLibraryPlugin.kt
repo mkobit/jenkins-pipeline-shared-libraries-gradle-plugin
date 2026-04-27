@@ -199,6 +199,10 @@ open class SharedLibraryPlugin
               testTask.configure {
                 mustRunAfter(test)
                 description = "Runs integration tests against an embedded Jenkins runtime"
+                // WarExploder hardcodes ./target/jenkins-for-test as the WAR explode directory.
+                // Setting workingDir to the build directory redirects that path inside build/,
+                // which is already gitignored, keeping the project root clean.
+                workingDir = layout.buildDirectory.asFile.get()
                 classpath += hpiFiles
                 classpath += groovyAllRuntime
                 maxParallelForks = 1
