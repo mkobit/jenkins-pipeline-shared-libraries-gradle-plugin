@@ -14,10 +14,8 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.kotlin.dsl.invoke
-import org.gradle.kotlin.dsl.property
-import java.net.URL
 
-internal open class JenkinsIntegrationPlugin : Plugin<Project> {
+internal class JenkinsIntegrationPlugin : Plugin<Project> {
   companion object {
     private const val EXTENSION_NAME = "jenkinsIntegration"
     private const val RETRIEVAL_TASK_GROUP = "Jenkins retrieve metadata"
@@ -25,14 +23,9 @@ internal open class JenkinsIntegrationPlugin : Plugin<Project> {
 
   override fun apply(target: Project) {
     target.run {
-      val integration =
-        extensions.create(
-          EXTENSION_NAME,
-          JenkinsIntegrationExtension::class.java,
-          objects.property<URL>(),
-          objects.property<Authentication>().apply { set(AnonymousAuthentication) },
-          objects.directoryProperty().apply { set(layout.buildDirectory.dir("jenkinsIntegrationDownloads")) },
-        )
+      val integration = extensions.create(EXTENSION_NAME, JenkinsIntegrationExtension::class.java)
+      integration.authentication.convention(AnonymousAuthentication)
+      integration.downloadDirectory.convention(layout.buildDirectory.dir("jenkinsIntegrationDownloads"))
 
       tasks {
         register("retrieveJenkinsGdsl") {

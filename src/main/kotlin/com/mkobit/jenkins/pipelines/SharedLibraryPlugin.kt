@@ -21,7 +21,7 @@ import org.gradle.process.CommandLineArgumentProvider
 import org.gradle.testing.base.TestingExtension
 import javax.inject.Inject
 
-open class SharedLibraryPlugin
+class SharedLibraryPlugin
   @Inject
   constructor(
     private val projectLayout: ProjectLayout,
@@ -65,6 +65,7 @@ open class SharedLibraryPlugin
         val ext = extensions.create("sharedLibrary", SharedLibraryExtension::class.java)
         ext.jenkins.version.convention(DEFAULT_CORE_VERSION)
         ext.jenkins.testHarnessVersion.convention(DEFAULT_TEST_HARNESS_VERSION)
+        ext.pipelineUnitVersion.convention(DEFAULT_JENKINS_PIPELINE_UNIT_VERSION)
 
         apply<GroovyPlugin>()
         apply<JenkinsIntegrationPlugin>()
@@ -190,9 +191,6 @@ open class SharedLibraryPlugin
               groovy.setSrcDirs(listOf("test/unit/groovy"))
               resources.setSrcDirs(listOf("test/unit/resources"))
             }
-            dependencies {
-              implementation("com.lesfurets:jenkins-pipeline-unit:$DEFAULT_JENKINS_PIPELINE_UNIT_VERSION")
-            }
           }
 
           val integrationTest by registering(JvmTestSuite::class) {
@@ -259,7 +257,11 @@ open class SharedLibraryPlugin
       }
 
       // DependencyCollector (used inside suites DSL) has no Provider<String> overload;
-      // add the test harness here via DependencyHandler.addProvider which accepts Provider<?>.
+      // add versioned deps here via DependencyHandler.addProvider which accepts Provider<?>.
+      dependencies.addProvider(
+        "testImplementation",
+        ext.pipelineUnitVersion.map { v: String -> "com.lesfurets:jenkins-pipeline-unit:$v" },
+      )
       dependencies.addProvider(
         "${INTEGRATION_TEST_SUITE}Implementation",
         ext.jenkins.testHarnessVersion.map { v: String -> "org.jenkins-ci.main:jenkins-test-harness:$v" },

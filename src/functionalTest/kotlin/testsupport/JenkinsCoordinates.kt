@@ -8,3 +8,4 @@ const val WORKFLOW_API = "org.jenkins-ci.plugins.workflow:workflow-api"
 // Mirror of SharedLibraryPlugin defaults — update here when the plugin defaults change.
 const val DEFAULT_CORE_VERSION = "2.479.1"
 const val DEFAULT_TEST_HARNESS_VERSION = "2391.v9b_3e2d3351a_2"
+const val DEFAULT_PIPELINE_UNIT_VERSION = "1.29"
