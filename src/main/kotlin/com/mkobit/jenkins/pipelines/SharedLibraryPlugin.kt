@@ -28,8 +28,8 @@ open class SharedLibraryPlugin
   ) : Plugin<Project> {
     companion object {
       private const val DEFAULT_JENKINS_PIPELINE_UNIT_VERSION = "1.29"
-      private const val DEFAULT_CORE_VERSION = "2.479.1"
-      private const val DEFAULT_TEST_HARNESS_VERSION = "2391.v9b_3e2d3351a_2"
+      internal const val DEFAULT_CORE_VERSION = "2.479.1"
+      internal const val DEFAULT_TEST_HARNESS_VERSION = "2391.v9b_3e2d3351a_2"
 
       private const val INTEGRATION_TEST_SUITE = "integrationTest"
 
@@ -62,18 +62,22 @@ open class SharedLibraryPlugin
 
     override fun apply(target: Project) {
       target.run {
+        val ext = extensions.create("sharedLibrary", SharedLibraryExtension::class.java)
+        ext.jenkins.version.convention(DEFAULT_CORE_VERSION)
+        ext.jenkins.testHarnessVersion.convention(DEFAULT_TEST_HARNESS_VERSION)
+
         apply<GroovyPlugin>()
         apply<JenkinsIntegrationPlugin>()
-        setupJenkinsPluginConfiguration()
+        setupJenkinsPluginConfiguration(ext)
         setupMain()
-        setupTestSuites()
+        setupTestSuites(ext)
         setupDocumentationTasks()
         setupIvyGrabSupport()
       }
     }
 
     @Suppress("DEPRECATION")
-    private fun Project.setupJenkinsPluginConfiguration() {
+    private fun Project.setupJenkinsPluginConfiguration(ext: SharedLibraryExtension) {
       dependencies.components.all(JenkinsPluginRule::class.java)
 
       dependencies.attributesSchema.attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE) {
@@ -89,7 +93,7 @@ open class SharedLibraryPlugin
         isCanBeConsumed = false
         description = "Jenkins HPI/JPI plugin dependencies for shared library compilation and testing"
       }
-      dependencies.add(JENKINS_PLUGIN_CONFIGURATION, "org.jenkins-ci.main:jenkins-core:$DEFAULT_CORE_VERSION")
+      dependencies.addProvider(JENKINS_PLUGIN_CONFIGURATION, ext.jenkins.version.map { v -> "org.jenkins-ci.main:jenkins-core:$v" })
       dependencies.add(JENKINS_PLUGIN_CONFIGURATION, DEFAULT_PIPELINE_GROOVY_LIB)
       dependencies.add(JENKINS_PLUGIN_CONFIGURATION, DEFAULT_WORKFLOW_JOB)
       dependencies.add(JENKINS_PLUGIN_CONFIGURATION, DEFAULT_WORKFLOW_BASIC_STEPS)
@@ -115,9 +119,7 @@ open class SharedLibraryPlugin
         isVisible = false
         description = "Jenkins WAR file for the embedded Jenkins runtime (integration tests)"
       }
-      dependencies.add(JENKINS_WAR_CONFIGURATION, "org.jenkins-ci.main:jenkins-war:$DEFAULT_CORE_VERSION") {
-        artifact { type = "war" }
-      }
+      dependencies.addProvider(JENKINS_WAR_CONFIGURATION, ext.jenkins.version.map { v -> "org.jenkins-ci.main:jenkins-war:$v@war" })
     }
 
     private fun Project.setupMain() {
@@ -132,7 +134,7 @@ open class SharedLibraryPlugin
       }
     }
 
-    private fun Project.setupTestSuites() {
+    private fun Project.setupTestSuites(ext: SharedLibraryExtension) {
       val jenkinsPlugin = configurations.getByName(JENKINS_PLUGIN_CONFIGURATION)
 
       // Lenient view so plain-JAR transitives that don't publish HPI are silently skipped
@@ -209,9 +211,6 @@ open class SharedLibraryPlugin
                 ),
               )
             }
-            dependencies {
-              implementation("org.jenkins-ci.main:jenkins-test-harness:$DEFAULT_TEST_HARNESS_VERSION")
-            }
             targets.all {
               testTask.configure {
                 mustRunAfter(test)
@@ -261,6 +260,13 @@ open class SharedLibraryPlugin
           exclude(mapOf("group" to "org.codehaus.groovy", "module" to "groovy-all"))
         }
       }
+
+      // DependencyCollector (used inside suites DSL) has no Provider<String> overload;
+      // add the test harness here via DependencyHandler.addProvider which accepts Provider<?>.
+      dependencies.addProvider(
+        "${INTEGRATION_TEST_SUITE}Implementation",
+        ext.jenkins.testHarnessVersion.map { v: String -> "org.jenkins-ci.main:jenkins-test-harness:$v" },
+      )
 
       val integrationTestSuite = the<TestingExtension>().suites.named(INTEGRATION_TEST_SUITE)
       tasks.named(LifecycleBasePlugin.CHECK_TASK_NAME) {
