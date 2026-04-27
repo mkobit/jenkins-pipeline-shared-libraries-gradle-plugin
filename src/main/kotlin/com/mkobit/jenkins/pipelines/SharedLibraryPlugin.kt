@@ -37,6 +37,19 @@ open class SharedLibraryPlugin
       private const val JENKINS_PLUGIN_HPIS_CONFIGURATION = "jenkinsPluginHpis"
       private const val JENKINS_WAR_CONFIGURATION = "jenkinsWar"
 
+      // Default pipeline runtime added to jenkinsPlugin automatically.
+      // Version-free: the user's Jenkins BOM manages them. pipeline-groovy-lib
+      // provides the library loading engine; its transitive required dependencies
+      // (workflow-cps, workflow-api, script-security, etc.) are pulled in as HPIs.
+      // workflow-job, workflow-basic-steps, and workflow-durable-task-step cover
+      // the minimum step surface (node, echo, sh) for JenkinsRule integration tests.
+      // Users who need additional plugins (pipeline-model-definition, lockable-resources,
+      // etc.) declare them via jenkinsPlugin(...) in their build script.
+      private const val DEFAULT_PIPELINE_GROOVY_LIB = "io.jenkins.plugins:pipeline-groovy-lib"
+      private const val DEFAULT_WORKFLOW_JOB = "org.jenkins-ci.plugins.workflow:workflow-job"
+      private const val DEFAULT_WORKFLOW_BASIC_STEPS = "org.jenkins-ci.plugins.workflow:workflow-basic-steps"
+      private const val DEFAULT_WORKFLOW_DURABLE_TASK_STEP = "org.jenkins-ci.plugins.workflow:workflow-durable-task-step"
+
       private const val IVY_CONFIGURATION = "sharedLibraryIvy"
       private const val IVY_COORDINATES = "org.apache.ivy:ivy:2.4.0"
 
@@ -77,6 +90,10 @@ open class SharedLibraryPlugin
         description = "Jenkins HPI/JPI plugin dependencies for shared library compilation and testing"
       }
       dependencies.add(JENKINS_PLUGIN_CONFIGURATION, "org.jenkins-ci.main:jenkins-core:$DEFAULT_CORE_VERSION")
+      dependencies.add(JENKINS_PLUGIN_CONFIGURATION, DEFAULT_PIPELINE_GROOVY_LIB)
+      dependencies.add(JENKINS_PLUGIN_CONFIGURATION, DEFAULT_WORKFLOW_JOB)
+      dependencies.add(JENKINS_PLUGIN_CONFIGURATION, DEFAULT_WORKFLOW_BASIC_STEPS)
+      dependencies.add(JENKINS_PLUGIN_CONFIGURATION, DEFAULT_WORKFLOW_DURABLE_TASK_STEP)
 
       // Internal: raw HPI archives for the embedded Jenkins runtime used by JenkinsRule.
       configurations.create(JENKINS_PLUGIN_HPIS_CONFIGURATION) {
