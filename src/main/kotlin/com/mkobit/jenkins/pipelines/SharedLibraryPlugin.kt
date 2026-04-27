@@ -17,6 +17,7 @@ import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.*
 import org.gradle.language.base.plugins.LifecycleBasePlugin
+import org.gradle.process.CommandLineArgumentProvider
 import org.gradle.testing.base.TestingExtension
 import javax.inject.Inject
 
@@ -34,9 +35,16 @@ open class SharedLibraryPlugin
 
       private const val JENKINS_PLUGIN_CONFIGURATION = "jenkinsPlugin"
       private const val JENKINS_PLUGIN_HPIS_CONFIGURATION = "jenkinsPluginHpis"
+      private const val JENKINS_WAR_CONFIGURATION = "jenkinsWar"
 
       private const val IVY_CONFIGURATION = "sharedLibraryIvy"
       private const val IVY_COORDINATES = "org.apache.ivy:ivy:2.4.0"
+
+      // groovy-all:2.4.x ships with Jenkins core and contains DGM classes (SqlGroovyMethods etc.)
+      // referenced by script-security's SandboxInterceptor static initializer. These classes
+      // were removed in Groovy 3.x so they must be supplied explicitly for integration tests.
+      private const val GROOVY_ALL_RUNTIME_CONFIGURATION = "integrationTestGroovyAllRuntime"
+      private const val GROOVY_ALL_COORDINATES = "org.codehaus.groovy:groovy-all:2.4.21"
     }
 
     override fun apply(target: Project) {
@@ -82,6 +90,17 @@ open class SharedLibraryPlugin
           attribute(JenkinsPluginRule.JENKINS_ARTIFACT_ATTRIBUTE, "hpi")
         }
       }
+
+      // Internal: Jenkins WAR for WarExploder (JenkinsRule). Resolved lazily at test execution.
+      configurations.create(JENKINS_WAR_CONFIGURATION) {
+        isCanBeResolved = true
+        isCanBeConsumed = false
+        isVisible = false
+        description = "Jenkins WAR file for the embedded Jenkins runtime (integration tests)"
+      }
+      dependencies.add(JENKINS_WAR_CONFIGURATION, "org.jenkins-ci.main:jenkins-war:$DEFAULT_CORE_VERSION") {
+        artifact { type = "war" }
+      }
     }
 
     private fun Project.setupMain() {
@@ -101,6 +120,8 @@ open class SharedLibraryPlugin
 
       // Lenient view so plain-JAR transitives that don't publish HPI are silently skipped
       // rather than failing resolution when artifactType=hpi is requested globally.
+      // JpiCompatibilityRule makes plain JARs compatible with the HPI request; filter to actual
+      // .hpi/.jpi files so transitive JARs (e.g. groovy-all) don't leak onto the test classpath.
       val hpiFiles =
         configurations
           .getByName(JENKINS_PLUGIN_HPIS_CONFIGURATION)
@@ -108,6 +129,7 @@ open class SharedLibraryPlugin
           .artifactView { isLenient = true }
           .artifacts
           .artifactFiles
+          .filter { it.name.endsWith(".hpi") || it.name.endsWith(".jpi") }
 
       val srcDir =
         projectLayout.projectDirectory
@@ -122,6 +144,20 @@ open class SharedLibraryPlugin
           .dir("resources")
           .asFile.absolutePath
       val libraryRoot = projectLayout.projectDirectory.asFile.absolutePath
+
+      val jenkinsWar = configurations.getByName(JENKINS_WAR_CONFIGURATION)
+
+      // Integration tests need groovy-all at *runtime only* so SandboxInterceptor
+      // (script-security plugin) can load SqlGroovyMethods and other Groovy 2.4 DGM classes
+      // that no longer exist in the groovy-3.x module jars. An isolated configuration bypasses
+      // the groovy-all exclusion on implementation, keeping it off the compile classpath.
+      val groovyAllRuntime =
+        configurations.create(GROOVY_ALL_RUNTIME_CONFIGURATION) {
+          isCanBeResolved = true
+          isCanBeConsumed = false
+          isVisible = false
+        }
+      dependencies.add(GROOVY_ALL_RUNTIME_CONFIGURATION, GROOVY_ALL_COORDINATES)
 
       val generateLocalLibraryFiles =
         tasks.register<GenerateLocalLibraryFiles>("generateLocalLibraryFiles") {
@@ -164,12 +200,28 @@ open class SharedLibraryPlugin
                 mustRunAfter(test)
                 description = "Runs integration tests against an embedded Jenkins runtime"
                 classpath += hpiFiles
+                classpath += groovyAllRuntime
                 maxParallelForks = 1
                 maxHeapSize = "2g"
                 systemProperty("test.library.root", libraryRoot)
                 systemProperty("test.library.src", srcDir)
                 systemProperty("test.library.vars", varsDir)
                 systemProperty("test.library.resources", resourcesDir)
+                jvmArgumentProviders.add(
+                  CommandLineArgumentProvider {
+                    listOf("-Djth.jenkins-war.path=${jenkinsWar.files.single { it.extension == "war" }.absolutePath}")
+                  },
+                )
+                // Jenkins uses XStream, Guice, and other reflection-heavy libraries that
+                // require access to JDK internals sealed by Java 9+ strong encapsulation.
+                jvmArgs(
+                  "--add-opens=java.base/java.util=ALL-UNNAMED",
+                  "--add-opens=java.base/java.lang=ALL-UNNAMED",
+                  "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+                  "--add-opens=java.base/java.text=ALL-UNNAMED",
+                  "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
+                  "--add-opens=java.desktop/java.awt=ALL-UNNAMED",
+                )
               }
             }
           }
@@ -178,8 +230,9 @@ open class SharedLibraryPlugin
 
       // Wire jenkinsPlugin into each suite's implementation config so variant resolution applies
       // rather than raw FileCollection additions that bypass Gradle's dependency management.
-      // Also exclude groovy-all (Groovy 2.4 bundled by jenkins-core) which conflicts with Groovy 3
-      // required by Spock and modern shared library tooling.
+      // Exclude groovy-all (Groovy 2.4 bundled by jenkins-core): having it on the compile
+      // classpath alongside groovy:3.x (from Spock 2.x) causes the Groovy compiler to pick up
+      // the 2.4 runtime, breaking Spock compilation entirely.
       the<TestingExtension>().suites.withType<JvmTestSuite>().configureEach {
         val implConfigName = sources.implementationConfigurationName
         this@setupTestSuites.configurations.named(implConfigName) {
