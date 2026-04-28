@@ -27,6 +27,13 @@ class SharedLibraryPlugin
     private val projectLayout: ProjectLayout,
   ) : Plugin<Project> {
     companion object {
+      // Baseline versions this plugin was built and integration-tested against.
+      // These are the defaults wired into every consumer project that applies the plugin.
+      // They correspond to the Jenkins 2.479.x LTS line.
+      // Consumers on a different LTS line should override via:
+      //   sharedLibrary { jenkins { version = "..."; testHarnessVersion = "..." } }
+      // These constants are separate from whatever versions a consumer uses in their
+      // own build.gradle.kts for compilation or IDE support — those have no effect here.
       private const val DEFAULT_JENKINS_PIPELINE_UNIT_VERSION = "1.29"
       internal const val DEFAULT_CORE_VERSION = "2.479.1"
       internal const val DEFAULT_TEST_HARNESS_VERSION = "2391.v9b_3e2d3351a_2"
