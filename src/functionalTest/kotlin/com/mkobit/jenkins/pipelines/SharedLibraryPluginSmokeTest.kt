@@ -18,11 +18,12 @@ class SharedLibraryPluginSmokeTest :
           plugins {
               id("com.mkobit.jenkins.pipelines.shared-library")
           }
-          tasks.register("printIntegrationTestWorkingDir") {
+          tasks.register("printIntegrationTestWarExploderConfig") {
               val t = tasks.named("integrationTest")
               doLast {
                   val testTask = t.get() as org.gradle.api.tasks.testing.Test
-                  println("workingDir=" + testTask.workingDir.absolutePath)
+                  println("buildDirectory=" + testTask.systemProperties["buildDirectory"])
+                  println("outputDirs=" + testTask.outputs.files.joinToString(",") { it.absolutePath })
               }
           }
           """.trimIndent(),
@@ -137,16 +138,17 @@ class SharedLibraryPluginSmokeTest :
       }
     }
 
-    describe("integrationTest workingDir is set to the project build directory") {
+    describe("integrationTest sets buildDirectory system property to build dir for WarExploder") {
       withData(TestedGradleVersion.entries) { gradleVersion ->
         sharedLibraryProject().use { project ->
           val result =
             project
               .runner(gradleVersion)
-              .withArguments("printIntegrationTestWorkingDir")
+              .withArguments("printIntegrationTestWarExploderConfig")
               .build()
-          val expectedWorkingDir = project.dir.resolve("build").absolutePath
-          result.output shouldContain "workingDir=$expectedWorkingDir"
+          val expectedBuildDir = project.dir.resolve("build").absolutePath
+          result.output shouldContain "buildDirectory=$expectedBuildDir"
+          result.output shouldContain "jenkins-for-test"
         }
       }
     }

@@ -177,10 +177,13 @@ fun Project.setupTestSuites(ext: SharedLibraryExtension) {
           testTask.configure {
             mustRunAfter(test)
             description = "Runs integration tests against an embedded Jenkins runtime"
-            // WarExploder hardcodes ./target/jenkins-for-test as the WAR explode directory.
-            // Setting workingDir to the build directory redirects that path inside build/,
-            // which is already gitignored, keeping the project root clean.
-            workingDir = layout.buildDirectory.asFile.get()
+            // WarExploder reads the `buildDirectory` system property (defaulting to "target")
+            // as the parent of its jenkins-for-test explode directory.  Pointing it at an
+            // absolute path inside build/ keeps the explode dir inside the Gradle build tree
+            // and allows us to declare it as a task output for correct up-to-date checking.
+            val explodeParent = layout.buildDirectory.get().asFile
+            systemProperty("buildDirectory", explodeParent.absolutePath)
+            outputs.dir(layout.buildDirectory.dir("jenkins-for-test"))
             classpath += hpiFiles
             classpath += groovyAllRuntime
             maxParallelForks = 1
