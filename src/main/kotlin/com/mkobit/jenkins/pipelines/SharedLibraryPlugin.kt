@@ -68,7 +68,6 @@ class SharedLibraryPlugin
         ext.pipelineUnitVersion.convention(DEFAULT_JENKINS_PIPELINE_UNIT_VERSION)
 
         apply<GroovyPlugin>()
-        apply<JenkinsIntegrationPlugin>()
         setupJenkinsPluginConfiguration(ext)
         setupMain()
         setupTestSuites(ext)

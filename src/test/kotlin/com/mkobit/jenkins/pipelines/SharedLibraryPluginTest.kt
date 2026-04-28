@@ -31,10 +31,6 @@ internal class SharedLibraryPluginTest :
       project.pluginManager.hasPlugin("groovy") shouldBe true
     }
 
-    it("applies JenkinsIntegrationPlugin") {
-      project.plugins.hasPlugin(JenkinsIntegrationPlugin::class.java) shouldBe true
-    }
-
     describe("main source set") {
       it("includes src as a Groovy source directory") {
         val main = project.extensions.getByType(SourceSetContainer::class.java).getByName("main")

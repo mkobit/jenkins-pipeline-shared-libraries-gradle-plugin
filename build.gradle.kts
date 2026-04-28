@@ -25,20 +25,11 @@ gradlePlugin {
       description = "Configures and sets up a Gradle project for development and testing of a Jenkins Pipeline shared library"
       tags = listOf("jenkins", "pipeline", "shared library")
     }
-    create("jenkinsIntegration") {
-      id = "com.mkobit.jenkins.pipelines.jenkins-integration"
-      implementationClass = "com.mkobit.jenkins.pipelines.JenkinsIntegrationPlugin"
-      displayName = "Jenkins Integration Plugin"
-      description = "Tasks to retrieve information from a Jenkins instance to aid in development of Gradle tooling"
-      tags = listOf("jenkins")
-    }
   }
 }
 
 dependencies {
   api(gradleApi())
-  implementation(libs.kotlin.logging)
-  implementation(libs.okhttp)
 }
 
 testing {
@@ -50,7 +41,6 @@ testing {
       )
       dependencies {
         implementation(libs.mockk)
-        implementation(libs.okhttp.mockwebserver)
         implementation(libs.kotest.assertions)
         implementation(libs.kotest.runner)
       }
@@ -65,7 +55,6 @@ testing {
         implementation(gradleTestKit())
         implementation(libs.kotest.assertions)
         implementation(libs.kotest.runner)
-        implementation(libs.okhttp.mockwebserver)
       }
       targets.all {
         testTask.configure {
