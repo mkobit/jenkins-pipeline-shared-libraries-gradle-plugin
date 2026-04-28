@@ -14,22 +14,44 @@ permissions: {}
 
 jobs:
   composite-test:
-    name: Example (Java ${{ matrix.java }})
+    name: ${{ matrix.name }}
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     permissions:
       contents: read
     strategy:
       fail-fast: false
       matrix:
-        java: [17, 21]
+        include:
+          # Java minimum × current Jenkins LTS (2.479.x baseline)
+          - name: "Java 17 / Jenkins 2.479.x"
+            java: 17
+            jenkins-version: "2.479.1"
+            jenkins-bom: "io.jenkins.tools.bom:bom-2.479.x:5054.v620b_5d2b_d5e6"
+            jenkins-test-harness: "2391.v9b_3e2d3351a_2"
+
+          # LTS Java × current Jenkins
+          - name: "Java 21 / Jenkins 2.479.x"
+            java: 21
+            jenkins-version: "2.479.1"
+            jenkins-bom: "io.jenkins.tools.bom:bom-2.479.x:5054.v620b_5d2b_d5e6"
+            jenkins-test-harness: "2391.v9b_3e2d3351a_2"
+
+          # TODO: add newer Jenkins LTS lines when BOM coordinates are confirmed, e.g.:
+          # - name: "Java 17 / Jenkins 2.492.x"
+          #   java: 17
+          #   jenkins-version: "..."
+          #   jenkins-bom: "io.jenkins.tools.bom:bom-2.492.x:..."
+          #   jenkins-test-harness: "..."
+
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
           path: plugin
 
+      # TODO: update ref to main once migration from the-phoenix-project is complete
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
         with:
           repository: mkobit/jenkins-pipeline-shared-library-example
@@ -45,4 +67,8 @@ jobs:
 
       - name: Build
         working-directory: example
-        run: ./gradlew --include-build ../plugin build --continue
+        run: >
+          ./gradlew --include-build ../plugin build --continue
+          -PjenkinsVersion=${{ matrix.jenkins-version }}
+          -PjenkinsBom=${{ matrix.jenkins-bom }}
+          -PjenkinsTestHarnessVersion=${{ matrix.jenkins-test-harness }}

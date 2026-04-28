@@ -14,8 +14,31 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    name: Java ${{ matrix.java }} / Gradle ${{ matrix.gradle }}
+  # Gate: Java 17 + current Gradle — fast sanity check before matrix fan-out.
+  # Runs build (unit + non-resolution functional tests). No Jenkins Maven repo calls.
+  gate:
+    name: Gate (Java 17 / Gradle 9.4.1)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654  # v5
+        with:
+          java-version: 17
+          distribution: temurin
+      - uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e  # v6
+        with:
+          gradle-version: "9.4.1"
+      - name: Build
+        run: gradle build --continue
+
+  # Gradle compat: Java 17 × older 9.x minor versions (9.4.1 already covered by gate).
+  # Includes resolution functional tests to verify Jenkins Maven repo coordinates.
+  gradle-compat:
+    name: Gradle ${{ matrix.gradle }} (Java 17)
+    needs: gate
     runs-on: ubuntu-latest
     timeout-minutes: 25
     permissions:
@@ -23,22 +46,64 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - java: 17
-            gradle: "9.0.0"
-          - java: 17
-            gradle: "9.4.1"
-          - java: 21
-            gradle: "9.4.1"
+        gradle:
+          - "9.0.0"
+          - "9.1.0"
+          - "9.2.1"
+          - "9.3.1"
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
       - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654  # v5
         with:
-          java-version: ${{ matrix.java }}
+          java-version: 17
           distribution: temurin
       - uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e  # v6
         with:
           gradle-version: ${{ matrix.gradle }}
+      - name: Build
+        run: gradle build --continue
+      - name: Functional tests (resolution)
+        run: gradle functionalTest --continue -Pkotest.tags=resolution
+
+  # Java 21 + current Gradle: LTS Java compat.
+  java-21:
+    name: Java 21 / Gradle 9.4.1
+    needs: gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654  # v5
+        with:
+          java-version: 21
+          distribution: temurin
+      - uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e  # v6
+        with:
+          gradle-version: "9.4.1"
+      - name: Build
+        run: gradle build --continue
+      - name: Functional tests (resolution)
+        run: gradle functionalTest --continue -Pkotest.tags=resolution
+
+  # Latest Java + current Gradle: forward-compat check.
+  java-latest:
+    name: Java 24 / Gradle 9.4.1
+    needs: gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654  # v5
+        with:
+          java-version: 24
+          distribution: temurin
+      - uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e  # v6
+        with:
+          gradle-version: "9.4.1"
       - name: Build
         run: gradle build --continue
       - name: Functional tests (resolution)
