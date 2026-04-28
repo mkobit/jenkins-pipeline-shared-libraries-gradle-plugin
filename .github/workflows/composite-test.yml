@@ -46,25 +46,21 @@ jobs:
           #   jenkins-test-harness: "..."
 
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
-        with:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd        with:
           ref: ${{ github.event.workflow_run.head_sha }}
           path: plugin
 
       # TODO: update ref to main once migration from the-phoenix-project is complete
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
-        with:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd        with:
           repository: mkobit/jenkins-pipeline-shared-library-example
           ref: the-phoenix-project
           path: example
 
-      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654  # v5
-        with:
+      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654        with:
           java-version: ${{ matrix.java }}
           distribution: temurin
 
-      - uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e  # v6
-
+      - uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e
       - name: Build
         working-directory: example
         run: >

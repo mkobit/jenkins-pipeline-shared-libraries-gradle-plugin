@@ -16,6 +16,7 @@ concurrency:
 jobs:
   # Gate: Java 17 + current Gradle — fast sanity check before matrix fan-out.
   # Runs build (unit + non-resolution functional tests). No Jenkins Maven repo calls.
+  # Populates the Gradle 9.4.1 dependency cache for reuse by java-21 and java-latest.
   gate:
     name: Gate (Java 17 / Gradle 9.4.1)
     runs-on: ubuntu-latest
@@ -23,19 +24,20 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
-      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654  # v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
         with:
           java-version: 17
           distribution: temurin
-      - uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e  # v6
+      - uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e
         with:
           gradle-version: "9.4.1"
       - name: Build
         run: gradle build --continue
 
   # Gradle compat: Java 17 × older 9.x minor versions (9.4.1 already covered by gate).
-  # Includes resolution functional tests to verify Jenkins Maven repo coordinates.
+  # Each Gradle version has its own cache key; first run downloads and caches the
+  # distribution, subsequent runs restore it. Includes resolution tests.
   gradle-compat:
     name: Gradle ${{ matrix.gradle }} (Java 17)
     needs: gate
@@ -52,12 +54,12 @@ jobs:
           - "9.2.1"
           - "9.3.1"
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
-      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654  # v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
         with:
           java-version: 17
           distribution: temurin
-      - uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e  # v6
+      - uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e
         with:
           gradle-version: ${{ matrix.gradle }}
       - name: Build
@@ -66,6 +68,7 @@ jobs:
         run: gradle functionalTest --continue -Pkotest.tags=resolution
 
   # Java 21 + current Gradle: LTS Java compat.
+  # cache-read-only: gate already wrote the 9.4.1 cache; avoid a redundant parallel write.
   java-21:
     name: Java 21 / Gradle 9.4.1
     needs: gate
@@ -74,20 +77,22 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
-      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654  # v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
         with:
           java-version: 21
           distribution: temurin
-      - uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e  # v6
+      - uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e
         with:
           gradle-version: "9.4.1"
+          cache-read-only: true
       - name: Build
         run: gradle build --continue
       - name: Functional tests (resolution)
         run: gradle functionalTest --continue -Pkotest.tags=resolution
 
   # Latest Java + current Gradle: forward-compat check.
+  # cache-read-only: same rationale as java-21.
   java-latest:
     name: Java 24 / Gradle 9.4.1
     needs: gate
@@ -96,14 +101,15 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
-      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654  # v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
         with:
           java-version: 24
           distribution: temurin
-      - uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e  # v6
+      - uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e
         with:
           gradle-version: "9.4.1"
+          cache-read-only: true
       - name: Build
         run: gradle build --continue
       - name: Functional tests (resolution)
