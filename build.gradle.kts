@@ -18,9 +18,7 @@ gradlePlugin {
   website = "https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin"
   vcsUrl = "https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin"
   plugins {
-    create("sharedLibrary") {
-      id = "com.mkobit.jenkins.pipelines.shared-library"
-      implementationClass = "com.mkobit.jenkins.pipelines.SharedLibraryPlugin"
+    named("com.mkobit.jenkins.pipelines.shared-library") {
       displayName = "Jenkins Pipeline Shared Library Development"
       description = "Configures and sets up a Gradle project for development and testing of a Jenkins Pipeline shared library"
       tags = listOf("jenkins", "pipeline", "shared library")
@@ -55,6 +53,7 @@ testing {
         implementation(gradleTestKit())
         implementation(libs.kotest.assertions)
         implementation(libs.kotest.runner)
+        implementation(project())
       }
       targets.all {
         testTask.configure {
@@ -93,6 +92,6 @@ spotless {
   }
   kotlinGradle {
     ktlint()
-    target("*.gradle.kts")
+    target("*.gradle.kts", "src/**/*.gradle.kts")
   }
 }

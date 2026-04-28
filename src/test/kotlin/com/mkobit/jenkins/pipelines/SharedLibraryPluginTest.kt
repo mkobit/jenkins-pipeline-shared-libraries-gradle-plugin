@@ -24,7 +24,7 @@ internal class SharedLibraryPluginTest :
 
     beforeTest {
       project = ProjectBuilder.builder().build()
-      project.pluginManager.apply(SharedLibraryPlugin::class.java)
+      project.pluginManager.apply("com.mkobit.jenkins.pipelines.shared-library")
     }
 
     it("applies the Groovy plugin") {
