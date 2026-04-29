@@ -34,10 +34,7 @@ dependencies {
 testing {
   suites {
     val test by getting(JvmTestSuite::class) {
-      useJUnitJupiter(
-        libs.versions.junit.jupiter
-          .get(),
-      )
+      useJUnitJupiter(libs.versions.junit.jupiter)
       dependencies {
         implementation(libs.mockk)
         implementation(libs.kotest.assertions)
@@ -46,10 +43,7 @@ testing {
     }
 
     val functionalTest by registering(JvmTestSuite::class) {
-      useJUnitJupiter(
-        libs.versions.junit.jupiter
-          .get(),
-      )
+      useJUnitJupiter(libs.versions.junit.jupiter)
       dependencies {
         implementation(gradleTestKit())
         implementation(libs.kotest.assertions)
@@ -61,7 +55,7 @@ testing {
           mustRunAfter(test)
           // java-gradle-plugin only wires pluginUnderTestMetadata into the test suite;
           // add it explicitly so GradleRunner.withPluginClasspath() works here.
-          classpath += files(tasks.named("pluginUnderTestMetadata"))
+          classpath += files(tasks.pluginUnderTestMetadata)
           // Resolution tests hit the Jenkins Maven repo and are slow on a cold cache.
           // Default to excluding them from the normal check so CI can run them as a
           // separate cacheable step. Override with -Pkotest.tags=resolution (or any
@@ -80,20 +74,24 @@ tasks.named("check") {
   dependsOn(testing.suites.named("functionalTest"))
 }
 
-tasks.register<Jar>("dokkaHtmlJar") {
-  description = "Assembles Dokka HTML documentation into a JAR"
-  archiveClassifier.set("javadoc")
-  val dokkaHtml = tasks.named<org.jetbrains.dokka.gradle.tasks.DokkaGeneratePublicationTask>("dokkaGeneratePublicationHtml")
-  dependsOn(dokkaHtml)
-  from(dokkaHtml.flatMap { it.outputDirectory })
-}
+val dokkaHtmlJar =
+  tasks.register<Jar>("dokkaHtmlJar") {
+    description = "Assembles Dokka HTML documentation into a JAR"
+    archiveClassifier.set("javadoc")
+    val dokkaHtml =
+      tasks.named<org.jetbrains.dokka.gradle.tasks.DokkaGeneratePublicationTask>(
+        "dokkaGeneratePublicationHtml",
+      )
+    dependsOn(dokkaHtml)
+    from(dokkaHtml.flatMap { it.outputDirectory })
+  }
 
 // gradle-publish creates pluginMaven lazily; wire the javadoc artifact after evaluation.
 afterEvaluate {
   publishing {
     publications {
       named<MavenPublication>("pluginMaven") {
-        artifact(tasks.named("dokkaHtmlJar"))
+        artifact(dokkaHtmlJar)
       }
     }
   }

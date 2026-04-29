@@ -183,8 +183,8 @@ fun Project.setupTestSuites(ext: SharedLibraryExtension) {
             // as the parent of its jenkins-for-test explode directory.  Pointing it at an
             // absolute path inside build/ keeps the explode dir inside the Gradle build tree
             // and allows us to declare it as a task output for correct up-to-date checking.
-            val explodeParent = layout.buildDirectory.get().asFile
-            systemProperty("buildDirectory", explodeParent.absolutePath)
+            // buildDirectory is finalized before testTask.configure runs; .get() is safe here.
+            systemProperty("buildDirectory", layout.buildDirectory.get().asFile.absolutePath)
             outputs.dir(layout.buildDirectory.dir("jenkins-for-test"))
             classpath += hpiFiles
             classpath += groovyAllRuntime
