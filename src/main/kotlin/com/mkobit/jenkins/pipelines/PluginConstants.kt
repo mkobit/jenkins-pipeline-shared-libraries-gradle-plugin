@@ -8,7 +8,7 @@ internal object PluginConstants {
   const val JENKINS_WAR_CONFIGURATION = "jenkinsWar"
 
   const val GROOVY_ALL_RUNTIME_CONFIGURATION = "integrationTestGroovyAllRuntime"
-  const val GROOVY_ALL_COORDINATES = "org.codehaus.groovy:groovy-all:2.4.21"
+  const val GROOVY_ALL_GROUP_AND_ARTIFACT = "org.codehaus.groovy:groovy-all"
 
   const val IVY_CONFIGURATION = "sharedLibraryIvy"
   const val IVY_COORDINATES = "org.apache.ivy:ivy:2.4.0"

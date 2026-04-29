@@ -31,6 +31,8 @@ val ext = extensions.create("sharedLibrary", SharedLibraryExtension::class.java)
 ext.jenkins.version.convention(SharedLibraryDefaults.CORE_VERSION)
 ext.jenkins.testHarnessVersion.convention(SharedLibraryDefaults.TEST_HARNESS_VERSION)
 ext.pipelineUnitVersion.convention(SharedLibraryDefaults.PIPELINE_UNIT_VERSION)
+ext.groovyAllVersion.convention(SharedLibraryDefaults.GROOVY_ALL_VERSION)
+ext.integrationTestMaxHeapSize.convention(SharedLibraryDefaults.INTEGRATION_TEST_MAX_HEAP_SIZE)
 
 setupJenkinsPluginConfiguration(ext)
 setupMain()
@@ -143,7 +145,10 @@ fun Project.setupTestSuites(ext: SharedLibraryExtension) {
       isCanBeResolved = true
       isCanBeConsumed = false
     }
-  dependencies.add(PluginConstants.GROOVY_ALL_RUNTIME_CONFIGURATION, PluginConstants.GROOVY_ALL_COORDINATES)
+  dependencies.addProvider(
+    PluginConstants.GROOVY_ALL_RUNTIME_CONFIGURATION,
+    ext.groovyAllVersion.map { v -> "${PluginConstants.GROOVY_ALL_GROUP_AND_ARTIFACT}:$v" },
+  )
 
   val generateLocalLibraryFiles =
     tasks.register<GenerateLocalLibraryFiles>("generateLocalLibraryFiles") {
@@ -189,7 +194,7 @@ fun Project.setupTestSuites(ext: SharedLibraryExtension) {
             classpath += hpiFiles
             classpath += groovyAllRuntime
             maxParallelForks = 1
-            maxHeapSize = "2g"
+            maxHeapSize = ext.integrationTestMaxHeapSize.get()
             systemProperty("test.library.root", libraryRoot)
             systemProperty("test.library.src", srcDir)
             systemProperty("test.library.vars", varsDir)
