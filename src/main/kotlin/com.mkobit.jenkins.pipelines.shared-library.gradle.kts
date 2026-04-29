@@ -130,7 +130,9 @@ fun Project.setupTestSuites(ext: SharedLibraryExtension) {
       .asFile.absolutePath
   val libraryRoot = layout.projectDirectory.asFile.absolutePath
 
-  val jenkinsWar = configurations.getByName(PluginConstants.JENKINS_WAR_CONFIGURATION)
+  val jenkinsWarFile: Provider<File> =
+    configurations.named(PluginConstants.JENKINS_WAR_CONFIGURATION)
+      .map { cfg -> cfg.files.single { it.extension == "war" } }
 
   // Integration tests need groovy-all at *runtime only* so SandboxInterceptor
   // (script-security plugin) can load SqlGroovyMethods and other Groovy 2.4 DGM classes
@@ -194,7 +196,7 @@ fun Project.setupTestSuites(ext: SharedLibraryExtension) {
             systemProperty("test.library.resources", resourcesDir)
             jvmArgumentProviders.add(
               CommandLineArgumentProvider {
-                listOf("-Djth.jenkins-war.path=${jenkinsWar.files.single { it.extension == "war" }.absolutePath}")
+                listOf("-Djth.jenkins-war.path=${jenkinsWarFile.get().absolutePath}")
               },
             )
             // Jenkins uses XStream, Guice, and other reflection-heavy libraries that
@@ -254,8 +256,8 @@ fun Project.setupDocumentationTasks() {
     val groovydoc = named<Groovydoc>(GroovyPlugin.GROOVYDOC_TASK_NAME)
     register<Jar>("groovydocJar") {
       description = "Assembles the Groovydoc JAR"
-      dependsOn(groovydoc)
-      archiveClassifier.set("javadoc")
+      archiveClassifier.set("groovydoc")
+      from(groovydoc.map { it.destinationDir })
     }
   }
 }

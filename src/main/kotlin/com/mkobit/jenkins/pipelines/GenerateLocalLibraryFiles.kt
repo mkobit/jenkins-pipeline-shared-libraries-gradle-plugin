@@ -2,7 +2,9 @@ package com.mkobit.jenkins.pipelines
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.provider.Property
 import org.gradle.api.tasks.CacheableTask
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 
@@ -33,6 +35,19 @@ abstract class GenerateLocalLibraryFiles : DefaultTask() {
   @get:OutputDirectory
   abstract val resourcesOutputDir: DirectoryProperty
 
+  /** Content written to `LocalLibraryRetriever.java`; tracked as a task input so a plugin upgrade that changes the template forces regeneration. */
+  @get:Input
+  abstract val retrieverSource: Property<String>
+
+  /** Content written to `META-INF/hudson.remoting.ClassFilter`; tracked as a task input for the same reason. */
+  @get:Input
+  abstract val classFilterEntry: Property<String>
+
+  init {
+    retrieverSource.convention(JAVA_SOURCE)
+    classFilterEntry.convention(CLASS_NAME)
+  }
+
   @TaskAction
   fun generate() {
     val javaFile =
@@ -41,7 +56,7 @@ abstract class GenerateLocalLibraryFiles : DefaultTask() {
         .file("com/mkobit/jenkins/pipelines/testing/LocalLibraryRetriever.java")
         .asFile
     javaFile.parentFile.mkdirs()
-    javaFile.writeText(JAVA_SOURCE)
+    javaFile.writeText(retrieverSource.get())
 
     val classFilterFile =
       resourcesOutputDir
@@ -49,7 +64,7 @@ abstract class GenerateLocalLibraryFiles : DefaultTask() {
         .file("META-INF/hudson.remoting.ClassFilter")
         .asFile
     classFilterFile.parentFile.mkdirs()
-    classFilterFile.writeText(CLASS_NAME)
+    classFilterFile.writeText(classFilterEntry.get())
   }
 
   companion object {
