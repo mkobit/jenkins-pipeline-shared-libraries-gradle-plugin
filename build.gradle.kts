@@ -80,13 +80,23 @@ tasks.named("check") {
   dependsOn(testing.suites.named("functionalTest"))
 }
 
-// TODO: wire dokkaHtmlJar into the publication and configure GitHub Pages deployment
 tasks.register<Jar>("dokkaHtmlJar") {
   description = "Assembles Dokka HTML documentation into a JAR"
   archiveClassifier.set("javadoc")
   val dokkaHtml = tasks.named<org.jetbrains.dokka.gradle.tasks.DokkaGeneratePublicationTask>("dokkaGeneratePublicationHtml")
   dependsOn(dokkaHtml)
   from(dokkaHtml.flatMap { it.outputDirectory })
+}
+
+// gradle-publish creates pluginMaven lazily; wire the javadoc artifact after evaluation.
+afterEvaluate {
+  publishing {
+    publications {
+      named<MavenPublication>("pluginMaven") {
+        artifact(tasks.named("dokkaHtmlJar"))
+      }
+    }
+  }
 }
 
 tasks.wrapper {
