@@ -1,5 +1,6 @@
 plugins {
   `kotlin-dsl`
+  alias(libs.plugins.dokka)
   alias(libs.plugins.gradle.publish)
   alias(libs.plugins.openrewrite)
   alias(libs.plugins.spotless)
@@ -77,6 +78,15 @@ testing {
 
 tasks.named("check") {
   dependsOn(testing.suites.named("functionalTest"))
+}
+
+// TODO: wire dokkaHtmlJar into the publication and configure GitHub Pages deployment
+tasks.register<Jar>("dokkaHtmlJar") {
+  description = "Assembles Dokka HTML documentation into a JAR"
+  archiveClassifier.set("javadoc")
+  val dokkaHtml = tasks.named<org.jetbrains.dokka.gradle.tasks.DokkaGeneratePublicationTask>("dokkaGeneratePublicationHtml")
+  dependsOn(dokkaHtml)
+  from(dokkaHtml.flatMap { it.outputDirectory })
 }
 
 tasks.wrapper {
