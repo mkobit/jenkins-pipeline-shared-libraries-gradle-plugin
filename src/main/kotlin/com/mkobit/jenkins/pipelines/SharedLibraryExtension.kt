@@ -13,10 +13,23 @@ import javax.inject.Inject
  * ```kotlin
  * sharedLibrary {
  *     jenkins {
- *         version = "2.492.1"
- *         testHarnessVersion = "2500.vb_4b_5ef084eb_4"
+ *         version = "2.492.3"
+ *         testHarnessVersion = "2397.v5992a_d47f025"
  *     }
  *     pipelineUnitVersion = "1.29"
+ * }
+ * ```
+ *
+ * To configure test execution properties (heap size, JVM args) use the standard Gradle API:
+ * ```kotlin
+ * testing {
+ *     suites {
+ *         named<JvmTestSuite>("integrationTest") {
+ *             targets.all {
+ *                 testTask.configure { maxHeapSize = "4g" }
+ *             }
+ *         }
+ *     }
  * }
  * ```
  */
@@ -32,24 +45,4 @@ abstract class SharedLibraryExtension
 
     /** `com.lesfurets:jenkins-pipeline-unit` version used in the `test` suite. */
     abstract val pipelineUnitVersion: Property<String>
-
-    /**
-     * `org.codehaus.groovy:groovy-all` version injected into the isolated `integrationTestGroovyAllRuntime`
-     * configuration so Jenkins' `SandboxInterceptor` can load Groovy 2.4 DGM classes at runtime.
-     * Default matches [SharedLibraryDefaults.GROOVY_ALL_VERSION] (Jenkins 2.479.x LTS).
-     * Override when targeting a Jenkins LTS line that bundles a different Groovy runtime.
-     */
-    abstract val groovyAllVersion: Property<String>
-
-    /**
-     * Max heap size passed to the `integrationTest` JVM (default [SharedLibraryDefaults.INTEGRATION_TEST_MAX_HEAP_SIZE]).
-     * Increase for large test suites that run many `JenkinsRule` tests.
-     *
-     * ```kotlin
-     * sharedLibrary {
-     *     integrationTestMaxHeapSize = "4g"
-     * }
-     * ```
-     */
-    abstract val integrationTestMaxHeapSize: Property<String>
   }
