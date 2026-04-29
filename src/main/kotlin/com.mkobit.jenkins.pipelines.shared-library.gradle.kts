@@ -109,13 +109,23 @@ val hpiFiles =
     .artifactFiles
     .filter { it.name.endsWith(".hpi") || it.name.endsWith(".jpi") }
 
-val srcDir = layout.projectDirectory.dir("src").asFile.absolutePath
-val varsDir = layout.projectDirectory.dir("vars").asFile.absolutePath
-val resourcesDir = layout.projectDirectory.dir("resources").asFile.absolutePath
+val srcDir =
+  layout.projectDirectory
+    .dir("src")
+    .asFile.absolutePath
+val varsDir =
+  layout.projectDirectory
+    .dir("vars")
+    .asFile.absolutePath
+val resourcesDir =
+  layout.projectDirectory
+    .dir("resources")
+    .asFile.absolutePath
 val libraryRoot = layout.projectDirectory.asFile.absolutePath
 
 val jenkinsWarFile: Provider<File> =
-  configurations.named(PluginConstants.JENKINS_WAR_CONFIGURATION)
+  configurations
+    .named(PluginConstants.JENKINS_WAR_CONFIGURATION)
     .map { cfg -> cfg.files.single { it.extension == "war" } }
 
 // Integration tests need groovy-all at *runtime only* so SandboxInterceptor
@@ -171,7 +181,12 @@ extensions.configure<TestingExtension> {
           // absolute path inside build/ keeps the explode dir inside the Gradle build tree
           // and allows us to declare it as a task output for correct up-to-date checking.
           // buildDirectory is finalized before testTask.configure runs; .get() is safe here.
-          systemProperty("buildDirectory", layout.buildDirectory.get().asFile.absolutePath)
+          systemProperty(
+            "buildDirectory",
+            layout.buildDirectory
+              .get()
+              .asFile.absolutePath,
+          )
           outputs.dir(layout.buildDirectory.dir("jenkins-for-test"))
           classpath += hpiFiles
           classpath += groovyAllRuntime
