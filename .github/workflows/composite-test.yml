@@ -24,26 +24,42 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Java minimum × current Jenkins LTS (2.479.x baseline)
+          # Java minimum × baseline LTS (2.479.x — Groovy 2.4 runtime)
           - name: "Java 17 / Jenkins 2.479.x"
             java: 17
             jenkins-version: "2.479.1"
             jenkins-bom: "io.jenkins.tools.bom:bom-2.479.x:5054.v620b_5d2b_d5e6"
             jenkins-test-harness: "2391.v9b_3e2d3351a_2"
 
-          # LTS Java × current Jenkins
+          # LTS Java × baseline LTS
           - name: "Java 21 / Jenkins 2.479.x"
             java: 21
             jenkins-version: "2.479.1"
             jenkins-bom: "io.jenkins.tools.bom:bom-2.479.x:5054.v620b_5d2b_d5e6"
             jenkins-test-harness: "2391.v9b_3e2d3351a_2"
 
-          # TODO: add newer Jenkins LTS lines when BOM coordinates are confirmed, e.g.:
-          # - name: "Java 17 / Jenkins 2.492.x"
-          #   java: 17
-          #   jenkins-version: "..."
-          #   jenkins-bom: "io.jenkins.tools.bom:bom-2.492.x:..."
-          #   jenkins-test-harness: "..."
+          # 2.492.x — first LTS to ship Groovy 3.x internally; key leg for Spock investigation.
+          # groovy-all:2.4.21 injection via integrationTestGroovyAllRuntime may conflict here;
+          # a failure on this leg is expected until the Spock/Groovy-3 strategy is resolved.
+          - name: "Java 17 / Jenkins 2.492.x"
+            java: 17
+            jenkins-version: "2.492.3"
+            jenkins-bom: "io.jenkins.tools.bom:bom-2.492.x:5473.vb_9533d9e5d88"
+            jenkins-test-harness: "2397.v5992a_d47f025"
+
+          # 2.504.x — intermediate LTS
+          - name: "Java 17 / Jenkins 2.504.x"
+            java: 17
+            jenkins-version: "2.504.3"
+            jenkins-bom: "io.jenkins.tools.bom:bom-2.504.x:5983.v443959746f1f"
+            jenkins-test-harness: "2565.vd1eb_7c961d1b_"
+
+          # 2.541.x — latest LTS; forward-compat check
+          - name: "Java 17 / Jenkins 2.541.x"
+            java: 17
+            jenkins-version: "2.541.3"
+            jenkins-bom: "io.jenkins.tools.bom:bom-2.541.x:6364.v16b_76a_4023c7"
+            jenkins-test-harness: "2565.vd1eb_7c961d1b_"
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
