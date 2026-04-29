@@ -1,14 +1,22 @@
 ---
 type: specs.openrewrite.org/v1beta/recipe
 name: com.mkobit.jenkins.pipelines.MigrateSharedLibraryPlugin010To011
-displayName: Migrate jenkins-pipeline-shared-libraries-gradle-plugin from 0.10.x to 0.11.x
+displayName: Migrate jenkins-pipeline-shared-libraries-gradle-plugin from 0.10.x to 0.11.x (automated steps)
 description: >
-  Applies automated migrations for upgrading from plugin version 0.10.x to 0.11.x.
-  The 0.11.x release is a breaking change: the sharedLibrary {} extension is removed,
-  Jenkins plugin dependencies move to dependencies { jenkinsPlugin(...) }, and the
-  minimum Gradle version is 9.0.
-  This recipe automates the version bump and configuration renames.
-  Manual steps are required for DSL restructuring; see the migration guide.
+  Automated part of the 0.10.x → 0.11.x migration. Bumps the plugin version and
+  renames all user-visible Gradle configurations.
+
+  What this recipe does:
+    - Bumps the plugin to 0.11.0
+    - Renames jenkinsPlugins → jenkinsPlugin (the "s" was dropped)
+    - Renames sharedLibraryImplementation → testImplementation (unit-test compile deps)
+    - Renames sharedLibraryTestImplementation → testImplementation (integration-test compile deps)
+
+  What this recipe does NOT do (manual steps required — see MigrateSharedLibraryPlugin010To011Full):
+    - Restructure the sharedLibrary {} extension block (property renames and nesting changes)
+    - Remove the pluginDependencies {} sub-block (replaced by jenkinsPlugin(...) dependencies)
+    - Add Jenkins BOM to version catalog
+    - Add Jenkins Maven repository to settings.gradle.kts
 tags:
   - jenkins
   - gradle
@@ -16,6 +24,11 @@ recipeList:
   - org.openrewrite.gradle.plugins.ChangePluginVersion:
       pluginId: com.mkobit.jenkins.pipelines.shared-library
       newVersion: 0.11.0
+
+  # The 0.10.x plugin exposed jenkinsPlugins; 0.11.x dropped the trailing "s".
+  - org.openrewrite.gradle.ChangeConfiguration:
+      oldConfigurationName: jenkinsPlugins
+      newConfigurationName: jenkinsPlugin
 
   - org.openrewrite.gradle.ChangeConfiguration:
       oldConfigurationName: sharedLibraryImplementation
@@ -28,38 +41,83 @@ recipeList:
 ---
 type: specs.openrewrite.org/v1beta/recipe
 name: com.mkobit.jenkins.pipelines.MigrateSharedLibraryPlugin010To011Full
-displayName: Full migration of jenkins-pipeline-shared-libraries-gradle-plugin from 0.10.x to 0.11.x
+displayName: Migrate jenkins-pipeline-shared-libraries-gradle-plugin from 0.10.x to 0.11.x (full guide)
 description: >
-  Combines automated migrations with guidance for manual steps.
-  After running this recipe, complete the following manual steps:
+  Full 0.10.x → 0.11.x migration: runs automated recipes then documents required manual steps.
 
-  1. Remove the sharedLibrary {} extension block entirely.
-     Any coreVersion, pipelineVersion, or unitTestingVersion properties inside it are no longer used.
+  MANUAL STEPS — complete these after running the recipe:
 
-  2. Declare Jenkins plugin dependencies via the new jenkinsPlugin configuration:
+  1. RESTRUCTURE the sharedLibrary {} extension block.
+     Old flat properties become nested under jenkins {} or are renamed:
+
+       // OLD (0.10.x)
+       sharedLibrary {
+           coreVersion = "2.222.4"
+           testHarnessVersion = "2.64"
+           pipelineTestUnitVersion = "1.5"   // or unitTestingLibraryVersion in some versions
+       }
+
+       // NEW (0.11.x)
+       sharedLibrary {
+           jenkins {
+               version = "2.479.1"                        // was coreVersion
+               testHarnessVersion = "2391.v9b_3e2d3351a_2" // was testHarnessVersion (same name, now nested)
+           }
+           pipelineUnitVersion = "1.29"                   // was pipelineTestUnitVersion
+       }
+
+  2. REMOVE the pluginDependencies {} block inside sharedLibrary {}.
+     Individual workflowXxxPluginVersion properties are no longer used.
+     The four core workflow plugins (pipeline-groovy-lib, workflow-job,
+     workflow-basic-steps, workflow-durable-task-step) are now defaults —
+     you do not need to declare them. Add any extras via jenkinsPlugin():
+
+       // OLD
+       sharedLibrary {
+           pluginDependencies {
+               workflowCpsPluginVersion = "2.72"
+               workflowJobPluginVersion = "2.33"
+               dependency("org.jenkinsci.plugins", "some-plugin", "1.0")
+           }
+       }
+
+       // NEW — only declare non-default plugins; manage versions via BOM
        dependencies {
-         jenkinsPlugin(platform(libs.jenkins.bom))
-         jenkinsPlugin(libs.pipeline.groovy.lib)
-         jenkinsPlugin("org.jenkinsci.plugins:some-plugin")
-       }
-     Replace any plugin declarations previously inside sharedLibrary { plugins { plugin("...") } }.
-
-  3. Add the Jenkins Maven repository to settings.gradle.kts dependencyResolutionManagement:
-       repositories {
-         maven { url = uri("https://repo.jenkins-ci.org/public/") }
-         mavenCentral()
+           jenkinsPlugin("org.jenkinsci.plugins:some-plugin")
        }
 
-  4. Add a Jenkins BOM to your version catalog (libs.versions.toml):
+  3. ADD a Jenkins BOM to manage plugin versions.
+     Add to your version catalog (gradle/libs.versions.toml):
+
        [versions]
-       jenkins-bom = "5054.v620b_5d2b_d5e6"
+       jenkins-bom = "5054.v620b_5d2b_d5e6"   # bom-2.479.x; pick the LTS line you target
        [libraries]
        jenkins-bom = { module = "io.jenkins.tools.bom:bom-2.479.x", version.ref = "jenkins-bom" }
 
-  5. Rename test source directories:
-       src/test/groovy/     -> test/unit/groovy/
-       src/test/resources/  -> test/unit/resources/
-       src/integrationTest/ -> test/integration/
+     Then in build.gradle.kts:
+
+       dependencies {
+           jenkinsPlugin(platform(libs.jenkins.bom))
+       }
+
+  4. ADD the Jenkins Maven repository to settings.gradle.kts.
+     The 0.10.x plugin added the repository automatically; 0.11.x does not.
+
+       dependencyResolutionManagement {
+           repositories {
+               mavenCentral()
+               maven {
+                   name = "jenkins"
+                   url = uri("https://repo.jenkins-ci.org/public/")
+               }
+           }
+       }
+
+  5. VERIFY your Gradle version is at least 9.0.
+     The 0.11.x plugin requires Gradle 9 (Java 17 minimum to run Gradle).
+     Update gradle/wrapper/gradle-wrapper.properties:
+
+       distributionUrl=https\://services.gradle.org/distributions/gradle-9.4.1-bin.zip
 tags:
   - jenkins
   - gradle
