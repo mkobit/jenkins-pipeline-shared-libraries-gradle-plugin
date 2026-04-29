@@ -6,6 +6,25 @@ import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 
+/**
+ * Generates source files that allow `JenkinsRule` integration tests to load the project's shared library.
+ *
+ * The plugin registers this task automatically; consumers do not invoke it directly.
+ * The generated files are wired into the `integrationTest` source set:
+ *
+ * - `LocalLibraryRetriever.java` — a `LibraryRetriever` that copies `src/`, `vars/`, and
+ *   `resources/` from the path set in the `test.library.root` system property.
+ * - `META-INF/hudson.remoting.ClassFilter` — registers `LocalLibraryRetriever` so XStream
+ *   can deserialise `LibraryConfiguration` during test setup.
+ *
+ * Use `LocalLibraryRetriever.implicitLibrary(name)` to load the library in a test:
+ *
+ * ```java
+ * GlobalLibraries.get().setLibraries(
+ *     List.of(LocalLibraryRetriever.implicitLibrary("my-lib"))
+ * );
+ * ```
+ */
 @CacheableTask
 abstract class GenerateLocalLibraryFiles : DefaultTask() {
   @get:OutputDirectory

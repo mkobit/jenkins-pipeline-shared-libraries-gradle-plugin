@@ -10,7 +10,7 @@ import org.gradle.api.model.ObjectFactory
 import javax.inject.Inject
 
 @CacheableRule
-abstract class JenkinsPluginRule
+internal abstract class JenkinsPluginRule
   @Inject
   constructor(
     private val objects: ObjectFactory,
