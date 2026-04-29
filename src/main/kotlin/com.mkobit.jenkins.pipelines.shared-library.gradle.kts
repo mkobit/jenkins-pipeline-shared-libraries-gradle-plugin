@@ -256,7 +256,7 @@ fun Project.setupDocumentationTasks() {
     val groovydoc = named<Groovydoc>(GroovyPlugin.GROOVYDOC_TASK_NAME)
     register<Jar>("groovydocJar") {
       description = "Assembles the Groovydoc JAR"
-      archiveClassifier.set("groovydoc")
+      archiveClassifier.set("javadoc")
       from(groovydoc.map { it.destinationDir })
     }
   }
