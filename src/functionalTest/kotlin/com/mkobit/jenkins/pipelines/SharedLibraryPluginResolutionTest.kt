@@ -11,7 +11,6 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldEndWith
 import io.kotest.matchers.string.shouldNotContain
-import testsupport.JENKINS_BOM
 import testsupport.TestProjectBuilder
 import testsupport.TestedGradleVersion
 import testsupport.WORKFLOW_API
@@ -42,7 +41,6 @@ class SharedLibraryPluginResolutionTest :
               id("com.mkobit.jenkins.pipelines.shared-library")
           }
           dependencies {
-              jenkinsPlugin(platform("$JENKINS_BOM"))
               jenkinsPlugin("$WORKFLOW_API")
           }
           tasks.register("printResolvedArtifacts") {
@@ -163,7 +161,6 @@ class SharedLibraryPluginResolutionTest :
                   id("com.mkobit.jenkins.pipelines.shared-library")
               }
               dependencies {
-                  jenkinsPlugin(platform("$JENKINS_BOM"))
                   jenkinsPlugin("$WORKFLOW_API")
               }
               tasks.register("printGroovyAll") {
@@ -255,14 +252,17 @@ class SharedLibraryPluginResolutionTest :
                   id("com.mkobit.jenkins.pipelines.shared-library")
               }
               dependencies {
-                  jenkinsPlugin(platform("$JENKINS_BOM"))
                   jenkinsPlugin("$WORKFLOW_API")
               }
               tasks.register("printCompileClasspath") {
                   val cp = configurations["integrationTestCompileClasspath"]
+                  val rt = configurations["integrationTestRuntimeClasspath"]
                   doLast {
                       cp.resolvedConfiguration.resolvedArtifacts.forEach {
                           println("compile:" + it.file.name)
+                      }
+                      rt.resolvedConfiguration.resolvedArtifacts.forEach {
+                          println("runtime:" + it.file.name)
                       }
                   }
               }
@@ -276,11 +276,15 @@ class SharedLibraryPluginResolutionTest :
                 .build()
 
             val compileFiles = result.output.lines().filter { it.startsWith("compile:") }
+            val runtimeFiles = result.output.lines().filter { it.startsWith("runtime:") }
             compileFiles.shouldNotBeEmpty()
+            runtimeFiles.shouldNotBeEmpty()
             compileFiles.forNone { it shouldContain "groovy-all" }
-            // jakarta.servlet-api must be present: jenkins-test-harness 2565+ excludes it from
-            // transitive deps, so the plugin must add it explicitly for Groovy compilation on 2.504.x+.
+            // ComponentMetadataRule restores jakarta.servlet-api to all variants of jenkins-test-harness.
+            // Must be present on both compile (Groovy type-checker) and runtime (JVM class verification
+            // before Winstone starts) classpaths.
             compileFiles.forAtLeastOne { it shouldContain "jakarta.servlet-api" }
+            runtimeFiles.forAtLeastOne { it shouldContain "jakarta.servlet-api" }
           }
       }
     }

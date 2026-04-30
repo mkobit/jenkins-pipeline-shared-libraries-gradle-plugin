@@ -6,7 +6,6 @@ import io.kotest.datatest.withData
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotContain
 import org.gradle.testkit.runner.TaskOutcome
-import testsupport.JENKINS_BOM
 import testsupport.TestProjectBuilder
 import testsupport.TestedGradleVersion
 
@@ -33,9 +32,6 @@ class SharedLibraryPluginSourceTest :
           """
           plugins {
               id("com.mkobit.jenkins.pipelines.shared-library")
-          }
-          dependencies {
-              jenkinsPlugin(platform("$JENKINS_BOM"))
           }
           """.trimIndent(),
         )
@@ -136,7 +132,6 @@ class SharedLibraryPluginSourceTest :
                 id("com.mkobit.jenkins.pipelines.shared-library")
             }
             dependencies {
-                jenkinsPlugin(platform("$JENKINS_BOM"))
                 testImplementation("org.spockframework:spock-core:2.3-groovy-3.0")
             }
             """.trimIndent(),

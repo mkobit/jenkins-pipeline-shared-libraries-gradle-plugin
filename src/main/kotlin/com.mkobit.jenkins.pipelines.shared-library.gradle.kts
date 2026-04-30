@@ -3,6 +3,7 @@
 import com.mkobit.jenkins.pipelines.GenerateLocalLibraryFiles
 import com.mkobit.jenkins.pipelines.JenkinsArtifactDisambiguationRule
 import com.mkobit.jenkins.pipelines.JenkinsPluginRule
+import com.mkobit.jenkins.pipelines.JenkinsTestHarnessServletApiRule
 import com.mkobit.jenkins.pipelines.JpiCompatibilityRule
 import com.mkobit.jenkins.pipelines.PluginConstants
 import com.mkobit.jenkins.pipelines.SharedLibraryDefaults
@@ -31,11 +32,16 @@ plugins {
 val ext = extensions.create("sharedLibrary", SharedLibraryExtension::class.java)
 ext.jenkins.version.convention(SharedLibraryDefaults.CORE_VERSION)
 ext.jenkins.testHarnessVersion.convention(SharedLibraryDefaults.TEST_HARNESS_VERSION)
+ext.jenkins.bomVersion.convention(SharedLibraryDefaults.BOM_VERSION)
 ext.pipelineUnitVersion.convention(SharedLibraryDefaults.PIPELINE_UNIT_VERSION)
 
 // ── Jenkins plugin configurations ─────────────────────────────────────────────
 
 dependencies.components.all(JenkinsPluginRule::class.java)
+dependencies.components.withModule(
+  "org.jenkins-ci.main:jenkins-test-harness",
+  JenkinsTestHarnessServletApiRule::class.java,
+)
 
 dependencies.attributesSchema.attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE) {
   compatibilityRules.add(JpiCompatibilityRule::class.java)
@@ -45,10 +51,20 @@ dependencies.attributesSchema.attribute(JenkinsPluginRule.JENKINS_ARTIFACT_ATTRI
 }
 
 // Eagerly created so the Kotlin DSL generates the jenkinsPlugin(...) typed accessor at sync time.
+val depsHandler = dependencies
 configurations.create(PluginConstants.JENKINS_PLUGIN_CONFIGURATION) {
   isCanBeResolved = false
   isCanBeConsumed = false
   description = "Jenkins HPI/JPI plugin dependencies for shared library compilation and testing"
+  withDependencies {
+    ext.jenkins.bomVersion.orNull?.let { bomVer ->
+      val (major, minor) =
+        ext.jenkins.version
+          .get()
+          .split(".")
+      add(depsHandler.platform("io.jenkins.tools.bom:bom-$major.$minor.x:$bomVer"))
+    }
+  }
 }
 dependencies.addProvider(
   PluginConstants.JENKINS_PLUGIN_CONFIGURATION,
@@ -241,12 +257,6 @@ dependencies.addProvider(
   "${PluginConstants.INTEGRATION_TEST_SUITE}Implementation",
   ext.jenkins.testHarnessVersion.map { v: String -> "org.jenkins-ci.main:jenkins-test-harness:$v" },
 )
-// jenkins-test-harness 2565+ excludes jakarta.servlet-api from its transitive compile deps
-// (the container provides it at runtime), so Groovy compilation fails on 2.504.x+ without this.
-// 5.0.0 is the Jakarta EE 9 baseline; jakarta.servlet.ServletContext is present identically
-// in EE 9 (5.x) and EE 10 (6.x), so this satisfies the Groovy type-checker on all Jenkins LTS lines.
-dependencies.add("${PluginConstants.INTEGRATION_TEST_SUITE}CompileOnly", "jakarta.servlet:jakarta.servlet-api:5.0.0")
-
 val integrationTestSuite = the<TestingExtension>().suites.named(PluginConstants.INTEGRATION_TEST_SUITE)
 tasks.named(LifecycleBasePlugin.CHECK_TASK_NAME) {
   dependsOn(integrationTestSuite)

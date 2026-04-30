@@ -22,4 +22,23 @@ abstract class JenkinsVersions {
 
   /** `jenkins-test-harness` version added to the `integrationTest` compile and runtime classpaths. */
   abstract val testHarnessVersion: Property<String>
+
+  /**
+   * Jenkins BOM version.
+   * Defaults to [SharedLibraryDefaults.BOM_VERSION], which matches the [SharedLibraryDefaults.CORE_VERSION] LTS line.
+   * The plugin automatically adds `io.jenkins.tools.bom:bom-{MAJOR}.{MINOR}.x:{bomVersion}` as a platform
+   * to the `jenkinsPlugin` configuration — no manual `jenkinsPlugin(platform(...))` call is needed.
+   *
+   * Override when upgrading to a different Jenkins LTS line:
+   * ```kotlin
+   * sharedLibrary {
+   *     jenkins {
+   *         version = "2.492.3"
+   *         testHarnessVersion = "2397.v5e2b_42e5e01c"
+   *         bomVersion = "3463.v23b_7bb_b_b_66d5"
+   *     }
+   * }
+   * ```
+   */
+  abstract val bomVersion: Property<String>
 }

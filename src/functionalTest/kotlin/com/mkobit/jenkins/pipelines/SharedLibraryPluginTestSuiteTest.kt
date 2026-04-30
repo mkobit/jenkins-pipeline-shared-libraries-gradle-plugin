@@ -6,7 +6,6 @@ import io.kotest.datatest.withData
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotContain
 import org.gradle.testkit.runner.TaskOutcome
-import testsupport.JENKINS_BOM
 import testsupport.TestProjectBuilder
 import testsupport.TestedGradleVersion
 
@@ -41,9 +40,6 @@ class SharedLibraryPluginTestSuiteTest :
               plugins {
                   id("com.mkobit.jenkins.pipelines.shared-library")
                   java
-              }
-              dependencies {
-                  jenkinsPlugin(platform("$JENKINS_BOM"))
               }
               testing {
                   suites {
@@ -89,7 +85,6 @@ class SharedLibraryPluginTestSuiteTest :
                   id("com.mkobit.jenkins.pipelines.shared-library")
               }
               dependencies {
-                  jenkinsPlugin(platform("$JENKINS_BOM"))
                   testImplementation("org.spockframework:spock-core:2.3-groovy-3.0")
               }
               """.trimIndent(),
@@ -135,7 +130,6 @@ class SharedLibraryPluginTestSuiteTest :
                   kotlin("jvm") version "2.0.21"
               }
               dependencies {
-                  jenkinsPlugin(platform("$JENKINS_BOM"))
                   testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
                   testImplementation("io.kotest:kotest-assertions-core:5.9.1")
               }
