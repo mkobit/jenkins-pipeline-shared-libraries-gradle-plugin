@@ -241,6 +241,11 @@ dependencies.addProvider(
   "${PluginConstants.INTEGRATION_TEST_SUITE}Implementation",
   ext.jenkins.testHarnessVersion.map { v: String -> "org.jenkins-ci.main:jenkins-test-harness:$v" },
 )
+// jenkins-test-harness 2565+ excludes jakarta.servlet-api from its transitive compile deps
+// (the container provides it at runtime), so Groovy compilation fails on 2.504.x+ without this.
+// 5.0.0 is the Jakarta EE 9 baseline; jakarta.servlet.ServletContext is present identically
+// in EE 9 (5.x) and EE 10 (6.x), so this satisfies the Groovy type-checker on all Jenkins LTS lines.
+dependencies.add("${PluginConstants.INTEGRATION_TEST_SUITE}CompileOnly", "jakarta.servlet:jakarta.servlet-api:5.0.0")
 
 val integrationTestSuite = the<TestingExtension>().suites.named(PluginConstants.INTEGRATION_TEST_SUITE)
 tasks.named(LifecycleBasePlugin.CHECK_TASK_NAME) {

@@ -3,6 +3,7 @@ package com.mkobit.jenkins.pipelines
 import io.kotest.core.annotation.Tags
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
+import io.kotest.inspectors.forAtLeastOne
 import io.kotest.inspectors.forNone
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldNotBeEmpty
@@ -277,6 +278,9 @@ class SharedLibraryPluginResolutionTest :
             val compileFiles = result.output.lines().filter { it.startsWith("compile:") }
             compileFiles.shouldNotBeEmpty()
             compileFiles.forNone { it shouldContain "groovy-all" }
+            // jakarta.servlet-api must be present: jenkins-test-harness 2565+ excludes it from
+            // transitive deps, so the plugin must add it explicitly for Groovy compilation on 2.504.x+.
+            compileFiles.forAtLeastOne { it shouldContain "jakarta.servlet-api" }
           }
       }
     }
