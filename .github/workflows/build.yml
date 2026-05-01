@@ -1,16 +1,20 @@
 name: Build
 
 on:
+  # TODO: remove push trigger once branch protection requires PRs for all changes,
+  #       so CI only runs once per commit (via pull_request), not twice.
   push:
     branches:
-      - the-phoenix-project
       - main
   pull_request:
 
 permissions: {}
 
+# head_ref is set for pull_request events (source branch name); ref_name is set for
+# push events (target branch). Using head_ref || ref_name groups a push to a PR branch
+# and the corresponding pull_request event together so the second cancels the first.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:

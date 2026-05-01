@@ -1,16 +1,22 @@
 name: Composite build test
 
 on:
+  # TODO: remove push trigger once branch protection requires PRs for all changes,
+  #       so CI only runs once per commit (via pull_request), not twice.
   push:
     branches:
-      - the-phoenix-project
       - main
+  pull_request:
   workflow_dispatch:
+    inputs:
+      example-ref:
+        description: "jenkins-pipeline-shared-library-example branch/SHA to test against (default: same branch name, then main)"
+        default: ""
 
 permissions: {}
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
@@ -66,11 +72,29 @@ jobs:
         with:
           path: plugin
 
-      # TODO: update ref to main once migration from the-phoenix-project is complete
+      # Resolve which example branch to test against:
+      #   1. workflow_dispatch input (explicit override)
+      #   2. same branch name as the current plugin branch (coordinated cross-repo changes)
+      #   3. main (fallback for plugin-only changes)
+      - name: Resolve example ref
+        id: example-ref
+        run: |
+          OVERRIDE="${{ inputs.example-ref }}"
+          BRANCH="${{ github.head_ref || github.ref_name }}"
+          if [ -n "$OVERRIDE" ]; then
+            echo "ref=$OVERRIDE" >> "$GITHUB_OUTPUT"
+          elif git ls-remote --exit-code \
+               https://github.com/mkobit/jenkins-pipeline-shared-library-example.git \
+               "refs/heads/$BRANCH" > /dev/null 2>&1; then
+            echo "ref=$BRANCH" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=main" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           repository: mkobit/jenkins-pipeline-shared-library-example
-          ref: the-phoenix-project
+          ref: ${{ steps.example-ref.outputs.ref }}
           path: example
 
       - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
