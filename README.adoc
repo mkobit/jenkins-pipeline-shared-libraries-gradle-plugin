@@ -8,7 +8,7 @@
 :uri-consumer-example: https://github.com/mkobit/jenkins-pipeline-shared-library-example
 :uri-gradle-plugin-portal: https://plugins.gradle.org/plugin/com.mkobit.jenkins.pipelines.shared-library
 :uri-version-badge-image: https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/com/mkobit/jenkins/pipelines/jenkins-pipeline-shared-libraries-gradle-plugin/maven-metadata.xml.svg?label=Gradle%20Plugin%20Portal
-:uri-build-badge: https://github.com/mkobit/{github-repo-id}/actions/workflows/build.yml/badge.svg?branch=the-phoenix-project
+:uri-build-badge: https://github.com/mkobit/{github-repo-id}/actions/workflows/build.yml/badge.svg?branch=main
 :uri-build-link: https://github.com/mkobit/{github-repo-id}/actions/workflows/build.yml
 :version-badge: image:{uri-version-badge-image}["Plugin Version", link="{uri-gradle-plugin-portal}"]
 :build-badge: image:{uri-build-badge}["Build", link="{uri-build-link}"]
@@ -27,8 +27,9 @@ A Gradle plugin for developing and testing link:{uri-jenkins-shared-library-docs
 * Unit testing with link:{uri-jenkins-pipeline-unit}[Jenkins Pipeline Unit]
 * Integration testing with link:{uri-jenkins-test-harness}[Jenkins Test Harness] (`JenkinsRule`)
 * `@Grab` / `@NonCPS` support in shared library source
-* Source code generation for `LocalLibraryRetriever` (wires local library into `JenkinsRule` tests)
-* IDE code completion via GDSL
+* Source code generation for `LocalLibraryRetriever` (wires the local library into `JenkinsRule` tests without a network checkout)
+* Jenkins BOM auto-injected for the configured LTS line — plugin versions stay aligned by default
+* Additional integration test suites (JUnit Jupiter, Spock, Kotest, …) can opt into full Jenkins harness wiring via `sharedLibrary.jenkinsTestRunnerSuite(suite)`
 
 == Compatibility
 
@@ -108,11 +109,10 @@ The plugin generates `LocalLibraryRetriever` so the local library is available i
 [source,groovy]
 ----
 // test/integration/groovy/com/example/MyStepTest.groovy
-import com.mkobit.jenkins.pipelines.codegen.LocalLibraryRetriever
+import com.mkobit.jenkins.pipelines.testing.LocalLibraryRetriever
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition
 import org.jenkinsci.plugins.workflow.job.WorkflowJob
 import org.jenkinsci.plugins.workflow.libs.GlobalLibraries
-import org.jenkinsci.plugins.workflow.libs.LibraryConfiguration
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -123,11 +123,7 @@ class MyStepTest {
 
     @Before
     void configureLibrary() {
-        def retriever = LocalLibraryRetriever.implicitLibrary()
-        def lib = new LibraryConfiguration('mylib', retriever)
-        lib.implicit = true
-        lib.defaultVersion = 'unused'
-        GlobalLibraries.get().libraries = [lib]
+        GlobalLibraries.get().libraries = [LocalLibraryRetriever.implicitLibrary('mylib')]
     }
 
     @Test
