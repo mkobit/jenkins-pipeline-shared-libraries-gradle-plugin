@@ -158,4 +158,94 @@ class SharedLibraryPluginTestSuiteTest :
           }
       }
     }
+
+    describe("consumer-registered JUnit Jupiter integrationTest suite compiles") {
+      withData(TestedGradleVersion.entries) { gradleVersion ->
+        baseProject()
+          .apply {
+            buildFile.writeText(
+              """
+              plugins {
+                  id("com.mkobit.jenkins.pipelines.shared-library")
+                  java
+              }
+              testing {
+                  suites {
+                      named<JvmTestSuite>("integrationTest") {
+                          useJUnitJupiter()
+                      }
+                  }
+              }
+              """.trimIndent(),
+            )
+            file("test/integration/java/com/example/JUnit6RuleTest.java").writeText(
+              """
+              package com.example;
+              import hudson.model.Item;
+              import org.junit.jupiter.api.Test;
+              class JUnit6RuleTest {
+                  @Test
+                  void jenkinsApiOnClasspath() {
+                      assert Item.class != null;
+                  }
+              }
+              """.trimIndent(),
+            )
+          }.use { project ->
+            val result =
+              project
+                .runner(gradleVersion)
+                .withArguments("compileIntegrationTestJava")
+                .build()
+            result.task(":compileIntegrationTestJava")!!.outcome shouldBe TaskOutcome.SUCCESS
+          }
+      }
+    }
+
+    describe("consumer-registered additional JvmTestSuite gets jenkins-test-harness automatically") {
+      withData(TestedGradleVersion.entries) { gradleVersion ->
+        baseProject()
+          .apply {
+            buildFile.writeText(
+              """
+              plugins {
+                  id("com.mkobit.jenkins.pipelines.shared-library")
+                  java
+              }
+              testing {
+                  suites {
+                      register<JvmTestSuite>("integrationTestJunit6") {
+                          useJUnitJupiter()
+                          sources {
+                              java.setSrcDirs(listOf("test/integration-junit6/java"))
+                          }
+                      }
+                  }
+              }
+              tasks.named("check") { dependsOn("integrationTestJunit6") }
+              """.trimIndent(),
+            )
+            file("test/integration-junit6/java/com/example/ExtraJUnit6Test.java").writeText(
+              """
+              package com.example;
+              import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+              import org.junit.jupiter.api.Test;
+              class ExtraJUnit6Test {
+                  @Test
+                  void jenkinsTestHarnessTypesAvailable() {
+                      assert WorkflowJob.class != null;
+                  }
+              }
+              """.trimIndent(),
+            )
+          }.use { project ->
+            val result =
+              project
+                .runner(gradleVersion)
+                .withArguments("compileIntegrationTestJunit6Java")
+                .build()
+            result.task(":compileIntegrationTestJunit6Java")!!.outcome shouldBe TaskOutcome.SUCCESS
+          }
+      }
+    }
   })

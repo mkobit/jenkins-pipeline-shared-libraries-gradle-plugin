@@ -188,47 +188,6 @@ extensions.configure<TestingExtension> {
           ),
         )
       }
-      targets.all {
-        testTask.configure {
-          mustRunAfter(test)
-          description = "Runs integration tests against an embedded Jenkins runtime"
-          // WarExploder reads the `buildDirectory` system property (defaulting to "target")
-          // as the parent of its jenkins-for-test explode directory.  Pointing it at an
-          // absolute path inside build/ keeps the explode dir inside the Gradle build tree
-          // and allows us to declare it as a task output for correct up-to-date checking.
-          // buildDirectory is finalized before testTask.configure runs; .get() is safe here.
-          systemProperty(
-            "buildDirectory",
-            layout.buildDirectory
-              .get()
-              .asFile.absolutePath,
-          )
-          outputs.dir(layout.buildDirectory.dir("jenkins-for-test"))
-          classpath += hpiFiles
-          classpath += groovyAllRuntime
-          maxParallelForks = 1
-          maxHeapSize = SharedLibraryDefaults.INTEGRATION_TEST_MAX_HEAP_SIZE
-          systemProperty("test.library.root", libraryRoot)
-          systemProperty("test.library.src", srcDir)
-          systemProperty("test.library.vars", varsDir)
-          systemProperty("test.library.resources", resourcesDir)
-          jvmArgumentProviders.add(
-            CommandLineArgumentProvider {
-              listOf("-Djth.jenkins-war.path=${jenkinsWarFile.get().absolutePath}")
-            },
-          )
-          // Jenkins uses XStream, Guice, and other reflection-heavy libraries that
-          // require access to JDK internals sealed by Java 9+ strong encapsulation.
-          jvmArgs(
-            "--add-opens=java.base/java.util=ALL-UNNAMED",
-            "--add-opens=java.base/java.lang=ALL-UNNAMED",
-            "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
-            "--add-opens=java.base/java.text=ALL-UNNAMED",
-            "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
-            "--add-opens=java.desktop/java.awt=ALL-UNNAMED",
-          )
-        }
-      }
     }
   }
 }
@@ -253,11 +212,84 @@ dependencies.addProvider(
   "testImplementation",
   ext.pipelineUnitVersion.map { v: String -> "com.lesfurets:jenkins-pipeline-unit:$v" },
 )
-dependencies.addProvider(
-  "${PluginConstants.INTEGRATION_TEST_SUITE}Implementation",
-  ext.jenkins.testHarnessVersion.map { v: String -> "org.jenkins-ci.main:jenkins-test-harness:$v" },
-)
-val integrationTestSuite = the<TestingExtension>().suites.named(PluginConstants.INTEGRATION_TEST_SUITE)
+
+// ── Jenkins test-harness wiring ───────────────────────────────────────────────
+
+val buildDir =
+  layout.buildDirectory
+    .get()
+    .asFile.absolutePath
+
+// Applies full Jenkins integration-test wiring to a JvmTestSuite:
+// - jenkins-test-harness on the implementation classpath
+// - ivy on the runtimeOnly classpath (must go through the configuration, not classpath +=,
+//   because classpath += before JvmTestSuitePlugin wires the convention would bypass it)
+// - HPI plugin archives + groovy-all on the test task classpath
+// Called explicitly for the built-in integrationTest suite and exposed via the extension
+// so consumers can opt-in their own additional suites (user suites via afterEvaluate below).
+fun applyJenkinsTestWiring(suite: JvmTestSuite) {
+  val implConfigName = suite.sources.implementationConfigurationName
+  depsHandler.addProvider(
+    implConfigName,
+    ext.jenkins.testHarnessVersion.map { v: String -> "org.jenkins-ci.main:jenkins-test-harness:$v" },
+  )
+  // ivy goes through runtimeOnly so it is part of the suite's runtimeClasspath that
+  // JvmTestSuitePlugin maps as the test task classpath convention. Adding it via
+  // tasks.withType<Test>().configureEach { classpath += ivy } would race against the
+  // convention registration for late-registered suites and bypass the runtime classpath.
+  depsHandler.add(suite.sources.runtimeOnlyConfigurationName, PluginConstants.IVY_COORDINATES)
+  suite.targets.all {
+    testTask.configure {
+      mustRunAfter(tasks.named("test"))
+      // WarExploder reads buildDirectory (defaults to "target") as parent of its explode dir.
+      // buildDirectory is finalized at configuration time; .get() is safe here.
+      systemProperty("buildDirectory", buildDir)
+      outputs.dir(layout.buildDirectory.dir("jenkins-for-test"))
+      classpath += hpiFiles
+      // groovyAllRuntime is an isolated configuration that forces groovy-all 2.4 onto the
+      // classpath even when groovy 3.x is present via Spock. Must use += (not runtimeOnly)
+      // to bypass version-conflict resolution that would otherwise pick groovy 3.x.
+      classpath += groovyAllRuntime
+      maxParallelForks = 1
+      maxHeapSize = SharedLibraryDefaults.INTEGRATION_TEST_MAX_HEAP_SIZE
+      systemProperty("test.library.root", libraryRoot)
+      systemProperty("test.library.src", srcDir)
+      systemProperty("test.library.vars", varsDir)
+      systemProperty("test.library.resources", resourcesDir)
+      jvmArgumentProviders.add(
+        CommandLineArgumentProvider {
+          listOf("-Djth.jenkins-war.path=${jenkinsWarFile.get().absolutePath}")
+        },
+      )
+      // Jenkins uses XStream, Guice, and other reflection-heavy libraries that
+      // require access to JDK internals sealed by Java 9+ strong encapsulation.
+      jvmArgs(
+        "--add-opens=java.base/java.util=ALL-UNNAMED",
+        "--add-opens=java.base/java.lang=ALL-UNNAMED",
+        "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+        "--add-opens=java.base/java.text=ALL-UNNAMED",
+        "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
+        "--add-opens=java.desktop/java.awt=ALL-UNNAMED",
+      )
+    }
+  }
+}
+
+val integrationTestSuite = the<TestingExtension>().suites.named<JvmTestSuite>(PluginConstants.INTEGRATION_TEST_SUITE)
+applyJenkinsTestWiring(integrationTestSuite.get())
+
+// User-registered suites (via jenkinsTestRunnerSuite) must be wired in afterEvaluate.
+// register<JvmTestSuite> {} runs its config block BEFORE adding the suite to the container,
+// so JvmTestSuitePlugin's suites.all {} — which registers the convention mapping for
+// Test.classpath — fires AFTER the config block returns. Deferring to afterEvaluate
+// ensures the convention is already in place when applyJenkinsTestWiring registers its
+// testTask.configure action, so classpath += hpiFiles captures the full runtimeClasspath.
+val deferredUserSuites = mutableListOf<JvmTestSuite>()
+afterEvaluate {
+  deferredUserSuites.forEach { applyJenkinsTestWiring(it) }
+}
+ext.setTestSuiteWirer { suite -> deferredUserSuites.add(suite) }
+
 tasks.named(LifecycleBasePlugin.CHECK_TASK_NAME) {
   dependsOn(integrationTestSuite)
 }
@@ -287,14 +319,12 @@ val ivy =
     description = "Ivy for @Grab support in shared library Groovy sources"
   }
 dependencies.add(ivy.name, PluginConstants.IVY_COORDINATES)
-tasks {
-  withType<GroovyCompile>().configureEach {
-    groovyClasspath += ivy
-  }
-  withType<Test>().configureEach {
-    classpath += ivy
-  }
+tasks.withType<GroovyCompile>().configureEach {
+  groovyClasspath += ivy
 }
+// ivy on the test suite classpath: integration test suites get it via applyJenkinsTestWiring
+// (added to runtimeOnly). The unit test suite gets it here directly.
+dependencies.add("testRuntimeOnly", PluginConstants.IVY_COORDINATES)
 
 // ── Type-safe source set accessors ────────────────────────────────────────────
 

@@ -2,6 +2,7 @@ package com.mkobit.jenkins.pipelines
 
 import org.gradle.api.Action
 import org.gradle.api.model.ObjectFactory
+import org.gradle.api.plugins.jvm.JvmTestSuite
 import org.gradle.api.provider.Property
 import javax.inject.Inject
 
@@ -20,14 +21,14 @@ import javax.inject.Inject
  * }
  * ```
  *
- * To configure test execution properties (heap size, JVM args) use the standard Gradle API:
+ * Additional integration test suites (JUnit Jupiter, Spock, Kotest, etc.) can be opted into
+ * full Jenkins harness wiring by calling [jenkinsTestRunnerSuite] inside the suite registration:
  * ```kotlin
  * testing {
  *     suites {
- *         named<JvmTestSuite>("integrationTest") {
- *             targets.all {
- *                 testTask.configure { maxHeapSize = "4g" }
- *             }
+ *         register<JvmTestSuite>("integrationTestJunit5") {
+ *             sharedLibrary.jenkinsTestRunnerSuite(this)
+ *             // ...suite-specific config...
  *         }
  *     }
  * }
@@ -45,4 +46,22 @@ abstract class SharedLibraryExtension
 
     /** `com.lesfurets:jenkins-pipeline-unit` version used in the `test` suite. */
     abstract val pipelineUnitVersion: Property<String>
+
+    private var testSuiteWirer: ((JvmTestSuite) -> Unit)? = null
+
+    internal fun setTestSuiteWirer(action: (JvmTestSuite) -> Unit) {
+      testSuiteWirer = action
+    }
+
+    /**
+     * Applies full Jenkins test-harness wiring to [suite] — identical to the built-in
+     * `integrationTest` suite. Call this inside your `register<JvmTestSuite>` block to opt
+     * the suite into Jenkins dependency injection, HPI classpath, WAR path, system properties,
+     * and JVM opens.
+     */
+    fun jenkinsTestRunnerSuite(suite: JvmTestSuite) {
+      checkNotNull(testSuiteWirer) {
+        "jenkinsTestRunnerSuite() called before plugin wiring is complete"
+      }.invoke(suite)
+    }
   }
