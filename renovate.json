@@ -29,8 +29,27 @@
       "automerge": true
     },
     {
-      "description": "Automerge GHA SHA re-pins after CI passes",
+      "description": "GitHub first-party actions — group and allow 30-day stabilisation before automerge",
       "matchManagers": ["github-actions"],
+      "matchDepPatterns": ["^actions/"],
+      "groupName": "GitHub Actions (first-party)",
+      "minimumReleaseAge": "30 days",
+      "automerge": true
+    },
+    {
+      "description": "Gradle actions — group and allow 30-day stabilisation before automerge",
+      "matchManagers": ["github-actions"],
+      "matchDepPatterns": ["^gradle/"],
+      "groupName": "Gradle Actions",
+      "minimumReleaseAge": "30 days",
+      "automerge": true
+    },
+    {
+      "description": "All other third-party actions — group and allow 30-day stabilisation before automerge",
+      "matchManagers": ["github-actions"],
+      "excludeDepPatterns": ["^actions/", "^gradle/"],
+      "groupName": "Third-party GitHub Actions",
+      "minimumReleaseAge": "30 days",
       "automerge": true
     },
     {
