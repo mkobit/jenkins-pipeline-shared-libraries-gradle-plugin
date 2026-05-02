@@ -1,5 +1,19 @@
 version: 2
 updates:
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
+    groups:
+      kotest:
+        patterns:
+          - "io.kotest:*"
+      okhttp:
+        patterns:
+          - "com.squareup.okhttp3:*"
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
