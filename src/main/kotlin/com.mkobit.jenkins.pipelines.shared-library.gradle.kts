@@ -11,6 +11,7 @@ import com.mkobit.jenkins.pipelines.SharedLibraryExtension
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition
 import org.gradle.api.plugins.GroovyPlugin
 import org.gradle.api.plugins.jvm.JvmTestSuite
+import org.gradle.api.plugins.quality.CodeNarc
 import org.gradle.api.tasks.GroovySourceDirectorySet
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
@@ -329,6 +330,23 @@ tasks.withType<GroovyCompile>().configureEach {
 // ivy on the test suite classpath: integration test suites get it via applyJenkinsTestWiring
 // (added to runtimeOnly). The unit test suite gets it here directly.
 dependencies.add("testRuntimeOnly", PluginConstants.IVY_COORDINATES)
+
+// ── CodeNarc Enhanced Classpath Rule support ──────────────────────────────────
+
+// rulesets/jenkins.xml contains Enhanced Classpath Rules that resolve type info
+// (Serializable, @NonCPS, etc.) at analysis time. Providing the Jenkins plugin
+// JARs as compilationClasspath lets CodeNarc resolve those types correctly so
+// the rules report real violations rather than silently skipping analysis.
+pluginManager.withPlugin("codenarc") {
+  // sourceSets.main.compileClasspath is resolvable and already contains Jenkins JARs
+  // via compileOnly → jenkinsPlugin. Enhanced Classpath Rules (rulesets/jenkins.xml)
+  // need Jenkins types on the analysis path to resolve Serializable checks and
+  // @NonCPS annotations; without this they silently skip type resolution.
+  val mainCompileClasspath = sourceSets.main.compileClasspath
+  tasks.withType<CodeNarc>().configureEach {
+    compilationClasspath += mainCompileClasspath
+  }
+}
 
 // ── Type-safe source set accessors ────────────────────────────────────────────
 
