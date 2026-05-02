@@ -276,27 +276,22 @@ fun applyJenkinsTestWiring(suite: JvmTestSuite) {
   }
 }
 
-// Capture the provider at script-body time (when TestingExtension is already registered via
-// the groovy plugin) so the tasks.named block captures a provider, not a live extension lookup.
-// tasks.named { } executes against the Task's ExtensionAware scope, not the project's.
-val integrationTestProvider = the<TestingExtension>().suites.named(PluginConstants.INTEGRATION_TEST_SUITE)
+val integrationTestSuite = the<TestingExtension>().suites.named<JvmTestSuite>(PluginConstants.INTEGRATION_TEST_SUITE)
+applyJenkinsTestWiring(integrationTestSuite.get())
 
-// Wire every JvmTestSuite in afterEvaluate so JvmTestSuitePlugin's classpath convention is
-// already registered before applyJenkinsTestWiring appends hpiFiles to the test task classpath.
-// register<JvmTestSuite> {} runs its config block before the suite is added to the container,
-// so suites.all {} (which sets the Test.classpath convention) fires after the config block.
-// Deferring to afterEvaluate guarantees the convention is in place for all suites, including
-// both the built-in integrationTest suite and any consumer-registered suites.
+// Consumer-registered suites opt in via sharedLibrary.jenkinsTestRunnerSuite(suite).
+// Those calls arrive during the consumer's build-script evaluation — before the suite
+// is added to the container and before JvmTestSuitePlugin's suites.all {} hook sets up
+// the Test.classpath convention. Deferring to afterEvaluate ensures the convention is
+// already in place when applyJenkinsTestWiring appends hpiFiles to the test classpath.
+val deferredUserSuites = mutableListOf<JvmTestSuite>()
 afterEvaluate {
-  the<TestingExtension>()
-    .suites
-    .withType<JvmTestSuite>()
-    .filter { it.name != "test" }
-    .forEach { applyJenkinsTestWiring(it) }
+  deferredUserSuites.forEach { applyJenkinsTestWiring(it) }
 }
+ext.setTestSuiteWirer { suite -> deferredUserSuites.add(suite) }
 
 tasks.named(LifecycleBasePlugin.CHECK_TASK_NAME) {
-  dependsOn(integrationTestProvider)
+  dependsOn(integrationTestSuite)
 }
 
 // ── Documentation ─────────────────────────────────────────────────────────────
