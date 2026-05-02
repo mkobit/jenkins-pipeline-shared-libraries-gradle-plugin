@@ -12,6 +12,7 @@ import io.kotest.matchers.string.shouldNotBeBlank
 import io.kotest.matchers.types.shouldBeInstanceOf
 import org.gradle.api.Project
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition
+import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.tasks.GroovySourceDirectorySet
 import org.gradle.api.tasks.SourceSetContainer
@@ -25,6 +26,7 @@ internal class SharedLibraryPluginTest :
     beforeTest {
       project = ProjectBuilder.builder().build()
       project.pluginManager.apply("com.mkobit.jenkins.pipelines.shared-library")
+      (project as ProjectInternal).evaluate()
     }
 
     it("applies the Groovy plugin") {

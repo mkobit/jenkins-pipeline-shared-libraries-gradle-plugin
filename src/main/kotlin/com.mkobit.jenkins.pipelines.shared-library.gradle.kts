@@ -275,23 +275,27 @@ fun applyJenkinsTestWiring(suite: JvmTestSuite) {
   }
 }
 
-val integrationTestSuite = the<TestingExtension>().suites.named<JvmTestSuite>(PluginConstants.INTEGRATION_TEST_SUITE)
-applyJenkinsTestWiring(integrationTestSuite.get())
+// Capture the provider at script-body time (when TestingExtension is already registered via
+// the groovy plugin) so the tasks.named block captures a provider, not a live extension lookup.
+// tasks.named { } executes against the Task's ExtensionAware scope, not the project's.
+val integrationTestProvider = the<TestingExtension>().suites.named(PluginConstants.INTEGRATION_TEST_SUITE)
 
-// User-registered suites (via jenkinsTestRunnerSuite) must be wired in afterEvaluate.
-// register<JvmTestSuite> {} runs its config block BEFORE adding the suite to the container,
-// so JvmTestSuitePlugin's suites.all {} — which registers the convention mapping for
-// Test.classpath — fires AFTER the config block returns. Deferring to afterEvaluate
-// ensures the convention is already in place when applyJenkinsTestWiring registers its
-// testTask.configure action, so classpath += hpiFiles captures the full runtimeClasspath.
-val deferredUserSuites = mutableListOf<JvmTestSuite>()
+// Wire every JvmTestSuite in afterEvaluate so JvmTestSuitePlugin's classpath convention is
+// already registered before applyJenkinsTestWiring appends hpiFiles to the test task classpath.
+// register<JvmTestSuite> {} runs its config block before the suite is added to the container,
+// so suites.all {} (which sets the Test.classpath convention) fires after the config block.
+// Deferring to afterEvaluate guarantees the convention is in place for all suites, including
+// both the built-in integrationTest suite and any consumer-registered suites.
 afterEvaluate {
-  deferredUserSuites.forEach { applyJenkinsTestWiring(it) }
+  the<TestingExtension>()
+    .suites
+    .withType<JvmTestSuite>()
+    .filter { it.name != "test" }
+    .forEach { applyJenkinsTestWiring(it) }
 }
-ext.setTestSuiteWirer { suite -> deferredUserSuites.add(suite) }
 
 tasks.named(LifecycleBasePlugin.CHECK_TASK_NAME) {
-  dependsOn(integrationTestSuite)
+  dependsOn(integrationTestProvider)
 }
 
 // ── Documentation ─────────────────────────────────────────────────────────────

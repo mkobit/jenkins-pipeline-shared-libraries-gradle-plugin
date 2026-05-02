@@ -10,7 +10,7 @@ package com.mkobit.jenkins.pipelines
  */
 object SharedLibraryDefaults {
   const val CORE_VERSION = "2.479.1"
-  const val TEST_HARNESS_VERSION = "2391.v9b_3e2d3351a_2"
+  const val TEST_HARNESS_VERSION = "2565.vd1eb_7c961d1b_"
   const val BOM_VERSION = "5054.v620b_5d2b_d5e6"
   const val PIPELINE_UNIT_VERSION = "1.29"
 

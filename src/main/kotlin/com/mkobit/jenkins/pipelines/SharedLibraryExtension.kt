@@ -2,7 +2,6 @@ package com.mkobit.jenkins.pipelines
 
 import org.gradle.api.Action
 import org.gradle.api.model.ObjectFactory
-import org.gradle.api.plugins.jvm.JvmTestSuite
 import org.gradle.api.provider.Property
 import javax.inject.Inject
 
@@ -21,18 +20,9 @@ import javax.inject.Inject
  * }
  * ```
  *
- * Additional integration test suites (JUnit Jupiter, Spock, Kotest, etc.) can be opted into
- * full Jenkins harness wiring by calling [jenkinsTestRunnerSuite] inside the suite registration:
- * ```kotlin
- * testing {
- *     suites {
- *         register<JvmTestSuite>("integrationTestJunit5") {
- *             sharedLibrary.jenkinsTestRunnerSuite(this)
- *             // ...suite-specific config...
- *         }
- *     }
- * }
- * ```
+ * Every [JvmTestSuite] in the project automatically receives full Jenkins harness wiring —
+ * `jenkins-test-harness`, HPI classpath, WAR path, system properties, and JVM opens.
+ * No additional configuration is required for consumer-registered suites.
  */
 abstract class SharedLibraryExtension
   @Inject
@@ -46,22 +36,4 @@ abstract class SharedLibraryExtension
 
     /** `com.lesfurets:jenkins-pipeline-unit` version used in the `test` suite. */
     abstract val pipelineUnitVersion: Property<String>
-
-    private var testSuiteWirer: ((JvmTestSuite) -> Unit)? = null
-
-    internal fun setTestSuiteWirer(action: (JvmTestSuite) -> Unit) {
-      testSuiteWirer = action
-    }
-
-    /**
-     * Applies full Jenkins test-harness wiring to [suite] — identical to the built-in
-     * `integrationTest` suite. Call this inside your `register<JvmTestSuite>` block to opt
-     * the suite into Jenkins dependency injection, HPI classpath, WAR path, system properties,
-     * and JVM opens.
-     */
-    fun jenkinsTestRunnerSuite(suite: JvmTestSuite) {
-      checkNotNull(testSuiteWirer) {
-        "jenkinsTestRunnerSuite() called before plugin wiring is complete"
-      }.invoke(suite)
-    }
   }

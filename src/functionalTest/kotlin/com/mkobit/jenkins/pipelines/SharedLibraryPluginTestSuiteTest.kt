@@ -228,12 +228,12 @@ class SharedLibraryPluginTestSuiteTest :
             file("test/integration-junit6/java/com/example/ExtraJUnit6Test.java").writeText(
               """
               package com.example;
-              import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+              import org.jvnet.hudson.test.JenkinsRule;
               import org.junit.jupiter.api.Test;
               class ExtraJUnit6Test {
                   @Test
                   void jenkinsTestHarnessTypesAvailable() {
-                      assert WorkflowJob.class != null;
+                      Class<?> c = JenkinsRule.class;
                   }
               }
               """.trimIndent(),
