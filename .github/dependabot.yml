@@ -1,0 +1,19 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 30
+    groups:
+      github-actions-first-party:
+        patterns:
+          - "actions/*"
+      gradle-actions:
+        patterns:
+          - "gradle/*"
+      third-party-actions:
+        exclude-patterns:
+          - "actions/*"
+          - "gradle/*"
