@@ -36,6 +36,7 @@ testing {
     val test by getting(JvmTestSuite::class) {
       useJUnitJupiter(libs.versions.junit.jupiter)
       dependencies {
+        implementation(platform(libs.kotest.bom))
         implementation(libs.mockk)
         implementation(libs.kotest.assertions)
         implementation(libs.kotest.runner)
@@ -46,6 +47,7 @@ testing {
       useJUnitJupiter(libs.versions.junit.jupiter)
       dependencies {
         implementation(gradleTestKit())
+        implementation(platform(libs.kotest.bom))
         implementation(libs.kotest.assertions)
         implementation(libs.kotest.runner)
         implementation(project())
