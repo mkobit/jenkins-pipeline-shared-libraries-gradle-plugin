@@ -4,6 +4,7 @@ import com.mkobit.jenkins.pipelines.GenerateLocalLibraryFiles
 import com.mkobit.jenkins.pipelines.JenkinsArtifactDisambiguationRule
 import com.mkobit.jenkins.pipelines.JenkinsPluginRule
 import com.mkobit.jenkins.pipelines.JenkinsTestHarnessServletApiRule
+import com.mkobit.jenkins.pipelines.JenkinsWarJvmArgumentProvider
 import com.mkobit.jenkins.pipelines.JpiCompatibilityRule
 import com.mkobit.jenkins.pipelines.PluginConstants
 import com.mkobit.jenkins.pipelines.SharedLibraryDefaults
@@ -21,7 +22,6 @@ import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.*
 import org.gradle.language.base.plugins.LifecycleBasePlugin
-import org.gradle.process.CommandLineArgumentProvider
 import org.gradle.testing.base.TestingExtension
 
 plugins {
@@ -258,8 +258,8 @@ fun applyJenkinsTestWiring(suite: JvmTestSuite) {
       systemProperty("test.library.vars", varsDir)
       systemProperty("test.library.resources", resourcesDir)
       jvmArgumentProviders.add(
-        CommandLineArgumentProvider {
-          listOf("-Djth.jenkins-war.path=${jenkinsWarFile.get().absolutePath}")
+        objects.newInstance<JenkinsWarJvmArgumentProvider>().also {
+          it.warFile.fileProvider(jenkinsWarFile)
         },
       )
       // Jenkins uses XStream, Guice, and other reflection-heavy libraries that
