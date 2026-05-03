@@ -74,6 +74,16 @@ tasks.named("check") {
   dependsOn(testing.suites.named("functionalTest"))
 }
 
+tasks.withType<Test>().configureEach {
+  testLogging {
+    events("failed", "skipped")
+    showExceptions = true
+    showCauses = true
+    showStackTraces = true
+    exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+  }
+}
+
 val dokkaHtmlJar =
   tasks.register<Jar>("dokkaHtmlJar") {
     description = "Assembles Dokka HTML documentation into a JAR"
