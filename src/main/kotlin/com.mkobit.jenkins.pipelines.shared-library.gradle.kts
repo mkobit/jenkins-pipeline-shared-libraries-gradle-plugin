@@ -328,18 +328,18 @@ dependencies.add("testRuntimeOnly", PluginConstants.IVY_COORDINATES)
 
 // ── CodeNarc Enhanced Classpath Rule support ──────────────────────────────────
 
-// rulesets/jenkins.xml contains Enhanced Classpath Rules that resolve type info
-// (Serializable, @NonCPS, etc.) at analysis time. Providing the Jenkins plugin
-// JARs as compilationClasspath lets CodeNarc resolve those types correctly so
-// the rules report real violations rather than silently skipping analysis.
 pluginManager.withPlugin("codenarc") {
-  // sourceSets.main.compileClasspath is resolvable and already contains Jenkins JARs
-  // via compileOnly → jenkinsPlugin. Enhanced Classpath Rules (rulesets/jenkins.xml)
-  // need Jenkins types on the analysis path to resolve Serializable checks and
-  // @NonCPS annotations; without this they silently skip type resolution.
   val mainCompileClasspath = sourceSets.main.compileClasspath
+  // Enhanced Classpath Rules (rulesets/jenkins.xml) require both the Jenkins
+  // dependency JARs AND the compiled .class output of the source being analyzed.
+  // Without the .class files on compilationClasspath the rules silently skip.
+  // dependsOn(compileGroovy) guarantees the output exists when CodeNarc runs.
+  val mainClassesDirs = sourceSets.main.output.classesDirs
+  val compileGroovy = tasks.named("compileGroovy")
   tasks.withType<CodeNarc>().configureEach {
     compilationClasspath += mainCompileClasspath
+    compilationClasspath += mainClassesDirs
+    dependsOn(compileGroovy)
   }
 }
 
