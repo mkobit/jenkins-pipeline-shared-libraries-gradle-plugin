@@ -209,11 +209,6 @@ dependencies.addProvider(
 
 // ── Jenkins test-harness wiring ───────────────────────────────────────────────
 
-val buildDir =
-  layout.buildDirectory
-    .get()
-    .asFile.absolutePath
-
 // Applies full Jenkins integration-test wiring to a JvmTestSuite:
 // - jenkins-test-harness on the implementation classpath
 // - ivy on the runtimeOnly classpath (must go through the configuration, not classpath +=,
@@ -232,13 +227,17 @@ fun applyJenkinsTestWiring(suite: JvmTestSuite) {
   // tasks.withType<Test>().configureEach { classpath += ivy } would race against the
   // convention registration for late-registered suites and bypass the runtime classpath.
   depsHandler.add(suite.sources.runtimeOnlyConfigurationName, PluginConstants.IVY_COORDINATES)
+  // Each suite gets its own subdirectory so multiple suites can run in parallel without
+  // conflicting on WarExploder output or Gradle's task output tracking.
+  val suiteJenkinsDir = layout.buildDirectory.dir("jenkins-for-test/${suite.name}")
+  // buildDirectory is finalized at configuration time; .get() is safe here.
+  val suiteBuildDir = suiteJenkinsDir.get().asFile.absolutePath
   suite.targets.all {
     testTask.configure {
       mustRunAfter(tasks.named("test"))
       // WarExploder reads buildDirectory (defaults to "target") as parent of its explode dir.
-      // buildDirectory is finalized at configuration time; .get() is safe here.
-      systemProperty("buildDirectory", buildDir)
-      outputs.dir(layout.buildDirectory.dir("jenkins-for-test"))
+      systemProperty("buildDirectory", suiteBuildDir)
+      outputs.dir(suiteJenkinsDir)
       classpath += hpiFiles
       // groovyAllRuntime is an isolated configuration that forces groovy-all 2.4 onto the
       // classpath even when groovy 3.x is present via Spock. Must use += (not runtimeOnly)
