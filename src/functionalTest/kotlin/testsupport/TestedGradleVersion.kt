@@ -14,4 +14,14 @@ enum class TestedGradleVersion(
   ;
 
   override fun dataTestName() = "Gradle $version"
+
+  companion object {
+    // Returns only the version matching -Ptest.gradle.version=X when set, otherwise all entries.
+    // Use with withData(TestedGradleVersion.filtered) to pin a single version during debugging.
+    val filtered: List<TestedGradleVersion>
+      get() {
+        val only = System.getProperty("test.gradle.version")
+        return if (only.isNullOrBlank()) entries.toList() else entries.filter { it.version == only }
+      }
+  }
 }

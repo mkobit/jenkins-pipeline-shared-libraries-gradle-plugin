@@ -6,41 +6,45 @@ import io.kotest.datatest.withData
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotContain
 import org.gradle.testkit.runner.TaskOutcome
-import testsupport.TestProjectBuilder
+import testsupport.TestProject
 import testsupport.TestedGradleVersion
+import testsupport.withTestProject
+import kotlin.io.path.writeText
 
 // Source compilation and unit test execution tests require the Jenkins Maven repo
 // on first run (cold cache). Exclude from fast PR checks with -P kotest.tags=!resolution.
 @Tags("resolution")
 class SharedLibraryPluginSourceTest :
   DescribeSpec({
-    fun sharedLibraryProject(configure: TestProjectBuilder.() -> Unit = {}): TestProjectBuilder =
-      TestProjectBuilder().apply {
-        settingsFile.writeText(
-          """
-          dependencyResolutionManagement {
-              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-              repositories {
-                  mavenCentral()
-                  maven("https://repo.jenkins-ci.org/public/")
-              }
+    val settingsContent =
+      """
+      dependencyResolutionManagement {
+          repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+          repositories {
+              mavenCentral()
+              maven("https://repo.jenkins-ci.org/public/")
           }
-          rootProject.name = "source-test"
-          """.trimIndent(),
-        )
-        buildFile.writeText(
+      }
+      rootProject.name = "source-test"
+      """.trimIndent()
+
+    fun withSharedLibraryProject(configure: TestProject.() -> Unit = {}, block: (TestProject) -> Unit) =
+      withTestProject { project ->
+        project.settingsFile.writeText(settingsContent)
+        project.buildFile.writeText(
           """
           plugins {
               id("com.mkobit.jenkins.pipelines.shared-library")
           }
           """.trimIndent(),
         )
-        configure()
+        project.configure()
+        block(project)
       }
 
     describe("main Groovy source in src/ compiles") {
-      withData(TestedGradleVersion.entries) { gradleVersion ->
-        sharedLibraryProject {
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withSharedLibraryProject(configure = {
           file("src/com/example/Lib.groovy").writeText(
             """
             package com.example
@@ -49,7 +53,7 @@ class SharedLibraryPluginSourceTest :
             }
             """.trimIndent(),
           )
-        }.use { project ->
+        }) { project ->
           val result = project.runner(gradleVersion).withArguments("compileGroovy").build()
           result.task(":compileGroovy")!!.outcome shouldBe TaskOutcome.SUCCESS
         }
@@ -57,10 +61,10 @@ class SharedLibraryPluginSourceTest :
     }
 
     describe("invalid Groovy in src/ fails compilation") {
-      withData(TestedGradleVersion.entries) { gradleVersion ->
-        sharedLibraryProject {
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withSharedLibraryProject(configure = {
           file("src/com/example/Bad.groovy").writeText("class { not valid groovy }")
-        }.use { project ->
+        }) { project ->
           val result = project.runner(gradleVersion).withArguments("compileGroovy").buildAndFail()
           result.task(":compileGroovy")!!.outcome shouldBe TaskOutcome.FAILED
         }
@@ -68,10 +72,10 @@ class SharedLibraryPluginSourceTest :
     }
 
     describe("invalid Groovy in vars/ fails compilation") {
-      withData(TestedGradleVersion.entries) { gradleVersion ->
-        sharedLibraryProject {
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withSharedLibraryProject(configure = {
           file("vars/badStep.groovy").writeText("def call( { unclosed paren and brace")
-        }.use { project ->
+        }) { project ->
           val result = project.runner(gradleVersion).withArguments("compileGroovy").buildAndFail()
           result.task(":compileGroovy")!!.outcome shouldBe TaskOutcome.FAILED
         }
@@ -79,10 +83,10 @@ class SharedLibraryPluginSourceTest :
     }
 
     describe("sourcesJar assembles a JAR of the main source") {
-      withData(TestedGradleVersion.entries) { gradleVersion ->
-        sharedLibraryProject {
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withSharedLibraryProject(configure = {
           file("src/com/example/Lib.groovy").writeText("package com.example; class Lib {}")
-        }.use { project ->
+        }) { project ->
           val result = project.runner(gradleVersion).withArguments("sourcesJar").build()
           result.task(":sourcesJar")!!.outcome shouldBe TaskOutcome.SUCCESS
         }
@@ -90,12 +94,12 @@ class SharedLibraryPluginSourceTest :
     }
 
     describe("groovydocJar assembles a Groovydoc JAR") {
-      withData(TestedGradleVersion.entries) { gradleVersion ->
-        sharedLibraryProject {
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withSharedLibraryProject(configure = {
           file("src/com/example/Lib.groovy").writeText(
             "package com.example; /** Documented. */ class Lib {}",
           )
-        }.use { project ->
+        }) { project ->
           val result = project.runner(gradleVersion).withArguments("groovydocJar").build()
           result.task(":groovydocJar")!!.outcome shouldBe TaskOutcome.SUCCESS
         }
@@ -103,8 +107,8 @@ class SharedLibraryPluginSourceTest :
     }
 
     describe("Jenkins API types usable in main library source") {
-      withData(TestedGradleVersion.entries) { gradleVersion ->
-        sharedLibraryProject {
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withSharedLibraryProject(configure = {
           file("src/com/example/JenkinsLib.groovy").writeText(
             """
             package com.example
@@ -114,7 +118,7 @@ class SharedLibraryPluginSourceTest :
             }
             """.trimIndent(),
           )
-        }.use { project ->
+        }) { project ->
           val result = project.runner(gradleVersion).withArguments("compileGroovy").build()
           result.task(":compileGroovy")!!.outcome shouldBe TaskOutcome.SUCCESS
         }
@@ -122,8 +126,8 @@ class SharedLibraryPluginSourceTest :
     }
 
     describe("unit test suite runs JenkinsPipelineUnit tests") {
-      withData(TestedGradleVersion.entries) { gradleVersion ->
-        sharedLibraryProject {
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withSharedLibraryProject(configure = {
           // Spock brings Groovy 3 onto the compile classpath; groovy-all exclusion is
           // applied by the plugin so Jenkins' bundled Groovy 2.4 does not conflict.
           buildFile.writeText(
@@ -151,7 +155,7 @@ class SharedLibraryPluginSourceTest :
             }
             """.trimIndent(),
           )
-        }.use { project ->
+        }) { project ->
           val result = project.runner(gradleVersion).withArguments("test").build()
           result.task(":test")!!.outcome shouldBe TaskOutcome.SUCCESS
         }
@@ -159,8 +163,8 @@ class SharedLibraryPluginSourceTest :
     }
 
     describe("running test does not trigger integrationTest") {
-      withData(TestedGradleVersion.entries) { gradleVersion ->
-        sharedLibraryProject().use { project ->
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withSharedLibraryProject { project ->
           val result =
             project
               .runner(gradleVersion)

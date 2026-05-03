@@ -11,9 +11,12 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldEndWith
 import io.kotest.matchers.string.shouldNotContain
-import testsupport.TestProjectBuilder
+import testsupport.TestProject
 import testsupport.TestedGradleVersion
 import testsupport.WORKFLOW_API
+import testsupport.withTestProject
+import kotlin.io.path.appendText
+import kotlin.io.path.writeText
 
 // Resolution-tier tests hit the Jenkins Maven repo on first run (cold cache) and are fast
 // on subsequent runs once Gradle's module cache is warm.
@@ -21,55 +24,57 @@ import testsupport.WORKFLOW_API
 @Tags("resolution")
 class SharedLibraryPluginResolutionTest :
   DescribeSpec({
-    fun jenkinsProject(): TestProjectBuilder =
-      TestProjectBuilder().apply {
-        settingsFile.writeText(
-          """
-          dependencyResolutionManagement {
-              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-              repositories {
-                  mavenCentral()
-                  maven("https://repo.jenkins-ci.org/public/")
-              }
+    val settingsContent =
+      """
+      dependencyResolutionManagement {
+          repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+          repositories {
+              mavenCentral()
+              maven("https://repo.jenkins-ci.org/public/")
           }
-          rootProject.name = "resolution-test"
-          """.trimIndent(),
-        )
-        buildFile.writeText(
-          """
-          plugins {
-              id("com.mkobit.jenkins.pipelines.shared-library")
-          }
-          dependencies {
-              jenkinsPlugin("$WORKFLOW_API")
-          }
-          tasks.register("printResolvedArtifacts") {
-              val testRt = configurations["testRuntimeClasspath"]
-              val hpis = configurations["jenkinsPluginHpis"]
-              val compileClasspath = configurations["compileClasspath"]
-              val runtimeClasspath = configurations["runtimeClasspath"]
-              doLast {
-                  testRt.resolvedConfiguration.resolvedArtifacts.forEach {
-                      println("testRuntime:" + it.file.name)
-                  }
-                  hpis.incoming.artifactView { isLenient = true }.artifacts.forEach {
-                      println("hpis:" + it.file.name)
-                  }
-                  compileClasspath.resolvedConfiguration.resolvedArtifacts.forEach {
-                      println("compile:" + it.file.name)
-                  }
-                  runtimeClasspath.resolvedConfiguration.resolvedArtifacts.forEach {
-                      println("runtime:" + it.file.name)
-                  }
-              }
-          }
-          """.trimIndent(),
-        )
       }
+      rootProject.name = "resolution-test"
+      """.trimIndent()
+
+    val jenkinsProjectBuildFile =
+      """
+      plugins {
+          id("com.mkobit.jenkins.pipelines.shared-library")
+      }
+      dependencies {
+          jenkinsPlugin("$WORKFLOW_API")
+      }
+      tasks.register("printResolvedArtifacts") {
+          val testRt = configurations["testRuntimeClasspath"]
+          val hpis = configurations["jenkinsPluginHpis"]
+          val compileClasspath = configurations["compileClasspath"]
+          val runtimeClasspath = configurations["runtimeClasspath"]
+          doLast {
+              testRt.resolvedConfiguration.resolvedArtifacts.forEach {
+                  println("testRuntime:" + it.file.name)
+              }
+              hpis.incoming.artifactView { isLenient = true }.artifacts.forEach {
+                  println("hpis:" + it.file.name)
+              }
+              compileClasspath.resolvedConfiguration.resolvedArtifacts.forEach {
+                  println("compile:" + it.file.name)
+              }
+              runtimeClasspath.resolvedConfiguration.resolvedArtifacts.forEach {
+                  println("runtime:" + it.file.name)
+              }
+          }
+      }
+      """.trimIndent()
+
+    fun withJenkinsProject(block: (TestProject) -> Unit) = withTestProject { project ->
+      project.settingsFile.writeText(settingsContent)
+      project.buildFile.writeText(jenkinsProjectBuildFile)
+      block(project)
+    }
 
     describe("testRuntimeClasspath") {
-      withData(TestedGradleVersion.entries) { gradleVersion ->
-        jenkinsProject().use { project ->
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withJenkinsProject { project ->
           val result =
             project
               .runner(gradleVersion)
@@ -91,8 +96,8 @@ class SharedLibraryPluginResolutionTest :
     }
 
     describe("jenkinsPluginHpis") {
-      withData(TestedGradleVersion.entries) { gradleVersion ->
-        jenkinsProject().use { project ->
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withJenkinsProject { project ->
           val result =
             project
               .runner(gradleVersion)
@@ -113,8 +118,8 @@ class SharedLibraryPluginResolutionTest :
     }
 
     describe("jenkins-core on compile classpath but not main runtime") {
-      withData(TestedGradleVersion.entries) { gradleVersion ->
-        jenkinsProject().use { project ->
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withJenkinsProject { project ->
           val result =
             project
               .runner(gradleVersion)
@@ -140,64 +145,62 @@ class SharedLibraryPluginResolutionTest :
     }
 
     describe("groovy-all absent from testRuntimeClasspath and integrationTestRuntimeClasspath") {
-      withData(TestedGradleVersion.entries) { gradleVersion ->
-        TestProjectBuilder()
-          .apply {
-            settingsFile.writeText(
-              """
-              dependencyResolutionManagement {
-                  repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-                  repositories {
-                      mavenCentral()
-                      maven("https://repo.jenkins-ci.org/public/")
-                  }
-              }
-              rootProject.name = "groovy-all-exclusion-test"
-              """.trimIndent(),
-            )
-            buildFile.writeText(
-              """
-              plugins {
-                  id("com.mkobit.jenkins.pipelines.shared-library")
-              }
-              dependencies {
-                  jenkinsPlugin("$WORKFLOW_API")
-              }
-              tasks.register("printGroovyAll") {
-                  val testRt = configurations["testRuntimeClasspath"]
-                  val integrationTestRt = configurations["integrationTestRuntimeClasspath"]
-                  doLast {
-                      testRt.resolvedConfiguration.resolvedArtifacts.forEach {
-                          println("test:" + it.file.name)
-                      }
-                      integrationTestRt.resolvedConfiguration.resolvedArtifacts.forEach {
-                          println("integration:" + it.file.name)
-                      }
-                  }
-              }
-              """.trimIndent(),
-            )
-          }.use { project ->
-            val result =
-              project
-                .runner(gradleVersion)
-                .withArguments("printGroovyAll")
-                .build()
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withTestProject { project ->
+          project.settingsFile.writeText(
+            """
+            dependencyResolutionManagement {
+                repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+                repositories {
+                    mavenCentral()
+                    maven("https://repo.jenkins-ci.org/public/")
+                }
+            }
+            rootProject.name = "groovy-all-exclusion-test"
+            """.trimIndent(),
+          )
+          project.buildFile.writeText(
+            """
+            plugins {
+                id("com.mkobit.jenkins.pipelines.shared-library")
+            }
+            dependencies {
+                jenkinsPlugin("$WORKFLOW_API")
+            }
+            tasks.register("printGroovyAll") {
+                val testRt = configurations["testRuntimeClasspath"]
+                val integrationTestRt = configurations["integrationTestRuntimeClasspath"]
+                doLast {
+                    testRt.resolvedConfiguration.resolvedArtifacts.forEach {
+                        println("test:" + it.file.name)
+                    }
+                    integrationTestRt.resolvedConfiguration.resolvedArtifacts.forEach {
+                        println("integration:" + it.file.name)
+                    }
+                }
+            }
+            """.trimIndent(),
+          )
+          val result =
+            project
+              .runner(gradleVersion)
+              .withArguments("printGroovyAll")
+              .build()
 
-            val testFiles = result.output.lines().filter { it.startsWith("test:") }
-            val integrationFiles = result.output.lines().filter { it.startsWith("integration:") }
+          val testFiles = result.output.lines().filter { it.startsWith("test:") }
+          val integrationFiles = result.output.lines().filter { it.startsWith("integration:") }
 
-            testFiles.shouldNotBeEmpty()
-            integrationFiles.shouldNotBeEmpty()
-            testFiles.forNone { it shouldContain "groovy-all" }
-            integrationFiles.forNone { it shouldContain "groovy-all" }
-          }
+          testFiles.shouldNotBeEmpty()
+          integrationFiles.shouldNotBeEmpty()
+          testFiles.forNone { it shouldContain "groovy-all" }
+          integrationFiles.forNone { it shouldContain "groovy-all" }
+        }
       }
     }
 
     describe("jenkinsWar resolves exactly one WAR artifact") {
-      withData(TestedGradleVersion.entries) { gradleVersion ->
-        jenkinsProject().use { project ->
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withJenkinsProject { project ->
           project.buildFile.appendText(
             """
             |
@@ -231,67 +234,65 @@ class SharedLibraryPluginResolutionTest :
     }
 
     describe("groovy-all absent from integrationTestCompileClasspath") {
-      withData(TestedGradleVersion.entries) { gradleVersion ->
-        TestProjectBuilder()
-          .apply {
-            settingsFile.writeText(
-              """
-              dependencyResolutionManagement {
-                  repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-                  repositories {
-                      mavenCentral()
-                      maven("https://repo.jenkins-ci.org/public/")
-                  }
-              }
-              rootProject.name = "groovy-all-compile-exclusion-test"
-              """.trimIndent(),
-            )
-            buildFile.writeText(
-              """
-              plugins {
-                  id("com.mkobit.jenkins.pipelines.shared-library")
-              }
-              dependencies {
-                  jenkinsPlugin("$WORKFLOW_API")
-              }
-              tasks.register("printCompileClasspath") {
-                  val cp = configurations["integrationTestCompileClasspath"]
-                  val rt = configurations["integrationTestRuntimeClasspath"]
-                  doLast {
-                      cp.resolvedConfiguration.resolvedArtifacts.forEach {
-                          println("compile:" + it.file.name)
-                      }
-                      rt.resolvedConfiguration.resolvedArtifacts.forEach {
-                          println("runtime:" + it.file.name)
-                      }
-                  }
-              }
-              """.trimIndent(),
-            )
-          }.use { project ->
-            val result =
-              project
-                .runner(gradleVersion)
-                .withArguments("printCompileClasspath")
-                .build()
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withTestProject { project ->
+          project.settingsFile.writeText(
+            """
+            dependencyResolutionManagement {
+                repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+                repositories {
+                    mavenCentral()
+                    maven("https://repo.jenkins-ci.org/public/")
+                }
+            }
+            rootProject.name = "groovy-all-compile-exclusion-test"
+            """.trimIndent(),
+          )
+          project.buildFile.writeText(
+            """
+            plugins {
+                id("com.mkobit.jenkins.pipelines.shared-library")
+            }
+            dependencies {
+                jenkinsPlugin("$WORKFLOW_API")
+            }
+            tasks.register("printCompileClasspath") {
+                val cp = configurations["integrationTestCompileClasspath"]
+                val rt = configurations["integrationTestRuntimeClasspath"]
+                doLast {
+                    cp.resolvedConfiguration.resolvedArtifacts.forEach {
+                        println("compile:" + it.file.name)
+                    }
+                    rt.resolvedConfiguration.resolvedArtifacts.forEach {
+                        println("runtime:" + it.file.name)
+                    }
+                }
+            }
+            """.trimIndent(),
+          )
+          val result =
+            project
+              .runner(gradleVersion)
+              .withArguments("printCompileClasspath")
+              .build()
 
-            val compileFiles = result.output.lines().filter { it.startsWith("compile:") }
-            val runtimeFiles = result.output.lines().filter { it.startsWith("runtime:") }
-            compileFiles.shouldNotBeEmpty()
-            runtimeFiles.shouldNotBeEmpty()
-            compileFiles.forNone { it shouldContain "groovy-all" }
-            // ComponentMetadataRule restores jakarta.servlet-api to all variants of jenkins-test-harness.
-            // Must be present on both compile (Groovy type-checker) and runtime (JVM class verification
-            // before Winstone starts) classpaths.
-            compileFiles.forAtLeastOne { it shouldContain "jakarta.servlet-api" }
-            runtimeFiles.forAtLeastOne { it shouldContain "jakarta.servlet-api" }
-          }
+          val compileFiles = result.output.lines().filter { it.startsWith("compile:") }
+          val runtimeFiles = result.output.lines().filter { it.startsWith("runtime:") }
+          compileFiles.shouldNotBeEmpty()
+          runtimeFiles.shouldNotBeEmpty()
+          compileFiles.forNone { it shouldContain "groovy-all" }
+          // ComponentMetadataRule restores jakarta.servlet-api to all variants of jenkins-test-harness.
+          // Must be present on both compile (Groovy type-checker) and runtime (JVM class verification
+          // before Winstone starts) classpaths.
+          compileFiles.forAtLeastOne { it shouldContain "jakarta.servlet-api" }
+          runtimeFiles.forAtLeastOne { it shouldContain "jakarta.servlet-api" }
+        }
       }
     }
 
     describe("integrationTestGroovyAllRuntime contains groovy-all:2.4.x") {
-      withData(TestedGradleVersion.entries) { gradleVersion ->
-        jenkinsProject().use { project ->
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withJenkinsProject { project ->
           project.buildFile.appendText(
             """
             |
@@ -325,13 +326,13 @@ class SharedLibraryPluginResolutionTest :
     }
 
     describe("BOM version constraint propagates through jenkinsPlugin") {
-      withData(TestedGradleVersion.entries) { gradleVersion ->
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
         // workflow-api is declared without a version — the BOM must supply it.
         // If BOM wiring is broken Gradle throws an unresolvable dependency error,
         // which causes the runner to throw UnexpectedBuildFailure (test fails).
         // The positive assertion is that the resolved line shows a concrete version
         // (not an empty coordinate), proving the BOM actually constrained it.
-        jenkinsProject().use { project ->
+        withJenkinsProject { project ->
           val result =
             project
               .runner(gradleVersion)

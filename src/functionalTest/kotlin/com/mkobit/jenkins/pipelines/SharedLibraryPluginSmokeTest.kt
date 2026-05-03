@@ -2,37 +2,38 @@ package com.mkobit.jenkins.pipelines
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
-import io.kotest.matchers.file.shouldExist
+import io.kotest.matchers.paths.shouldExist
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import org.gradle.testkit.runner.TaskOutcome
-import testsupport.TestProjectBuilder
 import testsupport.TestedGradleVersion
+import testsupport.withTestProject
+import kotlin.io.path.writeText
 
 class SharedLibraryPluginSmokeTest :
   DescribeSpec({
-    fun sharedLibraryProject(): TestProjectBuilder =
-      TestProjectBuilder().apply {
-        buildFile.writeText(
-          """
-          plugins {
-              id("com.mkobit.jenkins.pipelines.shared-library")
-          }
-          tasks.register("printIntegrationTestWarExploderConfig") {
-              val t = tasks.named("integrationTest")
-              doLast {
-                  val testTask = t.get() as org.gradle.api.tasks.testing.Test
-                  println("buildDirectory=" + testTask.systemProperties["buildDirectory"])
-                  println("outputDirs=" + testTask.outputs.files.joinToString(",") { it.absolutePath })
-              }
-          }
-          """.trimIndent(),
-        )
-      }
+    fun withSharedLibraryProject(block: (testsupport.TestProject) -> Unit) = withTestProject { project ->
+      project.buildFile.writeText(
+        """
+        plugins {
+            id("com.mkobit.jenkins.pipelines.shared-library")
+        }
+        tasks.register("printIntegrationTestWarExploderConfig") {
+            val t = tasks.named("integrationTest")
+            doLast {
+                val testTask = t.get() as org.gradle.api.tasks.testing.Test
+                println("buildDirectory=" + testTask.systemProperties["buildDirectory"])
+                println("outputDirs=" + testTask.outputs.files.joinToString(",") { it.absolutePath })
+            }
+        }
+        """.trimIndent(),
+      )
+      block(project)
+    }
 
     describe("plugin application") {
-      withData(TestedGradleVersion.entries) { gradleVersion ->
-        sharedLibraryProject().use { project ->
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withSharedLibraryProject { project ->
           val result = project.runner(gradleVersion).withArguments("help").build()
           result.task(":help")!!.outcome shouldBe TaskOutcome.SUCCESS
         }
@@ -40,8 +41,8 @@ class SharedLibraryPluginSmokeTest :
     }
 
     describe("expected tasks are registered") {
-      withData(TestedGradleVersion.entries) { gradleVersion ->
-        sharedLibraryProject().use { project ->
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withSharedLibraryProject { project ->
           val result = project.runner(gradleVersion).withArguments("tasks", "--all").build()
           result.output shouldContain "integrationTest"
           result.output shouldContain "generateLocalLibraryFiles"
@@ -54,8 +55,8 @@ class SharedLibraryPluginSmokeTest :
     }
 
     describe("generateLocalLibraryFiles produces LocalLibraryRetriever.java and ClassFilter resource") {
-      withData(TestedGradleVersion.entries) { gradleVersion ->
-        sharedLibraryProject().use { project ->
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withSharedLibraryProject { project ->
           val result =
             project
               .runner(gradleVersion)
@@ -73,8 +74,8 @@ class SharedLibraryPluginSmokeTest :
     }
 
     describe("compileIntegrationTestJava depends on generateLocalLibraryFiles") {
-      withData(TestedGradleVersion.entries) { gradleVersion ->
-        sharedLibraryProject().use { project ->
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withSharedLibraryProject { project ->
           val result =
             project
               .runner(gradleVersion)
@@ -87,8 +88,8 @@ class SharedLibraryPluginSmokeTest :
     }
 
     describe("check lifecycle includes integrationTest") {
-      withData(TestedGradleVersion.entries) { gradleVersion ->
-        sharedLibraryProject().use { project ->
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withSharedLibraryProject { project ->
           val result = project.runner(gradleVersion).withArguments("check", "--dry-run").build()
           result.output shouldContain ":integrationTest"
           result.output shouldContain ":test"
@@ -97,56 +98,52 @@ class SharedLibraryPluginSmokeTest :
     }
 
     describe("jenkinsPlugin configuration accepts a dependency declaration") {
-      withData(TestedGradleVersion.entries) { gradleVersion ->
-        TestProjectBuilder()
-          .apply {
-            buildFile.writeText(
-              """
-              plugins {
-                  id("com.mkobit.jenkins.pipelines.shared-library")
-              }
-              dependencies {
-                  jenkinsPlugin("org.example:fake:1.0")
-              }
-              """.trimIndent(),
-            )
-          }.use { project ->
-            val result = project.runner(gradleVersion).withArguments("help").build()
-            result.task(":help")!!.outcome shouldBe TaskOutcome.SUCCESS
-          }
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withTestProject { project ->
+          project.buildFile.writeText(
+            """
+            plugins {
+                id("com.mkobit.jenkins.pipelines.shared-library")
+            }
+            dependencies {
+                jenkinsPlugin("org.example:fake:1.0")
+            }
+            """.trimIndent(),
+          )
+          val result = project.runner(gradleVersion).withArguments("help").build()
+          result.task(":help")!!.outcome shouldBe TaskOutcome.SUCCESS
+        }
       }
     }
 
     describe("jenkinsPlugin configuration accepts a platform BOM") {
-      withData(TestedGradleVersion.entries) { gradleVersion ->
-        TestProjectBuilder()
-          .apply {
-            buildFile.writeText(
-              """
-              plugins {
-                  id("com.mkobit.jenkins.pipelines.shared-library")
-              }
-              dependencies {
-                  jenkinsPlugin(platform("org.example:fake-bom:1.0"))
-              }
-              """.trimIndent(),
-            )
-          }.use { project ->
-            val result = project.runner(gradleVersion).withArguments("help").build()
-            result.task(":help")!!.outcome shouldBe TaskOutcome.SUCCESS
-          }
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withTestProject { project ->
+          project.buildFile.writeText(
+            """
+            plugins {
+                id("com.mkobit.jenkins.pipelines.shared-library")
+            }
+            dependencies {
+                jenkinsPlugin(platform("org.example:fake-bom:1.0"))
+            }
+            """.trimIndent(),
+          )
+          val result = project.runner(gradleVersion).withArguments("help").build()
+          result.task(":help")!!.outcome shouldBe TaskOutcome.SUCCESS
+        }
       }
     }
 
     describe("integrationTest sets buildDirectory system property to build dir for WarExploder") {
-      withData(TestedGradleVersion.entries) { gradleVersion ->
-        sharedLibraryProject().use { project ->
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withSharedLibraryProject { project ->
           val result =
             project
               .runner(gradleVersion)
               .withArguments("printIntegrationTestWarExploderConfig")
               .build()
-          val expectedBuildDir = project.dir.resolve("build").absolutePath
+          val expectedBuildDir = project.dir.resolve("build").toAbsolutePath().toString()
           result.output shouldContain "buildDirectory=$expectedBuildDir"
           result.output shouldContain "jenkins-for-test"
         }
@@ -154,39 +151,37 @@ class SharedLibraryPluginSmokeTest :
     }
 
     describe("monorepo: test.library.root resolves relative to subproject projectDir, not rootDir") {
-      withData(TestedGradleVersion.entries) { gradleVersion ->
-        TestProjectBuilder()
-          .apply {
-            settingsFile.writeText(
-              """
-              rootProject.name = "monorepo-root"
-              include(":lib")
-              """.trimIndent(),
-            )
-            buildFile.writeText("")
-            file("lib/build.gradle.kts").writeText(
-              """
-              plugins {
-                  id("com.mkobit.jenkins.pipelines.shared-library")
-              }
-              tasks.register("printLibraryRoot") {
-                  val t = tasks.named("integrationTest")
-                  doLast {
-                      val testTask = t.get() as org.gradle.api.tasks.testing.Test
-                      println("root=" + testTask.systemProperties["test.library.root"])
-                  }
-              }
-              """.trimIndent(),
-            )
-          }.use { project ->
-            val result =
-              project
-                .runner(gradleVersion)
-                .withArguments(":lib:printLibraryRoot")
-                .build()
-            val expectedRoot = project.dir.resolve("lib").absolutePath
-            result.output shouldContain "root=$expectedRoot"
-          }
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withTestProject { project ->
+          project.settingsFile.writeText(
+            """
+            rootProject.name = "monorepo-root"
+            include(":lib")
+            """.trimIndent(),
+          )
+          project.buildFile.writeText("")
+          project.file("lib/build.gradle.kts").writeText(
+            """
+            plugins {
+                id("com.mkobit.jenkins.pipelines.shared-library")
+            }
+            tasks.register("printLibraryRoot") {
+                val t = tasks.named("integrationTest")
+                doLast {
+                    val testTask = t.get() as org.gradle.api.tasks.testing.Test
+                    println("root=" + testTask.systemProperties["test.library.root"])
+                }
+            }
+            """.trimIndent(),
+          )
+          val result =
+            project
+              .runner(gradleVersion)
+              .withArguments(":lib:printLibraryRoot")
+              .build()
+          val expectedRoot = project.dir.resolve("lib").toAbsolutePath().toString()
+          result.output shouldContain "root=$expectedRoot"
+        }
       }
     }
   })

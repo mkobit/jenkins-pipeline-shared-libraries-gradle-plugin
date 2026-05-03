@@ -72,6 +72,10 @@ testing {
           val cpuHalf = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
           maxParallelForks = cpuHalf
           systemProperty("kotest.framework.parallelism", cpuHalf)
+          // Pin to a single Gradle version for fast debugging: -Ptest.gradle.version=9.4.1
+          project.findProperty("test.gradle.version")?.let {
+            systemProperty("test.gradle.version", it)
+          }
         }
       }
     }

@@ -6,8 +6,11 @@ import io.kotest.datatest.withData
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import org.gradle.testkit.runner.TaskOutcome
-import testsupport.TestProjectBuilder
+import testsupport.TestProject
 import testsupport.TestedGradleVersion
+import testsupport.withTestProject
+import kotlin.io.path.readText
+import kotlin.io.path.writeText
 
 // Verifies that shared-library + codenarc together fire the Jenkins Enhanced Classpath Rules
 // and catch violations from rulesets/jenkins.xml.
@@ -15,21 +18,17 @@ import testsupport.TestedGradleVersion
 @Tags("resolution")
 class SharedLibraryPluginCodeNarcTest :
   DescribeSpec({
-    fun baseProject(): TestProjectBuilder =
-      TestProjectBuilder().apply {
-        settingsFile.writeText(
-          """
-          dependencyResolutionManagement {
-              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-              repositories {
-                  mavenCentral()
-                  maven("https://repo.jenkins-ci.org/public/")
-              }
+    val settingsContent =
+      """
+      dependencyResolutionManagement {
+          repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+          repositories {
+              mavenCentral()
+              maven("https://repo.jenkins-ci.org/public/")
           }
-          rootProject.name = "codenarc-test"
-          """.trimIndent(),
-        )
       }
+      rootProject.name = "codenarc-test"
+      """.trimIndent()
 
     val buildFileContent =
       """
@@ -54,205 +53,193 @@ class SharedLibraryPluginCodeNarcTest :
       </ruleset>
       """.trimIndent()
 
-    fun codenarcReport(project: TestProjectBuilder) = project.dir.resolve("build/reports/codenarc/main.txt").readText()
+    fun withBaseProject(block: (TestProject) -> Unit) = withTestProject { project ->
+      project.settingsFile.writeText(settingsContent)
+      block(project)
+    }
+
+    fun codenarcReport(project: TestProject) =
+      project.dir.resolve("build/reports/codenarc/main.txt").readText()
 
     // ── ClassNotSerializable ─────────────────────────────────────────────────────
 
     describe("ClassNotSerializable: class without Serializable is flagged") {
-      withData(TestedGradleVersion.entries) { gradleVersion ->
-        baseProject()
-          .apply {
-            buildFile.writeText(buildFileContent)
-            file("codenarc.xml").writeText(codeNarcXml)
-            // Violation: SomeClass does not implement Serializable
-            file("src/com/example/SomeClass.groovy").writeText(
-              """
-              package com.example
-              class SomeClass {}
-              """.trimIndent(),
-            )
-          }.use { project ->
-            project.runner(gradleVersion).withArguments("codenarcMain").buildAndFail()
-            codenarcReport(project) shouldContain "ClassNotSerializable"
-          }
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withBaseProject { project ->
+          project.buildFile.writeText(buildFileContent)
+          project.file("codenarc.xml").writeText(codeNarcXml)
+          project.file("src/com/example/SomeClass.groovy").writeText(
+            """
+            package com.example
+            class SomeClass {}
+            """.trimIndent(),
+          )
+          project.runner(gradleVersion).withArguments("codenarcMain").buildAndFail()
+          codenarcReport(project) shouldContain "ClassNotSerializable"
+        }
       }
     }
 
     // ── ClosureInGString ─────────────────────────────────────────────────────────
 
     describe("ClosureInGString: closure inside a GString is flagged") {
-      withData(TestedGradleVersion.entries) { gradleVersion ->
-        baseProject()
-          .apply {
-            buildFile.writeText(buildFileContent)
-            file("codenarc.xml").writeText(codeNarcXml)
-            // Violation: ${-> x} is a closure inside a GString
-            file("vars/greeting.groovy").writeText(
-              // ${'$'} produces a literal $ so Kotlin doesn't try to interpolate {-> name}
-              """def call(String name) { "Hello ${'$'}{-> name}" }""",
-            )
-          }.use { project ->
-            project.runner(gradleVersion).withArguments("codenarcMain").buildAndFail()
-            codenarcReport(project) shouldContain "ClosureInGString"
-          }
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withBaseProject { project ->
+          project.buildFile.writeText(buildFileContent)
+          project.file("codenarc.xml").writeText(codeNarcXml)
+          project.file("vars/greeting.groovy").writeText(
+            // ${'$'} produces a literal $ so Kotlin doesn't try to interpolate {-> name}
+            """def call(String name) { "Hello ${'$'}{-> name}" }""",
+          )
+          project.runner(gradleVersion).withArguments("codenarcMain").buildAndFail()
+          codenarcReport(project) shouldContain "ClosureInGString"
+        }
       }
     }
 
     // ── CpsCallFromNonCpsMethod ───────────────────────────────────────────────────
 
     describe("CpsCallFromNonCpsMethod: CPS method called from @NonCPS method is flagged") {
-      withData(TestedGradleVersion.entries) { gradleVersion ->
-        baseProject()
-          .apply {
-            buildFile.writeText(buildFileContent)
-            file("codenarc.xml").writeText(codeNarcXml)
-            file("src/com/example/Util.groovy").writeText(
-              """
-              package com.example
-              import com.cloudbees.groovy.cps.NonCPS
-              class Util implements Serializable {
-                  private static final long serialVersionUID = 1L
-                  void cpsMethod() {}
-                  @NonCPS
-                  void nonCpsMethod() { cpsMethod() }
-              }
-              """.trimIndent(),
-            )
-          }.use { project ->
-            project.runner(gradleVersion).withArguments("codenarcMain").buildAndFail()
-            codenarcReport(project) shouldContain "CpsCallFromNonCpsMethod"
-          }
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withBaseProject { project ->
+          project.buildFile.writeText(buildFileContent)
+          project.file("codenarc.xml").writeText(codeNarcXml)
+          project.file("src/com/example/Util.groovy").writeText(
+            """
+            package com.example
+            import com.cloudbees.groovy.cps.NonCPS
+            class Util implements Serializable {
+                private static final long serialVersionUID = 1L
+                void cpsMethod() {}
+                @NonCPS
+                void nonCpsMethod() { cpsMethod() }
+            }
+            """.trimIndent(),
+          )
+          project.runner(gradleVersion).withArguments("codenarcMain").buildAndFail()
+          codenarcReport(project) shouldContain "CpsCallFromNonCpsMethod"
+        }
       }
     }
 
     // ── ExpressionInCpsMethodNotSerializable ─────────────────────────────────────
 
     describe("ExpressionInCpsMethodNotSerializable: non-Serializable local variable is flagged") {
-      withData(TestedGradleVersion.entries) { gradleVersion ->
-        baseProject()
-          .apply {
-            buildFile.writeText(buildFileContent)
-            file("codenarc.xml").writeText(codeNarcXml)
-            file("src/com/example/Worker.groovy").writeText(
-              """
-              package com.example
-              class SomeClass {}
-              class Worker implements Serializable {
-                  private static final long serialVersionUID = 1L
-                  void run() {
-                      SomeClass some = new SomeClass()
-                  }
-              }
-              """.trimIndent(),
-            )
-          }.use { project ->
-            project.runner(gradleVersion).withArguments("codenarcMain").buildAndFail()
-            codenarcReport(project) shouldContain "ExpressionInCpsMethodNotSerializable"
-          }
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withBaseProject { project ->
+          project.buildFile.writeText(buildFileContent)
+          project.file("codenarc.xml").writeText(codeNarcXml)
+          project.file("src/com/example/Worker.groovy").writeText(
+            """
+            package com.example
+            class SomeClass {}
+            class Worker implements Serializable {
+                private static final long serialVersionUID = 1L
+                void run() {
+                    SomeClass some = new SomeClass()
+                }
+            }
+            """.trimIndent(),
+          )
+          project.runner(gradleVersion).withArguments("codenarcMain").buildAndFail()
+          codenarcReport(project) shouldContain "ExpressionInCpsMethodNotSerializable"
+        }
       }
     }
 
     // ── ForbiddenCallInCpsMethod ─────────────────────────────────────────────────
 
     describe("ForbiddenCallInCpsMethod: sort with closure in CPS method is flagged") {
-      withData(TestedGradleVersion.entries) { gradleVersion ->
-        baseProject()
-          .apply {
-            buildFile.writeText(buildFileContent)
-            file("codenarc.xml").writeText(codeNarcXml)
-            file("src/com/example/Sorter.groovy").writeText(
-              """
-              package com.example
-              class Sorter implements Serializable {
-                  private static final long serialVersionUID = 1L
-                  void run() {
-                      List l = [4, 1, 3]
-                      l.sort { a, b -> a > b }
-                  }
-              }
-              """.trimIndent(),
-            )
-          }.use { project ->
-            project.runner(gradleVersion).withArguments("codenarcMain").buildAndFail()
-            codenarcReport(project) shouldContain "ForbiddenCallInCpsMethod"
-          }
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withBaseProject { project ->
+          project.buildFile.writeText(buildFileContent)
+          project.file("codenarc.xml").writeText(codeNarcXml)
+          project.file("src/com/example/Sorter.groovy").writeText(
+            """
+            package com.example
+            class Sorter implements Serializable {
+                private static final long serialVersionUID = 1L
+                void run() {
+                    List l = [4, 1, 3]
+                    l.sort { a, b -> a > b }
+                }
+            }
+            """.trimIndent(),
+          )
+          project.runner(gradleVersion).withArguments("codenarcMain").buildAndFail()
+          codenarcReport(project) shouldContain "ForbiddenCallInCpsMethod"
+        }
       }
     }
 
     // ── ObjectOverrideOnlyNonCpsMethods ─────────────────────────────────────────
 
     describe("ObjectOverrideOnlyNonCpsMethods: toString override without @NonCPS is flagged") {
-      withData(TestedGradleVersion.entries) { gradleVersion ->
-        baseProject()
-          .apply {
-            buildFile.writeText(buildFileContent)
-            file("codenarc.xml").writeText(codeNarcXml)
-            file("src/com/example/Step.groovy").writeText(
-              """
-              package com.example
-              class Step implements Serializable {
-                  private static final long serialVersionUID = 1L
-                  @Override
-                  String toString() { return "Step" }
-              }
-              """.trimIndent(),
-            )
-          }.use { project ->
-            project.runner(gradleVersion).withArguments("codenarcMain").buildAndFail()
-            codenarcReport(project) shouldContain "ObjectOverrideOnlyNonCpsMethods"
-          }
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withBaseProject { project ->
+          project.buildFile.writeText(buildFileContent)
+          project.file("codenarc.xml").writeText(codeNarcXml)
+          project.file("src/com/example/Step.groovy").writeText(
+            """
+            package com.example
+            class Step implements Serializable {
+                private static final long serialVersionUID = 1L
+                @Override
+                String toString() { return "Step" }
+            }
+            """.trimIndent(),
+          )
+          project.runner(gradleVersion).withArguments("codenarcMain").buildAndFail()
+          codenarcReport(project) shouldContain "ObjectOverrideOnlyNonCpsMethods"
+        }
       }
     }
 
     // ── ParameterOrReturnTypeNotSerializable ─────────────────────────────────────
 
     describe("ParameterOrReturnTypeNotSerializable: non-Serializable return type is flagged") {
-      withData(TestedGradleVersion.entries) { gradleVersion ->
-        baseProject()
-          .apply {
-            buildFile.writeText(buildFileContent)
-            file("codenarc.xml").writeText(codeNarcXml)
-            file("src/com/example/Factory.groovy").writeText(
-              """
-              package com.example
-              class SomeClass {}
-              class Factory implements Serializable {
-                  private static final long serialVersionUID = 1L
-                  SomeClass create() { return null }
-              }
-              """.trimIndent(),
-            )
-          }.use { project ->
-            project.runner(gradleVersion).withArguments("codenarcMain").buildAndFail()
-            codenarcReport(project) shouldContain "ParameterOrReturnTypeNotSerializable"
-          }
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withBaseProject { project ->
+          project.buildFile.writeText(buildFileContent)
+          project.file("codenarc.xml").writeText(codeNarcXml)
+          project.file("src/com/example/Factory.groovy").writeText(
+            """
+            package com.example
+            class SomeClass {}
+            class Factory implements Serializable {
+                private static final long serialVersionUID = 1L
+                SomeClass create() { return null }
+            }
+            """.trimIndent(),
+          )
+          project.runner(gradleVersion).withArguments("codenarcMain").buildAndFail()
+          codenarcReport(project) shouldContain "ParameterOrReturnTypeNotSerializable"
+        }
       }
     }
 
     // ── Clean source passes ──────────────────────────────────────────────────────
 
     describe("no violations: Serializable class with @NonCPS toString passes") {
-      withData(TestedGradleVersion.entries) { gradleVersion ->
-        baseProject()
-          .apply {
-            buildFile.writeText(buildFileContent)
-            file("codenarc.xml").writeText(codeNarcXml)
-            file("src/com/example/Step.groovy").writeText(
-              """
-              package com.example
-              import com.cloudbees.groovy.cps.NonCPS
-              class Step implements Serializable {
-                  private static final long serialVersionUID = 1L
-                  @NonCPS
-                  @Override
-                  String toString() { return "Step" }
-              }
-              """.trimIndent(),
-            )
-          }.use { project ->
-            val result = project.runner(gradleVersion).withArguments("codenarcMain").build()
-            result.task(":codenarcMain")!!.outcome shouldBe TaskOutcome.SUCCESS
-          }
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withBaseProject { project ->
+          project.buildFile.writeText(buildFileContent)
+          project.file("codenarc.xml").writeText(codeNarcXml)
+          project.file("src/com/example/Step.groovy").writeText(
+            """
+            package com.example
+            import com.cloudbees.groovy.cps.NonCPS
+            class Step implements Serializable {
+                private static final long serialVersionUID = 1L
+                @NonCPS
+                @Override
+                String toString() { return "Step" }
+            }
+            """.trimIndent(),
+          )
+          val result = project.runner(gradleVersion).withArguments("codenarcMain").build()
+          result.task(":codenarcMain")!!.outcome shouldBe TaskOutcome.SUCCESS
+        }
       }
     }
   })
