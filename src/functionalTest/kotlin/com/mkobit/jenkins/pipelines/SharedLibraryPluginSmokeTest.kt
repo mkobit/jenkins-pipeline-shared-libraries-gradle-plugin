@@ -12,24 +12,25 @@ import kotlin.io.path.writeText
 
 class SharedLibraryPluginSmokeTest :
   DescribeSpec({
-    fun withSharedLibraryProject(block: (testsupport.TestProject) -> Unit) = withTestProject { project ->
-      project.buildFile.writeText(
-        """
-        plugins {
-            id("com.mkobit.jenkins.pipelines.shared-library")
-        }
-        tasks.register("printIntegrationTestWarExploderConfig") {
-            val t = tasks.named("integrationTest")
-            doLast {
-                val testTask = t.get() as org.gradle.api.tasks.testing.Test
-                println("buildDirectory=" + testTask.systemProperties["buildDirectory"])
-                println("outputDirs=" + testTask.outputs.files.joinToString(",") { it.absolutePath })
-            }
-        }
-        """.trimIndent(),
-      )
-      block(project)
-    }
+    fun withSharedLibraryProject(block: (testsupport.TestProject) -> Unit) =
+      withTestProject { project ->
+        project.buildFile.writeText(
+          """
+          plugins {
+              id("com.mkobit.jenkins.pipelines.shared-library")
+          }
+          tasks.register("printIntegrationTestWarExploderConfig") {
+              val t = tasks.named("integrationTest")
+              doLast {
+                  val testTask = t.get() as org.gradle.api.tasks.testing.Test
+                  println("buildDirectory=" + testTask.systemProperties["buildDirectory"])
+                  println("outputDirs=" + testTask.outputs.files.joinToString(",") { it.absolutePath })
+              }
+          }
+          """.trimIndent(),
+        )
+        block(project)
+      }
 
     describe("plugin application") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
@@ -143,7 +144,11 @@ class SharedLibraryPluginSmokeTest :
               .runner(gradleVersion)
               .withArguments("printIntegrationTestWarExploderConfig")
               .build()
-          val expectedBuildDir = project.dir.resolve("build").toAbsolutePath().toString()
+          val expectedBuildDir =
+            project.dir
+              .resolve("build")
+              .toAbsolutePath()
+              .toString()
           result.output shouldContain "buildDirectory=$expectedBuildDir"
           result.output shouldContain "jenkins-for-test"
         }
@@ -179,7 +184,11 @@ class SharedLibraryPluginSmokeTest :
               .runner(gradleVersion)
               .withArguments(":lib:printLibraryRoot")
               .build()
-          val expectedRoot = project.dir.resolve("lib").toAbsolutePath().toString()
+          val expectedRoot =
+            project.dir
+              .resolve("lib")
+              .toAbsolutePath()
+              .toString()
           result.output shouldContain "root=$expectedRoot"
         }
       }

@@ -29,10 +29,11 @@ class SharedLibraryPluginTestSuiteTest :
       rootProject.name = "suite-test"
       """.trimIndent()
 
-    fun withBaseProject(block: (TestProject) -> Unit) = withTestProject { project ->
-      project.settingsFile.writeText(settingsContent)
-      block(project)
-    }
+    fun withBaseProject(block: (TestProject) -> Unit) =
+      withTestProject { project ->
+        project.settingsFile.writeText(settingsContent)
+        block(project)
+      }
 
     describe("Java-only test suite: Jenkins API types compile without Groovy dependency") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->

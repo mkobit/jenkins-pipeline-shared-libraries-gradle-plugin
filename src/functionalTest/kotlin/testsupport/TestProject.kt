@@ -6,7 +6,9 @@ import kotlin.io.path.createDirectories
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.writeText
 
-class TestProject(val dir: Path) {
+class TestProject(
+  val dir: Path,
+) {
   val settingsFile: Path = dir.resolve("settings.gradle.kts")
   val buildFile: Path = dir.resolve("build.gradle.kts")
 

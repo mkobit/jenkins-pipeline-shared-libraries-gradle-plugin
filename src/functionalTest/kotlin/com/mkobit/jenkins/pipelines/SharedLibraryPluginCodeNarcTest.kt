@@ -43,13 +43,13 @@ class SharedLibraryPluginCodeNarcTest :
       }
       """.trimIndent()
 
-    fun withBaseProject(block: (TestProject) -> Unit) = withTestProject { project ->
-      project.settingsFile.writeText(settingsContent)
-      block(project)
-    }
+    fun withBaseProject(block: (TestProject) -> Unit) =
+      withTestProject { project ->
+        project.settingsFile.writeText(settingsContent)
+        block(project)
+      }
 
-    fun codenarcReport(project: TestProject) =
-      project.dir.resolve("build/reports/codenarc/jenkinsMain.txt").readText()
+    fun codenarcReport(project: TestProject) = project.dir.resolve("build/reports/codenarc/jenkinsMain.txt").readText()
 
     // ── ClassNotSerializable ─────────────────────────────────────────────────────
 

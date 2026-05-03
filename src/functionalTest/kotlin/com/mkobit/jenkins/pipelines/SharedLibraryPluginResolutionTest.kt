@@ -66,11 +66,12 @@ class SharedLibraryPluginResolutionTest :
       }
       """.trimIndent()
 
-    fun withJenkinsProject(block: (TestProject) -> Unit) = withTestProject { project ->
-      project.settingsFile.writeText(settingsContent)
-      project.buildFile.writeText(jenkinsProjectBuildFile)
-      block(project)
-    }
+    fun withJenkinsProject(block: (TestProject) -> Unit) =
+      withTestProject { project ->
+        project.settingsFile.writeText(settingsContent)
+        project.buildFile.writeText(jenkinsProjectBuildFile)
+        block(project)
+      }
 
     describe("testRuntimeClasspath") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->

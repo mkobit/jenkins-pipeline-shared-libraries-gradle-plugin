@@ -28,19 +28,21 @@ class SharedLibraryPluginSourceTest :
       rootProject.name = "source-test"
       """.trimIndent()
 
-    fun withSharedLibraryProject(configure: TestProject.() -> Unit = {}, block: (TestProject) -> Unit) =
-      withTestProject { project ->
-        project.settingsFile.writeText(settingsContent)
-        project.buildFile.writeText(
-          """
-          plugins {
-              id("com.mkobit.jenkins.pipelines.shared-library")
-          }
-          """.trimIndent(),
-        )
-        project.configure()
-        block(project)
-      }
+    fun withSharedLibraryProject(
+      configure: TestProject.() -> Unit = {},
+      block: (TestProject) -> Unit,
+    ) = withTestProject { project ->
+      project.settingsFile.writeText(settingsContent)
+      project.buildFile.writeText(
+        """
+        plugins {
+            id("com.mkobit.jenkins.pipelines.shared-library")
+        }
+        """.trimIndent(),
+      )
+      project.configure()
+      block(project)
+    }
 
     describe("main Groovy source in src/ compiles") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->

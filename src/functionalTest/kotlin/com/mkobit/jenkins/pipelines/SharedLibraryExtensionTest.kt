@@ -29,19 +29,21 @@ class SharedLibraryExtensionTest :
       }
       """.trimIndent()
 
-    fun withBaseProject(extraConfig: String = "", block: (testsupport.TestProject) -> Unit) =
-      withTestProject { project ->
-        project.buildFile.writeText(
-          """
-          plugins {
-              id("com.mkobit.jenkins.pipelines.shared-library")
-          }
-          $extraConfig
-          $printDepsTask
-          """.trimIndent(),
-        )
-        block(project)
-      }
+    fun withBaseProject(
+      extraConfig: String = "",
+      block: (testsupport.TestProject) -> Unit,
+    ) = withTestProject { project ->
+      project.buildFile.writeText(
+        """
+        plugins {
+            id("com.mkobit.jenkins.pipelines.shared-library")
+        }
+        $extraConfig
+        $printDepsTask
+        """.trimIndent(),
+      )
+      block(project)
+    }
 
     describe("jenkins.version default is the plugin built-in core version") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
