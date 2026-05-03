@@ -66,6 +66,12 @@ testing {
             "kotest.filter.tags",
             project.findProperty("kotest.tags") ?: "!resolution",
           )
+          // GradleRunner builds are I/O-bound and start no Jenkins instance, so
+          // parallelism is safe. Split test classes across N forks and let Kotest
+          // run N specs concurrently within each fork via coroutines.
+          val cpuHalf = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
+          maxParallelForks = cpuHalf
+          systemProperty("kotest.framework.parallelism", cpuHalf)
         }
       }
     }
