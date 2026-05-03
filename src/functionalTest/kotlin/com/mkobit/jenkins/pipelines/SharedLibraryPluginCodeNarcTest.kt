@@ -13,7 +13,7 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
 // Verifies that shared-library + codenarc together fire the Jenkins Enhanced Classpath Rules
-// and catch violations from rulesets/jenkins.xml.
+// and catch violations from rulesets/jenkins.xml using the bundled codenarc-jenkins.xml resource.
 // Requires Jenkins JARs on compilationClasspath — exclude with -P kotest.tags=!resolution.
 @Tags("resolution")
 class SharedLibraryPluginCodeNarcTest :
@@ -30,6 +30,7 @@ class SharedLibraryPluginCodeNarcTest :
       rootProject.name = "codenarc-test"
       """.trimIndent()
 
+    // No configFile — codenarcJenkinsMain uses the bundled resource from the plugin JAR.
     val buildFileContent =
       """
       plugins {
@@ -39,42 +40,7 @@ class SharedLibraryPluginCodeNarcTest :
       codenarc {
           toolVersion = "3.7.0"
           reportFormat = "text"
-          configFile = file("codenarc.xml")
       }
-      """.trimIndent()
-
-    // Jenkins rules default to applyToFileNames='Jenkinsfile'. Override to '*.groovy' so
-    // that rules fire on shared library source files in src/ and vars/.
-    val codeNarcXml =
-      """
-      <?xml version="1.0"?>
-      <ruleset xmlns="http://codenarc.org/ruleset/1.0"
-               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-               xsi:schemaLocation="http://codenarc.org/ruleset/1.0 http://codenarc.org/ruleset-schema.xsd">
-        <ruleset-ref path="rulesets/jenkins.xml">
-          <rule-config name="ClassNotSerializable">
-            <property name="applyToFileNames" value="*.groovy"/>
-          </rule-config>
-          <rule-config name="ClosureInGString">
-            <property name="applyToFileNames" value="*.groovy"/>
-          </rule-config>
-          <rule-config name="CpsCallFromNonCpsMethod">
-            <property name="applyToFileNames" value="*.groovy"/>
-          </rule-config>
-          <rule-config name="ExpressionInCpsMethodNotSerializable">
-            <property name="applyToFileNames" value="*.groovy"/>
-          </rule-config>
-          <rule-config name="ForbiddenCallInCpsMethod">
-            <property name="applyToFileNames" value="*.groovy"/>
-          </rule-config>
-          <rule-config name="ObjectOverrideOnlyNonCpsMethods">
-            <property name="applyToFileNames" value="*.groovy"/>
-          </rule-config>
-          <rule-config name="ParameterOrReturnTypeNotSerializable">
-            <property name="applyToFileNames" value="*.groovy"/>
-          </rule-config>
-        </ruleset-ref>
-      </ruleset>
       """.trimIndent()
 
     fun withBaseProject(block: (TestProject) -> Unit) = withTestProject { project ->
@@ -83,7 +49,7 @@ class SharedLibraryPluginCodeNarcTest :
     }
 
     fun codenarcReport(project: TestProject) =
-      project.dir.resolve("build/reports/codenarc/main.txt").readText()
+      project.dir.resolve("build/reports/codenarc/jenkinsMain.txt").readText()
 
     // ── ClassNotSerializable ─────────────────────────────────────────────────────
 
@@ -91,14 +57,13 @@ class SharedLibraryPluginCodeNarcTest :
       withData(TestedGradleVersion.filtered) { gradleVersion ->
         withBaseProject { project ->
           project.buildFile.writeText(buildFileContent)
-          project.file("codenarc.xml").writeText(codeNarcXml)
           project.file("src/com/example/SomeClass.groovy").writeText(
             """
             package com.example
             class SomeClass {}
             """.trimIndent(),
           )
-          project.runner(gradleVersion).withArguments("codenarcMain").buildAndFail()
+          project.runner(gradleVersion).withArguments("codenarcJenkinsMain").buildAndFail()
           codenarcReport(project) shouldContain "ClassNotSerializable"
         }
       }
@@ -110,12 +75,11 @@ class SharedLibraryPluginCodeNarcTest :
       withData(TestedGradleVersion.filtered) { gradleVersion ->
         withBaseProject { project ->
           project.buildFile.writeText(buildFileContent)
-          project.file("codenarc.xml").writeText(codeNarcXml)
           project.file("vars/greeting.groovy").writeText(
             // ${'$'} produces a literal $ so Kotlin doesn't try to interpolate {-> name}
             """def call(String name) { "Hello ${'$'}{-> name}" }""",
           )
-          project.runner(gradleVersion).withArguments("codenarcMain").buildAndFail()
+          project.runner(gradleVersion).withArguments("codenarcJenkinsMain").buildAndFail()
           codenarcReport(project) shouldContain "ClosureInGString"
         }
       }
@@ -127,7 +91,6 @@ class SharedLibraryPluginCodeNarcTest :
       withData(TestedGradleVersion.filtered) { gradleVersion ->
         withBaseProject { project ->
           project.buildFile.writeText(buildFileContent)
-          project.file("codenarc.xml").writeText(codeNarcXml)
           // CpsCallFromNonCpsMethod only fires for default-package classes (no package
           // declaration) unless cpsPackages is explicitly configured in the ruleset.
           project.file("src/Util.groovy").writeText(
@@ -141,7 +104,7 @@ class SharedLibraryPluginCodeNarcTest :
             }
             """.trimIndent(),
           )
-          project.runner(gradleVersion).withArguments("codenarcMain").buildAndFail()
+          project.runner(gradleVersion).withArguments("codenarcJenkinsMain").buildAndFail()
           codenarcReport(project) shouldContain "CpsCallFromNonCpsMethod"
         }
       }
@@ -153,7 +116,6 @@ class SharedLibraryPluginCodeNarcTest :
       withData(TestedGradleVersion.filtered) { gradleVersion ->
         withBaseProject { project ->
           project.buildFile.writeText(buildFileContent)
-          project.file("codenarc.xml").writeText(codeNarcXml)
           project.file("src/com/example/Worker.groovy").writeText(
             """
             package com.example
@@ -166,7 +128,7 @@ class SharedLibraryPluginCodeNarcTest :
             }
             """.trimIndent(),
           )
-          project.runner(gradleVersion).withArguments("codenarcMain").buildAndFail()
+          project.runner(gradleVersion).withArguments("codenarcJenkinsMain").buildAndFail()
           codenarcReport(project) shouldContain "ExpressionInCpsMethodNotSerializable"
         }
       }
@@ -178,7 +140,6 @@ class SharedLibraryPluginCodeNarcTest :
       withData(TestedGradleVersion.filtered) { gradleVersion ->
         withBaseProject { project ->
           project.buildFile.writeText(buildFileContent)
-          project.file("codenarc.xml").writeText(codeNarcXml)
           project.file("src/com/example/Sorter.groovy").writeText(
             """
             package com.example
@@ -191,7 +152,7 @@ class SharedLibraryPluginCodeNarcTest :
             }
             """.trimIndent(),
           )
-          project.runner(gradleVersion).withArguments("codenarcMain").buildAndFail()
+          project.runner(gradleVersion).withArguments("codenarcJenkinsMain").buildAndFail()
           codenarcReport(project) shouldContain "ForbiddenCallInCpsMethod"
         }
       }
@@ -203,7 +164,6 @@ class SharedLibraryPluginCodeNarcTest :
       withData(TestedGradleVersion.filtered) { gradleVersion ->
         withBaseProject { project ->
           project.buildFile.writeText(buildFileContent)
-          project.file("codenarc.xml").writeText(codeNarcXml)
           project.file("src/com/example/Step.groovy").writeText(
             """
             package com.example
@@ -214,7 +174,7 @@ class SharedLibraryPluginCodeNarcTest :
             }
             """.trimIndent(),
           )
-          project.runner(gradleVersion).withArguments("codenarcMain").buildAndFail()
+          project.runner(gradleVersion).withArguments("codenarcJenkinsMain").buildAndFail()
           codenarcReport(project) shouldContain "ObjectOverrideOnlyNonCpsMethods"
         }
       }
@@ -226,7 +186,6 @@ class SharedLibraryPluginCodeNarcTest :
       withData(TestedGradleVersion.filtered) { gradleVersion ->
         withBaseProject { project ->
           project.buildFile.writeText(buildFileContent)
-          project.file("codenarc.xml").writeText(codeNarcXml)
           project.file("src/com/example/Factory.groovy").writeText(
             """
             package com.example
@@ -237,7 +196,7 @@ class SharedLibraryPluginCodeNarcTest :
             }
             """.trimIndent(),
           )
-          project.runner(gradleVersion).withArguments("codenarcMain").buildAndFail()
+          project.runner(gradleVersion).withArguments("codenarcJenkinsMain").buildAndFail()
           codenarcReport(project) shouldContain "ParameterOrReturnTypeNotSerializable"
         }
       }
@@ -249,7 +208,6 @@ class SharedLibraryPluginCodeNarcTest :
       withData(TestedGradleVersion.filtered) { gradleVersion ->
         withBaseProject { project ->
           project.buildFile.writeText(buildFileContent)
-          project.file("codenarc.xml").writeText(codeNarcXml)
           project.file("src/com/example/Step.groovy").writeText(
             """
             package com.example
@@ -262,8 +220,8 @@ class SharedLibraryPluginCodeNarcTest :
             }
             """.trimIndent(),
           )
-          val result = project.runner(gradleVersion).withArguments("codenarcMain").build()
-          result.task(":codenarcMain")!!.outcome shouldBe TaskOutcome.SUCCESS
+          val result = project.runner(gradleVersion).withArguments("codenarcJenkinsMain").build()
+          result.task(":codenarcJenkinsMain")!!.outcome shouldBe TaskOutcome.SUCCESS
         }
       }
     }

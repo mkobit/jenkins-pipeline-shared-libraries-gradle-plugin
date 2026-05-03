@@ -334,6 +334,40 @@ pluginManager.withPlugin("codenarc") {
     compilationClasspath += mainClassesDirs
     dependsOn(compileGroovy)
   }
+
+  // Extract the bundled XML to a build-dir file with a .xml extension so CodeNarc
+  // parses it as XML rather than as a Groovy DSL script (resources.text.fromUri writes
+  // a .txt temp file, which CodeNarc would try to evaluate as Groovy).
+  val jenkinsConfigFile = layout.buildDirectory.file("generated/codenarc/codenarc-jenkins.xml")
+  val extractJenkinsCodeNarcConfig =
+    tasks.register("extractJenkinsCodeNarcConfig") {
+      outputs.file(jenkinsConfigFile)
+      doLast {
+        val file = jenkinsConfigFile.get().asFile
+        file.parentFile.mkdirs()
+        SharedLibraryExtension::class.java.classLoader
+          .getResourceAsStream("com/mkobit/jenkins/pipelines/codenarc-jenkins.xml")!!
+          .use { input -> file.outputStream().use { out -> input.copyTo(out) } }
+      }
+    }
+
+  tasks.register<CodeNarc>("codenarcJenkinsMain") {
+    description = "Runs Jenkins CPS/Serializable CodeNarc rules against the main source set."
+    source = sourceSets.main.groovy
+    dependsOn(extractJenkinsCodeNarcConfig)
+    config = resources.text.fromFile(jenkinsConfigFile)
+    codenarcClasspath = configurations.getByName("codenarc")
+    reports {
+      text.required.set(true)
+      xml.required.set(false)
+      html.required.set(false)
+      text.outputLocation.set(layout.buildDirectory.file("reports/codenarc/jenkinsMain.txt"))
+    }
+  }
+
+  tasks.named(LifecycleBasePlugin.CHECK_TASK_NAME) {
+    dependsOn("codenarcJenkinsMain")
+  }
 }
 
 // ── Type-safe source set accessors ────────────────────────────────────────────
