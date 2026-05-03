@@ -1,14 +1,7 @@
 @file:Suppress("ktlint:standard:no-wildcard-imports", "DEPRECATION")
 
-import com.mkobit.jenkins.pipelines.GenerateLocalLibraryFiles
-import com.mkobit.jenkins.pipelines.JenkinsArtifactDisambiguationRule
-import com.mkobit.jenkins.pipelines.JenkinsPluginRule
-import com.mkobit.jenkins.pipelines.JenkinsTestHarnessServletApiRule
-import com.mkobit.jenkins.pipelines.JenkinsWarJvmArgumentProvider
-import com.mkobit.jenkins.pipelines.JpiCompatibilityRule
-import com.mkobit.jenkins.pipelines.PluginConstants
-import com.mkobit.jenkins.pipelines.SharedLibraryDefaults
-import com.mkobit.jenkins.pipelines.SharedLibraryExtension
+package com.mkobit.jenkins.pipelines
+
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition
 import org.gradle.api.plugins.GroovyPlugin
 import org.gradle.api.plugins.jvm.JvmTestSuite
