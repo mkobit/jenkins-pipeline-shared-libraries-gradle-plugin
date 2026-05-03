@@ -196,6 +196,11 @@ internal class SharedLibraryPluginTest :
         task.systemProperties["test.library.root"] shouldBe project.projectDir.absolutePath
       }
 
+      it("integrationTest injects test.library.name system property") {
+        val task = project.tasks.getByName("integrationTest") as org.gradle.api.tasks.testing.Test
+        task.systemProperties["test.library.name"] shouldBe project.name
+      }
+
       it("generateLocalLibraryFiles task is registered") {
         project.tasks
           .getByName("generateLocalLibraryFiles")

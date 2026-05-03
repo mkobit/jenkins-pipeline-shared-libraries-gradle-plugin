@@ -8,6 +8,7 @@ import io.kotest.matchers.string.shouldContain
 import org.gradle.testkit.runner.TaskOutcome
 import testsupport.TestedGradleVersion
 import testsupport.withTestProject
+import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
 class SharedLibraryPluginSmokeTest :
@@ -64,9 +65,15 @@ class SharedLibraryPluginSmokeTest :
               .withArguments("generateLocalLibraryFiles")
               .build()
           result.task(":generateLocalLibraryFiles")!!.outcome shouldBe TaskOutcome.SUCCESS
-          project.dir
-            .resolve("build/generated-src/integrationTest/java/com/mkobit/jenkins/pipelines/testing/LocalLibraryRetriever.java")
-            .shouldExist()
+          val retrieverFile =
+            project.dir.resolve(
+              "build/generated-src/integrationTest/java/com/mkobit/jenkins/pipelines/testing/LocalLibraryRetriever.java",
+            )
+          retrieverFile.shouldExist()
+          val source = retrieverFile.readText()
+          source shouldContain "public static LibraryConfiguration implicitLibrary()"
+          source shouldContain "public static LibraryConfiguration implicitLibrary(String name)"
+          source shouldContain "test.library.name"
           project.dir
             .resolve("build/generated-src/integrationTest/resources/META-INF/hudson.remoting.ClassFilter")
             .shouldExist()

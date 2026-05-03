@@ -19,12 +19,15 @@ import org.gradle.api.tasks.TaskAction
  * - `META-INF/hudson.remoting.ClassFilter` — registers `LocalLibraryRetriever` so XStream
  *   can deserialise `LibraryConfiguration` during test setup.
  *
- * Use `LocalLibraryRetriever.implicitLibrary(name)` to load the library in a test:
+ * Use `LocalLibraryRetriever.implicitLibrary()` (no-arg) to load the library in a test.
+ * The library name is read from the `test.library.name` system property, which the plugin
+ * injects automatically as `project.name`. Pass an explicit name if you need a different
+ * identifier:
  *
  * ```java
- * GlobalLibraries.get().setLibraries(
- *     List.of(LocalLibraryRetriever.implicitLibrary("my-lib"))
- * );
+ * GlobalLibraries.get().setLibraries(List.of(LocalLibraryRetriever.implicitLibrary()));
+ * // or with an explicit name:
+ * GlobalLibraries.get().setLibraries(List.of(LocalLibraryRetriever.implicitLibrary("my-lib")));
  * ```
  */
 @CacheableTask
@@ -104,6 +107,13 @@ abstract class GenerateLocalLibraryFiles : DefaultTask() {
           @Override
           public void retrieve(String name, String version, FilePath target, Run<?, ?> run, TaskListener listener) throws Exception {
               retrieve(name, version, false, target, run, listener);
+          }
+
+          public static LibraryConfiguration implicitLibrary() {
+              String name = Objects.requireNonNull(
+                  System.getProperty("test.library.name"),
+                  "System property test.library.name must be set (injected by the shared-library plugin)");
+              return implicitLibrary(name);
           }
 
           public static LibraryConfiguration implicitLibrary(String name) {

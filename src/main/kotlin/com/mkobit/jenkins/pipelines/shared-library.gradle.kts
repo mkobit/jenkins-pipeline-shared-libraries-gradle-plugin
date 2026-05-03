@@ -249,6 +249,7 @@ fun applyJenkinsTestWiring(suite: JvmTestSuite) {
       systemProperty("test.library.src", srcDir)
       systemProperty("test.library.vars", varsDir)
       systemProperty("test.library.resources", resourcesDir)
+      systemProperty("test.library.name", project.name)
       jvmArgumentProviders.add(
         objects.newInstance<JenkinsWarJvmArgumentProvider>().also {
           it.warFile.fileProvider(jenkinsWarFile)
