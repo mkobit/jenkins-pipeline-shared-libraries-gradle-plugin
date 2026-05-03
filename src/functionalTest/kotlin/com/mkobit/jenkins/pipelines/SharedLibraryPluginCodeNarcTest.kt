@@ -43,13 +43,37 @@ class SharedLibraryPluginCodeNarcTest :
       }
       """.trimIndent()
 
+    // Jenkins rules default to applyToFileNames='Jenkinsfile'. Override to '*.groovy' so
+    // that rules fire on shared library source files in src/ and vars/.
     val codeNarcXml =
       """
       <?xml version="1.0"?>
       <ruleset xmlns="http://codenarc.org/ruleset/1.0"
                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                xsi:schemaLocation="http://codenarc.org/ruleset/1.0 http://codenarc.org/ruleset-schema.xsd">
-        <ruleset-ref path="rulesets/jenkins.xml"/>
+        <ruleset-ref path="rulesets/jenkins.xml">
+          <rule-config name="ClassNotSerializable">
+            <property name="applyToFileNames" value="*.groovy"/>
+          </rule-config>
+          <rule-config name="ClosureInGString">
+            <property name="applyToFileNames" value="*.groovy"/>
+          </rule-config>
+          <rule-config name="CpsCallFromNonCpsMethod">
+            <property name="applyToFileNames" value="*.groovy"/>
+          </rule-config>
+          <rule-config name="ExpressionInCpsMethodNotSerializable">
+            <property name="applyToFileNames" value="*.groovy"/>
+          </rule-config>
+          <rule-config name="ForbiddenCallInCpsMethod">
+            <property name="applyToFileNames" value="*.groovy"/>
+          </rule-config>
+          <rule-config name="ObjectOverrideOnlyNonCpsMethods">
+            <property name="applyToFileNames" value="*.groovy"/>
+          </rule-config>
+          <rule-config name="ParameterOrReturnTypeNotSerializable">
+            <property name="applyToFileNames" value="*.groovy"/>
+          </rule-config>
+        </ruleset-ref>
       </ruleset>
       """.trimIndent()
 
@@ -104,9 +128,10 @@ class SharedLibraryPluginCodeNarcTest :
         withBaseProject { project ->
           project.buildFile.writeText(buildFileContent)
           project.file("codenarc.xml").writeText(codeNarcXml)
-          project.file("src/com/example/Util.groovy").writeText(
+          // CpsCallFromNonCpsMethod only fires for default-package classes (no package
+          // declaration) unless cpsPackages is explicitly configured in the ruleset.
+          project.file("src/Util.groovy").writeText(
             """
-            package com.example
             import com.cloudbees.groovy.cps.NonCPS
             class Util implements Serializable {
                 private static final long serialVersionUID = 1L
