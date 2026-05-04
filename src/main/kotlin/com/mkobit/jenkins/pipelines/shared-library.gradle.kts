@@ -48,7 +48,7 @@ dependencies.attributesSchema.attribute(JenkinsPluginRule.JENKINS_ARTIFACT_ATTRI
 
 // Eagerly created so the Kotlin DSL generates the jenkinsPlugin(...) typed accessor at sync time.
 val depsHandler = dependencies
-configurations.create(PluginConstants.JENKINS_PLUGIN_CONFIGURATION) {
+configurations.register(JENKINS_PLUGIN_CONFIGURATION) {
   isCanBeResolved = false
   isCanBeConsumed = false
   description = "Jenkins HPI/JPI plugin dependencies for shared library compilation and testing"
@@ -63,32 +63,32 @@ configurations.create(PluginConstants.JENKINS_PLUGIN_CONFIGURATION) {
   }
 }
 dependencies.addProvider(
-  PluginConstants.JENKINS_PLUGIN_CONFIGURATION,
+  JENKINS_PLUGIN_CONFIGURATION,
   ext.jenkins.version.map { v -> "org.jenkins-ci.main:jenkins-core:$v" },
 )
-dependencies.add(PluginConstants.JENKINS_PLUGIN_CONFIGURATION, PluginConstants.DEFAULT_PIPELINE_GROOVY_LIB)
-dependencies.add(PluginConstants.JENKINS_PLUGIN_CONFIGURATION, PluginConstants.DEFAULT_WORKFLOW_JOB)
-dependencies.add(PluginConstants.JENKINS_PLUGIN_CONFIGURATION, PluginConstants.DEFAULT_WORKFLOW_BASIC_STEPS)
-dependencies.add(PluginConstants.JENKINS_PLUGIN_CONFIGURATION, PluginConstants.DEFAULT_WORKFLOW_DURABLE_TASK_STEP)
+dependencies.add(JENKINS_PLUGIN_CONFIGURATION, PIPELINE_GROOVY_LIB_MODULE)
+dependencies.add(JENKINS_PLUGIN_CONFIGURATION, WORKFLOW_JOB_MODULE)
+dependencies.add(JENKINS_PLUGIN_CONFIGURATION, WORKFLOW_BASIC_STEPS_MODULE)
+dependencies.add(JENKINS_PLUGIN_CONFIGURATION, WORKFLOW_DURABLE_TASK_STEP_MODULE)
 
-configurations.create(PluginConstants.JENKINS_PLUGIN_HPIS_CONFIGURATION) {
+configurations.register(JENKINS_PLUGIN_HPIS_CONFIGURATION) {
   isCanBeResolved = true
   isCanBeConsumed = false
   description = "Jenkins plugin HPI archives for embedded Jenkins runtime (integration tests)"
-  extendsFrom(configurations.getByName(PluginConstants.JENKINS_PLUGIN_CONFIGURATION))
+  extendsFrom(configurations.getByName(JENKINS_PLUGIN_CONFIGURATION))
   attributes {
     attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, "hpi")
     attribute(JenkinsPluginRule.JENKINS_ARTIFACT_ATTRIBUTE, "hpi")
   }
 }
 
-configurations.create(PluginConstants.JENKINS_WAR_CONFIGURATION) {
+configurations.register(JENKINS_WAR_CONFIGURATION) {
   isCanBeResolved = true
   isCanBeConsumed = false
   description = "Jenkins WAR file for the embedded Jenkins runtime (integration tests)"
 }
 dependencies.addProvider(
-  PluginConstants.JENKINS_WAR_CONFIGURATION,
+  JENKINS_WAR_CONFIGURATION,
   ext.jenkins.version.map { v -> "org.jenkins-ci.main:jenkins-war:$v@war" },
 )
 
@@ -101,12 +101,12 @@ sourceSets.main.apply {
 }
 // Jenkins APIs are compile-only for the shared library; the library runs inside Jenkins at runtime.
 configurations.named("compileOnly") {
-  extendsFrom(configurations.getByName(PluginConstants.JENKINS_PLUGIN_CONFIGURATION))
+  extendsFrom(configurations.getByName(JENKINS_PLUGIN_CONFIGURATION))
 }
 
 // ── Test suites ───────────────────────────────────────────────────────────────
 
-val jenkinsPlugin = configurations.getByName(PluginConstants.JENKINS_PLUGIN_CONFIGURATION)
+val jenkinsPlugin = configurations.getByName(JENKINS_PLUGIN_CONFIGURATION)
 
 // Lenient view so plain-JAR transitives that don't publish HPI are silently skipped
 // rather than failing resolution when artifactType=hpi is requested globally.
@@ -114,7 +114,7 @@ val jenkinsPlugin = configurations.getByName(PluginConstants.JENKINS_PLUGIN_CONF
 // .hpi/.jpi files so transitive JARs (e.g. groovy-all) don't leak onto the test classpath.
 val hpiFiles =
   configurations
-    .getByName(PluginConstants.JENKINS_PLUGIN_HPIS_CONFIGURATION)
+    .getByName(JENKINS_PLUGIN_HPIS_CONFIGURATION)
     .incoming
     .artifactView { isLenient = true }
     .artifacts
@@ -137,7 +137,7 @@ val libraryRoot = layout.projectDirectory.asFile.absolutePath
 
 val jenkinsWarFile: Provider<File> =
   configurations
-    .named(PluginConstants.JENKINS_WAR_CONFIGURATION)
+    .named(JENKINS_WAR_CONFIGURATION)
     .map { cfg -> cfg.files.single { it.extension == "war" } }
 
 // Integration tests need groovy-all at *runtime only* so SandboxInterceptor
@@ -156,14 +156,13 @@ val jenkinsWarFile: Provider<File> =
 // WAR bundles it, and the integrationTestGroovyAllRuntime configuration requires that
 // capability — making Gradle skip the add when jenkins-core no longer satisfies it.
 // Track via GitHub issue (file after this branch merges). See docs/06-backlog.md M7.
-val groovyAllRuntime =
-  configurations.create(PluginConstants.GROOVY_ALL_RUNTIME_CONFIGURATION) {
-    isCanBeResolved = true
-    isCanBeConsumed = false
-  }
+configurations.register(GROOVY_ALL_RUNTIME_CONFIGURATION) {
+  isCanBeResolved = true
+  isCanBeConsumed = false
+}
 dependencies.add(
-  PluginConstants.GROOVY_ALL_RUNTIME_CONFIGURATION,
-  "${PluginConstants.GROOVY_ALL_GROUP_AND_ARTIFACT}:${SharedLibraryDefaults.GROOVY_ALL_VERSION}",
+  GROOVY_ALL_RUNTIME_CONFIGURATION,
+  "${GROOVY_ALL_MODULE}:${SharedLibraryDefaults.GROOVY_ALL_VERSION}",
 )
 
 val generateLocalLibraryFiles =
@@ -241,7 +240,7 @@ fun applyJenkinsTestWiring(suite: JvmTestSuite) {
   // JvmTestSuitePlugin maps as the test task classpath convention. Adding it via
   // tasks.withType<Test>().configureEach { classpath += ivy } would race against the
   // convention registration for late-registered suites and bypass the runtime classpath.
-  depsHandler.add(suite.sources.runtimeOnlyConfigurationName, PluginConstants.IVY_COORDINATES)
+  depsHandler.add(suite.sources.runtimeOnlyConfigurationName, IVY_COORDINATES)
   // Each suite gets its own subdirectory so multiple suites can run in parallel without
   // conflicting on WarExploder output or Gradle's task output tracking.
   val suiteJenkinsDir = layout.buildDirectory.dir("jenkins-for-test/${suite.name}")
@@ -257,7 +256,7 @@ fun applyJenkinsTestWiring(suite: JvmTestSuite) {
       // groovyAllRuntime is an isolated configuration that forces groovy-all 2.4 onto the
       // classpath even when groovy 3.x is present via Spock. Must use += (not runtimeOnly)
       // to bypass version-conflict resolution that would otherwise pick groovy 3.x.
-      classpath += groovyAllRuntime
+      classpath += configurations.getByName(GROOVY_ALL_RUNTIME_CONFIGURATION)
       maxParallelForks = 1
       maxHeapSize = SharedLibraryDefaults.INTEGRATION_TEST_MAX_HEAP_SIZE
       systemProperty("test.library.root", libraryRoot)
@@ -284,7 +283,7 @@ fun applyJenkinsTestWiring(suite: JvmTestSuite) {
   }
 }
 
-val integrationTestSuite = the<TestingExtension>().suites.named<JvmTestSuite>(PluginConstants.INTEGRATION_TEST_SUITE)
+val integrationTestSuite = the<TestingExtension>().suites.named<JvmTestSuite>(INTEGRATION_TEST_SUITE)
 applyJenkinsTestWiring(integrationTestSuite.get())
 
 // annotation-indexer processor indexes @Initializer on SharedLibraryAutoRegistrar so
@@ -296,7 +295,7 @@ applyJenkinsTestWiring(integrationTestSuite.get())
 // which is when JvmTestSuitePlugin creates the integrationTestAnnotationProcessor config.
 // Always on the processor path; generateLocalLibraryFiles controls whether the annotated
 // source file is generated based on autoRegisterLibrary.
-dependencies.add("integrationTestAnnotationProcessor", PluginConstants.ANNOTATION_INDEXER_COORDINATES)
+dependencies.add("integrationTestAnnotationProcessor", ANNOTATION_INDEXER)
 
 // Consumer-registered suites opt in via sharedLibrary.jenkinsTestRunnerSuite(suite).
 // Those calls arrive during the consumer's build-script evaluation — before the suite
@@ -331,19 +330,18 @@ tasks {
 
 // ── Ivy / @Grab support ───────────────────────────────────────────────────────
 
-val ivy =
-  configurations.create(PluginConstants.IVY_CONFIGURATION) {
-    isCanBeResolved = true
-    isCanBeConsumed = false
-    description = "Ivy for @Grab support in shared library Groovy sources"
-  }
-dependencies.add(ivy.name, PluginConstants.IVY_COORDINATES)
+configurations.register(IVY_CONFIGURATION) {
+  isCanBeResolved = true
+  isCanBeConsumed = false
+  description = "Ivy for @Grab support in shared library Groovy sources"
+}
+dependencies.add(IVY_CONFIGURATION, IVY_COORDINATES)
 tasks.withType<GroovyCompile>().configureEach {
-  groovyClasspath += ivy
+  groovyClasspath += configurations.getByName(IVY_CONFIGURATION)
 }
 // ivy on the test suite classpath: integration test suites get it via applyJenkinsTestWiring
 // (added to runtimeOnly). The unit test suite gets it here directly.
-dependencies.add("testRuntimeOnly", PluginConstants.IVY_COORDINATES)
+dependencies.add("testRuntimeOnly", IVY_COORDINATES)
 
 // ── CodeNarc Enhanced Classpath Rule support ──────────────────────────────────
 
