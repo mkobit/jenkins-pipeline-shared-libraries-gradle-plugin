@@ -144,6 +144,18 @@ val jenkinsWarFile: Provider<File> =
 // (script-security plugin) can load SqlGroovyMethods and other Groovy 2.4 DGM classes
 // that no longer exist in the groovy-3.x module jars. An isolated configuration bypasses
 // the groovy-all exclusion on implementation, keeping it off the compile classpath.
+//
+// FUTURE: this injection is currently unconditional. Once a Jenkins version removes
+// groovy-all from the WAR (Jenkins has not done so through 2.541.1 as of 2026-05-04 —
+// see `findGroovyAllThreshold` in the root project), this should become conditional via a
+// ComponentMetadataRule on jenkins-core: resolve the WAR artifact for the selected Jenkins
+// version, inspect WEB-INF/lib/ for groovy-all-*.jar, and skip adding groovyAllRuntime when
+// it is absent. Design sketch:
+//   dependencies.components.withModule("org.jenkins-ci.main:jenkins-core", GroovyAllCapabilityRule::class.java)
+// where GroovyAllCapabilityRule adds a "provides groovy-all" capability to variants where the
+// WAR bundles it, and the integrationTestGroovyAllRuntime configuration requires that
+// capability — making Gradle skip the add when jenkins-core no longer satisfies it.
+// Track via GitHub issue (file after this branch merges). See docs/06-backlog.md M7.
 val groovyAllRuntime =
   configurations.create(PluginConstants.GROOVY_ALL_RUNTIME_CONFIGURATION) {
     isCanBeResolved = true
