@@ -82,7 +82,7 @@ testing {
   }
 }
 
-tasks.named("check") {
+tasks.check {
   dependsOn(testing.suites.named("functionalTest"))
 }
 
