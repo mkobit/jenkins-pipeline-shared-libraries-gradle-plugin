@@ -164,9 +164,9 @@ internal class SharedLibraryPluginTest :
         }
       }
 
-      it("integrationTestAnnotationProcessor includes sezpoz") {
+      it("integrationTestAnnotationProcessor includes annotation-indexer") {
         val deps = project.configurations.getByName("integrationTestAnnotationProcessor").dependencies
-        deps.any { it.group == "net.java.sezpoz" && it.name == "sezpoz" }.shouldBeTrue()
+        deps.any { it.group == "org.jenkins-ci" && it.name == "annotation-indexer" }.shouldBeTrue()
       }
     }
 

@@ -274,13 +274,16 @@ fun applyJenkinsTestWiring(suite: JvmTestSuite) {
 val integrationTestSuite = the<TestingExtension>().suites.named<JvmTestSuite>(PluginConstants.INTEGRATION_TEST_SUITE)
 applyJenkinsTestWiring(integrationTestSuite.get())
 
-// SezPoz annotation processor indexes @Initializer on SharedLibraryAutoRegistrar so
-// Jenkins' InitializerFinder can discover and call it at embedded Jenkins startup time.
+// annotation-indexer processor indexes @Initializer on SharedLibraryAutoRegistrar so
+// Jenkins' InitializerFinder (via Index.list) can discover and call it at embedded
+// Jenkins startup time. Uses org.jvnet.hudson.annotation_indexer.Indexed meta-annotation
+// which generates META-INF/services/annotations/hudson.init.Initializer (simple text
+// format, class names only — not SezPoz binary format).
 // Must be added after applyJenkinsTestWiring forces the integrationTest suite to realize,
 // which is when JvmTestSuitePlugin creates the integrationTestAnnotationProcessor config.
 // Always on the processor path; generateLocalLibraryFiles controls whether the annotated
 // source file is generated based on autoRegisterLibrary.
-dependencies.add("integrationTestAnnotationProcessor", PluginConstants.SEZPOZ_COORDINATES)
+dependencies.add("integrationTestAnnotationProcessor", PluginConstants.ANNOTATION_INDEXER_COORDINATES)
 
 // Consumer-registered suites opt in via sharedLibrary.jenkinsTestRunnerSuite(suite).
 // Those calls arrive during the consumer's build-script evaluation — before the suite
