@@ -16,17 +16,19 @@ import org.gradle.api.tasks.TaskAction
  *
  * - `LocalLibraryRetriever.java` — a `LibraryRetriever` that copies `src/`, `vars/`, and
  *   `resources/` from the path set in the `test.library.root` system property.
+ * - `SharedLibraryAutoRegistrar.java` — an `@Initializer`-annotated class that auto-registers
+ *   the library in `GlobalLibraries` at embedded Jenkins startup (generated unless
+ *   `sharedLibrary.autoRegisterLibrary = false`).
  * - `META-INF/hudson.remoting.ClassFilter` — registers `LocalLibraryRetriever` so XStream
  *   can deserialise `LibraryConfiguration` during test setup.
  *
- * Use `LocalLibraryRetriever.implicitLibrary()` (no-arg) to load the library in a test.
- * The library name is read from the `test.library.name` system property, which the plugin
- * injects automatically as `project.name`. Pass an explicit name if you need a different
- * identifier:
+ * When `generateAutoRegistrar = true` (the default), no explicit `GlobalLibraries.get().setLibraries(...)`
+ * call is needed in test code — the auto-registrar handles it at Jenkins startup time.
+ * Pass an explicit name if you need a different library name than `project.name`:
  *
  * ```java
+ * // Explicit registration (only needed when autoRegisterLibrary = false):
  * GlobalLibraries.get().setLibraries(List.of(LocalLibraryRetriever.implicitLibrary()));
- * // or with an explicit name:
  * GlobalLibraries.get().setLibraries(List.of(LocalLibraryRetriever.implicitLibrary("my-lib")));
  * ```
  */
@@ -42,24 +44,42 @@ abstract class GenerateLocalLibraryFiles : DefaultTask() {
   @get:Input
   abstract val retrieverSource: Property<String>
 
+  /** When `true`, generates `SharedLibraryAutoRegistrar.java` so Jenkins auto-registers the library via `@Initializer`; otherwise deletes it. */
+  @get:Input
+  abstract val generateAutoRegistrar: Property<Boolean>
+
+  /** Content written to `SharedLibraryAutoRegistrar.java`; tracked as a task input for the same reason as [retrieverSource]. */
+  @get:Input
+  abstract val autoRegistrarSource: Property<String>
+
   /** Content written to `META-INF/hudson.remoting.ClassFilter`; tracked as a task input for the same reason. */
   @get:Input
   abstract val classFilterEntry: Property<String>
 
   init {
     retrieverSource.convention(JAVA_SOURCE)
+    generateAutoRegistrar.convention(true)
+    autoRegistrarSource.convention(AUTO_REGISTRAR_SOURCE)
     classFilterEntry.convention(CLASS_NAME)
   }
 
   @TaskAction
   fun generate() {
-    val javaFile =
-      javaOutputDir
-        .get()
-        .file("com/mkobit/jenkins/pipelines/testing/LocalLibraryRetriever.java")
+    val javaDir = javaOutputDir.get()
+    javaDir.file("com/mkobit/jenkins/pipelines/testing/LocalLibraryRetriever.java").asFile.also {
+      it.parentFile.mkdirs()
+      it.writeText(retrieverSource.get())
+    }
+
+    val autoRegistrarFile =
+      javaDir
+        .file("com/mkobit/jenkins/pipelines/testing/SharedLibraryAutoRegistrar.java")
         .asFile
-    javaFile.parentFile.mkdirs()
-    javaFile.writeText(retrieverSource.get())
+    if (generateAutoRegistrar.get()) {
+      autoRegistrarFile.writeText(autoRegistrarSource.get())
+    } else {
+      autoRegistrarFile.delete()
+    }
 
     val classFilterFile =
       resourcesOutputDir
@@ -72,6 +92,36 @@ abstract class GenerateLocalLibraryFiles : DefaultTask() {
 
   companion object {
     private const val CLASS_NAME = "com.mkobit.jenkins.pipelines.testing.LocalLibraryRetriever"
+
+    private val AUTO_REGISTRAR_SOURCE =
+      """
+      package com.mkobit.jenkins.pipelines.testing;
+
+      import hudson.init.InitMilestone;
+      import hudson.init.Initializer;
+      import java.util.List;
+      import org.jenkinsci.plugins.workflow.libs.GlobalLibraries;
+
+      public final class SharedLibraryAutoRegistrar {
+
+          private SharedLibraryAutoRegistrar() {}
+
+          /**
+           * Runs after all Jenkins extensions are loaded. Reads {@code test.library.name} (injected
+           * by the shared-library Gradle plugin) and registers the local library in GlobalLibraries
+           * so test pipelines can reference it without any explicit setup code.
+           * If the system property is absent this method is a no-op.
+           */
+          @Initializer(after = InitMilestone.EXTENSIONS_AUGMENTED)
+          public static void registerLibrary() {
+              String name = System.getProperty("test.library.name");
+              if (name == null) {
+                  return;
+              }
+              GlobalLibraries.get().setLibraries(List.of(LocalLibraryRetriever.implicitLibrary(name)));
+          }
+      }
+      """.trimIndent()
 
     private val JAVA_SOURCE =
       """

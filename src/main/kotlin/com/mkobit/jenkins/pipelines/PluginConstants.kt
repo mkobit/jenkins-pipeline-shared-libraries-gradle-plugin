@@ -13,6 +13,8 @@ internal object PluginConstants {
   const val IVY_CONFIGURATION = "sharedLibraryIvy"
   const val IVY_COORDINATES = "org.apache.ivy:ivy:2.4.0"
 
+  const val SEZPOZ_COORDINATES = "net.java.sezpoz:sezpoz:1.13"
+
   const val DEFAULT_PIPELINE_GROOVY_LIB = "io.jenkins.plugins:pipeline-groovy-lib"
   const val DEFAULT_WORKFLOW_JOB = "org.jenkins-ci.plugins.workflow:workflow-job"
   const val DEFAULT_WORKFLOW_BASIC_STEPS = "org.jenkins-ci.plugins.workflow:workflow-basic-steps"

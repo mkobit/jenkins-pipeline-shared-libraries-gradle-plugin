@@ -65,10 +65,11 @@ class SharedLibraryPluginSmokeTest :
               .withArguments("generateLocalLibraryFiles")
               .build()
           result.task(":generateLocalLibraryFiles")!!.outcome shouldBe TaskOutcome.SUCCESS
-          val retrieverFile =
+          val testingDir =
             project.dir.resolve(
-              "build/generated-src/integrationTest/java/com/mkobit/jenkins/pipelines/testing/LocalLibraryRetriever.java",
+              "build/generated-src/integrationTest/java/com/mkobit/jenkins/pipelines/testing",
             )
+          val retrieverFile = testingDir.resolve("LocalLibraryRetriever.java")
           retrieverFile.shouldExist()
           val source = retrieverFile.readText()
           source shouldContain "public static LibraryConfiguration implicitLibrary()"
@@ -77,6 +78,41 @@ class SharedLibraryPluginSmokeTest :
           project.dir
             .resolve("build/generated-src/integrationTest/resources/META-INF/hudson.remoting.ClassFilter")
             .shouldExist()
+
+          val autoRegistrarFile = testingDir.resolve("SharedLibraryAutoRegistrar.java")
+          autoRegistrarFile.shouldExist()
+          val autoRegistrarSource = autoRegistrarFile.readText()
+          autoRegistrarSource shouldContain "@Initializer(after = InitMilestone.EXTENSIONS_AUGMENTED)"
+          autoRegistrarSource shouldContain "public static void registerLibrary()"
+          autoRegistrarSource shouldContain "test.library.name"
+        }
+      }
+    }
+
+    describe("generateLocalLibraryFiles skips SharedLibraryAutoRegistrar when autoRegisterLibrary = false") {
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withTestProject { project ->
+          project.buildFile.writeText(
+            """
+            plugins {
+                id("com.mkobit.jenkins.pipelines.shared-library")
+            }
+            sharedLibrary {
+                autoRegisterLibrary = false
+            }
+            """.trimIndent(),
+          )
+          val result =
+            project
+              .runner(gradleVersion)
+              .withArguments("generateLocalLibraryFiles")
+              .build()
+          result.task(":generateLocalLibraryFiles")!!.outcome shouldBe TaskOutcome.SUCCESS
+          project.dir
+            .resolve(
+              "build/generated-src/integrationTest/java/com/mkobit/jenkins/pipelines/testing/SharedLibraryAutoRegistrar.java",
+            ).toFile()
+            .exists() shouldBe false
         }
       }
     }

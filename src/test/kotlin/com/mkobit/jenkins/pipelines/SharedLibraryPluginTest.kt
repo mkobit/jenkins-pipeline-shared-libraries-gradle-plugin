@@ -163,6 +163,18 @@ internal class SharedLibraryPluginTest :
             .shouldNotBeBlank()
         }
       }
+
+      it("integrationTestAnnotationProcessor includes sezpoz") {
+        val deps = project.configurations.getByName("integrationTestAnnotationProcessor").dependencies
+        deps.any { it.group == "net.java.sezpoz" && it.name == "sezpoz" }.shouldBeTrue()
+      }
+    }
+
+    describe("extension defaults") {
+      it("autoRegisterLibrary defaults to true") {
+        val ext = project.extensions.getByType(SharedLibraryExtension::class.java)
+        ext.autoRegisterLibrary.get().shouldBeTrue()
+      }
     }
 
     describe("attribute schema") {
@@ -205,6 +217,11 @@ internal class SharedLibraryPluginTest :
         project.tasks
           .getByName("generateLocalLibraryFiles")
           .shouldBeInstanceOf<GenerateLocalLibraryFiles>()
+      }
+
+      it("generateLocalLibraryFiles generateAutoRegistrar defaults to true") {
+        val task = project.tasks.getByName("generateLocalLibraryFiles") as GenerateLocalLibraryFiles
+        task.generateAutoRegistrar.get() shouldBe true
       }
 
       it("groovydocJar is created with a description") {

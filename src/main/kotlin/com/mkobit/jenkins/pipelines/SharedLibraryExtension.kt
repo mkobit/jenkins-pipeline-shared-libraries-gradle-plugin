@@ -47,6 +47,20 @@ abstract class SharedLibraryExtension
     /** `com.lesfurets:jenkins-pipeline-unit` version used in the `test` suite. */
     abstract val pipelineUnitVersion: Property<String>
 
+    /**
+     * When `true` (default), generates `SharedLibraryAutoRegistrar.java` and registers the SezPoz
+     * annotation processor so Jenkins auto-registers the shared library at embedded Jenkins startup.
+     * No explicit `GlobalLibraries.get().setLibraries(...)` call is needed in test code.
+     *
+     * Set to `false` to revert to the manual registration pattern:
+     * ```kotlin
+     * sharedLibrary {
+     *     autoRegisterLibrary = false
+     * }
+     * ```
+     */
+    abstract val autoRegisterLibrary: Property<Boolean>
+
     private var testSuiteWirer: ((JvmTestSuite) -> Unit)? = null
 
     internal fun setTestSuiteWirer(action: (JvmTestSuite) -> Unit) {

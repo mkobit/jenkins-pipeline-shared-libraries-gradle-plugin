@@ -28,6 +28,7 @@ ext.jenkins.version.convention(SharedLibraryDefaults.CORE_VERSION)
 ext.jenkins.testHarnessVersion.convention(SharedLibraryDefaults.TEST_HARNESS_VERSION)
 ext.jenkins.bomVersion.convention(SharedLibraryDefaults.BOM_VERSION)
 ext.pipelineUnitVersion.convention(SharedLibraryDefaults.PIPELINE_UNIT_VERSION)
+ext.autoRegisterLibrary.convention(true)
 
 // ── Jenkins plugin configurations ─────────────────────────────────────────────
 
@@ -156,6 +157,7 @@ val generateLocalLibraryFiles =
   tasks.register<GenerateLocalLibraryFiles>("generateLocalLibraryFiles") {
     javaOutputDir.set(layout.buildDirectory.dir("generated-src/integrationTest/java"))
     resourcesOutputDir.set(layout.buildDirectory.dir("generated-src/integrationTest/resources"))
+    generateAutoRegistrar.set(ext.autoRegisterLibrary)
   }
 
 extensions.configure<TestingExtension> {
@@ -271,6 +273,14 @@ fun applyJenkinsTestWiring(suite: JvmTestSuite) {
 
 val integrationTestSuite = the<TestingExtension>().suites.named<JvmTestSuite>(PluginConstants.INTEGRATION_TEST_SUITE)
 applyJenkinsTestWiring(integrationTestSuite.get())
+
+// SezPoz annotation processor indexes @Initializer on SharedLibraryAutoRegistrar so
+// Jenkins' InitializerFinder can discover and call it at embedded Jenkins startup time.
+// Must be added after applyJenkinsTestWiring forces the integrationTest suite to realize,
+// which is when JvmTestSuitePlugin creates the integrationTestAnnotationProcessor config.
+// Always on the processor path; generateLocalLibraryFiles controls whether the annotated
+// source file is generated based on autoRegisterLibrary.
+dependencies.add("integrationTestAnnotationProcessor", PluginConstants.SEZPOZ_COORDINATES)
 
 // Consumer-registered suites opt in via sharedLibrary.jenkinsTestRunnerSuite(suite).
 // Those calls arrive during the consumer's build-script evaluation — before the suite
