@@ -72,6 +72,7 @@ class SharedLibraryPluginSmokeTest :
           val retrieverFile = testingDir.resolve("LocalLibraryRetriever.java")
           retrieverFile.shouldExist()
           val source = retrieverFile.readText()
+          source shouldContain "@Generated(\"com.mkobit.jenkins.pipelines.GenerateLocalLibraryFiles\")"
           source shouldContain "public static LibraryConfiguration implicitLibrary()"
           source shouldContain "public static LibraryConfiguration implicitLibrary(String name)"
           source shouldContain "test.library.name"
@@ -82,8 +83,10 @@ class SharedLibraryPluginSmokeTest :
           val autoRegistrarFile = testingDir.resolve("SharedLibraryAutoRegistrar.java")
           autoRegistrarFile.shouldExist()
           val autoRegistrarSource = autoRegistrarFile.readText()
+          autoRegistrarSource shouldContain "@Generated(\"com.mkobit.jenkins.pipelines.GenerateLocalLibraryFiles\")"
           autoRegistrarSource shouldContain "@Initializer(after = InitMilestone.EXTENSIONS_AUGMENTED)"
           autoRegistrarSource shouldContain "public static void registerLibrary()"
+          autoRegistrarSource shouldContain "test.library.auto.register"
           autoRegistrarSource shouldContain "test.library.name"
         }
       }

@@ -100,8 +100,10 @@ abstract class GenerateLocalLibraryFiles : DefaultTask() {
       import hudson.init.InitMilestone;
       import hudson.init.Initializer;
       import java.util.List;
+      import javax.annotation.processing.Generated;
       import org.jenkinsci.plugins.workflow.libs.GlobalLibraries;
 
+      @Generated("com.mkobit.jenkins.pipelines.GenerateLocalLibraryFiles")
       public final class SharedLibraryAutoRegistrar {
 
           private SharedLibraryAutoRegistrar() {}
@@ -110,10 +112,15 @@ abstract class GenerateLocalLibraryFiles : DefaultTask() {
            * Runs after all Jenkins extensions are loaded. Reads {@code test.library.name} (injected
            * by the shared-library Gradle plugin) and registers the local library in GlobalLibraries
            * so test pipelines can reference it without any explicit setup code.
-           * If the system property is absent this method is a no-op.
+           *
+           * <p>Set system property {@code test.library.auto.register=false} at JVM startup to
+           * disable auto-registration for a specific test run (e.g. to test manual registration).
            */
           @Initializer(after = InitMilestone.EXTENSIONS_AUGMENTED)
           public static void registerLibrary() {
+              if ("false".equalsIgnoreCase(System.getProperty("test.library.auto.register", "true"))) {
+                  return;
+              }
               String name = System.getProperty("test.library.name");
               if (name == null) {
                   return;
@@ -132,9 +139,11 @@ abstract class GenerateLocalLibraryFiles : DefaultTask() {
       import hudson.model.TaskListener;
       import java.io.File;
       import java.util.Objects;
+      import javax.annotation.processing.Generated;
       import org.jenkinsci.plugins.workflow.libs.LibraryConfiguration;
       import org.jenkinsci.plugins.workflow.libs.LibraryRetriever;
 
+      @Generated("com.mkobit.jenkins.pipelines.GenerateLocalLibraryFiles")
       public final class LocalLibraryRetriever extends LibraryRetriever {
 
           private final File root;

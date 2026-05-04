@@ -48,6 +48,24 @@ abstract class SharedLibraryExtension
     abstract val pipelineUnitVersion: Property<String>
 
     /**
+     * Name of the shared library injected into the embedded Jenkins test instance.
+     * Defaults to `project.name`.
+     *
+     * This value is injected as the `test.library.name` system property on all Jenkins test
+     * suites. Pipelines reference the library by this name:
+     * ```groovy
+     * @Library('my-shared-lib') _
+     * ```
+     * Override when the Jenkins library name must differ from the Gradle project name:
+     * ```kotlin
+     * sharedLibrary {
+     *     libraryName = "my-shared-lib"
+     * }
+     * ```
+     */
+    abstract val libraryName: Property<String>
+
+    /**
      * When `true` (default), generates `SharedLibraryAutoRegistrar.java` and registers the SezPoz
      * annotation processor so Jenkins auto-registers the shared library at embedded Jenkins startup.
      * No explicit `GlobalLibraries.get().setLibraries(...)` call is needed in test code.

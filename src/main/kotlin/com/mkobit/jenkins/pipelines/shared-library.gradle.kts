@@ -29,6 +29,7 @@ ext.jenkins.testHarnessVersion.convention(SharedLibraryDefaults.TEST_HARNESS_VER
 ext.jenkins.bomVersion.convention(SharedLibraryDefaults.BOM_VERSION)
 ext.pipelineUnitVersion.convention(SharedLibraryDefaults.PIPELINE_UNIT_VERSION)
 ext.autoRegisterLibrary.convention(true)
+ext.libraryName.convention(project.name)
 
 // ── Jenkins plugin configurations ─────────────────────────────────────────────
 
@@ -251,7 +252,7 @@ fun applyJenkinsTestWiring(suite: JvmTestSuite) {
       systemProperty("test.library.src", srcDir)
       systemProperty("test.library.vars", varsDir)
       systemProperty("test.library.resources", resourcesDir)
-      systemProperty("test.library.name", project.name)
+      systemProperty("test.library.name", ext.libraryName.get())
       jvmArgumentProviders.add(
         objects.newInstance<JenkinsWarJvmArgumentProvider>().also {
           it.warFile.fileProvider(jenkinsWarFile)

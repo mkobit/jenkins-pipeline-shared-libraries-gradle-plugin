@@ -175,6 +175,19 @@ internal class SharedLibraryPluginTest :
         val ext = project.extensions.getByType(SharedLibraryExtension::class.java)
         ext.autoRegisterLibrary.get().shouldBeTrue()
       }
+
+      it("libraryName defaults to project name") {
+        val ext = project.extensions.getByType(SharedLibraryExtension::class.java)
+        ext.libraryName.get() shouldBe project.name
+      }
+    }
+
+    describe("libraryName is reflected in test.library.name system property") {
+      it("integrationTest injects libraryName as test.library.name") {
+        val ext = project.extensions.getByType(SharedLibraryExtension::class.java)
+        val task = project.tasks.getByName("integrationTest") as org.gradle.api.tasks.testing.Test
+        task.systemProperties["test.library.name"] shouldBe ext.libraryName.get()
+      }
     }
 
     describe("attribute schema") {
