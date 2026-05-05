@@ -82,7 +82,7 @@ jenkins-bom = { module = "io.jenkins.tools.bom:bom-2.479.x", version.ref = "jenk
 # Change module to bom-2.528.x (and update the version) to move to a newer LTS line.
 
 [plugins]
-jenkins-shared-library = { id = "com.mkobit.jenkins.pipelines.shared-library", version = "1.0.0" }
+jenkins-shared-library = { id = "com.mkobit.jenkins.pipelines.shared-library", version = "0.11.0" }
 ----
 
 === `build.gradle.kts`
@@ -375,12 +375,12 @@ Changing the LTS module coordinate is a manual step.
 
 == Migration from 0.10.x
 
-Version 1.0.0 is a clean break from the 0.x series.
+Version 0.11.0 is a clean break from the 0.10.x series.
 The following table maps old API to its replacement.
 
 [cols="1,1"]
 |===
-|0.10.x |1.0.0
+|0.10.x |0.11.0
 
 |`sharedLibrary { pluginDependencies { dependency("git") { ... } } }`
 |`dependencies { jenkinsPlugin("org.jenkins-ci.plugins:git") }`

@@ -7,6 +7,7 @@ plugins {
 }
 
 group = "com.mkobit.jenkins.pipelines"
+version = "0.11.0"
 description = "Gradle plugins for Jenkins Pipeline shared library development and testing"
 
 java {
