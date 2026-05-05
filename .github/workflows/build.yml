@@ -17,9 +17,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Gate: Java 17 + current Gradle — fast sanity check before matrix fan-out.
+  # Gate: Java 17 / Gradle 9.4.1 — fast sanity check before matrix fan-out.
   # Runs build (unit + non-resolution functional tests). No Jenkins Maven repo calls.
-  # Populates the Gradle 9.4.1 dependency cache for reuse by java-21 and java-latest.
+  # Populates the Gradle 9.4.1 dependency cache for reuse by java-compat.
   gate:
     name: Gate (Java 17 / Gradle 9.4.1)
     runs-on: ubuntu-latest
@@ -27,18 +27,14 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
+      - uses: ./.github/actions/setup-env
         with:
           java-version: 17
-          distribution: temurin
-      - uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e
-        with:
           gradle-version: "9.4.1"
       - name: Build
         run: gradle build --continue
 
-  # Gradle compat: Java 17 × older 9.x minor versions (9.4.1 already covered by gate).
+  # Gradle compat: Java 17 × supported 9.x minor versions (9.4.1 covered by gate).
   # Each Gradle version has its own cache key; first run downloads and caches the
   # distribution, subsequent runs restore it. Includes resolution tests.
   gradle-compat:
@@ -56,63 +52,36 @@ jobs:
           - "9.1.0"
           - "9.2.1"
           - "9.3.1"
+          - "9.5.0"
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
+      - uses: ./.github/actions/setup-env
         with:
           java-version: 17
-          distribution: temurin
-      - uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e
-        with:
           gradle-version: ${{ matrix.gradle }}
       - name: Build
         run: gradle build --continue
       - name: Functional tests (resolution)
         run: gradle functionalTest --continue -Pkotest.tags=resolution
 
-  # Java 21 + current Gradle: LTS Java compat.
-  # cache-read-only: gate already wrote the 9.4.1 cache; avoid a redundant parallel write.
-  java-21:
-    name: Java 21 / Gradle 9.4.1
+  # Java compat: LTS Java (21) and latest Java (24) × Gradle 9.4.1.
+  # cache-read-only: gate already wrote the 9.4.1 cache; avoid redundant parallel writes.
+  java-compat:
+    name: Java ${{ matrix.java }} / Gradle 9.4.1
     needs: gate
     runs-on: ubuntu-latest
     timeout-minutes: 25
     permissions:
       contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        java: [21, 24]
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
+      - uses: ./.github/actions/setup-env
         with:
-          java-version: 21
-          distribution: temurin
-      - uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e
-        with:
+          java-version: ${{ matrix.java }}
           gradle-version: "9.4.1"
-          cache-read-only: true
-      - name: Build
-        run: gradle build --continue
-      - name: Functional tests (resolution)
-        run: gradle functionalTest --continue -Pkotest.tags=resolution
-
-  # Latest Java + current Gradle: forward-compat check.
-  # cache-read-only: same rationale as java-21.
-  java-latest:
-    name: Java 24 / Gradle 9.4.1
-    needs: gate
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
-        with:
-          java-version: 24
-          distribution: temurin
-      - uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e
-        with:
-          gradle-version: "9.4.1"
-          cache-read-only: true
+          cache-read-only: "true"
       - name: Build
         run: gradle build --continue
       - name: Functional tests (resolution)

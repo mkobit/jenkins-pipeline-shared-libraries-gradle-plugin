@@ -24,7 +24,8 @@ jobs:
   # ── Gate ──────────────────────────────────────────────────────────────────────
   # Primary signal: Java 17 / Gradle 9.4.1 / Jenkins 2.528.x (current standard).
   # Runs first to catch obvious failures fast before the matrix fan-out.
-  # Populates the Gradle 9.4.1 + Java 17 dependency cache for subsequent jobs.
+  # Populates the Gradle 9.4.1 + Java 17 dependency cache for gradle-compat and
+  # jenkins-compat jobs (Gradle 9.4.1 / cache-read-only: true).
   # Resolves the example repo ref once and exposes it as a job output so
   # gradle-compat and jenkins-compat do not repeat the git ls-remote probe.
   gate:
@@ -101,6 +102,7 @@ jobs:
           - "9.1.0"
           - "9.2.1"
           - "9.3.1"
+          - "9.5.0"
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
