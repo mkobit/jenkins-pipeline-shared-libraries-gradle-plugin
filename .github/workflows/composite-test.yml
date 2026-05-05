@@ -160,8 +160,14 @@ jobs:
             jenkins-version: "2.528.3"
             jenkins-bom: "io.jenkins.tools.bom:bom-2.528.x:6398.v1d26a_dd495e2"
             jenkins-test-harness: "2565.vd1eb_7c961d1b_"
-          # Latest LTS × maximum Java
+          # Latest LTS × maximum LTS Java
           - java: 21
+            jenkins-lts: "2.541.x"
+            jenkins-version: "2.541.3"
+            jenkins-bom: "io.jenkins.tools.bom:bom-2.541.x:6364.v16b_76a_4023c7"
+            jenkins-test-harness: "2565.vd1eb_7c961d1b_"
+          # Latest LTS × latest Java (forward-compat)
+          - java: 24
             jenkins-lts: "2.541.x"
             jenkins-version: "2.541.3"
             jenkins-bom: "io.jenkins.tools.bom:bom-2.541.x:6364.v16b_76a_4023c7"
