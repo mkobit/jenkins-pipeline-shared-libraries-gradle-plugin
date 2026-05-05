@@ -75,7 +75,7 @@ configurations.register(JENKINS_PLUGIN_HPIS_CONFIGURATION) {
   isCanBeResolved = true
   isCanBeConsumed = false
   description = "Jenkins plugin HPI archives for embedded Jenkins runtime (integration tests)"
-  extendsFrom(configurations.getByName(JENKINS_PLUGIN_CONFIGURATION))
+  extendsFrom(configurations.named(JENKINS_PLUGIN_CONFIGURATION).get())
   attributes {
     attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, "hpi")
     attribute(JenkinsPluginRule.JENKINS_ARTIFACT_ATTRIBUTE, "hpi")
@@ -101,12 +101,12 @@ sourceSets.main.apply {
 }
 // Jenkins APIs are compile-only for the shared library; the library runs inside Jenkins at runtime.
 configurations.named("compileOnly") {
-  extendsFrom(configurations.getByName(JENKINS_PLUGIN_CONFIGURATION))
+  extendsFrom(configurations.named(JENKINS_PLUGIN_CONFIGURATION).get())
 }
 
 // ── Test suites ───────────────────────────────────────────────────────────────
 
-val jenkinsPlugin = configurations.getByName(JENKINS_PLUGIN_CONFIGURATION)
+val jenkinsPlugin = configurations.named(JENKINS_PLUGIN_CONFIGURATION)
 
 // Lenient view so plain-JAR transitives that don't publish HPI are silently skipped
 // rather than failing resolution when artifactType=hpi is requested globally.
@@ -114,7 +114,8 @@ val jenkinsPlugin = configurations.getByName(JENKINS_PLUGIN_CONFIGURATION)
 // .hpi/.jpi files so transitive JARs (e.g. groovy-all) don't leak onto the test classpath.
 val hpiFiles =
   configurations
-    .getByName(JENKINS_PLUGIN_HPIS_CONFIGURATION)
+    .named(JENKINS_PLUGIN_HPIS_CONFIGURATION)
+    .get()
     .incoming
     .artifactView { isLenient = true }
     .artifacts
@@ -209,7 +210,7 @@ val projectConfigurations = configurations
 the<TestingExtension>().suites.withType<JvmTestSuite>().configureEach {
   val implConfigName = sources.implementationConfigurationName
   projectConfigurations.named(implConfigName) {
-    extendsFrom(jenkinsPlugin)
+    extendsFrom(jenkinsPlugin.get())
     exclude(mapOf("group" to "org.codehaus.groovy", "module" to "groovy-all"))
   }
 }
@@ -244,13 +245,15 @@ fun applyJenkinsTestWiring(suite: JvmTestSuite) {
   // Each suite gets its own subdirectory so multiple suites can run in parallel without
   // conflicting on WarExploder output or Gradle's task output tracking.
   val suiteJenkinsDir = layout.buildDirectory.dir("jenkins-for-test/${suite.name}")
-  // buildDirectory is finalized at configuration time; .get() is safe here.
-  val suiteBuildDir = suiteJenkinsDir.get().asFile.absolutePath
-  suite.targets.all {
+  suite.targets.configureEach {
     testTask.configure {
       mustRunAfter(tasks.named("test"))
       // WarExploder reads buildDirectory (defaults to "target") as parent of its explode dir.
-      systemProperty("buildDirectory", suiteBuildDir)
+      jvmArgumentProviders.add(
+        objects.newInstance<BuildDirJvmArgumentProvider>().also {
+          it.dir.set(suiteJenkinsDir)
+        },
+      )
       outputs.dir(suiteJenkinsDir)
       classpath += hpiFiles
       // groovyAllRuntime is an isolated configuration that forces groovy-all 2.4 onto the

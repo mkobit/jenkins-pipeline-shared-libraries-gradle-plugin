@@ -24,7 +24,10 @@ class SharedLibraryPluginSmokeTest :
               val t = tasks.named("integrationTest")
               doLast {
                   val testTask = t.get() as org.gradle.api.tasks.testing.Test
-                  println("buildDirectory=" + testTask.systemProperties["buildDirectory"])
+                  val buildDirProvider = testTask.jvmArgumentProviders
+                      .filterIsInstance<com.mkobit.jenkins.pipelines.BuildDirJvmArgumentProvider>()
+                      .firstOrNull()
+                  println("buildDirectory=" + buildDirProvider?.dir?.get()?.asFile?.absolutePath)
                   println("outputDirs=" + testTask.outputs.files.joinToString(",") { it.absolutePath })
               }
           }

@@ -53,7 +53,7 @@ testing {
         implementation(libs.kotest.runner)
         implementation(project())
       }
-      targets.all {
+      targets.configureEach {
         testTask.configure {
           mustRunAfter(test)
           // java-gradle-plugin only wires pluginUnderTestMetadata into the test suite;
