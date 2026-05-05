@@ -151,11 +151,13 @@ jobs:
       matrix:
         include:
           # Floor: minimum Java × minimum supported Jenkins LTS
+          # JenkinsSessionFixture was introduced in harness 2554; override the
+          # BOM-pinned 2391 so the base-class pattern in the example compiles.
           - java: 17
             jenkins-lts: "2.479.x"
             jenkins-version: "2.479.1"
             jenkins-bom: "io.jenkins.tools.bom:bom-2.479.x:5054.v620b_5d2b_d5e6"
-            jenkins-test-harness: "2391.v9b_3e2d3351a_2"
+            jenkins-test-harness: "2554.v574c0503d196"
           # Current middle LTS × maximum Java
           - java: 21
             jenkins-lts: "2.528.x"
