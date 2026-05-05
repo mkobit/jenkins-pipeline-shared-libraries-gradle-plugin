@@ -1,12 +1,11 @@
 name: Build
 
 on:
-  # TODO: remove push trigger once branch protection requires PRs for all changes,
-  #       so CI only runs once per commit (via pull_request), not twice.
   push:
     branches:
       - main
   pull_request:
+  workflow_dispatch:
 
 permissions: {}
 
