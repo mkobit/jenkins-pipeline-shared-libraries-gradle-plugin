@@ -12,6 +12,7 @@ on:
       example-ref:
         description: "jenkins-pipeline-shared-library-example branch/SHA to test against (default: same branch name, then main)"
         default: ""
+      # TODO: add gradle-version and jenkins-version inputs for on-demand latest/stretch testing
 
 permissions: {}
 
@@ -20,54 +21,20 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  composite-test:
-    name: ${{ matrix.name }}
+  # ── Gate ──────────────────────────────────────────────────────────────────────
+  # Primary signal: Java 17 / Gradle 9.4.1 / Jenkins 2.528.x (current standard).
+  # Runs first to catch obvious failures fast before the matrix fan-out.
+  # Populates the Gradle 9.4.1 + Java 17 dependency cache for subsequent jobs.
+  # Resolves the example repo ref once and exposes it as a job output so
+  # gradle-compat and jenkins-compat do not repeat the git ls-remote probe.
+  gate:
+    name: Gate (Java 17 / Gradle 9.4.1 / Jenkins 2.528.x)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
       contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          # Floor: minimum Java × baseline LTS (2.479.x — Groovy 2.4 runtime)
-          # TODO: add a Gradle 9.0 floor leg once CI supports overriding the wrapper version.
-          - name: "Java 17 / Jenkins 2.479.x"
-            java: 17
-            jenkins-version: "2.479.1"
-            jenkins-bom: "io.jenkins.tools.bom:bom-2.479.x:5054.v620b_5d2b_d5e6"
-            jenkins-test-harness: "2391.v9b_3e2d3351a_2"
-
-          # 2.492.x — first LTS to ship Groovy 3.x internally; key leg for Spock investigation.
-          # groovy-all:2.4.21 injection via integrationTestGroovyAllRuntime may conflict here;
-          # a failure on this leg is expected until the Spock/Groovy-3 strategy is resolved.
-          - name: "Java 17 / Jenkins 2.492.x"
-            java: 17
-            jenkins-version: "2.492.3"
-            jenkins-bom: "io.jenkins.tools.bom:bom-2.492.x:5473.vb_9533d9e5d88"
-            jenkins-test-harness: "2397.v5992a_d47f025"
-
-          # Current middle LTS
-          - name: "Java 17 / Jenkins 2.528.x"
-            java: 17
-            jenkins-version: "2.528.3"
-            jenkins-bom: "io.jenkins.tools.bom:bom-2.528.x:6398.v1d26a_dd495e2"
-            jenkins-test-harness: "2565.vd1eb_7c961d1b_"
-
-          # Current latest LTS × maximum Java
-          - name: "Java 21 / Jenkins 2.541.x"
-            java: 21
-            jenkins-version: "2.541.3"
-            jenkins-bom: "io.jenkins.tools.bom:bom-2.541.x:6364.v16b_76a_4023c7"
-            jenkins-test-harness: "2565.vd1eb_7c961d1b_"
-
-          # Stretch: newest LTS × maximum Java
-          - name: "Java 21 / Jenkins 2.555.x"
-            java: 21
-            jenkins-version: "2.555.1"
-            jenkins-bom: "io.jenkins.tools.bom:bom-2.555.x:6398.v1d26a_dd495e2"
-            jenkins-test-harness: "2565.vd1eb_7c961d1b_"
-
+    outputs:
+      example-ref: ${{ steps.example-ref.outputs.ref }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
@@ -100,14 +67,131 @@ jobs:
 
       - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
         with:
+          java-version: 17
+          distribution: temurin
+
+      - uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e
+        with:
+          gradle-version: "9.4.1"
+
+      - name: Build
+        working-directory: example
+        run: >
+          gradle --include-build ../plugin build --continue
+          -PjenkinsVersion=2.528.3
+          -PjenkinsBom=io.jenkins.tools.bom:bom-2.528.x:6398.v1d26a_dd495e2
+          -PjenkinsTestHarnessVersion=2565.vd1eb_7c961d1b_
+
+  # ── Gradle compatibility ──────────────────────────────────────────────────────
+  # One leg per supported Gradle 9.x minor; 9.4.1 is covered by the gate.
+  # Jenkins (2.528.x) and Java (17) are held constant — Gradle is the only variable.
+  # Each Gradle version has its own cache key and populates it independently.
+  gradle-compat:
+    name: Gradle ${{ matrix.gradle }} / Java 17 / Jenkins 2.528.x
+    needs: gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        gradle:
+          - "9.0.0"
+          - "9.1.0"
+          - "9.2.1"
+          - "9.3.1"
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          path: plugin
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          repository: mkobit/jenkins-pipeline-shared-library-example
+          ref: ${{ needs.gate.outputs.example-ref }}
+          path: example
+
+      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
+        with:
+          java-version: 17
+          distribution: temurin
+
+      - uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e
+        with:
+          gradle-version: ${{ matrix.gradle }}
+
+      - name: Build
+        working-directory: example
+        run: >
+          gradle --include-build ../plugin build --continue
+          -PjenkinsVersion=2.528.3
+          -PjenkinsBom=io.jenkins.tools.bom:bom-2.528.x:6398.v1d26a_dd495e2
+          -PjenkinsTestHarnessVersion=2565.vd1eb_7c961d1b_
+
+  # ── Jenkins LTS compatibility ─────────────────────────────────────────────────
+  # Three Jenkins LTS lines × two Java versions; Gradle 9.4.1 held constant.
+  # 2.528.x × Java 17 is covered by the gate; these legs provide:
+  #   - floor LTS (2.479.x) coverage at minimum Java
+  #   - middle LTS (2.528.x) at maximum Java
+  #   - latest LTS (2.541.x) at maximum Java
+  # cache-read-only: true — gate populated the Gradle 9.4.1 dependency cache;
+  # avoid redundant parallel writes from three concurrent jobs using the same key.
+  jenkins-compat:
+    name: Java ${{ matrix.java }} / Gradle 9.4.1 / Jenkins ${{ matrix.jenkins-lts }}
+    needs: gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Floor: minimum Java × minimum supported Jenkins LTS
+          - java: 17
+            jenkins-lts: "2.479.x"
+            jenkins-version: "2.479.1"
+            jenkins-bom: "io.jenkins.tools.bom:bom-2.479.x:5054.v620b_5d2b_d5e6"
+            jenkins-test-harness: "2391.v9b_3e2d3351a_2"
+          # Current middle LTS × maximum Java
+          - java: 21
+            jenkins-lts: "2.528.x"
+            jenkins-version: "2.528.3"
+            jenkins-bom: "io.jenkins.tools.bom:bom-2.528.x:6398.v1d26a_dd495e2"
+            jenkins-test-harness: "2565.vd1eb_7c961d1b_"
+          # Latest LTS × maximum Java
+          - java: 21
+            jenkins-lts: "2.541.x"
+            jenkins-version: "2.541.3"
+            jenkins-bom: "io.jenkins.tools.bom:bom-2.541.x:6364.v16b_76a_4023c7"
+            jenkins-test-harness: "2565.vd1eb_7c961d1b_"
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          path: plugin
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          repository: mkobit/jenkins-pipeline-shared-library-example
+          ref: ${{ needs.gate.outputs.example-ref }}
+          path: example
+
+      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
+        with:
           java-version: ${{ matrix.java }}
           distribution: temurin
 
       - uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e
+        with:
+          gradle-version: "9.4.1"
+          cache-read-only: true
+
       - name: Build
         working-directory: example
         run: >
-          ./gradlew --include-build ../plugin build --continue
+          gradle --include-build ../plugin build --continue
           -PjenkinsVersion=${{ matrix.jenkins-version }}
           -PjenkinsBom=${{ matrix.jenkins-bom }}
           -PjenkinsTestHarnessVersion=${{ matrix.jenkins-test-harness }}
+
