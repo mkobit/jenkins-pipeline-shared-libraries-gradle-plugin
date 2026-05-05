@@ -42,7 +42,7 @@ jobs:
     name: Gradle ${{ matrix.gradle }} (Java 17)
     needs: gate
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 45
     permissions:
       contents: read
     strategy:
