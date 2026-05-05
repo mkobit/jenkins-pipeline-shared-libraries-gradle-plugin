@@ -30,16 +30,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Java minimum × baseline LTS (2.479.x — Groovy 2.4 runtime)
+          # Floor: minimum Java × baseline LTS (2.479.x — Groovy 2.4 runtime)
+          # TODO: add a Gradle 9.0 floor leg once CI supports overriding the wrapper version.
           - name: "Java 17 / Jenkins 2.479.x"
             java: 17
-            jenkins-version: "2.479.1"
-            jenkins-bom: "io.jenkins.tools.bom:bom-2.479.x:5054.v620b_5d2b_d5e6"
-            jenkins-test-harness: "2391.v9b_3e2d3351a_2"
-
-          # LTS Java × baseline LTS
-          - name: "Java 21 / Jenkins 2.479.x"
-            java: 21
             jenkins-version: "2.479.1"
             jenkins-bom: "io.jenkins.tools.bom:bom-2.479.x:5054.v620b_5d2b_d5e6"
             jenkins-test-harness: "2391.v9b_3e2d3351a_2"
@@ -53,18 +47,25 @@ jobs:
             jenkins-bom: "io.jenkins.tools.bom:bom-2.492.x:5473.vb_9533d9e5d88"
             jenkins-test-harness: "2397.v5992a_d47f025"
 
-          # 2.504.x — intermediate LTS
-          - name: "Java 17 / Jenkins 2.504.x"
+          # Current middle LTS
+          - name: "Java 17 / Jenkins 2.528.x"
             java: 17
-            jenkins-version: "2.504.3"
-            jenkins-bom: "io.jenkins.tools.bom:bom-2.504.x:5983.v443959746f1f"
+            jenkins-version: "2.528.3"
+            jenkins-bom: "io.jenkins.tools.bom:bom-2.528.x:6398.v1d26a_dd495e2"
             jenkins-test-harness: "2565.vd1eb_7c961d1b_"
 
-          # 2.541.x — latest LTS; forward-compat check
-          - name: "Java 17 / Jenkins 2.541.x"
-            java: 17
+          # Current latest LTS × maximum Java
+          - name: "Java 21 / Jenkins 2.541.x"
+            java: 21
             jenkins-version: "2.541.3"
             jenkins-bom: "io.jenkins.tools.bom:bom-2.541.x:6364.v16b_76a_4023c7"
+            jenkins-test-harness: "2565.vd1eb_7c961d1b_"
+
+          # Stretch: newest LTS × maximum Java
+          - name: "Java 21 / Jenkins 2.555.x"
+            java: 21
+            jenkins-version: "2.555.1"
+            jenkins-bom: "io.jenkins.tools.bom:bom-2.555.x:6398.v1d26a_dd495e2"
             jenkins-test-harness: "2565.vd1eb_7c961d1b_"
 
     steps:
