@@ -242,4 +242,33 @@ class SharedLibraryPluginSmokeTest :
         }
       }
     }
+
+    describe("integrationTest jvmArgumentProviders include JenkinsWarJvmArgumentProvider") {
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withTestProject { project ->
+          project.buildFile.writeText(
+            """
+            plugins {
+                id("com.mkobit.jenkins.pipelines.shared-library")
+            }
+            tasks.register("printWarArgumentProvider") {
+                val t = tasks.named("integrationTest")
+                doLast {
+                    val testTask = t.get() as org.gradle.api.tasks.testing.Test
+                    val hasProvider = testTask.jvmArgumentProviders
+                        .any { it is com.mkobit.jenkins.pipelines.JenkinsWarJvmArgumentProvider }
+                    println("hasWarProvider=${'$'}hasProvider")
+                }
+            }
+            """.trimIndent(),
+          )
+          val result =
+            project
+              .runner(gradleVersion)
+              .withArguments("printWarArgumentProvider")
+              .build()
+          result.output shouldContain "hasWarProvider=true"
+        }
+      }
+    }
   })
