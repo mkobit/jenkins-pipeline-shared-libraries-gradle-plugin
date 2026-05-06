@@ -64,6 +64,7 @@ jobs:
       - uses: ./.github/actions/setup-env
         with:
           java-version: 17
+          cache-read-only: "true"
       - name: Functional tests (Gradle ${{ matrix.gradle }})
         run: ./gradlew functionalTest${{ matrix.task_suffix }} --continue
       - name: Functional tests (resolution)
