@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import os
 import re
 import subprocess
 import sys
@@ -14,4 +15,5 @@ if "/build/" in file_path:
 if not re.search(r"\.(kt|kts|groovy|java)$", file_path):
     sys.exit(0)
 
-subprocess.run(["./gradlew", "spotlessApply", "--quiet"], check=True)
+project_dir = os.environ.get("CLAUDE_PROJECT_DIR", ".")
+subprocess.run(["./gradlew", "spotlessApply", "--quiet"], check=True, cwd=project_dir)
