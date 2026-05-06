@@ -3,5 +3,18 @@
     "allow": [
       "Bash(./gradlew *)"
     ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 $CLAUDE_PROJECT_DIR/.claude/hooks/post-edit-spotless.py"
+          }
+        ]
+      }
+    ]
   }
 }
