@@ -247,7 +247,7 @@ fun applyJenkinsTestWiring(suite: JvmTestSuite) {
   val suiteJenkinsDir = layout.buildDirectory.dir("jenkins-for-test/${suite.name}")
   suite.targets.configureEach {
     testTask.configure {
-      mustRunAfter(tasks.named("test"))
+      mustRunAfter(tasks.test)
       // WarExploder reads buildDirectory (defaults to "target") as parent of its explode dir.
       jvmArgumentProviders.add(
         objects.newInstance<BuildDirJvmArgumentProvider>().also {
@@ -355,7 +355,7 @@ pluginManager.withPlugin("codenarc") {
   // Without the .class files on compilationClasspath the rules silently skip.
   // dependsOn(compileGroovy) guarantees the output exists when CodeNarc runs.
   val mainClassesDirs = sourceSets.main.output.classesDirs
-  val compileGroovy = tasks.named("compileGroovy")
+  val compileGroovy = tasks.compileGroovy
   tasks.withType<CodeNarc>().configureEach {
     compilationClasspath += mainCompileClasspath
     compilationClasspath += mainClassesDirs
