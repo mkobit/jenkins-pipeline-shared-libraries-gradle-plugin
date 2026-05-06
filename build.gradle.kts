@@ -93,6 +93,7 @@ val ftSuite = testing.suites.getByName<JvmTestSuite>("functionalTest")
 val perVersionTests =
   listOf("9.0.0", "9.1.0", "9.2.1", "9.3.1", "9.4.1", "9.5.0")
     .map { GradleVersion.version(it) }
+    .plus(GradleVersion.current())
     .distinct()
     .map { gv ->
       val suffix = gv.version.replace(".", "_")
