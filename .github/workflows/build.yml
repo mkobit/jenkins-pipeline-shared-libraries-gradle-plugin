@@ -69,6 +69,37 @@ jobs:
       - name: Functional tests (resolution)
         run: ./gradlew functionalTest --continue -Pkotest.tags=resolution -Ptest.gradle.version=${{ matrix.gradle }}
 
+  # Platform compat: Windows and macOS — Java 21 / Gradle 9.4.1 (wrapper).
+  # Runs after gate as a platform sanity check: path-separator handling, shell quoting,
+  # and file-system behaviour under GradleTestKit. Single Gradle version keeps the
+  # concurrent-daemon memory budget inside the macOS runner limit (3 vCPU / 7 GB).
+  # Each OS has its own Gradle cache key; cache-read-only is intentionally omitted so
+  # each platform can seed its own cache on first run.
+  # NOTE: update functionalTest9_4_1 when the wrapper version bumps.
+  platform-compat:
+    name: ${{ matrix.os }} / Java 21 / Gradle 9.4.1
+    needs: gate
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: ./.github/actions/setup-env
+        with:
+          java-version: 21
+      - name: Unit tests
+        run: ./gradlew test --continue
+      - name: Functional tests (Gradle 9.4.1)
+        run: ./gradlew functionalTest9_4_1 --continue
+
   # Java compat: LTS Java (21) and latest Java (25) × Gradle 9.4.1.
   # Tests only Gradle 9.4.1 — cross-Gradle coverage is in gradle-compat.
   # cache-read-only: gate already wrote the 9.4.1 cache; avoid redundant parallel writes.
