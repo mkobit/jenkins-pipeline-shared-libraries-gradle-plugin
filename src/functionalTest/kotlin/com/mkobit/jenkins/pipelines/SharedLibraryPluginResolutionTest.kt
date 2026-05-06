@@ -5,12 +5,12 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
 import io.kotest.inspectors.forAtLeastOne
 import io.kotest.inspectors.forNone
-import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldEndWith
 import io.kotest.matchers.string.shouldNotContain
+import io.kotest.matchers.string.shouldStartWith
 import testsupport.TestProject
 import testsupport.TestedGradleVersion
 import testsupport.WORKFLOW_API
@@ -45,10 +45,10 @@ class SharedLibraryPluginResolutionTest :
           jenkinsPlugin("$WORKFLOW_API")
       }
       tasks.register("printResolvedArtifacts") {
-          val testRt = configurations["testRuntimeClasspath"]
-          val hpis = configurations["jenkinsPluginHpis"]
-          val compileClasspath = configurations["compileClasspath"]
-          val runtimeClasspath = configurations["runtimeClasspath"]
+          val testRt = configurations.testRuntimeClasspath
+          val hpis = configurations.jenkinsPluginHpis
+          val compileClasspath = configurations.compileClasspath
+          val runtimeClasspath = configurations.runtimeClasspath
           doLast {
               testRt.resolvedConfiguration.resolvedArtifacts.forEach {
                   println("testRuntime:" + it.file.name)
@@ -89,7 +89,7 @@ class SharedLibraryPluginResolutionTest :
               .map { it.removePrefix("testRuntime:") }
 
           testRuntimeFiles.shouldNotBeEmpty()
-          testRuntimeFiles.filter { it.startsWith("workflow-api") }.shouldNotBeEmpty()
+          testRuntimeFiles.forAtLeastOne { it shouldStartWith "workflow-api" }
           testRuntimeFiles.forNone { it shouldEndWith ".hpi" }
           testRuntimeFiles.forNone { it shouldEndWith ".jpi" }
         }
@@ -113,7 +113,10 @@ class SharedLibraryPluginResolutionTest :
 
           hpiFiles.shouldNotBeEmpty()
           // Jenkins plugin artifacts must appear as .hpi — plain Java lib transitives may appear as .jar via JpiCompatibilityRule.
-          hpiFiles.filter { it.startsWith("workflow-api") && it.endsWith(".hpi") }.shouldNotBeEmpty()
+          hpiFiles.forAtLeastOne {
+            it shouldStartWith "workflow-api"
+            it shouldEndWith ".hpi"
+          }
         }
       }
     }
@@ -139,8 +142,8 @@ class SharedLibraryPluginResolutionTest :
               .filter { it.startsWith("runtime:") }
               .map { it.removePrefix("runtime:") }
 
-          compileFiles.filter { it.startsWith("jenkins-core") }.shouldNotBeEmpty()
-          runtimeFiles.filter { it.startsWith("jenkins-core") }.shouldBeEmpty()
+          compileFiles.forAtLeastOne { it shouldStartWith "jenkins-core" }
+          runtimeFiles.forNone { it shouldStartWith "jenkins-core" }
         }
       }
     }
@@ -169,8 +172,8 @@ class SharedLibraryPluginResolutionTest :
                 jenkinsPlugin("$WORKFLOW_API")
             }
             tasks.register("printGroovyAll") {
-                val testRt = configurations["testRuntimeClasspath"]
-                val integrationTestRt = configurations["integrationTestRuntimeClasspath"]
+                val testRt = configurations.testRuntimeClasspath
+                val integrationTestRt = configurations.integrationTestRuntimeClasspath
                 doLast {
                     testRt.resolvedConfiguration.resolvedArtifacts.forEach {
                         println("test:" + it.file.name)
@@ -204,16 +207,16 @@ class SharedLibraryPluginResolutionTest :
         withJenkinsProject { project ->
           project.buildFile.appendText(
             """
-            |
-            |tasks.register("printJenkinsWar") {
-            |    val war = configurations["jenkinsWar"]
-            |    doLast {
-            |        war.resolvedConfiguration.resolvedArtifacts.forEach {
-            |            println("war:" + it.file.name)
-            |        }
-            |    }
-            |}
-            """.trimMargin(),
+
+            tasks.register("printJenkinsWar") {
+                val war = configurations.jenkinsWar
+                doLast {
+                    war.resolvedConfiguration.resolvedArtifacts.forEach {
+                        println("war:" + it.file.name)
+                    }
+                }
+            }
+            """.trimIndent(),
           )
           val result =
             project
@@ -258,8 +261,8 @@ class SharedLibraryPluginResolutionTest :
                 jenkinsPlugin("$WORKFLOW_API")
             }
             tasks.register("printCompileClasspath") {
-                val cp = configurations["integrationTestCompileClasspath"]
-                val rt = configurations["integrationTestRuntimeClasspath"]
+                val cp = configurations.integrationTestCompileClasspath
+                val rt = configurations.integrationTestRuntimeClasspath
                 doLast {
                     cp.resolvedConfiguration.resolvedArtifacts.forEach {
                         println("compile:" + it.file.name)
@@ -296,16 +299,16 @@ class SharedLibraryPluginResolutionTest :
         withJenkinsProject { project ->
           project.buildFile.appendText(
             """
-            |
-            |tasks.register("printGroovyAllRuntime") {
-            |    val rt = configurations["integrationTestGroovyAllRuntime"]
-            |    doLast {
-            |        rt.resolvedConfiguration.resolvedArtifacts.forEach {
-            |            println("groovyAllRuntime:" + it.file.name)
-            |        }
-            |    }
-            |}
-            """.trimMargin(),
+
+            tasks.register("printGroovyAllRuntime") {
+                val rt = configurations.integrationTestGroovyAllRuntime
+                doLast {
+                    rt.resolvedConfiguration.resolvedArtifacts.forEach {
+                        println("groovyAllRuntime:" + it.file.name)
+                    }
+                }
+            }
+            """.trimIndent(),
           )
           val result =
             project

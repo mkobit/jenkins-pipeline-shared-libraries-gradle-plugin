@@ -3,6 +3,7 @@ package com.mkobit.jenkins.pipelines
 import io.kotest.core.annotation.Tags
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import org.gradle.testkit.runner.TaskOutcome
@@ -51,8 +52,6 @@ class SharedLibraryPluginCodeNarcTest :
 
     fun codenarcReport(project: TestProject) = project.dir.resolve("build/reports/codenarc/jenkinsMain.txt").readText()
 
-    // ── ClassNotSerializable ─────────────────────────────────────────────────────
-
     describe("ClassNotSerializable: class without Serializable is flagged") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
         withBaseProject { project ->
@@ -69,8 +68,6 @@ class SharedLibraryPluginCodeNarcTest :
       }
     }
 
-    // ── ClosureInGString ─────────────────────────────────────────────────────────
-
     describe("ClosureInGString: closure inside a GString is flagged") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
         withBaseProject { project ->
@@ -84,8 +81,6 @@ class SharedLibraryPluginCodeNarcTest :
         }
       }
     }
-
-    // ── CpsCallFromNonCpsMethod ───────────────────────────────────────────────────
 
     describe("CpsCallFromNonCpsMethod: CPS method called from @NonCPS method is flagged") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
@@ -110,8 +105,6 @@ class SharedLibraryPluginCodeNarcTest :
       }
     }
 
-    // ── ExpressionInCpsMethodNotSerializable ─────────────────────────────────────
-
     describe("ExpressionInCpsMethodNotSerializable: non-Serializable local variable is flagged") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
         withBaseProject { project ->
@@ -133,8 +126,6 @@ class SharedLibraryPluginCodeNarcTest :
         }
       }
     }
-
-    // ── ForbiddenCallInCpsMethod ─────────────────────────────────────────────────
 
     describe("ForbiddenCallInCpsMethod: sort with closure in CPS method is flagged") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
@@ -158,8 +149,6 @@ class SharedLibraryPluginCodeNarcTest :
       }
     }
 
-    // ── ObjectOverrideOnlyNonCpsMethods ─────────────────────────────────────────
-
     describe("ObjectOverrideOnlyNonCpsMethods: toString override without @NonCPS is flagged") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
         withBaseProject { project ->
@@ -179,8 +168,6 @@ class SharedLibraryPluginCodeNarcTest :
         }
       }
     }
-
-    // ── ParameterOrReturnTypeNotSerializable ─────────────────────────────────────
 
     describe("ParameterOrReturnTypeNotSerializable: non-Serializable return type is flagged") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
@@ -202,8 +189,6 @@ class SharedLibraryPluginCodeNarcTest :
       }
     }
 
-    // ── Clean source passes ──────────────────────────────────────────────────────
-
     describe("no violations: Serializable class with @NonCPS toString passes") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
         withBaseProject { project ->
@@ -221,7 +206,7 @@ class SharedLibraryPluginCodeNarcTest :
             """.trimIndent(),
           )
           val result = project.runner(gradleVersion).withArguments("codenarcJenkinsMain").build()
-          result.task(":codenarcJenkinsMain")!!.outcome shouldBe TaskOutcome.SUCCESS
+          result.task(":codenarcJenkinsMain").shouldNotBeNull().outcome shouldBe TaskOutcome.SUCCESS
         }
       }
     }

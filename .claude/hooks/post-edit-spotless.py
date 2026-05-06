@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# PostToolUse hook: runs spotlessApply after any Edit/Write to a Kotlin, Groovy, or Java file.
+# Skips generated files under build/ to avoid redundant formatting on outputs.
 import json
 import os
 import re

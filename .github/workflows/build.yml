@@ -31,13 +31,13 @@ jobs:
       - uses: ./.github/actions/setup-env
         with:
           java-version: 17
-          gradle-version: "9.4.1"
       - name: Build
-        run: gradle build --continue
+        run: ./gradlew build --continue
 
   # Gradle compat: Java 17 × supported 9.x minor versions (9.4.1 covered by gate).
-  # Each Gradle version has its own cache key; first run downloads and caches the
-  # distribution, subsequent runs restore it. Includes resolution tests.
+  # Tests use GradleTestKit to invoke the specific Gradle version; the build wrapper
+  # always uses 9.4.1. Each Gradle version has its own TestKit cache entry.
+  # Includes resolution tests that hit the Jenkins Maven repo.
   gradle-compat:
     name: Gradle ${{ matrix.gradle }} (Java 17)
     needs: gate
@@ -48,24 +48,29 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        gradle:
-          - "9.0.0"
-          - "9.1.0"
-          - "9.2.1"
-          - "9.3.1"
-          - "9.5.0"
+        include:
+          - gradle: "9.0.0"
+            task_suffix: "9_0_0"
+          - gradle: "9.1.0"
+            task_suffix: "9_1_0"
+          - gradle: "9.2.1"
+            task_suffix: "9_2_1"
+          - gradle: "9.3.1"
+            task_suffix: "9_3_1"
+          - gradle: "9.5.0"
+            task_suffix: "9_5_0"
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
       - uses: ./.github/actions/setup-env
         with:
           java-version: 17
-          gradle-version: ${{ matrix.gradle }}
-      - name: Build
-        run: gradle build --continue
+      - name: Functional tests (Gradle ${{ matrix.gradle }})
+        run: ./gradlew functionalTest${{ matrix.task_suffix }} --continue
       - name: Functional tests (resolution)
-        run: gradle functionalTest --continue -Pkotest.tags=resolution -Ptest.gradle.version=${{ matrix.gradle }}
+        run: ./gradlew functionalTest --continue -Pkotest.tags=resolution -Ptest.gradle.version=${{ matrix.gradle }}
 
-  # Java compat: LTS Java (21) and latest Java (24) × Gradle 9.4.1.
+  # Java compat: LTS Java (21) and latest Java (25) × Gradle 9.4.1.
+  # Tests only Gradle 9.4.1 — cross-Gradle coverage is in gradle-compat.
   # cache-read-only: gate already wrote the 9.4.1 cache; avoid redundant parallel writes.
   java-compat:
     name: Java ${{ matrix.java }} / Gradle 9.4.1
@@ -77,15 +82,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        java: [21, 24]
+        java: [21, 25]
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
       - uses: ./.github/actions/setup-env
         with:
           java-version: ${{ matrix.java }}
-          gradle-version: "9.4.1"
           cache-read-only: "true"
-      - name: Build
-        run: gradle build --continue
+      - name: Build (compile and unit tests)
+        run: ./gradlew test --continue
+      - name: Functional tests (Gradle 9.4.1)
+        run: ./gradlew functionalTest9_4_1 --continue
       - name: Functional tests (resolution)
-        run: gradle functionalTest --continue -Pkotest.tags=resolution
+        run: ./gradlew functionalTest --continue -Pkotest.tags=resolution

@@ -21,9 +21,9 @@ class SharedLibraryPluginSmokeTest :
               id("com.mkobit.jenkins.pipelines.shared-library")
           }
           tasks.register("printIntegrationTestWarExploderConfig") {
-              val t = tasks.named("integrationTest")
+              val t = tasks.integrationTest
               doLast {
-                  val testTask = t.get() as org.gradle.api.tasks.testing.Test
+                  val testTask = t.get()
                   val buildDirProvider = testTask.jvmArgumentProviders
                       .filterIsInstance<com.mkobit.jenkins.pipelines.BuildDirJvmArgumentProvider>()
                       .firstOrNull()
@@ -220,9 +220,9 @@ class SharedLibraryPluginSmokeTest :
                 id("com.mkobit.jenkins.pipelines.shared-library")
             }
             tasks.register("printLibraryRoot") {
-                val t = tasks.named("integrationTest")
+                val t = tasks.integrationTest
                 doLast {
-                    val testTask = t.get() as org.gradle.api.tasks.testing.Test
+                    val testTask = t.get()
                     println("root=" + testTask.systemProperties["test.library.root"])
                 }
             }
@@ -252,9 +252,9 @@ class SharedLibraryPluginSmokeTest :
                 id("com.mkobit.jenkins.pipelines.shared-library")
             }
             tasks.register("printWarArgumentProvider") {
-                val t = tasks.named("integrationTest")
+                val t = tasks.integrationTest
                 doLast {
-                    val testTask = t.get() as org.gradle.api.tasks.testing.Test
+                    val testTask = t.get()
                     val hasProvider = testTask.jvmArgumentProviders
                         .any { it is com.mkobit.jenkins.pipelines.JenkinsWarJvmArgumentProvider }
                     println("hasWarProvider=${'$'}hasProvider")

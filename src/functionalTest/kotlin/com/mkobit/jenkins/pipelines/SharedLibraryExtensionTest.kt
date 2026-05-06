@@ -18,9 +18,9 @@ class SharedLibraryExtensionTest :
     val printDepsTask =
       """
       tasks.register("printDeclaredDeps") {
-          val pluginDeps = configurations["jenkinsPlugin"].dependencies
-          val testDeps = configurations["testImplementation"].dependencies
-          val integrationDeps = configurations["integrationTestImplementation"].dependencies
+          val pluginDeps = configurations.jenkinsPlugin.dependencies
+          val testDeps = configurations.testImplementation.dependencies
+          val integrationDeps = configurations.integrationTestImplementation.dependencies
           doLast {
               pluginDeps.forEach { println("plugin:" + it.group + ":" + it.name + ":" + it.version) }
               testDeps.forEach { println("test:" + it.group + ":" + it.name + ":" + it.version) }

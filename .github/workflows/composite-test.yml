@@ -12,7 +12,7 @@ on:
       example-ref:
         description: "jenkins-pipeline-shared-library-example branch/SHA to test against (default: same branch name, then main)"
         default: ""
-      # TODO: add gradle-version and jenkins-version inputs for on-demand latest/stretch testing
+      # TODO: add jenkins-version input for on-demand stretch testing
 
 permissions: {}
 
@@ -24,8 +24,6 @@ jobs:
   # ── Gate ──────────────────────────────────────────────────────────────────────
   # Primary signal: Java 17 / Gradle 9.4.1 / Jenkins 2.528.x (current standard).
   # Runs first to catch obvious failures fast before the matrix fan-out.
-  # Populates the Gradle 9.4.1 + Java 17 dependency cache for gradle-compat and
-  # jenkins-compat jobs (Gradle 9.4.1 / cache-read-only: true).
   # Resolves the example repo ref once and exposes it as a job output so
   # gradle-compat and jenkins-compat do not repeat the git ls-remote probe.
   gate:
@@ -72,13 +70,11 @@ jobs:
           distribution: temurin
 
       - uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e
-        with:
-          gradle-version: "9.4.1"
 
       - name: Build
         working-directory: example
         run: >
-          gradle --include-build ../plugin build --continue
+          ./gradlew --include-build ../plugin build --continue
           -PjenkinsVersion=2.528.3
           -PjenkinsBom=io.jenkins.tools.bom:bom-2.528.x:6398.v1d26a_dd495e2
           -PjenkinsTestHarnessVersion=2565.vd1eb_7c961d1b_
@@ -86,7 +82,7 @@ jobs:
   # ── Gradle compatibility ──────────────────────────────────────────────────────
   # One leg per supported Gradle 9.x minor; 9.4.1 is covered by the gate.
   # Jenkins (2.528.x) and Java (17) are held constant — Gradle is the only variable.
-  # Each Gradle version has its own cache key and populates it independently.
+  # The example is built with the specific Gradle version to verify consumer compatibility.
   gradle-compat:
     name: Gradle ${{ matrix.gradle }} / Java 17 / Jenkins 2.528.x
     needs: gate
@@ -132,13 +128,11 @@ jobs:
           -PjenkinsTestHarnessVersion=2565.vd1eb_7c961d1b_
 
   # ── Jenkins LTS compatibility ─────────────────────────────────────────────────
-  # Three Jenkins LTS lines × two Java versions; Gradle 9.4.1 held constant.
+  # Three Jenkins LTS lines × two Java versions; Gradle 9.4.1 (wrapper) held constant.
   # 2.528.x × Java 17 is covered by the gate; these legs provide:
   #   - floor LTS (2.479.x) coverage at minimum Java
   #   - middle LTS (2.528.x) at maximum Java
   #   - latest LTS (2.541.x) at maximum Java
-  # cache-read-only: true — gate populated the Gradle 9.4.1 dependency cache;
-  # avoid redundant parallel writes from three concurrent jobs using the same key.
   jenkins-compat:
     name: Java ${{ matrix.java }} / Gradle 9.4.1 / Jenkins ${{ matrix.jenkins-lts }}
     needs: gate
@@ -171,7 +165,7 @@ jobs:
             jenkins-bom: "io.jenkins.tools.bom:bom-2.541.x:6364.v16b_76a_4023c7"
             jenkins-test-harness: "2565.vd1eb_7c961d1b_"
           # Latest LTS × latest Java (forward-compat)
-          - java: 24
+          - java: 25
             jenkins-lts: "2.541.x"
             jenkins-version: "2.541.3"
             jenkins-bom: "io.jenkins.tools.bom:bom-2.541.x:6364.v16b_76a_4023c7"
@@ -193,15 +187,11 @@ jobs:
           distribution: temurin
 
       - uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e
-        with:
-          gradle-version: "9.4.1"
-          cache-read-only: true
 
       - name: Build
         working-directory: example
         run: >
-          gradle --include-build ../plugin build --continue
+          ./gradlew --include-build ../plugin build --continue
           -PjenkinsVersion=${{ matrix.jenkins-version }}
           -PjenkinsBom=${{ matrix.jenkins-bom }}
           -PjenkinsTestHarnessVersion=${{ matrix.jenkins-test-harness }}
-

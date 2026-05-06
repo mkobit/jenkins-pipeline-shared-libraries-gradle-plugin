@@ -5,9 +5,6 @@ inputs:
   java-version:
     description: Java version (temurin distribution)
     required: true
-  gradle-version:
-    description: Gradle version to install and put on PATH
-    required: true
   cache-read-only:
     description: Use Gradle dependency cache read-only
     required: false
@@ -22,5 +19,4 @@ runs:
         distribution: temurin
     - uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e
       with:
-        gradle-version: ${{ inputs.gradle-version }}
         cache-read-only: ${{ inputs.cache-read-only }}
