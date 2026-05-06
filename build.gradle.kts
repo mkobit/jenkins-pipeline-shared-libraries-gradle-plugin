@@ -1,3 +1,5 @@
+import org.gradle.util.GradleVersion
+
 plugins {
   `kotlin-dsl`
   alias(libs.plugins.dokka)
@@ -83,38 +85,35 @@ testing {
   }
 }
 
-// Per-Gradle-version functional test tasks that run in parallel under --parallel.
-// Each task reuses the compiled functionalTest source set and pins exactly one version,
-// so withData(TestedGradleVersion.filtered) exercises only that version.
+// Per-Gradle-version functional test tasks; org.gradle.parallel=true (gradle.properties)
+// runs them concurrently. Each reuses the compiled functionalTest source set and pins
+// one version so withData(TestedGradleVersion.filtered) exercises only that version.
 // The legacy `functionalTest` task remains for local debugging (-Ptest.gradle.version=X).
 val ftSuite = testing.suites.getByName<JvmTestSuite>("functionalTest")
 val perVersionTests =
-  listOf(
-    "V900" to "9.0.0",
-    "V910" to "9.1.0",
-    "V921" to "9.2.1",
-    "V931" to "9.3.1",
-    "V941" to "9.4.1",
-    "V950" to "9.5.0",
-  ).map { (suffix, gradleVersion) ->
-    tasks.register<Test>("functionalTest$suffix") {
-      group = "verification"
-      description = "Functional tests for Gradle $gradleVersion"
-      testClassesDirs = ftSuite.sources.output.classesDirs
-      classpath = ftSuite.sources.runtimeClasspath + files(tasks.pluginUnderTestMetadata)
-      useJUnitPlatform()
-      mustRunAfter(tasks.named("test"))
-      systemProperty("kotest.filter.tags", project.findProperty("kotest.tags") ?: "!resolution")
-      systemProperty("test.gradle.version", gradleVersion)
-      // One fork per version task; Kotest coroutines provide intra-task concurrency.
-      maxParallelForks = 1
-      systemProperty("kotest.framework.parallelism", 2)
-      reports {
-        html.outputLocation.set(layout.buildDirectory.dir("reports/tests/functionalTest$suffix"))
-        junitXml.outputLocation.set(layout.buildDirectory.dir("test-results/functionalTest$suffix"))
+  listOf("9.0.0", "9.1.0", "9.2.1", "9.3.1", "9.4.1", "9.5.0")
+    .map { GradleVersion.version(it) }
+    .distinct()
+    .map { gv ->
+      val suffix = gv.version.replace(".", "_")
+      tasks.register<Test>("functionalTest$suffix") {
+        group = "verification"
+        description = "Functional tests for Gradle ${gv.version}"
+        testClassesDirs = ftSuite.sources.output.classesDirs
+        classpath = ftSuite.sources.runtimeClasspath + files(tasks.pluginUnderTestMetadata)
+        useJUnitPlatform()
+        mustRunAfter(tasks.named("test"))
+        systemProperty("kotest.filter.tags", project.findProperty("kotest.tags") ?: "!resolution")
+        systemProperty("test.gradle.version", gv.version)
+        // One fork per version task; Kotest coroutines provide intra-task concurrency.
+        maxParallelForks = 1
+        systemProperty("kotest.framework.parallelism", 2)
+        reports {
+          html.outputLocation.set(layout.buildDirectory.dir("reports/tests/functionalTest$suffix"))
+          junitXml.outputLocation.set(layout.buildDirectory.dir("test-results/functionalTest$suffix"))
+        }
       }
     }
-  }
 
 tasks.check {
   dependsOn(perVersionTests)
