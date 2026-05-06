@@ -218,7 +218,7 @@ class SharedLibraryPluginTestSuiteTest :
                     }
                 }
             }
-            tasks.named("check") { dependsOn("integrationTestJunit6") }
+            tasks.check { dependsOn("integrationTestJunit6") }
             """.trimIndent(),
           )
           project.file("test/integration-junit6/java/com/example/ExtraJUnit6Test.java").writeText(

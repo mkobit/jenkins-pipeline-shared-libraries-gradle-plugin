@@ -27,8 +27,6 @@ updates:
       gradle-actions:
         patterns:
           - "gradle/*"
-      # Catches everything not already claimed by github-actions-first-party or gradle-actions
-      # above — Dependabot uses first-match-wins group assignment so no exclusions needed.
       third-party-actions:
         patterns:
           - "*"
