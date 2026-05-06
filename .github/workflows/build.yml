@@ -63,7 +63,7 @@ jobs:
       - name: Build
         run: gradle build --continue
       - name: Functional tests (resolution)
-        run: gradle functionalTest --continue -Pkotest.tags=resolution
+        run: gradle functionalTest --continue -Pkotest.tags=resolution -Ptest.gradle.version=${{ matrix.gradle }}
 
   # Java compat: LTS Java (21) and latest Java (24) × Gradle 9.4.1.
   # cache-read-only: gate already wrote the 9.4.1 cache; avoid redundant parallel writes.
