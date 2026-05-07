@@ -76,7 +76,7 @@ jobs:
         run: >
           ./gradlew --include-build ../plugin build --continue
           -PjenkinsVersion=2.528.3
-          -PjenkinsBom=io.jenkins.tools.bom:bom-2.528.x:6398.v1d26a_dd495e2
+          -PjenkinsBomVersion=6398.v1d26a_dd495e2
           -PjenkinsTestHarnessVersion=2565.vd1eb_7c961d1b_
 
   # ── Jenkins LTS compatibility ─────────────────────────────────────────────────
@@ -103,19 +103,19 @@ jobs:
           - java: 17
             jenkins-lts: "2.479.x"
             jenkins-version: "2.479.1"
-            jenkins-bom: "io.jenkins.tools.bom:bom-2.479.x:5054.v620b_5d2b_d5e6"
+            jenkins-bom-version: "5054.v620b_5d2b_d5e6"
             jenkins-test-harness: "2554.v574c0503d196"
           # Latest LTS × maximum LTS Java
           - java: 21
             jenkins-lts: "2.541.x"
             jenkins-version: "2.541.3"
-            jenkins-bom: "io.jenkins.tools.bom:bom-2.541.x:6364.v16b_76a_4023c7"
+            jenkins-bom-version: "6364.v16b_76a_4023c7"
             jenkins-test-harness: "2565.vd1eb_7c961d1b_"
           # Latest LTS × latest Java (forward-compat)
           - java: 25
             jenkins-lts: "2.541.x"
             jenkins-version: "2.541.3"
-            jenkins-bom: "io.jenkins.tools.bom:bom-2.541.x:6364.v16b_76a_4023c7"
+            jenkins-bom-version: "6364.v16b_76a_4023c7"
             jenkins-test-harness: "2565.vd1eb_7c961d1b_"
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -140,5 +140,5 @@ jobs:
         run: >
           ./gradlew --include-build ../plugin build --continue
           -PjenkinsVersion=${{ matrix.jenkins-version }}
-          -PjenkinsBom=${{ matrix.jenkins-bom }}
+          -PjenkinsBomVersion=${{ matrix.jenkins-bom-version }}
           -PjenkinsTestHarnessVersion=${{ matrix.jenkins-test-harness }}
