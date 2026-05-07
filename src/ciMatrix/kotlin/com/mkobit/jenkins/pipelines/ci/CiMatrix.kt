@@ -22,12 +22,16 @@ data class GradleCompatEntry(
   val taskSuffix: String,
 )
 
+data class JavaCompatEntry(
+  val java: Int,
+)
+
 data class CiMatrix<T>(
   val include: List<T>,
 )
 
 // ── JSON serialization ─────────────────────────────────────────────────────────
-// @JvmName disambiguates the two overloads at the JVM level (generic type erasure).
+// @JvmName disambiguates overloads at the JVM level (generic type erasure).
 
 @JvmName("jenkinsCompatToJson")
 fun CiMatrix<JenkinsCompatEntry>.toJson(): String =
@@ -57,6 +61,21 @@ fun CiMatrix<GradleCompatEntry>.toJson(): String =
             "task_suffix" to e.taskSuffix,
           )
         },
+    ),
+  )
+
+@JvmName("javaCompatToJson")
+fun CiMatrix<JavaCompatEntry>.toJson(): String = encodeJson(mapOf("include" to include.map { e -> mapOf("java" to e.java) }))
+
+// Flat JSON object for a single gate entry — consumed by composite-test.yml via fromJSON.
+fun JenkinsCompatEntry.toGateJson(): String =
+  encodeJson(
+    mapOf(
+      "java" to java,
+      "jenkins-lts" to jenkinsLts,
+      "jenkins-version" to jenkinsVersion,
+      "jenkins-bom-version" to jenkinsBomVersion,
+      "jenkins-test-harness" to jenkinsTestHarness,
     ),
   )
 

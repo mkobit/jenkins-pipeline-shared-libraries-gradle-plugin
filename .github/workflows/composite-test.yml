@@ -53,12 +53,13 @@ jobs:
         run: echo "matrix=$(cat build/ci/jenkins-compat-matrix.json)" >> "$GITHUB_OUTPUT"
 
   # ── Gate ──────────────────────────────────────────────────────────────────────
-  # Primary signal: Gradle 9.5.0 / Java 17 / Jenkins 2.528.x (current standard).
+  # Primary signal: Gradle 9.5.0 / Java 17 / Jenkins (current standard LTS).
   # Runs first to catch obvious failures fast before the jenkins-compat fan-out.
   # Resolves the example repo ref once and exposes it as a job output so
   # jenkins-compat legs do not repeat the git ls-remote probe.
+  # Jenkins version parameters come from generateJenkinsGateParams (MatrixCli.kt).
   gate:
-    name: Gate (Gradle 9.5.0 / Java 17 / Jenkins 2.528.x)
+    name: Gate (Gradle 9.5.0 / Java 17 / Jenkins current LTS)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -102,15 +103,28 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e
 
+      - name: Generate gate parameters
+        working-directory: plugin
+        run: ./gradlew generateJenkinsGateParams --console=plain
+
+      - name: Read gate parameters
+        id: gate-params
+        working-directory: plugin
+        run: echo "params=$(cat build/ci/jenkins-gate-params.json)" >> "$GITHUB_OUTPUT"
+
       - name: Build
         working-directory: example
+        env:
+          JENKINS_VERSION: ${{ fromJSON(steps.gate-params.outputs.params).jenkins-version }}
+          JENKINS_BOM_VERSION: ${{ fromJSON(steps.gate-params.outputs.params).jenkins-bom-version }}
+          JENKINS_TEST_HARNESS_VERSION: ${{ fromJSON(steps.gate-params.outputs.params).jenkins-test-harness }}
         run: >
           ./gradlew --include-build ../plugin
           --init-script ../plugin/.github/ci/jenkins-version.init.gradle.kts
           build --continue
-          -PjenkinsVersion=2.528.3
-          -PjenkinsBomVersion=6398.v1d26a_dd495e2
-          -PjenkinsTestHarnessVersion=2565.vd1eb_7c961d1b_
+          -PjenkinsVersion=$JENKINS_VERSION
+          -PjenkinsBomVersion=$JENKINS_BOM_VERSION
+          -PjenkinsTestHarnessVersion=$JENKINS_TEST_HARNESS_VERSION
 
   # ── Jenkins LTS compatibility ─────────────────────────────────────────────────
   # Sanity-check the composite build against the floor and latest LTS lines using

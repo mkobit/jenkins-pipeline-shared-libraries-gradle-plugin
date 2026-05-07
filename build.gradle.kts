@@ -208,6 +208,32 @@ tasks.register<JavaExec>("generateJenkinsCompatMatrix") {
     }
 }
 
+tasks.register<JavaExec>("generateJenkinsGateParams") {
+  group = "CI"
+  description = "Writes the jenkins gate parameters JSON to build/ci/jenkins-gate-params.json"
+  mainClass = "com.mkobit.jenkins.pipelines.ci.MatrixCliKt"
+  classpath = ciMatrixSourceSet.runtimeClasspath
+  val outFile = layout.buildDirectory.file("ci/jenkins-gate-params.json")
+  outputs.file(outFile)
+  argumentProviders +=
+    CommandLineArgumentProvider {
+      listOf("jenkins-gate", outFile.get().asFile.absolutePath)
+    }
+}
+
+tasks.register<JavaExec>("generateJavaCompatMatrix") {
+  group = "CI"
+  description = "Writes the java-compat CI matrix JSON to build/ci/java-compat-matrix.json"
+  mainClass = "com.mkobit.jenkins.pipelines.ci.MatrixCliKt"
+  classpath = ciMatrixSourceSet.runtimeClasspath
+  val outFile = layout.buildDirectory.file("ci/java-compat-matrix.json")
+  outputs.file(outFile)
+  argumentProviders +=
+    CommandLineArgumentProvider {
+      listOf("java-compat", outFile.get().asFile.absolutePath)
+    }
+}
+
 spotless {
   kotlin {
     ktlint()
