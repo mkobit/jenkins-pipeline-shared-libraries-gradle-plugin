@@ -17,11 +17,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Gate: Java 17 / Gradle 9.5.0 — fast sanity check before matrix fan-out.
+  # Gate: Gradle 9.5.0 / Java 17 — fast sanity check before matrix fan-out.
   # Runs build (unit + non-resolution functional tests). No Jenkins Maven repo calls.
   # Populates the Gradle 9.5.0 dependency cache for reuse by java-compat.
   gate:
-    name: Gate (Java 17 / Gradle 9.5.0)
+    name: Gate (Gradle 9.5.0 / Java 17)
     runs-on: ubuntu-latest
     timeout-minutes: 25
     permissions:
@@ -34,12 +34,12 @@ jobs:
       - name: Build
         run: ./gradlew build --continue
 
-  # Gradle compat: Java 17 × supported 9.x minor versions (9.5.0 covered by gate).
+  # Gradle compat: Gradle 9.x minor versions × Java 17 (9.5.0 covered by gate).
   # Tests use GradleTestKit to invoke the specific Gradle version; the build wrapper
   # always uses 9.5.0. Each Gradle version has its own TestKit cache entry.
   # Includes resolution tests that hit the Jenkins Maven repo.
   gradle-compat:
-    name: Gradle ${{ matrix.gradle }} (Java 17)
+    name: Gradle ${{ matrix.gradle }} / Java 17
     needs: gate
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -67,7 +67,7 @@ jobs:
       - name: Functional tests (resolution)
         run: ./gradlew functionalTest --continue -Pkotest.tags=resolution -Ptest.gradle.version=${{ matrix.gradle }}
 
-  # Platform compat: Windows and macOS — Java 21 / Gradle 9.5.0 (wrapper).
+  # Platform compat: Windows and macOS — Gradle 9.5.0 / Java 21.
   # Runs after gate as a platform sanity check: path-separator handling, shell quoting,
   # and file-system behaviour under GradleTestKit. Single Gradle version keeps the
   # concurrent-daemon memory budget inside the macOS runner limit (3 vCPU / 7 GB).
@@ -75,7 +75,7 @@ jobs:
   # each platform can seed its own cache on first run.
   # NOTE: update functionalTest9_5_0 when the wrapper version bumps.
   platform-compat:
-    name: ${{ matrix.os }} / Java 21 / Gradle 9.5.0
+    name: ${{ matrix.os }} / Gradle 9.5.0 / Java 21
     needs: gate
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
@@ -89,6 +89,10 @@ jobs:
       matrix:
         os: [windows-latest, macos-latest]
     steps:
+      - name: Enable long paths (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: git config --global core.longpaths true
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
       - uses: ./.github/actions/setup-env
         with:
@@ -98,11 +102,11 @@ jobs:
       - name: Functional tests (Gradle 9.5.0)
         run: ./gradlew functionalTest9_5_0 --continue
 
-  # Java compat: LTS Java (21) and latest Java (25) × Gradle 9.5.0.
+  # Java compat: Gradle 9.5.0 × LTS Java (21) and latest Java (25).
   # Tests only Gradle 9.5.0 — cross-Gradle coverage is in gradle-compat.
   # cache-read-only: gate already wrote the 9.5.0 cache; avoid redundant parallel writes.
   java-compat:
-    name: Java ${{ matrix.java }} / Gradle 9.5.0
+    name: Gradle 9.5.0 / Java ${{ matrix.java }}
     needs: gate
     runs-on: ubuntu-latest
     timeout-minutes: 25
