@@ -107,7 +107,7 @@ val gradleCompatVersions = listOf("9.0.0", "9.1.0", "9.2.1", "9.3.1", "9.4.1")
 dependencies {
   // Wire ciMatrix output into functionalTest so tests can reference the registry
   // (gradleCompatVersions, jenkinsGateEntry, etc.) without duplicating values.
-  "functionalTestImplementation"(files(ciMatrixSourceSet.output))
+  "functionalTestImplementation"(ciMatrixSourceSet.output)
 }
 
 // ── Per-version functional test tasks ─────────────────────────────────────────
