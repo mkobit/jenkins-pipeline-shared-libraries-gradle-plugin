@@ -195,8 +195,8 @@ class SharedLibraryPluginSmokeTest :
               .build()
           val expectedBuildDir =
             project.dir
+              .toRealPath()
               .resolve("build")
-              .toAbsolutePath()
               .toString()
           result.output shouldContain "buildDirectory=$expectedBuildDir"
           result.output shouldContain "jenkins-for-test"
@@ -235,8 +235,8 @@ class SharedLibraryPluginSmokeTest :
               .build()
           val expectedRoot =
             project.dir
+              .toRealPath()
               .resolve("lib")
-              .toAbsolutePath()
               .toString()
           result.output shouldContain "root=$expectedRoot"
         }
