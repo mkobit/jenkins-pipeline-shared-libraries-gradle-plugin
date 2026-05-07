@@ -118,7 +118,7 @@ val perVersionTests =
         systemProperty("kotest.filter.tags", project.findProperty("kotest.tags") ?: "!resolution")
         systemProperty("test.gradle.version", gv.version)
         maxParallelForks = 1
-        systemProperty("kotest.framework.parallelism", 2)
+        systemProperty("kotest.framework.parallelism", 3)
         reports {
           html.outputLocation.set(layout.buildDirectory.dir("reports/tests/functionalTest$suffix"))
           junitXml.outputLocation.set(layout.buildDirectory.dir("test-results/functionalTest$suffix"))
