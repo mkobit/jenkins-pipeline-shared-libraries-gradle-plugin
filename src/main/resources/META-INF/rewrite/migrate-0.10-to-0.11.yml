@@ -3,6 +3,9 @@ type: specs.openrewrite.org/v1beta/recipe
 name: com.mkobit.jenkins.pipelines.MigrateSharedLibraryPlugin010To011
 displayName: Migrate jenkins-pipeline-shared-libraries-gradle-plugin from 0.10.x to 0.11.x (automated steps)
 description: >
+  EXPERIMENTAL / UNTESTED: This recipe has not been verified against a real project.
+  Use as a starting point and verify each change manually.
+
   Automated part of the 0.10.x → 0.11.x migration. Bumps the plugin version and
   renames all user-visible Gradle configurations.
 
@@ -43,6 +46,9 @@ type: specs.openrewrite.org/v1beta/recipe
 name: com.mkobit.jenkins.pipelines.MigrateSharedLibraryPlugin010To011Full
 displayName: Migrate jenkins-pipeline-shared-libraries-gradle-plugin from 0.10.x to 0.11.x (full guide)
 description: >
+  EXPERIMENTAL / UNTESTED: This recipe has not been verified against a real project.
+  Use as a starting point and verify each change manually.
+
   Full 0.10.x → 0.11.x migration: runs automated recipes then documents required manual steps.
 
   MANUAL STEPS — complete these after running the recipe:
@@ -117,7 +123,7 @@ description: >
      The 0.11.x plugin requires Gradle 9 (Java 17 minimum to run Gradle).
      Update gradle/wrapper/gradle-wrapper.properties:
 
-       distributionUrl=https\://services.gradle.org/distributions/gradle-9.4.1-bin.zip
+       distributionUrl=https\://services.gradle.org/distributions/gradle-9.5.0-bin.zip
 tags:
   - jenkins
   - gradle
