@@ -17,11 +17,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Gate: Java 17 / Gradle 9.4.1 — fast sanity check before matrix fan-out.
+  # Gate: Java 17 / Gradle 9.5.0 — fast sanity check before matrix fan-out.
   # Runs build (unit + non-resolution functional tests). No Jenkins Maven repo calls.
-  # Populates the Gradle 9.4.1 dependency cache for reuse by java-compat.
+  # Populates the Gradle 9.5.0 dependency cache for reuse by java-compat.
   gate:
-    name: Gate (Java 17 / Gradle 9.4.1)
+    name: Gate (Java 17 / Gradle 9.5.0)
     runs-on: ubuntu-latest
     timeout-minutes: 25
     permissions:
@@ -34,9 +34,9 @@ jobs:
       - name: Build
         run: ./gradlew build --continue
 
-  # Gradle compat: Java 17 × supported 9.x minor versions (9.4.1 covered by gate).
+  # Gradle compat: Java 17 × supported 9.x minor versions (9.5.0 covered by gate).
   # Tests use GradleTestKit to invoke the specific Gradle version; the build wrapper
-  # always uses 9.4.1. Each Gradle version has its own TestKit cache entry.
+  # always uses 9.5.0. Each Gradle version has its own TestKit cache entry.
   # Includes resolution tests that hit the Jenkins Maven repo.
   gradle-compat:
     name: Gradle ${{ matrix.gradle }} (Java 17)
@@ -57,8 +57,6 @@ jobs:
             task_suffix: "9_2_1"
           - gradle: "9.3.1"
             task_suffix: "9_3_1"
-          - gradle: "9.5.0"
-            task_suffix: "9_5_0"
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
       - uses: ./.github/actions/setup-env
@@ -69,15 +67,15 @@ jobs:
       - name: Functional tests (resolution)
         run: ./gradlew functionalTest --continue -Pkotest.tags=resolution -Ptest.gradle.version=${{ matrix.gradle }}
 
-  # Platform compat: Windows and macOS — Java 21 / Gradle 9.4.1 (wrapper).
+  # Platform compat: Windows and macOS — Java 21 / Gradle 9.5.0 (wrapper).
   # Runs after gate as a platform sanity check: path-separator handling, shell quoting,
   # and file-system behaviour under GradleTestKit. Single Gradle version keeps the
   # concurrent-daemon memory budget inside the macOS runner limit (3 vCPU / 7 GB).
   # Each OS has its own Gradle cache key; cache-read-only is intentionally omitted so
   # each platform can seed its own cache on first run.
-  # NOTE: update functionalTest9_4_1 when the wrapper version bumps.
+  # NOTE: update functionalTest9_5_0 when the wrapper version bumps.
   platform-compat:
-    name: ${{ matrix.os }} / Java 21 / Gradle 9.4.1
+    name: ${{ matrix.os }} / Java 21 / Gradle 9.5.0
     needs: gate
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
@@ -97,14 +95,14 @@ jobs:
           java-version: 21
       - name: Unit tests
         run: ./gradlew test --continue
-      - name: Functional tests (Gradle 9.4.1)
-        run: ./gradlew functionalTest9_4_1 --continue
+      - name: Functional tests (Gradle 9.5.0)
+        run: ./gradlew functionalTest9_5_0 --continue
 
-  # Java compat: LTS Java (21) and latest Java (25) × Gradle 9.4.1.
-  # Tests only Gradle 9.4.1 — cross-Gradle coverage is in gradle-compat.
-  # cache-read-only: gate already wrote the 9.4.1 cache; avoid redundant parallel writes.
+  # Java compat: LTS Java (21) and latest Java (25) × Gradle 9.5.0.
+  # Tests only Gradle 9.5.0 — cross-Gradle coverage is in gradle-compat.
+  # cache-read-only: gate already wrote the 9.5.0 cache; avoid redundant parallel writes.
   java-compat:
-    name: Java ${{ matrix.java }} / Gradle 9.4.1
+    name: Java ${{ matrix.java }} / Gradle 9.5.0
     needs: gate
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -122,7 +120,7 @@ jobs:
           cache-read-only: "true"
       - name: Build (compile and unit tests)
         run: ./gradlew test --continue
-      - name: Functional tests (Gradle 9.4.1)
-        run: ./gradlew functionalTest9_4_1 --continue
+      - name: Functional tests (Gradle 9.5.0)
+        run: ./gradlew functionalTest9_5_0 --continue
       - name: Functional tests (resolution)
         run: ./gradlew functionalTest --continue -Pkotest.tags=resolution

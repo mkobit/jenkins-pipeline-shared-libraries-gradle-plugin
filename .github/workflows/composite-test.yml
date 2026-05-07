@@ -22,12 +22,12 @@ concurrency:
 
 jobs:
   # ── Gate ──────────────────────────────────────────────────────────────────────
-  # Primary signal: Java 17 / Gradle 9.4.1 / Jenkins 2.528.x (current standard).
+  # Primary signal: Java 17 / Gradle 9.5.0 / Jenkins 2.528.x (current standard).
   # Runs first to catch obvious failures fast before the jenkins-compat fan-out.
   # Resolves the example repo ref once and exposes it as a job output so
   # jenkins-compat legs do not repeat the git ls-remote probe.
   gate:
-    name: Gate (Java 17 / Gradle 9.4.1 / Jenkins 2.528.x)
+    name: Gate (Java 17 / Gradle 9.5.0 / Jenkins 2.528.x)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -87,7 +87,7 @@ jobs:
   #   - floor LTS (2.479.x) at minimum Java
   #   - latest LTS (2.541.x) at maximum Java and latest Java (forward-compat)
   jenkins-compat:
-    name: Java ${{ matrix.java }} / Gradle 9.4.1 / Jenkins ${{ matrix.jenkins-lts }}
+    name: Java ${{ matrix.java }} / Gradle 9.5.0 / Jenkins ${{ matrix.jenkins-lts }}
     needs: gate
     runs-on: ubuntu-latest
     timeout-minutes: 20

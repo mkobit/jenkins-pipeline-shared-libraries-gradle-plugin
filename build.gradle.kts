@@ -75,7 +75,7 @@ testing {
           val cpuHalf = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
           maxParallelForks = cpuHalf
           systemProperty("kotest.framework.parallelism", cpuHalf)
-          // Pin to a single Gradle version for fast debugging: -Ptest.gradle.version=9.4.1
+          // Pin to a single Gradle version for fast debugging: -Ptest.gradle.version=9.5.0
           project.findProperty("test.gradle.version")?.let {
             systemProperty("test.gradle.version", it)
           }
@@ -91,7 +91,7 @@ testing {
 // The legacy `functionalTest` task remains for local debugging (-Ptest.gradle.version=X).
 val ftSuite = testing.suites.getByName<JvmTestSuite>("functionalTest")
 val perVersionTests =
-  listOf("9.0.0", "9.1.0", "9.2.1", "9.3.1", "9.4.1", "9.5.0")
+  listOf("9.0.0", "9.1.0", "9.2.1", "9.3.1")
     .map { GradleVersion.version(it) }
     .plus(GradleVersion.current())
     .distinct()
