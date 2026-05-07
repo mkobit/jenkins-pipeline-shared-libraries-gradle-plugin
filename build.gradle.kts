@@ -85,13 +85,57 @@ testing {
   }
 }
 
-// Per-Gradle-version functional test tasks; org.gradle.parallel=true (gradle.properties)
-// runs them concurrently. Each reuses the compiled functionalTest source set and pins
-// one version so withData(TestedGradleVersion.filtered) exercises only that version.
+// ── CI matrix data ────────────────────────────────────────────────────────────
+// Source of truth for the matrix-gen tasks and the per-version task fan-out.
+// Types are defined in buildSrc/src/main/kotlin/CiMatrix.kt; JSON is written to
+// build/ci/*.json and read by GitHub Actions workflows via `fromJSON`.
+
+// Gradle minor versions tested by the gradle-compat CI leg (build.yml).
+// GradleVersion.current() (the wrapper) is added automatically below and is also
+// covered by the gate + platform-compat / java-compat legs.
+val gradleCompatVersions = listOf("9.0.0", "9.1.0", "9.2.1", "9.3.1")
+
+// Jenkins LTS lines tested by the jenkins-compat CI leg (composite-test.yml).
+val jenkinsCompatMatrix =
+  CiMatrix(
+    listOf(
+      // Floor: minimum Java × minimum supported Jenkins LTS.
+      // JenkinsSessionFixture was introduced in harness 2554; override the
+      // BOM-pinned 2391 so the base-class pattern in the example compiles.
+      JenkinsCompatEntry(
+        java = 17,
+        jenkinsLts = "2.479.x",
+        jenkinsVersion = "2.479.1",
+        jenkinsBomVersion = "5054.v620b_5d2b_d5e6",
+        jenkinsTestHarness = "2554.v574c0503d196",
+      ),
+      // Latest LTS × maximum LTS Java.
+      JenkinsCompatEntry(
+        java = 21,
+        jenkinsLts = "2.541.x",
+        jenkinsVersion = "2.541.3",
+        jenkinsBomVersion = "6364.v16b_76a_4023c7",
+        jenkinsTestHarness = "2565.vd1eb_7c961d1b_",
+      ),
+      // Latest LTS × latest Java (forward-compat).
+      JenkinsCompatEntry(
+        java = 25,
+        jenkinsLts = "2.541.x",
+        jenkinsVersion = "2.541.3",
+        jenkinsBomVersion = "6364.v16b_76a_4023c7",
+        jenkinsTestHarness = "2565.vd1eb_7c961d1b_",
+      ),
+    ),
+  )
+
+// ── Per-version functional test tasks ─────────────────────────────────────────
+// org.gradle.parallel=true (gradle.properties) runs them concurrently. Each
+// reuses the compiled functionalTest source set and pins one version so
+// withData(TestedGradleVersion.filtered) exercises only that version.
 // The legacy `functionalTest` task remains for local debugging (-Ptest.gradle.version=X).
 val ftSuite = testing.suites.getByName<JvmTestSuite>("functionalTest")
 val perVersionTests =
-  listOf("9.0.0", "9.1.0", "9.2.1", "9.3.1")
+  gradleCompatVersions
     .map { GradleVersion.version(it) }
     .plus(GradleVersion.current())
     .distinct()
@@ -106,7 +150,6 @@ val perVersionTests =
         mustRunAfter(tasks.named("test"))
         systemProperty("kotest.filter.tags", project.findProperty("kotest.tags") ?: "!resolution")
         systemProperty("test.gradle.version", gv.version)
-        // One fork per version task; Kotest coroutines provide intra-task concurrency.
         maxParallelForks = 1
         systemProperty("kotest.framework.parallelism", 2)
         reports {
@@ -158,14 +201,52 @@ tasks.wrapper {
   distributionType = Wrapper.DistributionType.ALL
 }
 
+// ── CI matrix generators ───────────────────────────────────────────────────────
+// GitHub Actions reads the generated JSON files via `cat` and passes them to
+// `fromJSON` for dynamic matrix strategy. Types and serialization are in buildSrc.
+
+tasks.register("generateGradleCompatMatrix") {
+  group = "CI"
+  description = "Writes the gradle-compat CI matrix JSON to build/ci/gradle-compat-matrix.json"
+  val outFile = layout.buildDirectory.file("ci/gradle-compat-matrix.json")
+  outputs.file(outFile)
+  // Pre-compute at configuration time so doLast captures only String + Provider (CC-safe).
+  val json =
+    CiMatrix(gradleCompatVersions.map { v -> GradleCompatEntry(gradle = v, taskSuffix = v.replace(".", "_")) })
+      .toJson()
+  doLast {
+    outFile
+      .get()
+      .asFile
+      .also { it.parentFile.mkdirs() }
+      .writeText(json)
+  }
+}
+
+tasks.register("generateJenkinsCompatMatrix") {
+  group = "CI"
+  description = "Writes the jenkins-compat CI matrix JSON to build/ci/jenkins-compat-matrix.json"
+  val outFile = layout.buildDirectory.file("ci/jenkins-compat-matrix.json")
+  outputs.file(outFile)
+  // Pre-compute at configuration time so doLast captures only String + Provider (CC-safe).
+  val json = jenkinsCompatMatrix.toJson()
+  doLast {
+    outFile
+      .get()
+      .asFile
+      .also { it.parentFile.mkdirs() }
+      .writeText(json)
+  }
+}
+
 spotless {
   kotlin {
     ktlint()
-    target("src/**/*.kt")
+    target("src/**/*.kt", "buildSrc/src/**/*.kt")
     targetExclude("src/integrationTest/**/*.kt")
   }
   kotlinGradle {
     ktlint()
-    target("*.gradle.kts", "src/**/*.gradle.kts")
+    target("*.gradle.kts", "src/**/*.gradle.kts", "buildSrc/*.gradle.kts")
   }
 }
