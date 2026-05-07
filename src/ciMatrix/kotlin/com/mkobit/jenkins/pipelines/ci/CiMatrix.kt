@@ -88,7 +88,7 @@ internal fun JenkinsCompatEntry.toGateJson(): String =
 internal fun encodeJson(v: Any?): String =
   when (v) {
     is String -> {
-      "\"${v.replace("\\", "\\\\").replace("\"", "\\\"")}\""
+      "\"${v.replace("""\""", """\\""").replace("\"", """\"""")}\""
     }
 
     is Number -> {

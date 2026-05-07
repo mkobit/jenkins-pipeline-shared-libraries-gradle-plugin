@@ -102,13 +102,12 @@ testing {
 // gradleCompatVersions is duplicated here because the per-version task fan-out
 // below must run at configuration time (before the ciMatrix source set is compiled).
 // Keep these two lists in sync.
-val gradleCompatVersions = listOf("9.0.0", "9.1.0", "9.2.1", "9.3.1")
+val gradleCompatVersions = listOf("9.0.0", "9.1.0", "9.2.1", "9.3.1", "9.4.1")
 
-// Wire ciMatrix output into functionalTest so tests can reference the registry
-// (gradleCompatVersions, jenkinsGateEntry, etc.) without duplicating values.
-sourceSets["functionalTest"].apply {
-  compileClasspath += ciMatrixSourceSet.output
-  runtimeClasspath += ciMatrixSourceSet.output
+dependencies {
+  // Wire ciMatrix output into functionalTest so tests can reference the registry
+  // (gradleCompatVersions, jenkinsGateEntry, etc.) without duplicating values.
+  "functionalTestImplementation"(files(ciMatrixSourceSet.output))
 }
 
 // ── Per-version functional test tasks ─────────────────────────────────────────

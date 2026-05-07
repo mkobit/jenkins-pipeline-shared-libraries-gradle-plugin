@@ -51,7 +51,7 @@ internal val jenkinsCompatMatrix =
 
 // NOTE: also update gradleCompatVersions in build.gradle.kts (needed at
 // configuration time for the per-version functionalTest task fan-out).
-val gradleCompatVersions = listOf("9.0.0", "9.1.0", "9.2.1", "9.3.1")
+val gradleCompatVersions = listOf("9.0.0", "9.1.0", "9.2.1", "9.3.1", "9.4.1")
 
 // Java versions for the java-compat CI leg in build.yml.
 val javaCompatVersions = listOf(21, 25)
