@@ -104,6 +104,13 @@ testing {
 // Keep these two lists in sync.
 val gradleCompatVersions = listOf("9.0.0", "9.1.0", "9.2.1", "9.3.1")
 
+// Wire ciMatrix output into functionalTest so tests can reference the registry
+// (gradleCompatVersions, jenkinsGateEntry, etc.) without duplicating values.
+sourceSets["functionalTest"].apply {
+  compileClasspath += ciMatrixSourceSet.output
+  runtimeClasspath += ciMatrixSourceSet.output
+}
+
 // ── Per-version functional test tasks ─────────────────────────────────────────
 // org.gradle.parallel=true (gradle.properties) runs them concurrently. Each
 // reuses the compiled functionalTest source set and pins one version so

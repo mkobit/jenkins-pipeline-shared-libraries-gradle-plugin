@@ -17,7 +17,7 @@ val jenkinsGateEntry =
     jenkinsTestHarness = "2565.vd1eb_7c961d1b_",
   )
 
-val jenkinsCompatMatrix =
+internal val jenkinsCompatMatrix =
   CiMatrix(
     listOf(
       // Floor: minimum Java × minimum supported Jenkins LTS.

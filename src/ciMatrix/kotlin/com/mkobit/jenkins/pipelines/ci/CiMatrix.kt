@@ -1,14 +1,9 @@
 package com.mkobit.jenkins.pipelines.ci
 
-/**
- * Typed CI matrix entries for build.yml (Gradle compat) and composite-test.yml (Jenkins
- * compat). JSON keys use hyphen/underscore naming to match GitHub Actions matrix variable
- * names; Kotlin properties use camelCase.
- *
- * [toJson] produces compact single-line JSON suitable for GitHub Actions `fromJSON()`
- * after being written to a file by MatrixCli.
- */
-
+// Typed CI matrix entries for build.yml (Gradle compat) and composite-test.yml (Jenkins compat).
+// JSON keys use hyphen/underscore naming to match GitHub Actions matrix variable names.
+// Public: JenkinsCompatEntry — consumers (e.g. functionalTest) may inspect fields.
+// Internal: GradleCompatEntry, JavaCompatEntry, CiMatrix, toJson/toGateJson — serialization details.
 data class JenkinsCompatEntry(
   val java: Int,
   val jenkinsLts: String,
@@ -17,24 +12,26 @@ data class JenkinsCompatEntry(
   val jenkinsTestHarness: String,
 )
 
-data class GradleCompatEntry(
+// Internal: serialization shapes only, not part of the public registry API.
+internal data class GradleCompatEntry(
   val gradle: String,
   val taskSuffix: String,
 )
 
-data class JavaCompatEntry(
+internal data class JavaCompatEntry(
   val java: Int,
 )
 
-data class CiMatrix<T>(
+internal data class CiMatrix<T>(
   val include: List<T>,
 )
 
 // ── JSON serialization ─────────────────────────────────────────────────────────
+// All internal — serialization is an implementation detail of MatrixCli.
 // @JvmName disambiguates overloads at the JVM level (generic type erasure).
 
 @JvmName("jenkinsCompatToJson")
-fun CiMatrix<JenkinsCompatEntry>.toJson(): String =
+internal fun CiMatrix<JenkinsCompatEntry>.toJson(): String =
   encodeJson(
     mapOf(
       "include" to
@@ -51,7 +48,7 @@ fun CiMatrix<JenkinsCompatEntry>.toJson(): String =
   )
 
 @JvmName("gradleCompatToJson")
-fun CiMatrix<GradleCompatEntry>.toJson(): String =
+internal fun CiMatrix<GradleCompatEntry>.toJson(): String =
   encodeJson(
     mapOf(
       "include" to
@@ -65,10 +62,10 @@ fun CiMatrix<GradleCompatEntry>.toJson(): String =
   )
 
 @JvmName("javaCompatToJson")
-fun CiMatrix<JavaCompatEntry>.toJson(): String = encodeJson(mapOf("include" to include.map { e -> mapOf("java" to e.java) }))
+internal fun CiMatrix<JavaCompatEntry>.toJson(): String = encodeJson(mapOf("include" to include.map { e -> mapOf("java" to e.java) }))
 
 // Flat JSON object for a single gate entry — consumed by composite-test.yml via fromJSON.
-fun JenkinsCompatEntry.toGateJson(): String =
+internal fun JenkinsCompatEntry.toGateJson(): String =
   encodeJson(
     mapOf(
       "java" to java,
