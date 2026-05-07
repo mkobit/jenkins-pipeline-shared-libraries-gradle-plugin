@@ -1,11 +1,12 @@
+package com.mkobit.jenkins.pipelines.ci
+
 /**
  * Typed CI matrix entries for build.yml (Gradle compat) and composite-test.yml (Jenkins
  * compat). JSON keys use hyphen/underscore naming to match GitHub Actions matrix variable
  * names; Kotlin properties use camelCase.
  *
  * [toJson] produces compact single-line JSON suitable for GitHub Actions `fromJSON()`
- * after being written to a file by the `generateGradleCompatMatrix` /
- * `generateJenkinsCompatMatrix` tasks.
+ * after being written to a file by MatrixCli.
  */
 
 data class JenkinsCompatEntry(
@@ -63,7 +64,7 @@ fun CiMatrix<GradleCompatEntry>.toJson(): String =
 // Operates on plain Kotlin types — no pre-encoded intermediates — to avoid
 // double-escaping when nested structures are passed as values.
 
-private fun encodeJson(v: Any?): String =
+internal fun encodeJson(v: Any?): String =
   when (v) {
     is String -> {
       "\"${v.replace("\\", "\\\\").replace("\"", "\\\"")}\""
