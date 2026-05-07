@@ -24,14 +24,9 @@ plugins {
 // ── Extension ─────────────────────────────────────────────────────────────────
 
 val ext = extensions.create("sharedLibrary", SharedLibraryExtension::class.java)
-// Project properties let CI (or local dev) override versions without touching build scripts:
-//   -PjenkinsVersion=2.528.3  -PjenkinsBomVersion=6398.v...  -PjenkinsTestHarnessVersion=2565.v...
-// Explicit sharedLibrary { jenkins { version.set("...") } } overrides these conventions.
-ext.jenkins.version.convention(providers.gradleProperty("jenkinsVersion").orElse(SharedLibraryDefaults.CORE_VERSION))
-ext.jenkins.testHarnessVersion.convention(
-  providers.gradleProperty("jenkinsTestHarnessVersion").orElse(SharedLibraryDefaults.TEST_HARNESS_VERSION),
-)
-ext.jenkins.bomVersion.convention(providers.gradleProperty("jenkinsBomVersion").orElse(SharedLibraryDefaults.BOM_VERSION))
+ext.jenkins.version.convention(SharedLibraryDefaults.CORE_VERSION)
+ext.jenkins.testHarnessVersion.convention(SharedLibraryDefaults.TEST_HARNESS_VERSION)
+ext.jenkins.bomVersion.convention(SharedLibraryDefaults.BOM_VERSION)
 ext.pipelineUnitVersion.convention(SharedLibraryDefaults.PIPELINE_UNIT_VERSION)
 ext.autoRegisterLibrary.convention(true)
 ext.libraryName.convention(project.name)

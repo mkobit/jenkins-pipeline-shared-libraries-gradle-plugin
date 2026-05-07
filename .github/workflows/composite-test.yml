@@ -74,7 +74,9 @@ jobs:
       - name: Build
         working-directory: example
         run: >
-          ./gradlew --include-build ../plugin build --continue
+          ./gradlew --include-build ../plugin
+          --init-script ../plugin/.github/ci/jenkins-version.init.gradle
+          build --continue
           -PjenkinsVersion=2.528.3
           -PjenkinsBomVersion=6398.v1d26a_dd495e2
           -PjenkinsTestHarnessVersion=2565.vd1eb_7c961d1b_
@@ -138,7 +140,9 @@ jobs:
       - name: Build
         working-directory: example
         run: >
-          ./gradlew --include-build ../plugin build --continue
+          ./gradlew --include-build ../plugin
+          --init-script ../plugin/.github/ci/jenkins-version.init.gradle
+          build --continue
           -PjenkinsVersion=${{ matrix.jenkins-version }}
           -PjenkinsBomVersion=${{ matrix.jenkins-bom-version }}
           -PjenkinsTestHarnessVersion=${{ matrix.jenkins-test-harness }}
