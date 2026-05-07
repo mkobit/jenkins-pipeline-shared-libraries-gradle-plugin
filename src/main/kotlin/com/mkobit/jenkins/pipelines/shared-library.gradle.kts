@@ -232,6 +232,7 @@ dependencies.addProvider(
 // Called explicitly for the built-in integrationTest suite and exposed via the extension
 // so consumers can opt-in their own additional suites (user suites via afterEvaluate below).
 fun applyJenkinsTestWiring(suite: JvmTestSuite) {
+  val suiteName = suite.name
   val implConfigName = suite.sources.implementationConfigurationName
   depsHandler.addProvider(
     implConfigName,
@@ -244,7 +245,7 @@ fun applyJenkinsTestWiring(suite: JvmTestSuite) {
   depsHandler.add(suite.sources.runtimeOnlyConfigurationName, IVY_COORDINATES)
   // Each suite gets its own subdirectory so multiple suites can run in parallel without
   // conflicting on WarExploder output or Gradle's task output tracking.
-  val suiteJenkinsDir = layout.buildDirectory.dir("jenkins-for-test/${suite.name}")
+  val suiteJenkinsDir = layout.buildDirectory.dir("jenkins-for-test/$suiteName")
   suite.targets.configureEach {
     testTask.configure {
       mustRunAfter(tasks.test)
@@ -256,10 +257,25 @@ fun applyJenkinsTestWiring(suite: JvmTestSuite) {
       )
       outputs.dir(suiteJenkinsDir)
       classpath += hpiFiles
-      // groovyAllRuntime is an isolated configuration that forces groovy-all 2.4 onto the
-      // classpath even when groovy 3.x is present via Spock. Must use += (not runtimeOnly)
-      // to bypass version-conflict resolution that would otherwise pick groovy 3.x.
+      // groovy-all:2.4 provides the Groovy runtime to the embedded Jenkins pipeline engine.
+      // The plugin excludes groovy-all from all suite implementation configs (to prevent
+      // groovy 2.4/3.x classpath conflicts in test code), but CpsFlowDefinition needs
+      // groovy.lang.Script and the full Groovy runtime at test-task time. += bypasses
+      // version-conflict resolution that would otherwise suppress it when groovy 3.x is present.
       classpath += configurations.getByName(GROOVY_ALL_RUNTIME_CONFIGURATION)
+      doFirst {
+        val names = classpath.map { it.name }
+        val hasGroovyAll2x = names.any { it.startsWith("groovy-all-2.") }
+        val hasGroovy3xPlus = names.any { name -> name.matches(Regex("groovy(-all)?-[34]\\..*\\.jar")) }
+        if (hasGroovyAll2x && hasGroovy3xPlus) {
+          logger.warn(
+            "Jenkins test suite '$suiteName' has both groovy-all:2.x (required for the embedded " +
+              "Jenkins pipeline engine) and a Groovy 3.x+ runtime on the classpath. " +
+              "CpsFlowDefinition(script, sandbox=true) will fail with a CPS transform error. " +
+              "Use sandbox=false for suites that include a Groovy 3.x framework (e.g. Spock 2.x).",
+          )
+        }
+      }
       maxParallelForks = 1
       maxHeapSize = SharedLibraryDefaults.INTEGRATION_TEST_MAX_HEAP_SIZE
       systemProperty("test.library.root", libraryRoot)

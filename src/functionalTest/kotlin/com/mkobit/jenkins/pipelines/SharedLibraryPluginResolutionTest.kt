@@ -45,21 +45,17 @@ class SharedLibraryPluginResolutionTest :
           jenkinsPlugin("$WORKFLOW_API")
       }
       tasks.register("printResolvedArtifacts") {
-          val testRt = configurations.testRuntimeClasspath
-          val hpis = configurations.jenkinsPluginHpis
-          val compileClasspath = configurations.compileClasspath
-          val runtimeClasspath = configurations.runtimeClasspath
           doLast {
-              testRt.resolvedConfiguration.resolvedArtifacts.forEach {
+              configurations.getByName("testRuntimeClasspath").resolvedConfiguration.resolvedArtifacts.forEach {
                   println("testRuntime:" + it.file.name)
               }
-              hpis.incoming.artifactView { isLenient = true }.artifacts.forEach {
+              configurations.getByName("jenkinsPluginHpis").incoming.artifactView { isLenient = true }.artifacts.forEach {
                   println("hpis:" + it.file.name)
               }
-              compileClasspath.resolvedConfiguration.resolvedArtifacts.forEach {
+              configurations.getByName("compileClasspath").resolvedConfiguration.resolvedArtifacts.forEach {
                   println("compile:" + it.file.name)
               }
-              runtimeClasspath.resolvedConfiguration.resolvedArtifacts.forEach {
+              configurations.getByName("runtimeClasspath").resolvedConfiguration.resolvedArtifacts.forEach {
                   println("runtime:" + it.file.name)
               }
           }
@@ -172,13 +168,11 @@ class SharedLibraryPluginResolutionTest :
                 jenkinsPlugin("$WORKFLOW_API")
             }
             tasks.register("printGroovyAll") {
-                val testRt = configurations.testRuntimeClasspath
-                val integrationTestRt = configurations.integrationTestRuntimeClasspath
                 doLast {
-                    testRt.resolvedConfiguration.resolvedArtifacts.forEach {
+                    configurations.getByName("testRuntimeClasspath").resolvedConfiguration.resolvedArtifacts.forEach {
                         println("test:" + it.file.name)
                     }
-                    integrationTestRt.resolvedConfiguration.resolvedArtifacts.forEach {
+                    configurations.getByName("integrationTestRuntimeClasspath").resolvedConfiguration.resolvedArtifacts.forEach {
                         println("integration:" + it.file.name)
                     }
                 }
@@ -209,9 +203,8 @@ class SharedLibraryPluginResolutionTest :
             """
 
             tasks.register("printJenkinsWar") {
-                val war = configurations.jenkinsWar
                 doLast {
-                    war.resolvedConfiguration.resolvedArtifacts.forEach {
+                    configurations.getByName("jenkinsWar").resolvedConfiguration.resolvedArtifacts.forEach {
                         println("war:" + it.file.name)
                     }
                 }
@@ -261,13 +254,11 @@ class SharedLibraryPluginResolutionTest :
                 jenkinsPlugin("$WORKFLOW_API")
             }
             tasks.register("printCompileClasspath") {
-                val cp = configurations.integrationTestCompileClasspath
-                val rt = configurations.integrationTestRuntimeClasspath
                 doLast {
-                    cp.resolvedConfiguration.resolvedArtifacts.forEach {
+                    configurations.getByName("integrationTestCompileClasspath").resolvedConfiguration.resolvedArtifacts.forEach {
                         println("compile:" + it.file.name)
                     }
-                    rt.resolvedConfiguration.resolvedArtifacts.forEach {
+                    configurations.getByName("integrationTestRuntimeClasspath").resolvedConfiguration.resolvedArtifacts.forEach {
                         println("runtime:" + it.file.name)
                     }
                 }
@@ -301,9 +292,8 @@ class SharedLibraryPluginResolutionTest :
             """
 
             tasks.register("printGroovyAllRuntime") {
-                val rt = configurations.integrationTestGroovyAllRuntime
                 doLast {
-                    rt.resolvedConfiguration.resolvedArtifacts.forEach {
+                    configurations.getByName("integrationTestGroovyAllRuntime").resolvedConfiguration.resolvedArtifacts.forEach {
                         println("groovyAllRuntime:" + it.file.name)
                     }
                 }
