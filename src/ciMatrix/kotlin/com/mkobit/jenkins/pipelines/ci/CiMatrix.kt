@@ -80,6 +80,11 @@ fun JenkinsCompatEntry.toGateJson(): String =
   )
 
 // ── Recursive JSON encoder ─────────────────────────────────────────────────────
+// Hand-rolled rather than kotlinx.serialization: the ciMatrix source set runs
+// against the Gradle-embedded Kotlin stdlib, and pulling in an external
+// serialization library would require resolving a version-matched artifact.
+// The output shapes are fixed and narrow, so a recursive encoder over plain
+// Kotlin types is simpler than the dependency management cost.
 // Operates on plain Kotlin types — no pre-encoded intermediates — to avoid
 // double-escaping when nested structures are passed as values.
 
