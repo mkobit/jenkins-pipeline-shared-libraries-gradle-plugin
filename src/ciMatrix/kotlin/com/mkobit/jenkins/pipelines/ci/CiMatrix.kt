@@ -26,10 +26,6 @@ internal data class CiMatrix<T>(
   val include: List<T>,
 )
 
-// ── JSON serialization ─────────────────────────────────────────────────────────
-// All internal — serialization is an implementation detail of MatrixCli.
-// @JvmName disambiguates overloads at the JVM level (generic type erasure).
-
 @JvmName("jenkinsCompatToJson")
 internal fun CiMatrix<JenkinsCompatEntry>.toJson(): String =
   encodeJson(
@@ -76,14 +72,9 @@ internal fun JenkinsCompatEntry.toGateJson(): String =
     ),
   )
 
-// ── Recursive JSON encoder ─────────────────────────────────────────────────────
-// Hand-rolled rather than kotlinx.serialization: the ciMatrix source set runs
-// against the Gradle-embedded Kotlin stdlib, and pulling in an external
-// serialization library would require resolving a version-matched artifact.
-// The output shapes are fixed and narrow, so a recursive encoder over plain
-// Kotlin types is simpler than the dependency management cost.
-// Operates on plain Kotlin types — no pre-encoded intermediates — to avoid
-// double-escaping when nested structures are passed as values.
+// Hand-rolled rather than kotlinx.serialization: ciMatrix runs against the
+// Gradle-embedded Kotlin stdlib, so an external serialization library would
+// require resolving a version-matched artifact against that stdlib.
 
 internal fun encodeJson(v: Any?): String =
   when (v) {

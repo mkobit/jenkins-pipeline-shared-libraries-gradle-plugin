@@ -2,12 +2,7 @@ package com.mkobit.jenkins.pipelines.ci
 
 import java.io.File
 
-// ── Matrix registry ────────────────────────────────────────────────────────────
-// Single source of truth for all CI workflows. Update here when adding Jenkins
-// LTS lines, Gradle minor versions, or Java compat targets.
-
-// Current standard Jenkins LTS — used by the composite-test.yml gate job.
-// Not included in jenkinsCompatMatrix (that covers floor + latest LTS legs).
+// Gate entry: used by composite-test.yml directly, not part of the compat matrix.
 val jenkinsGateEntry =
   JenkinsCompatEntry(
     java = 17,
@@ -49,14 +44,10 @@ internal val jenkinsCompatMatrix =
     ),
   )
 
-// NOTE: also update gradleCompatVersions in build.gradle.kts (needed at
-// configuration time for the per-version functionalTest task fan-out).
+// Keep in sync with gradleCompatVersions in build.gradle.kts (needed at configuration time).
 val gradleCompatVersions = listOf("9.0.0", "9.1.0", "9.2.1", "9.3.1", "9.4.1")
 
-// Java versions for the java-compat CI leg in build.yml.
 val javaCompatVersions = listOf(21, 25)
-
-// ── CLI entry point ────────────────────────────────────────────────────────────
 
 fun main(args: Array<String>) {
   require(args.size == 2) { "Usage: MatrixCli <subcommand> <output-file>" }

@@ -8,11 +8,7 @@ plugins {
   alias(libs.plugins.spotless)
 }
 
-// ── ciMatrix source set ────────────────────────────────────────────────────────
-// Non-main, unbundled: not included in the published plugin JAR. Contains the
-// matrix registry (MatrixCli.kt) and data types (CiMatrix.kt). Compiled against
-// the main source set so it can reference SharedLibraryDefaults if needed.
-// functionalTest can also depend on it for version cross-checking.
+// Not included in the published plugin JAR — matrix registry and data types only.
 val ciMatrixSourceSet =
   sourceSets.create("ciMatrix") {
     kotlin.srcDir("src/ciMatrix/kotlin")
@@ -97,24 +93,13 @@ testing {
   }
 }
 
-// ── CI matrix data ────────────────────────────────────────────────────────────
-// The canonical matrix registry lives in src/ciMatrix/kotlin/…/MatrixCli.kt.
-// gradleCompatVersions is duplicated here because the per-version task fan-out
-// below must run at configuration time (before the ciMatrix source set is compiled).
-// Keep these two lists in sync.
+// Duplicated from MatrixCli.kt: task fan-out runs at configuration time, before ciMatrix compiles.
 val gradleCompatVersions = listOf("9.0.0", "9.1.0", "9.2.1", "9.3.1", "9.4.1")
 
 dependencies {
-  // Wire ciMatrix output into functionalTest so tests can reference the registry
-  // (gradleCompatVersions, jenkinsGateEntry, etc.) without duplicating values.
   "functionalTestImplementation"(ciMatrixSourceSet.output)
 }
 
-// ── Per-version functional test tasks ─────────────────────────────────────────
-// org.gradle.parallel=true (gradle.properties) runs them concurrently. Each
-// reuses the compiled functionalTest source set and pins one version so
-// withData(TestedGradleVersion.filtered) exercises only that version.
-// The legacy `functionalTest` task remains for local debugging (-Ptest.gradle.version=X).
 val ftSuite = testing.suites.getByName<JvmTestSuite>("functionalTest")
 val perVersionTests =
   gradleCompatVersions
@@ -182,11 +167,6 @@ tasks.wrapper {
   gradleVersion = "9.5.0"
   distributionType = Wrapper.DistributionType.ALL
 }
-
-// ── CI matrix generators ───────────────────────────────────────────────────────
-// GitHub Actions reads the generated JSON files via `cat` and passes them to
-// `fromJSON` for dynamic matrix strategy. MatrixCli (src/ciMatrix) is the
-// canonical source of truth; these tasks invoke it via JavaExec.
 
 tasks.register<JavaExec>("generateGradleCompatMatrix") {
   group = "CI"
