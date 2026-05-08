@@ -108,7 +108,7 @@ jobs:
       - name: Enable long paths (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
-        run: git config --global core.longpaths true
+        run: git config --system core.longpaths true
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
       - uses: ./.github/actions/setup-env
         with:
