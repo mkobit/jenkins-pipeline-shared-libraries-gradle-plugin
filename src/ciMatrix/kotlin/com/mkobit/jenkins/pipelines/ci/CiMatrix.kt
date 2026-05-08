@@ -38,6 +38,7 @@ internal fun CiMatrix<JenkinsCompatEntry>.toJson(): String =
             "jenkins-version" to e.jenkinsVersion,
             "jenkins-bom-version" to e.jenkinsBomVersion,
             "jenkins-test-harness" to e.jenkinsTestHarness,
+            "task_suffix" to e.jenkinsVersion.replace(".", "_"),
           )
         },
     ),
@@ -59,18 +60,6 @@ internal fun CiMatrix<GradleCompatEntry>.toJson(): String =
 
 @JvmName("javaCompatToJson")
 internal fun CiMatrix<JavaCompatEntry>.toJson(): String = encodeJson(mapOf("include" to include.map { e -> mapOf("java" to e.java) }))
-
-// Flat JSON object for a single gate entry — consumed by composite-test.yml via fromJSON.
-internal fun JenkinsCompatEntry.toGateJson(): String =
-  encodeJson(
-    mapOf(
-      "java" to java,
-      "jenkins-lts" to jenkinsLts,
-      "jenkins-version" to jenkinsVersion,
-      "jenkins-bom-version" to jenkinsBomVersion,
-      "jenkins-test-harness" to jenkinsTestHarness,
-    ),
-  )
 
 // Hand-rolled rather than kotlinx.serialization: ciMatrix runs against the
 // Gradle-embedded Kotlin stdlib, so an external serialization library would

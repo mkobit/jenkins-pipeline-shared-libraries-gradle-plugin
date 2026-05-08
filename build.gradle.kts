@@ -75,7 +75,7 @@ testing {
           // other Kotest tag expression) to target a specific subset.
           systemProperty(
             "kotest.filter.tags",
-            project.findProperty("kotest.tags") ?: "!resolution",
+            project.findProperty("kotest.tags") ?: "!resolution & !jenkins-compat",
           )
           // GradleRunner builds are I/O-bound and start no Jenkins instance, so
           // parallelism is safe. Split test classes across N forks and let Kotest
@@ -95,6 +95,7 @@ testing {
 
 // Duplicated from MatrixCli.kt: task fan-out runs at configuration time, before ciMatrix compiles.
 val gradleCompatVersions = listOf("9.0.0", "9.1.0", "9.2.1", "9.3.1", "9.4.1")
+val jenkinsCompatVersions = listOf("2.479.1", "2.528.3", "2.541.3")
 
 dependencies {
   "functionalTestImplementation"(ciMatrixSourceSet.output)
@@ -115,7 +116,7 @@ val perVersionTests =
         classpath = ftSuite.sources.runtimeClasspath + files(tasks.pluginUnderTestMetadata)
         useJUnitPlatform()
         mustRunAfter(tasks.named("test"))
-        systemProperty("kotest.filter.tags", project.findProperty("kotest.tags") ?: "!resolution")
+        systemProperty("kotest.filter.tags", project.findProperty("kotest.tags") ?: "!resolution & !jenkins-compat")
         systemProperty("test.gradle.version", gv.version)
         maxParallelForks = 1
         systemProperty("kotest.framework.parallelism", 3)
@@ -128,6 +129,29 @@ val perVersionTests =
 
 tasks.check {
   dependsOn(perVersionTests)
+}
+
+// Jenkins LTS compat tasks — not wired into check (require network; run by jenkins-compat CI job).
+// Each task pins a single Jenkins version so TestedJenkinsVersion.filtered returns one entry.
+jenkinsCompatVersions.forEach { jv ->
+  val suffix = jv.replace(".", "_")
+  tasks.register<Test>("functionalTestJenkins$suffix") {
+    group = "verification"
+    description = "Jenkins compat tests for Jenkins $jv"
+    testClassesDirs = ftSuite.sources.output.classesDirs
+    classpath = ftSuite.sources.runtimeClasspath + files(tasks.pluginUnderTestMetadata)
+    useJUnitPlatform()
+    mustRunAfter(tasks.named("test"))
+    systemProperty("kotest.filter.tags", "jenkins-compat")
+    systemProperty("test.jenkins.version", jv)
+    systemProperty("test.gradle.version", GradleVersion.current().version)
+    maxParallelForks = 1
+    systemProperty("kotest.framework.parallelism", 3)
+    reports {
+      html.outputLocation.set(layout.buildDirectory.dir("reports/tests/functionalTestJenkins$suffix"))
+      junitXml.outputLocation.set(layout.buildDirectory.dir("test-results/functionalTestJenkins$suffix"))
+    }
+  }
 }
 
 tasks.withType<Test>().configureEach {
@@ -191,19 +215,6 @@ tasks.register<JavaExec>("generateJenkinsCompatMatrix") {
   argumentProviders +=
     CommandLineArgumentProvider {
       listOf("jenkins", outFile.get().asFile.absolutePath)
-    }
-}
-
-tasks.register<JavaExec>("generateJenkinsGateParams") {
-  group = "CI"
-  description = "Writes the jenkins gate parameters JSON to build/ci/jenkins-gate-params.json"
-  mainClass = "com.mkobit.jenkins.pipelines.ci.MatrixCliKt"
-  classpath = ciMatrixSourceSet.runtimeClasspath
-  val outFile = layout.buildDirectory.file("ci/jenkins-gate-params.json")
-  outputs.file(outFile)
-  argumentProviders +=
-    CommandLineArgumentProvider {
-      listOf("jenkins-gate", outFile.get().asFile.absolutePath)
     }
 }
 
