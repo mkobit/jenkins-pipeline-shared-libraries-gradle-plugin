@@ -79,6 +79,7 @@ class SharedLibraryPluginSmokeTest :
           source shouldContain "public static LibraryConfiguration implicitLibrary()"
           source shouldContain "public static LibraryConfiguration implicitLibrary(String name)"
           source shouldContain "test.library.name"
+          source shouldContain "resources/**"
           project.dir
             .resolve("build/generated-src/integrationTest/resources/META-INF/hudson.remoting.ClassFilter")
             .shouldExist()
