@@ -164,8 +164,8 @@ internal class SharedLibraryPluginTest :
         }
       }
 
-      it("integrationTestAnnotationProcessor includes annotation-indexer") {
-        val deps = project.configurations.getByName("integrationTestAnnotationProcessor").dependencies
+      it("localLibraryRetrieverAnnotationProcessor includes annotation-indexer") {
+        val deps = project.configurations.getByName("localLibraryRetrieverAnnotationProcessor").dependencies
         deps.any { it.group == "org.jenkins-ci" && it.name == "annotation-indexer" }.shouldBeTrue()
       }
     }

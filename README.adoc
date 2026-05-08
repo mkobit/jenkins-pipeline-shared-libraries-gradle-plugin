@@ -26,9 +26,8 @@ A Gradle plugin for developing and testing link:{uri-jenkins-shared-library-docs
 * Unit testing via link:{uri-jenkins-pipeline-unit}[Jenkins Pipeline Unit] in the `test` suite
 * Integration testing via link:{uri-jenkins-test-harness}[Jenkins Test Harness] (`JenkinsRule`) in the `integrationTest` suite
 * Jenkins BOM auto-injected for the configured LTS line — plugin versions stay aligned by default
-* `LocalLibraryRetriever` generated into the `integrationTest` source set — wires the local library into `JenkinsRule` tests without a network checkout
-* Auto-registration of the shared library into the embedded Jenkins instance via a generated `SharedLibraryAutoRegistrar` — no manual `GlobalLibraries.get()` call required in tests
-* Additional suites (JUnit Jupiter, Spock, Kotest, …) opt into full Jenkins wiring with a single `jenkinsTestRunnerSuite(suite)` call
+* `LocalLibraryRetriever` and `SharedLibraryAutoRegistrar` generated into a dedicated `localLibraryRetriever` source set — auto-wired into all Jenkins test suites so tests can access the local library without a network checkout or manual `GlobalLibraries.get()` call
+* Additional suites (JUnit Jupiter, Spock, Kotest, …) opt into full Jenkins wiring with a single `useJenkinsTestRunnerSuite(suite)` call
 * Configuration cache compliant
 
 == Compatibility
@@ -251,7 +250,7 @@ GlobalLibraries.get().setLibraries(List.of(lib));
 
 == Additional test suites
 
-Register extra suites and opt them into full Jenkins wiring with `jenkinsTestRunnerSuite()`.
+Register extra suites and opt them into full Jenkins wiring with `useJenkinsTestRunnerSuite()`.
 This applies the same wiring as the built-in `integrationTest` suite: `jenkins-test-harness`, HPI classpath, WAR path, system properties, JVM `--add-opens` flags, `maxParallelForks = 1`, and heap defaults.
 
 === JUnit Jupiter
@@ -261,10 +260,9 @@ This applies the same wiring as the built-in `integrationTest` suite: `jenkins-t
 testing {
     suites {
         register<JvmTestSuite>("integrationTestJunit5") {
-            sharedLibrary.jenkinsTestRunnerSuite(this)
+            sharedLibrary.useJenkinsTestRunnerSuite(this)
             sources { java.setSrcDirs(listOf("test/integration-junit5/java")) }
             dependencies {
-                implementation(sourceSets["integrationTest"].output.classesDirs)
                 implementation(libs.junit.jupiter.api)
                 runtimeOnly(libs.junit.jupiter.engine)
                 runtimeOnly(libs.junit.platform.launcher)
@@ -282,10 +280,9 @@ testing {
 testing {
     suites {
         register<JvmTestSuite>("integrationTestSpock") {
-            sharedLibrary.jenkinsTestRunnerSuite(this)
+            sharedLibrary.useJenkinsTestRunnerSuite(this)
             sources { groovy.setSrcDirs(listOf("test/integration-spock/groovy")) }
             dependencies {
-                implementation(sourceSets["integrationTest"].output.classesDirs)
                 implementation(libs.spock.core)
                 compileOnly(libs.groovy.core)
             }
@@ -306,13 +303,12 @@ This restriction is expected to lift on Jenkins 2.492.x+ once its internal Groov
 testing {
     suites {
         register<JvmTestSuite>("integrationTestKotest") {
-            sharedLibrary.jenkinsTestRunnerSuite(this)
+            sharedLibrary.useJenkinsTestRunnerSuite(this)
             useJUnitJupiter()
             sources { extensions.configure<SourceDirectorySet>("kotlin") {
                 setSrcDirs(listOf("test/integration-kotest/kotlin"))
             }}
             dependencies {
-                implementation(sourceSets["integrationTest"].output.classesDirs)
                 implementation(libs.kotest.runner)
                 implementation(libs.kotest.assertions)
                 implementation(libs.coroutines.core)

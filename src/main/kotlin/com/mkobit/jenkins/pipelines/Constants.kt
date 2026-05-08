@@ -1,8 +1,9 @@
 package com.mkobit.jenkins.pipelines
 
-// ── Test suite names ──────────────────────────────────────────────────────────
+// ── Test suite names / source set names ──────────────────────────────────────
 
 internal const val INTEGRATION_TEST_SUITE = "integrationTest"
+internal const val LOCAL_LIBRARY_RETRIEVER_SOURCE_SET = "localLibraryRetriever"
 
 // ── Gradle configuration names ────────────────────────────────────────────────
 

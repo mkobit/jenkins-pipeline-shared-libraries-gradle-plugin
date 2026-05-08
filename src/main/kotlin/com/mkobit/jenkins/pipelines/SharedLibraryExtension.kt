@@ -22,13 +22,13 @@ import javax.inject.Inject
  * ```
  *
  * The built-in `integrationTest` suite is wired automatically. Additional suites
- * (JUnit Jupiter, Spock, Kotest, etc.) must opt in by calling [jenkinsTestRunnerSuite]
+ * (JUnit Jupiter, Spock, Kotest, etc.) must opt in by calling [useJenkinsTestRunnerSuite]
  * inside their `register<JvmTestSuite>` block:
  * ```kotlin
  * testing {
  *     suites {
  *         register<JvmTestSuite>("integrationTestKotest") {
- *             sharedLibrary.jenkinsTestRunnerSuite(this)
+ *             sharedLibrary.useJenkinsTestRunnerSuite(this)
  *         }
  *     }
  * }
@@ -90,9 +90,9 @@ abstract class SharedLibraryExtension
      * `integrationTest` suite: `jenkins-test-harness`, HPI classpath, WAR path,
      * system properties, JVM opens, and `mustRunAfter("test")` ordering.
      */
-    fun jenkinsTestRunnerSuite(suite: JvmTestSuite) {
+    fun useJenkinsTestRunnerSuite(suite: JvmTestSuite) {
       checkNotNull(testSuiteWirer) {
-        "jenkinsTestRunnerSuite() called before plugin wiring is complete"
+        "useJenkinsTestRunnerSuite() called before plugin wiring is complete"
       }.invoke(suite)
     }
   }

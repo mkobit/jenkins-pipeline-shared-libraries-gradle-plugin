@@ -198,7 +198,7 @@ class SharedLibraryPluginTestSuiteTest :
       }
     }
 
-    describe("jenkinsTestRunnerSuite opt-in wires jenkins-test-harness onto the suite") {
+    describe("useJenkinsTestRunnerSuite opt-in wires jenkins-test-harness onto the suite") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
         withBaseProject { project ->
           project.buildFile.writeText(
@@ -210,7 +210,7 @@ class SharedLibraryPluginTestSuiteTest :
             testing {
                 suites {
                     register<JvmTestSuite>("integrationTestJunit6") {
-                        sharedLibrary.jenkinsTestRunnerSuite(this)
+                        sharedLibrary.useJenkinsTestRunnerSuite(this)
                         useJUnitJupiter()
                         sources {
                             java.setSrcDirs(listOf("test/integration-junit6/java"))

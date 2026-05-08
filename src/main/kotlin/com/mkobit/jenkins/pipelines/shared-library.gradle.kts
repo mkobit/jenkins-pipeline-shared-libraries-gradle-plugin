@@ -168,10 +168,27 @@ dependencies.add(
 
 val generateLocalLibraryFiles =
   tasks.register<GenerateLocalLibraryFiles>("generateLocalLibraryFiles") {
-    javaOutputDir.set(layout.buildDirectory.dir("generated-src/integrationTest/java"))
-    resourcesOutputDir.set(layout.buildDirectory.dir("generated-src/integrationTest/resources"))
+    javaOutputDir.set(layout.buildDirectory.dir("generated-src/localLibraryRetriever/java"))
+    resourcesOutputDir.set(layout.buildDirectory.dir("generated-src/localLibraryRetriever/resources"))
     generateAutoRegistrar.set(ext.autoRegisterLibrary)
   }
+
+// Dedicated source set for generated helper classes (LocalLibraryRetriever,
+// SharedLibraryAutoRegistrar). Kept separate from integrationTest so the generated
+// artifacts are compiled once and shared across all Jenkins test suites via
+// applyJenkinsTestWiring, rather than re-compiled per suite.
+val localLibraryRetrieverSourceSet =
+  sourceSets.create(LOCAL_LIBRARY_RETRIEVER_SOURCE_SET) {
+    java.setSrcDirs(listOf(generateLocalLibraryFiles.flatMap { it.javaOutputDir }))
+    resources.setSrcDirs(listOf(generateLocalLibraryFiles.flatMap { it.resourcesOutputDir }))
+  }
+localLibraryRetrieverSourceSet.groovy.setSrcDirs(emptyList<Any>())
+// Jenkins APIs are needed to compile LocalLibraryRetriever / SharedLibraryAutoRegistrar.
+configurations.named("${LOCAL_LIBRARY_RETRIEVER_SOURCE_SET}CompileOnly") {
+  extendsFrom(jenkinsPlugin.get())
+}
+// annotation-indexer processor generates the META-INF index for SharedLibraryAutoRegistrar.
+dependencies.add("${LOCAL_LIBRARY_RETRIEVER_SOURCE_SET}AnnotationProcessor", ANNOTATION_INDEXER)
 
 extensions.configure<TestingExtension> {
   suites {
@@ -186,16 +203,9 @@ extensions.configure<TestingExtension> {
 
     register<JvmTestSuite>(INTEGRATION_TEST_SUITE) {
       sources.apply {
-        java.setSrcDirs(
-          listOf("test/integration/java", generateLocalLibraryFiles.flatMap { it.javaOutputDir }),
-        )
+        java.setSrcDirs(listOf("test/integration/java"))
         groovy.setSrcDirs(listOf("test/integration/groovy"))
-        resources.setSrcDirs(
-          listOf(
-            "test/integration/resources",
-            generateLocalLibraryFiles.flatMap { it.resourcesOutputDir },
-          ),
-        )
+        resources.setSrcDirs(listOf("test/integration/resources"))
       }
     }
   }
@@ -238,6 +248,8 @@ fun applyJenkinsTestWiring(suite: JvmTestSuite) {
     implConfigName,
     ext.jenkins.testHarnessVersion.map { v: String -> "org.jenkins-ci.main:jenkins-test-harness:$v" },
   )
+  // Provide compiled LocalLibraryRetriever + SharedLibraryAutoRegistrar + annotation index.
+  depsHandler.add(implConfigName, localLibraryRetrieverSourceSet.output)
   // ivy goes through runtimeOnly so it is part of the suite's runtimeClasspath that
   // JvmTestSuitePlugin maps as the test task classpath convention. Adding it via
   // tasks.withType<Test>().configureEach { classpath += ivy } would race against the
@@ -305,18 +317,7 @@ fun applyJenkinsTestWiring(suite: JvmTestSuite) {
 val integrationTestSuite = the<TestingExtension>().suites.named<JvmTestSuite>(INTEGRATION_TEST_SUITE)
 applyJenkinsTestWiring(integrationTestSuite.get())
 
-// annotation-indexer processor indexes @Initializer on SharedLibraryAutoRegistrar so
-// Jenkins' InitializerFinder (via Index.list) can discover and call it at embedded
-// Jenkins startup time. Uses org.jvnet.hudson.annotation_indexer.Indexed meta-annotation
-// which generates META-INF/services/annotations/hudson.init.Initializer (simple text
-// format, class names only — not SezPoz binary format).
-// Must be added after applyJenkinsTestWiring forces the integrationTest suite to realize,
-// which is when JvmTestSuitePlugin creates the integrationTestAnnotationProcessor config.
-// Always on the processor path; generateLocalLibraryFiles controls whether the annotated
-// source file is generated based on autoRegisterLibrary.
-dependencies.add("integrationTestAnnotationProcessor", ANNOTATION_INDEXER)
-
-// Consumer-registered suites opt in via sharedLibrary.jenkinsTestRunnerSuite(suite).
+// Consumer-registered suites opt in via sharedLibrary.useJenkinsTestRunnerSuite(suite).
 // Those calls arrive during the consumer's build-script evaluation — before the suite
 // is added to the container and before JvmTestSuitePlugin's suites.all {} hook sets up
 // the Test.classpath convention. Deferring to afterEvaluate ensures the convention is
