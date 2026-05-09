@@ -62,7 +62,7 @@ jobs:
       - name: Compile, style, and unit tests
         run: ./gradlew spotlessCheck test
       - name: Functional tests (current Gradle)
-        run: ./gradlew assemble validatePlugins functionalTest9_5_0
+        run: ./gradlew assemble validatePlugins functionalTestCurrentWrapper
       - name: Publish test results
         if: always()
         uses: mikepenz/action-junit-report@3585e9575db828022551b4231f165eb59a0e74e3
@@ -104,13 +104,12 @@ jobs:
           check_name: 'Test results — Gradle ${{ matrix.gradle }}'
           fail_on_failure: false
 
-  # Platform compat: Windows and macOS — Gradle 9.5.0 / Java 21.
+  # Platform compat: Windows and macOS — current Gradle / Java 21.
   # Runs after gate as a platform sanity check: path-separator handling, shell quoting,
   # and file-system behaviour under GradleTestKit. Single Gradle version keeps the
   # concurrent-daemon memory budget inside the macOS runner limit (3 vCPU / 7 GB).
   # Each OS has its own Gradle cache key; cache-read-only is intentionally omitted so
   # each platform can seed its own cache on first run.
-  # NOTE: update functionalTest9_5_0 when the wrapper version bumps.
   platform-compat:
     name: ${{ matrix.os }} / Gradle 9.5.0 / Java 21
     needs: gate
@@ -137,8 +136,8 @@ jobs:
           java-version: 21
       - name: Unit tests
         run: ./gradlew test --continue
-      - name: Functional tests (Gradle 9.5.0)
-        run: ./gradlew functionalTest9_5_0 --continue
+      - name: Functional tests (current Gradle)
+        run: ./gradlew functionalTestCurrentWrapper --continue
       - name: Publish test results
         if: always()
         uses: mikepenz/action-junit-report@3585e9575db828022551b4231f165eb59a0e74e3
@@ -199,10 +198,10 @@ jobs:
           cache-read-only: "true"
       - name: Build (compile and unit tests)
         run: ./gradlew test --continue
-      - name: Functional tests (Gradle 9.5.0)
-        run: ./gradlew functionalTest9_5_0 --continue
+      - name: Functional tests (current Gradle)
+        run: ./gradlew functionalTestCurrentWrapper --continue
       - name: Functional tests (resolution)
-        run: ./gradlew functionalTest --continue -Pkotest.tags=resolution -Ptest.gradle.version=9.5.0
+        run: ./gradlew functionalTest --continue -Pkotest.tags=resolution -Ptest.gradle.version=current
       - name: Publish test results
         if: always()
         uses: mikepenz/action-junit-report@3585e9575db828022551b4231f165eb59a0e74e3

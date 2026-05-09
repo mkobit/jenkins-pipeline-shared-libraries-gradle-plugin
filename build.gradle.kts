@@ -86,8 +86,10 @@ testing {
           maxParallelForks = cpuHalf
           systemProperty("kotest.framework.parallelism", cpuHalf)
           // Pin to a single Gradle version for fast debugging: -Ptest.gradle.version=9.5.0
-          project.findProperty("test.gradle.version")?.let {
-            systemProperty("test.gradle.version", it)
+          // Use -Ptest.gradle.version=current to target the wrapper version automatically.
+          project.findProperty("test.gradle.version")?.let { prop ->
+            val version = if (prop == "current") GradleVersion.current().version else prop.toString()
+            systemProperty("test.gradle.version", version)
           }
         }
       }
@@ -131,6 +133,16 @@ val perVersionTests =
 
 tasks.check {
   dependsOn(perVersionTests)
+}
+
+// Stable alias for the per-version task matching the current wrapper. Used by CI jobs that
+// test Java or platform variation (not Gradle version variation), so the task name doesn't
+// need to change in lockstep with the wrapper. Delegates to functionalTest<version>, which
+// carries its own reports and build cache entry.
+tasks.register("functionalTestCurrentWrapper") {
+  group = "verification"
+  description = "Functional tests for the current Gradle wrapper version (${GradleVersion.current().version})"
+  dependsOn("functionalTest${GradleVersion.current().version.replace(".", "_")}")
 }
 
 // Jenkins LTS compat tasks — not wired into check (require network; run by jenkins-compat CI job).
