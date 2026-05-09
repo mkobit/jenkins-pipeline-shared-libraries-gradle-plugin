@@ -157,6 +157,10 @@ jenkinsCompatVersions.forEach { jv ->
 }
 
 tasks.withType<Test>().configureEach {
+  // Share the Gradle user home with GradleTestKit so Jenkins artifact downloads are cached
+  // across runner invocations within the same job. Controlled by the GRADLE_USER_HOME env
+  // var that gradle/actions/setup-gradle sets in CI; absent locally, TestKit uses its default.
+  System.getenv("GRADLE_USER_HOME")?.let { systemProperty("test.gradle.user.home", it) }
   testLogging {
     events("failed", "skipped")
     showExceptions = true

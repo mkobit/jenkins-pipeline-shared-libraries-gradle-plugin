@@ -53,6 +53,7 @@ jobs:
     timeout-minutes: 25
     permissions:
       contents: read
+      checks: write
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
       - uses: ./.github/actions/setup-env
@@ -62,6 +63,13 @@ jobs:
         run: ./gradlew spotlessCheck test
       - name: Functional tests (current Gradle)
         run: ./gradlew assemble validatePlugins functionalTest9_5_0
+      - name: Publish test results
+        if: always()
+        uses: mikepenz/action-junit-report@3585e9575db828022551b4231f165eb59a0e74e3
+        with:
+          report_paths: 'build/test-results/**/*.xml'
+          check_name: 'Test results — Gate'
+          fail_on_failure: false
 
   # Gradle compat: all Gradle 9.x versions × Java 17, including 9.5.0 (cache hit from gate).
   # Tests use GradleTestKit to invoke the specific Gradle version; the build wrapper
@@ -75,6 +83,7 @@ jobs:
     timeout-minutes: 45
     permissions:
       contents: read
+      checks: write
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.matrix-gen.outputs.gradle-matrix) }}
@@ -87,6 +96,13 @@ jobs:
         run: ./gradlew functionalTest${{ matrix.task_suffix }} --continue
       - name: Functional tests (resolution)
         run: ./gradlew functionalTest --continue -Pkotest.tags=resolution -Ptest.gradle.version=${{ matrix.gradle }}
+      - name: Publish test results
+        if: always()
+        uses: mikepenz/action-junit-report@3585e9575db828022551b4231f165eb59a0e74e3
+        with:
+          report_paths: 'build/test-results/**/*.xml'
+          check_name: 'Test results — Gradle ${{ matrix.gradle }}'
+          fail_on_failure: false
 
   # Platform compat: Windows and macOS — Gradle 9.5.0 / Java 21.
   # Runs after gate as a platform sanity check: path-separator handling, shell quoting,
@@ -102,6 +118,7 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
+      checks: write
     defaults:
       run:
         shell: bash
@@ -122,6 +139,13 @@ jobs:
         run: ./gradlew test --continue
       - name: Functional tests (Gradle 9.5.0)
         run: ./gradlew functionalTest9_5_0 --continue
+      - name: Publish test results
+        if: always()
+        uses: mikepenz/action-junit-report@3585e9575db828022551b4231f165eb59a0e74e3
+        with:
+          report_paths: 'build/test-results/**/*.xml'
+          check_name: 'Test results — ${{ matrix.os }}'
+          fail_on_failure: false
 
   # Jenkins LTS compat: resolution tests × each supported Jenkins LTS line, Gradle 9.5.0 / Java 17.
   # Gradle compat coverage is in gradle-compat; these legs only vary Jenkins version.
@@ -133,6 +157,7 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
+      checks: write
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.matrix-gen.outputs.jenkins-matrix) }}
@@ -143,6 +168,13 @@ jobs:
           java-version: 17
       - name: Jenkins compat tests (Jenkins ${{ matrix.jenkins-lts }})
         run: ./gradlew functionalTestJenkins${{ matrix.task_suffix }} --continue
+      - name: Publish test results
+        if: always()
+        uses: mikepenz/action-junit-report@3585e9575db828022551b4231f165eb59a0e74e3
+        with:
+          report_paths: 'build/test-results/**/*.xml'
+          check_name: 'Test results — Jenkins ${{ matrix.jenkins-lts }}'
+          fail_on_failure: false
 
   # Java compat: Gradle 9.5.0 × LTS Java and latest Java.
   # Tests only Gradle 9.5.0 — cross-Gradle coverage is in gradle-compat.
@@ -152,9 +184,10 @@ jobs:
     name: Gradle 9.5.0 / Java ${{ matrix.java }}
     needs: [gate, matrix-gen]
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 15
     permissions:
       contents: read
+      checks: write
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.matrix-gen.outputs.java-matrix) }}
@@ -169,4 +202,11 @@ jobs:
       - name: Functional tests (Gradle 9.5.0)
         run: ./gradlew functionalTest9_5_0 --continue
       - name: Functional tests (resolution)
-        run: ./gradlew functionalTest --continue -Pkotest.tags=resolution
+        run: ./gradlew functionalTest --continue -Pkotest.tags=resolution -Ptest.gradle.version=9.5.0
+      - name: Publish test results
+        if: always()
+        uses: mikepenz/action-junit-report@3585e9575db828022551b4231f165eb59a0e74e3
+        with:
+          report_paths: 'build/test-results/**/*.xml'
+          check_name: 'Test results — Java ${{ matrix.java }}'
+          fail_on_failure: false
