@@ -93,7 +93,7 @@ jobs:
         with:
           java-version: 17
       - name: Functional tests (Gradle ${{ matrix.gradle }})
-        run: ./gradlew functionalTest${{ matrix.task_suffix }} --continue
+        run: ./gradlew functionalTest --continue -Ptest.gradle.version=${{ matrix.gradle }}
       - name: Functional tests (resolution)
         run: ./gradlew functionalTest --continue -Pkotest.tags=resolution -Ptest.gradle.version=${{ matrix.gradle }}
       - name: Publish test results
@@ -166,7 +166,7 @@ jobs:
         with:
           java-version: 17
       - name: Jenkins compat tests (Jenkins ${{ matrix.jenkins-lts }})
-        run: ./gradlew functionalTestJenkins${{ matrix.task_suffix }} --continue
+        run: ./gradlew functionalTest --continue -Pkotest.tags=jenkins-compat -Ptest.jenkins.version=${{ matrix.jenkins-version }}
       - name: Publish test results
         if: always()
         uses: mikepenz/action-junit-report@3585e9575db828022551b4231f165eb59a0e74e3

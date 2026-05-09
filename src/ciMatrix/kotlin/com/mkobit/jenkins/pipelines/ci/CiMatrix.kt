@@ -12,10 +12,8 @@ data class JenkinsCompatEntry(
   val jenkinsTestHarness: String,
 )
 
-// Internal: serialization shapes only, not part of the public registry API.
 internal data class GradleCompatEntry(
   val gradle: String,
-  val taskSuffix: String,
 )
 
 internal data class JavaCompatEntry(
@@ -38,7 +36,6 @@ internal fun CiMatrix<JenkinsCompatEntry>.toJson(): String =
             "jenkins-version" to e.jenkinsVersion,
             "jenkins-bom-version" to e.jenkinsBomVersion,
             "jenkins-test-harness" to e.jenkinsTestHarness,
-            "task_suffix" to e.jenkinsVersion.replace(".", "_"),
           )
         },
     ),
@@ -52,7 +49,6 @@ internal fun CiMatrix<GradleCompatEntry>.toJson(): String =
         include.map { e ->
           mapOf(
             "gradle" to e.gradle,
-            "task_suffix" to e.taskSuffix,
           )
         },
     ),

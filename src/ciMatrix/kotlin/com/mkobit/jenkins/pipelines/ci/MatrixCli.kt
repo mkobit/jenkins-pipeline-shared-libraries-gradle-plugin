@@ -1,11 +1,12 @@
 package com.mkobit.jenkins.pipelines.ci
 
-import java.io.File
+import java.nio.file.Path
+import kotlin.io.path.createDirectories
+import kotlin.io.path.writeText
 
-// Jenkins LTS versions under test; each maps to a functionalTestJenkins* task in build.gradle.kts.
-// Java version is always 17 — Java compat variation is handled by the java-compat CI job.
-// JenkinsSessionFixture was introduced in harness 2554; the 2.479.x entry overrides the
-// BOM-pinned 2391 so the base-class pattern in the example compiles.
+// Jenkins LTS versions under test. Java version is always 17 — Java compat variation is handled
+// by the java-compat CI job. JenkinsSessionFixture was introduced in harness 2554; the 2.479.x
+// entry overrides the BOM-pinned 2391 so the base-class pattern in the example compiles.
 val jenkinsCompatEntries: List<JenkinsCompatEntry> =
   listOf(
     JenkinsCompatEntry(
@@ -33,15 +34,14 @@ val jenkinsCompatEntries: List<JenkinsCompatEntry> =
 
 internal val jenkinsCompatMatrix = CiMatrix(jenkinsCompatEntries)
 
-// Keep in sync with gradleCompatVersions in build.gradle.kts (needed at configuration time).
 val gradleCompatVersions = listOf("9.0.0", "9.1.0", "9.2.1", "9.3.1", "9.4.1", "9.5.0")
 
-val javaCompatVersions = listOf(21, 25)
+private val javaCompatVersions = listOf(21, 25)
 
 fun main(args: Array<String>) {
   require(args.size == 2) { "Usage: MatrixCli <subcommand> <output-file>" }
   val (subcommand, outPath) = args
-  val outFile = File(outPath).also { it.parentFile?.mkdirs() }
+  val outFile = Path.of(outPath).also { it.parent?.createDirectories() }
   when (subcommand) {
     "jenkins" -> {
       outFile.writeText(jenkinsCompatMatrix.toJson())
@@ -49,7 +49,7 @@ fun main(args: Array<String>) {
 
     "gradle" -> {
       outFile.writeText(
-        CiMatrix(gradleCompatVersions.map { v -> GradleCompatEntry(v, v.replace(".", "_")) }).toJson(),
+        CiMatrix(gradleCompatVersions.map { v -> GradleCompatEntry(v) }).toJson(),
       )
     }
 

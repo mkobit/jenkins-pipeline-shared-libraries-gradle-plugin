@@ -2,7 +2,6 @@ package testsupport
 
 import com.mkobit.jenkins.pipelines.SharedLibraryDefaults
 
-// Coordinates and defaults used across functional test build scripts.
 const val WORKFLOW_API = "org.jenkins-ci.plugins.workflow:workflow-api"
 
 const val DEFAULT_CORE_VERSION = SharedLibraryDefaults.CORE_VERSION

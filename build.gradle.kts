@@ -97,75 +97,33 @@ testing {
   }
 }
 
-// Duplicated from MatrixCli.kt: task fan-out runs at configuration time, before ciMatrix compiles.
-val gradleCompatVersions = listOf("9.0.0", "9.1.0", "9.2.1", "9.3.1", "9.4.1", "9.5.0")
-val jenkinsCompatVersions = listOf("2.479.1", "2.528.3", "2.541.3")
-
 dependencies {
   "functionalTestImplementation"(ciMatrixSourceSet.output)
 }
 
 val ftSuite = testing.suites.getByName<JvmTestSuite>("functionalTest")
-val perVersionTests =
-  gradleCompatVersions
-    .map { GradleVersion.version(it) }
-    .plus(GradleVersion.current())
-    .distinct()
-    .map { gv ->
-      val suffix = gv.version.replace(".", "_")
-      tasks.register<Test>("functionalTest$suffix") {
-        group = "verification"
-        description = "Functional tests for Gradle ${gv.version}"
-        testClassesDirs = ftSuite.sources.output.classesDirs
-        classpath = ftSuite.sources.runtimeClasspath + files(tasks.pluginUnderTestMetadata)
-        useJUnitPlatform()
-        mustRunAfter(tasks.named("test"))
-        systemProperty("kotest.filter.tags", project.findProperty("kotest.tags") ?: "!resolution & !jenkins-compat")
-        systemProperty("test.gradle.version", gv.version)
-        maxParallelForks = 1
-        systemProperty("kotest.framework.parallelism", 3)
-        reports {
-          html.outputLocation.set(layout.buildDirectory.dir("reports/tests/functionalTest$suffix"))
-          junitXml.outputLocation.set(layout.buildDirectory.dir("test-results/functionalTest$suffix"))
-        }
-      }
-    }
 
-tasks.check {
-  dependsOn(perVersionTests)
-}
-
-// Stable alias for the per-version task matching the current wrapper. Used by CI jobs that
-// test Java or platform variation (not Gradle version variation), so the task name doesn't
-// need to change in lockstep with the wrapper. Delegates to functionalTest<version>, which
-// carries its own reports and build cache entry.
-tasks.register("functionalTestCurrentWrapper") {
+// Stable task for CI jobs that test Java or platform variation (not Gradle version variation).
+// Pins to the current wrapper version; gradle-compat CI uses -Ptest.gradle.version=X directly.
+tasks.register<Test>("functionalTestCurrentWrapper") {
   group = "verification"
   description = "Functional tests for the current Gradle wrapper version (${GradleVersion.current().version})"
-  dependsOn("functionalTest${GradleVersion.current().version.replace(".", "_")}")
+  testClassesDirs = ftSuite.sources.output.classesDirs
+  classpath = ftSuite.sources.runtimeClasspath + files(tasks.pluginUnderTestMetadata)
+  useJUnitPlatform()
+  mustRunAfter(tasks.named("test"))
+  systemProperty("kotest.filter.tags", project.findProperty("kotest.tags") ?: "!resolution & !jenkins-compat")
+  systemProperty("test.gradle.version", GradleVersion.current().version)
+  maxParallelForks = 1
+  systemProperty("kotest.framework.parallelism", 3)
+  reports {
+    html.outputLocation.set(layout.buildDirectory.dir("reports/tests/functionalTestCurrentWrapper"))
+    junitXml.outputLocation.set(layout.buildDirectory.dir("test-results/functionalTestCurrentWrapper"))
+  }
 }
 
-// Jenkins LTS compat tasks — not wired into check (require network; run by jenkins-compat CI job).
-// Each task pins a single Jenkins version so TestedJenkinsVersion.filtered returns one entry.
-jenkinsCompatVersions.forEach { jv ->
-  val suffix = jv.replace(".", "_")
-  tasks.register<Test>("functionalTestJenkins$suffix") {
-    group = "verification"
-    description = "Jenkins compat tests for Jenkins $jv"
-    testClassesDirs = ftSuite.sources.output.classesDirs
-    classpath = ftSuite.sources.runtimeClasspath + files(tasks.pluginUnderTestMetadata)
-    useJUnitPlatform()
-    mustRunAfter(tasks.named("test"))
-    systemProperty("kotest.filter.tags", "jenkins-compat")
-    systemProperty("test.jenkins.version", jv)
-    systemProperty("test.gradle.version", GradleVersion.current().version)
-    maxParallelForks = 1
-    systemProperty("kotest.framework.parallelism", 3)
-    reports {
-      html.outputLocation.set(layout.buildDirectory.dir("reports/tests/functionalTestJenkins$suffix"))
-      junitXml.outputLocation.set(layout.buildDirectory.dir("test-results/functionalTestJenkins$suffix"))
-    }
-  }
+tasks.check {
+  dependsOn("functionalTestCurrentWrapper")
 }
 
 tasks.withType<Test>().configureEach {
