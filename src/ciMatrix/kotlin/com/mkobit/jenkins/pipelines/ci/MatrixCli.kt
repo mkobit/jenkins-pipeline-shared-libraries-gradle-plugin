@@ -34,7 +34,7 @@ val jenkinsCompatEntries: List<JenkinsCompatEntry> =
 internal val jenkinsCompatMatrix = CiMatrix(jenkinsCompatEntries)
 
 // Keep in sync with gradleCompatVersions in build.gradle.kts (needed at configuration time).
-val gradleCompatVersions = listOf("9.0.0", "9.1.0", "9.2.1", "9.3.1", "9.4.1")
+val gradleCompatVersions = listOf("9.0.0", "9.1.0", "9.2.1", "9.3.1", "9.4.1", "9.5.0")
 
 val javaCompatVersions = listOf(21, 25)
 
