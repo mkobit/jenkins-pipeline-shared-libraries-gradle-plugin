@@ -91,6 +91,7 @@ testing {
             val version = if (prop == "current") GradleVersion.current().version else prop.toString()
             systemProperty("test.gradle.version", version)
           }
+          project.findProperty("test.jenkins.version")?.let { systemProperty("test.jenkins.version", it.toString()) }
         }
       }
     }

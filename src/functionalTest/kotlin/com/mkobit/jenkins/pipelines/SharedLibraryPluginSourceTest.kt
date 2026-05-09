@@ -30,18 +30,18 @@ class SharedLibraryPluginSourceTest :
 
     fun withSharedLibraryProject(
       configure: TestProject.() -> Unit = {},
-      block: (TestProject) -> Unit,
-    ) = withTestProject { project ->
-      project.settingsFile.writeText(settingsContent)
-      project.buildFile.writeText(
+      block: TestProject.() -> Unit,
+    ) = withTestProject {
+      settingsFile.writeText(settingsContent)
+      buildFile.writeText(
         """
         plugins {
             id("com.mkobit.jenkins.pipelines.shared-library")
         }
         """.trimIndent(),
       )
-      project.configure()
-      block(project)
+      configure()
+      block()
     }
 
     describe("main Groovy source in src/ compiles") {
@@ -55,8 +55,8 @@ class SharedLibraryPluginSourceTest :
             }
             """.trimIndent(),
           )
-        }) { project ->
-          val result = project.runner(gradleVersion).withArguments("compileGroovy").build()
+        }) {
+          val result = runner(gradleVersion).withArguments("compileGroovy").build()
           result.task(":compileGroovy")!!.outcome shouldBe TaskOutcome.SUCCESS
         }
       }
@@ -66,8 +66,8 @@ class SharedLibraryPluginSourceTest :
       withData(TestedGradleVersion.filtered) { gradleVersion ->
         withSharedLibraryProject(configure = {
           file("src/com/example/Bad.groovy").writeText("class { not valid groovy }")
-        }) { project ->
-          val result = project.runner(gradleVersion).withArguments("compileGroovy").buildAndFail()
+        }) {
+          val result = runner(gradleVersion).withArguments("compileGroovy").buildAndFail()
           result.task(":compileGroovy")!!.outcome shouldBe TaskOutcome.FAILED
         }
       }
@@ -77,8 +77,8 @@ class SharedLibraryPluginSourceTest :
       withData(TestedGradleVersion.filtered) { gradleVersion ->
         withSharedLibraryProject(configure = {
           file("vars/badStep.groovy").writeText("def call( { unclosed paren and brace")
-        }) { project ->
-          val result = project.runner(gradleVersion).withArguments("compileGroovy").buildAndFail()
+        }) {
+          val result = runner(gradleVersion).withArguments("compileGroovy").buildAndFail()
           result.task(":compileGroovy")!!.outcome shouldBe TaskOutcome.FAILED
         }
       }
@@ -88,8 +88,8 @@ class SharedLibraryPluginSourceTest :
       withData(TestedGradleVersion.filtered) { gradleVersion ->
         withSharedLibraryProject(configure = {
           file("src/com/example/Lib.groovy").writeText("package com.example; class Lib {}")
-        }) { project ->
-          val result = project.runner(gradleVersion).withArguments("sourcesJar").build()
+        }) {
+          val result = runner(gradleVersion).withArguments("sourcesJar").build()
           result.task(":sourcesJar")!!.outcome shouldBe TaskOutcome.SUCCESS
         }
       }
@@ -101,8 +101,8 @@ class SharedLibraryPluginSourceTest :
           file("src/com/example/Lib.groovy").writeText(
             "package com.example; /** Documented. */ class Lib {}",
           )
-        }) { project ->
-          val result = project.runner(gradleVersion).withArguments("groovydocJar").build()
+        }) {
+          val result = runner(gradleVersion).withArguments("groovydocJar").build()
           result.task(":groovydocJar")!!.outcome shouldBe TaskOutcome.SUCCESS
         }
       }
@@ -120,8 +120,8 @@ class SharedLibraryPluginSourceTest :
             }
             """.trimIndent(),
           )
-        }) { project ->
-          val result = project.runner(gradleVersion).withArguments("compileGroovy").build()
+        }) {
+          val result = runner(gradleVersion).withArguments("compileGroovy").build()
           result.task(":compileGroovy")!!.outcome shouldBe TaskOutcome.SUCCESS
         }
       }
@@ -157,8 +157,8 @@ class SharedLibraryPluginSourceTest :
             }
             """.trimIndent(),
           )
-        }) { project ->
-          val result = project.runner(gradleVersion).withArguments("test").build()
+        }) {
+          val result = runner(gradleVersion).withArguments("test").build()
           result.task(":test")!!.outcome shouldBe TaskOutcome.SUCCESS
         }
       }
@@ -166,12 +166,8 @@ class SharedLibraryPluginSourceTest :
 
     describe("running test does not trigger integrationTest") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
-        withSharedLibraryProject { project ->
-          val result =
-            project
-              .runner(gradleVersion)
-              .withArguments("test", "--dry-run")
-              .build()
+        withSharedLibraryProject {
+          val result = runner(gradleVersion).withArguments("test", "--dry-run").build()
           result.output shouldNotContain ":integrationTest"
         }
       }

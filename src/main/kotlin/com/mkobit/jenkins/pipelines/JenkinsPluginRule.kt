@@ -30,7 +30,7 @@ internal abstract class JenkinsPluginRule
         }
       }
 
-      // Separate java-runtime variant backed by the JAR so unit test runtimeClasspaths
+      // Separate java-runtime variant backed by the JAR — unit test runtimeClasspaths
       // resolve plugin classes without picking up the HPI runtime variant.
       ctx.details.addVariant("jar-runtime", "compile") {
         attributes {

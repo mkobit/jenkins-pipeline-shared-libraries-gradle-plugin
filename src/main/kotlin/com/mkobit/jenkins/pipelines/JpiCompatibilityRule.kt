@@ -4,10 +4,14 @@ import org.gradle.api.artifacts.CacheableRule
 import org.gradle.api.attributes.AttributeCompatibilityRule
 import org.gradle.api.attributes.CompatibilityCheckDetails
 
-// When a consumer requests hpi/jpi artifacts but a component only publishes a jar
-// (e.g., plain Java library transitives that appear alongside Jenkins plugins),
-// accept the jar as compatible rather than failing resolution.
-// Actual filtering to only .hpi files happens downstream via lenient artifact views.
+/**
+ * Marks plain-JAR artifacts as compatible when an HPI/JPI artifact is requested.
+ *
+ * When a consumer requests `hpi` or `jpi` artifacts but a component only publishes a `jar`
+ * (e.g., plain Java library transitives that appear alongside Jenkins plugins), accept the
+ * `jar` as compatible rather than failing resolution.
+ * Actual filtering to only `.hpi` files happens downstream via lenient artifact views.
+ */
 @CacheableRule
 internal class JpiCompatibilityRule : AttributeCompatibilityRule<String> {
   override fun execute(details: CompatibilityCheckDetails<String>) {

@@ -17,8 +17,8 @@ import testsupport.withTestProject
 import kotlin.io.path.writeText
 
 // Verifies that the plugin correctly wires Jenkins LTS dependency coordinates for each supported
-// LTS version. Run per-version by functionalTestJenkins* tasks in build.gradle.kts; each task
-// pins test.jenkins.version so TestedJenkinsVersion.filtered returns a single entry.
+// LTS version. Run per-version by the jenkins-compat CI job; each run pins test.jenkins.version
+// so TestedJenkinsVersion.filtered returns a single entry.
 @Tags("jenkins-compat")
 class SharedLibraryPluginJenkinsCompatTest :
   DescribeSpec({
@@ -70,14 +70,10 @@ class SharedLibraryPluginJenkinsCompatTest :
         """.trimIndent()
 
       describe("jenkins-core resolves at declared version") {
-        withTestProject { project ->
-          project.settingsFile.writeText(settingsContent)
-          project.buildFile.writeText(buildContent)
-          val result =
-            project
-              .runner(gradleVersion)
-              .withArguments("printClasspaths")
-              .build()
+        withTestProject {
+          settingsFile.writeText(settingsContent)
+          buildFile.writeText(buildContent)
+          val result = runner(gradleVersion).withArguments("printClasspaths").build()
 
           val compileFiles =
             result.output
@@ -90,12 +86,11 @@ class SharedLibraryPluginJenkinsCompatTest :
       }
 
       describe("BOM constraint propagates through jenkinsPlugin") {
-        withTestProject { project ->
-          project.settingsFile.writeText(settingsContent)
-          project.buildFile.writeText(buildContent)
+        withTestProject {
+          settingsFile.writeText(settingsContent)
+          buildFile.writeText(buildContent)
           val result =
-            project
-              .runner(gradleVersion)
+            runner(gradleVersion)
               .withArguments("dependencies", "--configuration", "testRuntimeClasspath")
               .build()
 
@@ -105,14 +100,10 @@ class SharedLibraryPluginJenkinsCompatTest :
       }
 
       describe("groovy-all absent from testRuntimeClasspath") {
-        withTestProject { project ->
-          project.settingsFile.writeText(settingsContent)
-          project.buildFile.writeText(buildContent)
-          val result =
-            project
-              .runner(gradleVersion)
-              .withArguments("printClasspaths")
-              .build()
+        withTestProject {
+          settingsFile.writeText(settingsContent)
+          buildFile.writeText(buildContent)
+          val result = runner(gradleVersion).withArguments("printClasspaths").build()
 
           val testRuntimeFiles =
             result.output
@@ -125,14 +116,10 @@ class SharedLibraryPluginJenkinsCompatTest :
       }
 
       describe("jenkinsWar resolves exactly one WAR at declared version") {
-        withTestProject { project ->
-          project.settingsFile.writeText(settingsContent)
-          project.buildFile.writeText(buildContent)
-          val result =
-            project
-              .runner(gradleVersion)
-              .withArguments("printClasspaths")
-              .build()
+        withTestProject {
+          settingsFile.writeText(settingsContent)
+          buildFile.writeText(buildContent)
+          val result = runner(gradleVersion).withArguments("printClasspaths").build()
 
           val warFiles =
             result.output

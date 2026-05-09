@@ -12,10 +12,6 @@ class TestProject(
   val settingsFile: Path = dir.resolve("settings.gradle.kts")
   val buildFile: Path = dir.resolve("build.gradle.kts")
 
-  init {
-    settingsFile.writeText("""rootProject.name = "test-project"""")
-  }
-
   fun file(path: String): Path = dir.resolve(path).also { it.parent.createDirectories() }
 
   fun runner(gradleVersion: TestedGradleVersion): GradleRunner =
@@ -25,14 +21,16 @@ class TestProject(
       .withGradleVersion(gradleVersion.version)
       .withPluginClasspath()
       .apply {
-        System.getProperty("test.gradle.user.home")?.let { withTestKitDir(java.io.File(it)) }
+        System.getProperty("test.gradle.user.home")?.let { withTestKitDir(Path.of(it).toFile()) }
       }
 }
 
-inline fun withTestProject(block: (TestProject) -> Unit) {
+inline fun withTestProject(block: TestProject.() -> Unit) {
   val dir = createTempDirectory("shared-library-functional-test")
+  val project = TestProject(dir)
+  project.settingsFile.writeText("""rootProject.name = "test-project"""")
   try {
-    block(TestProject(dir))
+    project.block()
   } finally {
     dir.toFile().deleteRecursively()
   }

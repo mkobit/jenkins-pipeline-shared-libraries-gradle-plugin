@@ -11,8 +11,8 @@ class SharedLibraryPluginDeprecationTest :
   DescribeSpec({
     describe("no deprecation warnings emitted on plugin application") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
-        withTestProject { project ->
-          project.buildFile.writeText(
+        withTestProject {
+          buildFile.writeText(
             """
             plugins {
                 id("com.mkobit.jenkins.pipelines.shared-library")
@@ -20,8 +20,7 @@ class SharedLibraryPluginDeprecationTest :
             """.trimIndent(),
           )
           val result =
-            project
-              .runner(gradleVersion)
+            runner(gradleVersion)
               .withArguments("help", "--warning-mode=fail")
               .build()
           result.output shouldNotContain "Deprecated Gradle features were used"

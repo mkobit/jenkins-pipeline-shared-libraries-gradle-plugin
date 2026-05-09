@@ -29,16 +29,16 @@ class SharedLibraryPluginTestSuiteTest :
       rootProject.name = "suite-test"
       """.trimIndent()
 
-    fun withBaseProject(block: (TestProject) -> Unit) =
-      withTestProject { project ->
-        project.settingsFile.writeText(settingsContent)
-        block(project)
+    fun withBaseProject(block: TestProject.() -> Unit) =
+      withTestProject {
+        settingsFile.writeText(settingsContent)
+        block()
       }
 
     describe("Java-only test suite: Jenkins API types compile without Groovy dependency") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
-        withBaseProject { project ->
-          project.buildFile.writeText(
+        withBaseProject {
+          buildFile.writeText(
             """
             plugins {
                 id("com.mkobit.jenkins.pipelines.shared-library")
@@ -53,7 +53,7 @@ class SharedLibraryPluginTestSuiteTest :
             }
             """.trimIndent(),
           )
-          project.file("test/unit/java/com/example/JenkinsApiTest.java").writeText(
+          file("test/unit/java/com/example/JenkinsApiTest.java").writeText(
             """
             package com.example;
             import hudson.model.Item;
@@ -67,11 +67,7 @@ class SharedLibraryPluginTestSuiteTest :
             }
             """.trimIndent(),
           )
-          val result =
-            project
-              .runner(gradleVersion)
-              .withArguments("compileTestJava")
-              .build()
+          val result = runner(gradleVersion).withArguments("compileTestJava").build()
           result.task(":compileTestJava")!!.outcome shouldBe TaskOutcome.SUCCESS
         }
       }
@@ -79,8 +75,8 @@ class SharedLibraryPluginTestSuiteTest :
 
     describe("Groovy test suite: Spock test compiles and groovy-all is excluded") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
-        withBaseProject { project ->
-          project.buildFile.writeText(
+        withBaseProject {
+          buildFile.writeText(
             """
             plugins {
                 id("com.mkobit.jenkins.pipelines.shared-library")
@@ -90,7 +86,7 @@ class SharedLibraryPluginTestSuiteTest :
             }
             """.trimIndent(),
           )
-          project.file("test/unit/groovy/com/example/JenkinsSpockTest.groovy").writeText(
+          file("test/unit/groovy/com/example/JenkinsSpockTest.groovy").writeText(
             """
             package com.example
             import hudson.model.Item
@@ -103,17 +99,12 @@ class SharedLibraryPluginTestSuiteTest :
             """.trimIndent(),
           )
           val depsResult =
-            project
-              .runner(gradleVersion)
+            runner(gradleVersion)
               .withArguments("dependencies", "--configuration", "testRuntimeClasspath")
               .build()
           depsResult.output shouldNotContain "groovy-all"
 
-          val compileResult =
-            project
-              .runner(gradleVersion)
-              .withArguments("compileTestGroovy")
-              .build()
+          val compileResult = runner(gradleVersion).withArguments("compileTestGroovy").build()
           compileResult.task(":compileTestGroovy")!!.outcome shouldBe TaskOutcome.SUCCESS
         }
       }
@@ -121,8 +112,8 @@ class SharedLibraryPluginTestSuiteTest :
 
     describe("Kotlin test suite: Kotest test compiles with Jenkins API on classpath") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
-        withBaseProject { project ->
-          project.buildFile.writeText(
+        withBaseProject {
+          buildFile.writeText(
             """
             plugins {
                 id("com.mkobit.jenkins.pipelines.shared-library")
@@ -134,7 +125,7 @@ class SharedLibraryPluginTestSuiteTest :
             }
             """.trimIndent(),
           )
-          project.file("src/test/kotlin/com/example/JenkinsKotestTest.kt").writeText(
+          file("src/test/kotlin/com/example/JenkinsKotestTest.kt").writeText(
             """
             package com.example
             import hudson.model.Item
@@ -147,11 +138,7 @@ class SharedLibraryPluginTestSuiteTest :
             })
             """.trimIndent(),
           )
-          val result =
-            project
-              .runner(gradleVersion)
-              .withArguments("compileTestKotlin")
-              .build()
+          val result = runner(gradleVersion).withArguments("compileTestKotlin").build()
           result.task(":compileTestKotlin")!!.outcome shouldBe TaskOutcome.SUCCESS
         }
       }
@@ -159,8 +146,8 @@ class SharedLibraryPluginTestSuiteTest :
 
     describe("consumer-registered JUnit Jupiter integrationTest suite compiles") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
-        withBaseProject { project ->
-          project.buildFile.writeText(
+        withBaseProject {
+          buildFile.writeText(
             """
             plugins {
                 id("com.mkobit.jenkins.pipelines.shared-library")
@@ -175,7 +162,7 @@ class SharedLibraryPluginTestSuiteTest :
             }
             """.trimIndent(),
           )
-          project.file("test/integration/java/com/example/JUnit6RuleTest.java").writeText(
+          file("test/integration/java/com/example/JUnit6RuleTest.java").writeText(
             """
             package com.example;
             import hudson.model.Item;
@@ -188,11 +175,7 @@ class SharedLibraryPluginTestSuiteTest :
             }
             """.trimIndent(),
           )
-          val result =
-            project
-              .runner(gradleVersion)
-              .withArguments("compileIntegrationTestJava")
-              .build()
+          val result = runner(gradleVersion).withArguments("compileIntegrationTestJava").build()
           result.task(":compileIntegrationTestJava")!!.outcome shouldBe TaskOutcome.SUCCESS
         }
       }
@@ -200,8 +183,8 @@ class SharedLibraryPluginTestSuiteTest :
 
     describe("useJenkinsTestRunnerSuite opt-in wires jenkins-test-harness onto the suite") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
-        withBaseProject { project ->
-          project.buildFile.writeText(
+        withBaseProject {
+          buildFile.writeText(
             """
             plugins {
                 id("com.mkobit.jenkins.pipelines.shared-library")
@@ -221,7 +204,7 @@ class SharedLibraryPluginTestSuiteTest :
             tasks.check { dependsOn("integrationTestJunit6") }
             """.trimIndent(),
           )
-          project.file("test/integration-junit6/java/com/example/ExtraJUnit6Test.java").writeText(
+          file("test/integration-junit6/java/com/example/ExtraJUnit6Test.java").writeText(
             """
             package com.example;
             import org.jvnet.hudson.test.JenkinsRule;
@@ -234,11 +217,7 @@ class SharedLibraryPluginTestSuiteTest :
             }
             """.trimIndent(),
           )
-          val result =
-            project
-              .runner(gradleVersion)
-              .withArguments("compileIntegrationTestJunit6Java")
-              .build()
+          val result = runner(gradleVersion).withArguments("compileIntegrationTestJunit6Java").build()
           result.task(":compileIntegrationTestJunit6Java")!!.outcome shouldBe TaskOutcome.SUCCESS
         }
       }

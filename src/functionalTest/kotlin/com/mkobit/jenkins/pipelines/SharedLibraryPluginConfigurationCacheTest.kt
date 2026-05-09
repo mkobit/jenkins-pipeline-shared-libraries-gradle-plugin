@@ -14,8 +14,8 @@ class SharedLibraryPluginConfigurationCacheTest :
   DescribeSpec({
     describe("configuration cache: second run reuses stored entry") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
-        withTestProject { project ->
-          project.buildFile.writeText(
+        withTestProject {
+          buildFile.writeText(
             """
             plugins {
                 id("com.mkobit.jenkins.pipelines.shared-library")
@@ -24,16 +24,14 @@ class SharedLibraryPluginConfigurationCacheTest :
           )
 
           val store =
-            project
-              .runner(gradleVersion)
+            runner(gradleVersion)
               .withArguments("generateLocalLibraryFiles", "--configuration-cache")
               .build()
           store.task(":generateLocalLibraryFiles").shouldNotBeNull().outcome shouldBe TaskOutcome.SUCCESS
           store.output shouldContain "Configuration cache entry stored"
 
           val reuse =
-            project
-              .runner(gradleVersion)
+            runner(gradleVersion)
               .withArguments("generateLocalLibraryFiles", "--configuration-cache")
               .build()
           reuse.task(":generateLocalLibraryFiles").shouldNotBeNull().outcome shouldBe TaskOutcome.UP_TO_DATE

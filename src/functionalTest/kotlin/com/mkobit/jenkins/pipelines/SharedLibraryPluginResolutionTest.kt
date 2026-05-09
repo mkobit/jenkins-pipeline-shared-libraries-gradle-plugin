@@ -62,21 +62,17 @@ class SharedLibraryPluginResolutionTest :
       }
       """.trimIndent()
 
-    fun withJenkinsProject(block: (TestProject) -> Unit) =
-      withTestProject { project ->
-        project.settingsFile.writeText(settingsContent)
-        project.buildFile.writeText(jenkinsProjectBuildFile)
-        block(project)
+    fun withJenkinsProject(block: TestProject.() -> Unit) =
+      withTestProject {
+        settingsFile.writeText(settingsContent)
+        buildFile.writeText(jenkinsProjectBuildFile)
+        block()
       }
 
     describe("testRuntimeClasspath") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
-        withJenkinsProject { project ->
-          val result =
-            project
-              .runner(gradleVersion)
-              .withArguments("printResolvedArtifacts")
-              .build()
+        withJenkinsProject {
+          val result = runner(gradleVersion).withArguments("printResolvedArtifacts").build()
 
           val testRuntimeFiles =
             result.output
@@ -94,12 +90,8 @@ class SharedLibraryPluginResolutionTest :
 
     describe("jenkinsPluginHpis") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
-        withJenkinsProject { project ->
-          val result =
-            project
-              .runner(gradleVersion)
-              .withArguments("printResolvedArtifacts")
-              .build()
+        withJenkinsProject {
+          val result = runner(gradleVersion).withArguments("printResolvedArtifacts").build()
 
           val hpiFiles =
             result.output
@@ -119,12 +111,8 @@ class SharedLibraryPluginResolutionTest :
 
     describe("jenkins-core on compile classpath but not main runtime") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
-        withJenkinsProject { project ->
-          val result =
-            project
-              .runner(gradleVersion)
-              .withArguments("printResolvedArtifacts")
-              .build()
+        withJenkinsProject {
+          val result = runner(gradleVersion).withArguments("printResolvedArtifacts").build()
 
           val compileFiles =
             result.output
@@ -146,8 +134,8 @@ class SharedLibraryPluginResolutionTest :
 
     describe("groovy-all absent from testRuntimeClasspath and integrationTestRuntimeClasspath") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
-        withTestProject { project ->
-          project.settingsFile.writeText(
+        withTestProject {
+          settingsFile.writeText(
             """
             dependencyResolutionManagement {
                 repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
@@ -159,7 +147,7 @@ class SharedLibraryPluginResolutionTest :
             rootProject.name = "groovy-all-exclusion-test"
             """.trimIndent(),
           )
-          project.buildFile.writeText(
+          buildFile.writeText(
             """
             plugins {
                 id("com.mkobit.jenkins.pipelines.shared-library")
@@ -179,11 +167,7 @@ class SharedLibraryPluginResolutionTest :
             }
             """.trimIndent(),
           )
-          val result =
-            project
-              .runner(gradleVersion)
-              .withArguments("printGroovyAll")
-              .build()
+          val result = runner(gradleVersion).withArguments("printGroovyAll").build()
 
           val testFiles = result.output.lines().filter { it.startsWith("test:") }
           val integrationFiles = result.output.lines().filter { it.startsWith("integration:") }
@@ -198,8 +182,8 @@ class SharedLibraryPluginResolutionTest :
 
     describe("jenkinsWar resolves exactly one WAR artifact") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
-        withJenkinsProject { project ->
-          project.buildFile.appendText(
+        withJenkinsProject {
+          buildFile.appendText(
             """
 
             tasks.register("printJenkinsWar") {
@@ -211,11 +195,7 @@ class SharedLibraryPluginResolutionTest :
             }
             """.trimIndent(),
           )
-          val result =
-            project
-              .runner(gradleVersion)
-              .withArguments("printJenkinsWar")
-              .build()
+          val result = runner(gradleVersion).withArguments("printJenkinsWar").build()
 
           val warFiles =
             result.output
@@ -232,8 +212,8 @@ class SharedLibraryPluginResolutionTest :
 
     describe("groovy-all absent from integrationTestCompileClasspath") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
-        withTestProject { project ->
-          project.settingsFile.writeText(
+        withTestProject {
+          settingsFile.writeText(
             """
             dependencyResolutionManagement {
                 repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
@@ -245,7 +225,7 @@ class SharedLibraryPluginResolutionTest :
             rootProject.name = "groovy-all-compile-exclusion-test"
             """.trimIndent(),
           )
-          project.buildFile.writeText(
+          buildFile.writeText(
             """
             plugins {
                 id("com.mkobit.jenkins.pipelines.shared-library")
@@ -265,11 +245,7 @@ class SharedLibraryPluginResolutionTest :
             }
             """.trimIndent(),
           )
-          val result =
-            project
-              .runner(gradleVersion)
-              .withArguments("printCompileClasspath")
-              .build()
+          val result = runner(gradleVersion).withArguments("printCompileClasspath").build()
 
           val compileFiles = result.output.lines().filter { it.startsWith("compile:") }
           val runtimeFiles = result.output.lines().filter { it.startsWith("runtime:") }
@@ -287,8 +263,8 @@ class SharedLibraryPluginResolutionTest :
 
     describe("integrationTestGroovyAllRuntime contains groovy-all:2.4.x") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
-        withJenkinsProject { project ->
-          project.buildFile.appendText(
+        withJenkinsProject {
+          buildFile.appendText(
             """
 
             tasks.register("printGroovyAllRuntime") {
@@ -300,11 +276,7 @@ class SharedLibraryPluginResolutionTest :
             }
             """.trimIndent(),
           )
-          val result =
-            project
-              .runner(gradleVersion)
-              .withArguments("printGroovyAllRuntime")
-              .build()
+          val result = runner(gradleVersion).withArguments("printGroovyAllRuntime").build()
 
           val groovyAllFiles =
             result.output
@@ -326,15 +298,13 @@ class SharedLibraryPluginResolutionTest :
         // which causes the runner to throw UnexpectedBuildFailure (test fails).
         // The positive assertion is that the resolved line shows a concrete version
         // (not an empty coordinate), proving the BOM actually constrained it.
-        withJenkinsProject { project ->
+        withJenkinsProject {
           val result =
-            project
-              .runner(gradleVersion)
+            runner(gradleVersion)
               .withArguments("dependencies", "--configuration", "testRuntimeClasspath")
               .build()
 
-          val workflowLine =
-            result.output.lines().firstOrNull { it.contains("workflow-api") }
+          val workflowLine = result.output.lines().firstOrNull { it.contains("workflow-api") }
           workflowLine shouldContain Regex("workflow-api:\\d")
           result.output shouldNotContain "FAILED"
         }

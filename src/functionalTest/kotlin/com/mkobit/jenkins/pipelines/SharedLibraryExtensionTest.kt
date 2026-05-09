@@ -7,6 +7,7 @@ import io.kotest.matchers.string.shouldNotContain
 import testsupport.DEFAULT_CORE_VERSION
 import testsupport.DEFAULT_PIPELINE_UNIT_VERSION
 import testsupport.DEFAULT_TEST_HARNESS_VERSION
+import testsupport.TestProject
 import testsupport.TestedGradleVersion
 import testsupport.withTestProject
 import kotlin.io.path.writeText
@@ -28,9 +29,9 @@ class SharedLibraryExtensionTest :
 
     fun withBaseProject(
       extraConfig: String = "",
-      block: (testsupport.TestProject) -> Unit,
-    ) = withTestProject { project ->
-      project.buildFile.writeText(
+      block: TestProject.() -> Unit,
+    ) = withTestProject {
+      buildFile.writeText(
         """
         plugins {
             id("com.mkobit.jenkins.pipelines.shared-library")
@@ -39,13 +40,13 @@ class SharedLibraryExtensionTest :
         $printDepsTask
         """.trimIndent(),
       )
-      block(project)
+      block()
     }
 
     describe("jenkins.version default is the plugin built-in core version") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
-        withBaseProject { project ->
-          val result = project.runner(gradleVersion).withArguments("printDeclaredDeps").build()
+        withBaseProject {
+          val result = runner(gradleVersion).withArguments("printDeclaredDeps").build()
           result.output shouldContain "plugin:org.jenkins-ci.main:jenkins-core:${DEFAULT_CORE_VERSION}"
         }
       }
@@ -61,8 +62,8 @@ class SharedLibraryExtensionTest :
               }
           }
           """.trimIndent(),
-        ) { project ->
-          val result = project.runner(gradleVersion).withArguments("printDeclaredDeps").build()
+        ) {
+          val result = runner(gradleVersion).withArguments("printDeclaredDeps").build()
           result.output shouldContain "plugin:org.jenkins-ci.main:jenkins-core:2.123.4"
           result.output shouldNotContain "plugin:org.jenkins-ci.main:jenkins-core:${DEFAULT_CORE_VERSION}"
         }
@@ -71,8 +72,8 @@ class SharedLibraryExtensionTest :
 
     describe("jenkins.testHarnessVersion default is the plugin built-in test harness version") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
-        withBaseProject { project ->
-          val result = project.runner(gradleVersion).withArguments("printDeclaredDeps").build()
+        withBaseProject {
+          val result = runner(gradleVersion).withArguments("printDeclaredDeps").build()
           result.output shouldContain
             "integration:org.jenkins-ci.main:jenkins-test-harness:${DEFAULT_TEST_HARNESS_VERSION}"
         }
@@ -81,8 +82,8 @@ class SharedLibraryExtensionTest :
 
     describe("pipelineUnitVersion default is the plugin built-in JPU version") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
-        withBaseProject { project ->
-          val result = project.runner(gradleVersion).withArguments("printDeclaredDeps").build()
+        withBaseProject {
+          val result = runner(gradleVersion).withArguments("printDeclaredDeps").build()
           result.output shouldContain "test:com.lesfurets:jenkins-pipeline-unit:$DEFAULT_PIPELINE_UNIT_VERSION"
         }
       }
@@ -96,8 +97,8 @@ class SharedLibraryExtensionTest :
               pipelineUnitVersion = "9.9.9"
           }
           """.trimIndent(),
-        ) { project ->
-          val result = project.runner(gradleVersion).withArguments("printDeclaredDeps").build()
+        ) {
+          val result = runner(gradleVersion).withArguments("printDeclaredDeps").build()
           result.output shouldContain "test:com.lesfurets:jenkins-pipeline-unit:9.9.9"
           result.output shouldNotContain "test:com.lesfurets:jenkins-pipeline-unit:$DEFAULT_PIPELINE_UNIT_VERSION"
         }
@@ -114,8 +115,8 @@ class SharedLibraryExtensionTest :
               }
           }
           """.trimIndent(),
-        ) { project ->
-          val result = project.runner(gradleVersion).withArguments("printDeclaredDeps").build()
+        ) {
+          val result = runner(gradleVersion).withArguments("printDeclaredDeps").build()
           result.output shouldContain "integration:org.jenkins-ci.main:jenkins-test-harness:9999.vFAKE"
           result.output shouldNotContain
             "integration:org.jenkins-ci.main:jenkins-test-harness:${DEFAULT_TEST_HARNESS_VERSION}"
