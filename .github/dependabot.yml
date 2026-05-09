@@ -5,8 +5,11 @@ updates:
     schedule:
       interval: "weekly"
     cooldown:
-      default-days: 30
+      default-days: 14
     groups:
+      junit:
+        patterns:
+          - "org.junit.*:*"
       kotest:
         patterns:
           - "io.kotest:*"
