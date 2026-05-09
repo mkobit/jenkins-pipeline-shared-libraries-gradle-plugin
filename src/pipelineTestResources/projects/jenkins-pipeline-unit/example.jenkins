@@ -1,7 +1,0 @@
-def execute() {
-  node {
-    echo "We in the pipeline now!"
-  }
-}
-
-return this
