@@ -11,9 +11,11 @@ import testsupport.TestedGradleVersion
 import testsupport.withTestProject
 import kotlin.io.path.writeText
 
-// Tests that the shared-library plugin correctly wires jenkinsPlugin JARs into
-// consumer-defined test suites across all three JVM languages.
-// Requires the Jenkins Maven repo — exclude with -P kotest.tags=!resolution.
+/**
+ * Tests that the shared-library plugin correctly wires jenkinsPlugin JARs into
+ * consumer-defined test suites across all three JVM languages.
+ * Requires the Jenkins Maven repo — exclude with `-P kotest.tags=!resolution`.
+ */
 @Tags("resolution")
 class SharedLibraryPluginTestSuiteTest :
   DescribeSpec({

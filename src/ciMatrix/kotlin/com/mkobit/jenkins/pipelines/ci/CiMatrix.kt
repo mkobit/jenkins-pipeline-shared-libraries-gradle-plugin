@@ -1,9 +1,10 @@
 package com.mkobit.jenkins.pipelines.ci
 
-// Typed CI matrix entries for build.yml (Gradle compat) and composite-test.yml (Jenkins compat).
-// JSON keys use hyphen/underscore naming to match GitHub Actions matrix variable names.
-// Public: JenkinsCompatEntry — consumers (e.g. functionalTest) may inspect fields.
-// Internal: GradleCompatEntry, JavaCompatEntry, CiMatrix, toJson/toGateJson — serialization details.
+/**
+ * Typed CI matrix entry for Jenkins compat jobs in build.yml.
+ * JSON keys use hyphen/underscore naming to match GitHub Actions matrix variable names.
+ * Consumers such as functionalTest inspect fields to pin dependency versions per LTS line.
+ */
 data class JenkinsCompatEntry(
   val java: Int,
   val jenkinsLts: String,
@@ -57,10 +58,11 @@ internal fun CiMatrix<GradleCompatEntry>.toJson(): String =
 @JvmName("javaCompatToJson")
 internal fun CiMatrix<JavaCompatEntry>.toJson(): String = encodeJson(mapOf("include" to include.map { e -> mapOf("java" to e.java) }))
 
-// Hand-rolled rather than kotlinx.serialization: ciMatrix runs against the
-// Gradle-embedded Kotlin stdlib, so an external serialization library would
-// require resolving a version-matched artifact against that stdlib.
-
+/**
+ * Hand-rolled rather than kotlinx.serialization: ciMatrix runs against the
+ * Gradle-embedded Kotlin stdlib, so an external serialization library would
+ * require resolving a version-matched artifact against that stdlib.
+ */
 internal fun encodeJson(v: Any?): String =
   when (v) {
     is String -> {

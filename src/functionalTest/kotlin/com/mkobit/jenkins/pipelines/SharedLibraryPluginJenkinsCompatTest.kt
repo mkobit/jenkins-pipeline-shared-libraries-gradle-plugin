@@ -16,9 +16,11 @@ import testsupport.WORKFLOW_API
 import testsupport.withTestProject
 import kotlin.io.path.writeText
 
-// Verifies that the plugin correctly wires Jenkins LTS dependency coordinates for each supported
-// LTS version. Run per-version by the jenkins-compat CI job; each run pins test.jenkins.version
-// so TestedJenkinsVersion.filtered returns a single entry.
+/**
+ * Verifies that the plugin correctly wires Jenkins LTS dependency coordinates for each supported
+ * LTS version. Run per-version by the jenkins-compat CI job; each run pins `test.jenkins.version`
+ * so [TestedJenkinsVersion.filtered] returns a single entry.
+ */
 @Tags("jenkins-compat")
 class SharedLibraryPluginJenkinsCompatTest :
   DescribeSpec({

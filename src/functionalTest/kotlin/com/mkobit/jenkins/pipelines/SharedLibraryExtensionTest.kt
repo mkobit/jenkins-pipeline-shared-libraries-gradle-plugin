@@ -12,7 +12,7 @@ import testsupport.TestedGradleVersion
 import testsupport.withTestProject
 import kotlin.io.path.writeText
 
-// Smoke-tier: inspects declared dependency coordinates only — no artifact resolution, no network.
+/** Smoke-tier: inspects declared dependency coordinates only — no artifact resolution, no network. */
 class SharedLibraryExtensionTest :
   DescribeSpec({
     // Prints declared deps on all relevant configurations without resolving artifacts.

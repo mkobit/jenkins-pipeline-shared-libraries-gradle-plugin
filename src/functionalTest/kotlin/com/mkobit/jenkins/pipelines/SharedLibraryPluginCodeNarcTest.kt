@@ -13,9 +13,11 @@ import testsupport.withTestProject
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
-// Verifies that shared-library + codenarc together fire the Jenkins Enhanced Classpath Rules
-// and catch violations from rulesets/jenkins.xml using the bundled codenarc-jenkins.xml resource.
-// Requires Jenkins JARs on compilationClasspath — exclude with -P kotest.tags=!resolution.
+/**
+ * Verifies that shared-library + codenarc together fire the Jenkins Enhanced Classpath Rules
+ * and catch violations from rulesets/jenkins.xml using the bundled codenarc-jenkins.xml resource.
+ * Requires Jenkins JARs on compilationClasspath — exclude with `-P kotest.tags=!resolution`.
+ */
 @Tags("resolution")
 class SharedLibraryPluginCodeNarcTest :
   DescribeSpec({

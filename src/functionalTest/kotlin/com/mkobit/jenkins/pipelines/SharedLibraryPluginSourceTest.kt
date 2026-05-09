@@ -11,8 +11,10 @@ import testsupport.TestedGradleVersion
 import testsupport.withTestProject
 import kotlin.io.path.writeText
 
-// Source compilation and unit test execution tests require the Jenkins Maven repo
-// on first run (cold cache). Exclude from fast PR checks with -P kotest.tags=!resolution.
+/**
+ * Source compilation and unit test execution tests require the Jenkins Maven repo on first run.
+ * Exclude from fast PR checks with `-P kotest.tags=!resolution`.
+ */
 @Tags("resolution")
 class SharedLibraryPluginSourceTest :
   DescribeSpec({
