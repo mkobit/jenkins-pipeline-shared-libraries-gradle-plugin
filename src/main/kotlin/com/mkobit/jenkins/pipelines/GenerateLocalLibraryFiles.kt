@@ -7,6 +7,9 @@ import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
+import kotlin.io.path.createDirectories
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.writeText
 
 /**
  * Generates source files that allow `JenkinsRule` integration tests to load the project's shared library.
@@ -65,29 +68,30 @@ abstract class GenerateLocalLibraryFiles : DefaultTask() {
 
   @TaskAction
   fun generate() {
-    val javaDir = javaOutputDir.get()
-    javaDir.file("com/mkobit/jenkins/pipelines/testing/LocalLibraryRetriever.java").asFile.also {
-      it.parentFile.mkdirs()
-      it.writeText(retrieverSource.get())
-    }
-
-    val autoRegistrarFile =
-      javaDir
-        .file("com/mkobit/jenkins/pipelines/testing/SharedLibraryAutoRegistrar.java")
+    val testingPkg =
+      javaOutputDir
+        .get()
         .asFile
+        .toPath()
+        .resolve("com/mkobit/jenkins/pipelines/testing")
+    testingPkg.createDirectories()
+    testingPkg.resolve("LocalLibraryRetriever.java").writeText(retrieverSource.get())
+
+    val autoRegistrar = testingPkg.resolve("SharedLibraryAutoRegistrar.java")
     if (generateAutoRegistrar.get()) {
-      autoRegistrarFile.writeText(autoRegistrarSource.get())
+      autoRegistrar.writeText(autoRegistrarSource.get())
     } else {
-      autoRegistrarFile.delete()
+      autoRegistrar.deleteIfExists()
     }
 
-    val classFilterFile =
+    val classFilter =
       resourcesOutputDir
         .get()
-        .file("META-INF/hudson.remoting.ClassFilter")
         .asFile
-    classFilterFile.parentFile.mkdirs()
-    classFilterFile.writeText(classFilterEntry.get())
+        .toPath()
+        .resolve("META-INF/hudson.remoting.ClassFilter")
+    classFilter.parent.createDirectories()
+    classFilter.writeText(classFilterEntry.get())
   }
 
   companion object {
