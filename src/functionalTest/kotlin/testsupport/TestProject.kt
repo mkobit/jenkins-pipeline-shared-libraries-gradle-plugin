@@ -25,7 +25,7 @@ class TestProject(
       .withGradleVersion(gradleVersion.version)
       .withPluginClasspath()
       .apply {
-        System.getProperty("test.gradle.user.home")?.let { withGradleUserHomeDir(java.io.File(it)) }
+        System.getProperty("test.gradle.user.home")?.let { withTestKitDir(java.io.File(it)) }
       }
 }
 
