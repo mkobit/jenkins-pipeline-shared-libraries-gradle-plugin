@@ -11,9 +11,10 @@ plugin-publish    = "2.1.1"
 spotless          = "8.4.0"
 
 [libraries]
-kotest-bom         = { module = "io.kotest:kotest-bom",                       version.ref = "kotest" }
-kotest-assertions  = { module = "io.kotest:kotest-assertions-core" }
-kotest-runner      = { module = "io.kotest:kotest-runner-junit5" }
+kotest-bom            = { module = "io.kotest:kotest-bom",                              version.ref = "kotest" }
+kotest-assertions     = { module = "io.kotest:kotest-assertions-core" }
+kotest-decoroutinator = { module = "io.kotest:kotest-extensions-decoroutinator",        version.ref = "kotest" }
+kotest-runner         = { module = "io.kotest:kotest-runner-junit5" }
 kotlin-logging     = { module = "io.github.oshai:kotlin-logging-jvm",         version.ref = "kotlin-logging" }
 mockk              = { module = "io.mockk:mockk",                             version.ref = "mockk" }
 okhttp             = { module = "com.squareup.okhttp3:okhttp",                version.ref = "okhttp" }

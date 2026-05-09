@@ -70,7 +70,7 @@ class SharedLibraryPluginSmokeTest :
           result.task(":generateLocalLibraryFiles")!!.outcome shouldBe TaskOutcome.SUCCESS
           val testingDir =
             project.dir.resolve(
-              "build/generated-src/integrationTest/java/com/mkobit/jenkins/pipelines/testing",
+              "build/generated-src/localLibraryRetriever/java/com/mkobit/jenkins/pipelines/testing",
             )
           val retrieverFile = testingDir.resolve("LocalLibraryRetriever.java")
           retrieverFile.shouldExist()
@@ -81,7 +81,7 @@ class SharedLibraryPluginSmokeTest :
           source shouldContain "test.library.name"
           source shouldContain "resources/**"
           project.dir
-            .resolve("build/generated-src/integrationTest/resources/META-INF/hudson.remoting.ClassFilter")
+            .resolve("build/generated-src/localLibraryRetriever/resources/META-INF/hudson.remoting.ClassFilter")
             .shouldExist()
 
           val autoRegistrarFile = testingDir.resolve("SharedLibraryAutoRegistrar.java")

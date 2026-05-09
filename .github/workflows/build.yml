@@ -57,7 +57,9 @@ jobs:
       - uses: ./.github/actions/setup-env
         with:
           java-version: 17
-      - name: Build
+      - name: Compile, style, and unit tests
+        run: ./gradlew spotlessCheck test
+      - name: Functional tests
         run: ./gradlew build --continue
 
   # Gradle compat: Gradle 9.x minor versions × Java 17 (9.5.0 covered by gate).

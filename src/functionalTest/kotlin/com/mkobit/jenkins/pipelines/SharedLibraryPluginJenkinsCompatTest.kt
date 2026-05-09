@@ -80,7 +80,10 @@ class SharedLibraryPluginJenkinsCompatTest :
               .build()
 
           val compileFiles =
-            result.output.lines().filter { it.startsWith("compile:") }.map { it.removePrefix("compile:") }
+            result.output
+              .lines()
+              .filter { it.startsWith("compile:") }
+              .map { it.removePrefix("compile:") }
           compileFiles.shouldNotBeEmpty()
           compileFiles.forAtLeastOne { it shouldContain "jenkins-core-${e.jenkinsVersion}" }
         }
@@ -112,7 +115,10 @@ class SharedLibraryPluginJenkinsCompatTest :
               .build()
 
           val testRuntimeFiles =
-            result.output.lines().filter { it.startsWith("testRuntime:") }.map { it.removePrefix("testRuntime:") }
+            result.output
+              .lines()
+              .filter { it.startsWith("testRuntime:") }
+              .map { it.removePrefix("testRuntime:") }
           testRuntimeFiles.shouldNotBeEmpty()
           testRuntimeFiles.forNone { it shouldContain "groovy-all" }
         }
@@ -129,7 +135,10 @@ class SharedLibraryPluginJenkinsCompatTest :
               .build()
 
           val warFiles =
-            result.output.lines().filter { it.startsWith("war:") }.map { it.removePrefix("war:") }
+            result.output
+              .lines()
+              .filter { it.startsWith("war:") }
+              .map { it.removePrefix("war:") }
           warFiles.size shouldBe 1
           warFiles.single() shouldContain "jenkins-war-${e.jenkinsVersion}"
         }

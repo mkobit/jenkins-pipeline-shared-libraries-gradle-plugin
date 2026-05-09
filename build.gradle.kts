@@ -50,6 +50,7 @@ testing {
         implementation(platform(libs.kotest.bom))
         implementation(libs.mockk)
         implementation(libs.kotest.assertions)
+        implementation(libs.kotest.decoroutinator)
         implementation(libs.kotest.runner)
       }
     }
@@ -60,6 +61,7 @@ testing {
         implementation(gradleTestKit())
         implementation(platform(libs.kotest.bom))
         implementation(libs.kotest.assertions)
+        implementation(libs.kotest.decoroutinator)
         implementation(libs.kotest.runner)
         implementation(project())
       }
@@ -161,6 +163,7 @@ tasks.withType<Test>().configureEach {
     showCauses = true
     showStackTraces = true
     exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+    stackTraceFilters = setOf(org.gradle.api.tasks.testing.logging.TestStackTraceFilter.TRUNCATE)
   }
 }
 
