@@ -1,7 +1,7 @@
 [versions]
 dokka             = "2.0.0"
 foojay            = "1.0.0"
-junit-jupiter     = "5.11.4"
+junit-jupiter     = "6.0.3"
 kotest            = "6.1.11"
 kotlin-logging    = "7.0.0"
 mockk             = "1.13.12"
