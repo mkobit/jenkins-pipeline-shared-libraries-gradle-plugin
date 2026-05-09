@@ -13,7 +13,7 @@ develocity {
   buildScan {
     termsOfUseUrl = "https://gradle.com/terms-of-service"
     termsOfUseAgree = "yes"
-    publishing.onlyIf { System.getenv("CI") != null }
+    publishing.onlyIf { System.getenv("DEVELOCITY_PUBLISH") == "1" }
   }
 }
 
