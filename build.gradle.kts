@@ -82,9 +82,10 @@ testing {
           // GradleRunner builds are I/O-bound and start no Jenkins instance, so
           // parallelism is safe. Split test classes across N forks and let Kotest
           // run N specs concurrently within each fork via coroutines.
+          // jvmArgumentProviders (not systemProperty) so parallelism doesn't pollute the cache key.
           val cpuHalf = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
           maxParallelForks = cpuHalf
-          systemProperty("kotest.framework.parallelism", cpuHalf)
+          jvmArgumentProviders += CommandLineArgumentProvider { listOf("-Dkotest.framework.parallelism=$cpuHalf") }
           // Pin to a single Gradle version for fast debugging: -Ptest.gradle.version=9.5.0
           // Use -Ptest.gradle.version=current to target the wrapper version automatically.
           project.findProperty("test.gradle.version")?.let { prop ->
@@ -116,7 +117,7 @@ tasks.register<Test>("functionalTestCurrentWrapper") {
   systemProperty("kotest.filter.tags", project.findProperty("kotest.tags") ?: "!resolution & !jenkins-compat")
   systemProperty("test.gradle.version", GradleVersion.current().version)
   maxParallelForks = 1
-  systemProperty("kotest.framework.parallelism", 3)
+  jvmArgumentProviders += CommandLineArgumentProvider { listOf("-Dkotest.framework.parallelism=3") }
   reports {
     html.outputLocation.set(layout.buildDirectory.dir("reports/tests/functionalTestCurrentWrapper"))
     junitXml.outputLocation.set(layout.buildDirectory.dir("test-results/functionalTestCurrentWrapper"))
