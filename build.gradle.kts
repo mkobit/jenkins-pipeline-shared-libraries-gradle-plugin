@@ -1,3 +1,5 @@
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestStackTraceFilter
 import org.gradle.util.GradleVersion
 
 plugins {
@@ -135,11 +137,9 @@ tasks.withType<Test>().configureEach {
   System.getenv("GRADLE_USER_HOME")?.let { systemProperty("test.gradle.user.home", it) }
   testLogging {
     events("failed", "skipped")
-    showExceptions = true
-    showCauses = true
     showStackTraces = true
-    exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
-    stackTraceFilters = setOf(org.gradle.api.tasks.testing.logging.TestStackTraceFilter.TRUNCATE)
+    exceptionFormat = TestExceptionFormat.FULL
+    stackTraceFilters = setOf(TestStackTraceFilter.TRUNCATE)
   }
 }
 
