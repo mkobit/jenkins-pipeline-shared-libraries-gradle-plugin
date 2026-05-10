@@ -106,23 +106,24 @@ testing {
 
 // Stable task for CI jobs that test Java or platform variation (not Gradle version variation).
 // Pins to the current wrapper version; gradle-compat CI uses -Ptest.gradle.version=X directly.
-val functionalTestCurrentWrapper = tasks.register<Test>("functionalTestCurrentWrapper") {
-  group = "verification"
-  description = "Functional tests for the current Gradle wrapper version (${GradleVersion.current().version})"
-  val ftSuite = testing.suites.named<JvmTestSuite>("functionalTest").get()
-  testClassesDirs = ftSuite.sources.output.classesDirs
-  classpath = ftSuite.sources.runtimeClasspath + files(tasks.pluginUnderTestMetadata)
-  useJUnitPlatform()
-  mustRunAfter(tasks.test)
-  systemProperty("kotest.filter.tags", project.findProperty("kotest.tags") ?: "!resolution & !jenkins-compat")
-  systemProperty("test.gradle.version", GradleVersion.current().version)
-  maxParallelForks = 1
-  jvmArgumentProviders += CommandLineArgumentProvider { listOf("-Dkotest.framework.parallelism=3") }
-  reports {
-    html.outputLocation.set(layout.buildDirectory.dir("reports/tests/functionalTestCurrentWrapper"))
-    junitXml.outputLocation.set(layout.buildDirectory.dir("test-results/functionalTestCurrentWrapper"))
+val functionalTestCurrentWrapper =
+  tasks.register<Test>("functionalTestCurrentWrapper") {
+    group = "verification"
+    description = "Functional tests for the current Gradle wrapper version (${GradleVersion.current().version})"
+    val ftSuite = testing.suites.named<JvmTestSuite>("functionalTest").get()
+    testClassesDirs = ftSuite.sources.output.classesDirs
+    classpath = ftSuite.sources.runtimeClasspath + files(tasks.pluginUnderTestMetadata)
+    useJUnitPlatform()
+    mustRunAfter(tasks.test)
+    systemProperty("kotest.filter.tags", project.findProperty("kotest.tags") ?: "!resolution & !jenkins-compat")
+    systemProperty("test.gradle.version", GradleVersion.current().version)
+    maxParallelForks = 1
+    jvmArgumentProviders += CommandLineArgumentProvider { listOf("-Dkotest.framework.parallelism=3") }
+    reports {
+      html.outputLocation.set(layout.buildDirectory.dir("reports/tests/functionalTestCurrentWrapper"))
+      junitXml.outputLocation.set(layout.buildDirectory.dir("test-results/functionalTestCurrentWrapper"))
+    }
   }
-}
 
 tasks.check {
   dependsOn(functionalTestCurrentWrapper)

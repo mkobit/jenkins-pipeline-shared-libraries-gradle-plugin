@@ -22,13 +22,12 @@ A Gradle plugin for developing and testing link:{uri-jenkins-shared-library-docs
 
 == Features
 
-* Groovy compilation of `src/` and `vars/` against Jenkins core and plugin APIs
-* Unit testing via link:{uri-jenkins-pipeline-unit}[Jenkins Pipeline Unit] in the `test` suite
-* Integration testing via link:{uri-jenkins-test-harness}[Jenkins Test Harness] (`JenkinsRule`) in the `integrationTest` suite
-* Jenkins BOM auto-injected for the configured LTS line — plugin versions stay aligned by default
-* `LocalLibraryRetriever` and `SharedLibraryAutoRegistrar` generated into a dedicated `localLibraryRetriever` source set — auto-wired into all Jenkins test suites so tests can access the local library without a network checkout or manual `GlobalLibraries.get()` call
-* Additional suites (JUnit Jupiter, Spock, Kotest, …) opt into full Jenkins wiring with a single `useJenkinsTestRunnerSuite(suite)` call
-* Configuration cache compliant
+* Groovy compilation of `src/` and `vars/` against Jenkins APIs.
+* Unit testing via link:{uri-jenkins-pipeline-unit}[Jenkins Pipeline Unit].
+* Integration testing via link:{uri-jenkins-test-harness}[Jenkins Test Harness] (`JenkinsRule`).
+* Automatic Jenkins BOM injection and dependency alignment.
+* Local library auto-registration for integration tests (no network needed).
+* Configuration cache compliant.
 
 == Compatibility
 
@@ -36,69 +35,36 @@ A Gradle plugin for developing and testing link:{uri-jenkins-shared-library-docs
 |===
 |Dimension |Supported versions
 
-|Gradle
-|9.x (9.0 minimum)
-
-|Java
-|17, 21
-
-|Jenkins LTS
-|2.479.x, 2.492.x, 2.528.x, 2.541.x
+|Gradle |9.x
+|Java |17, 21
+|Jenkins LTS |2.479.x, 2.492.x, 2.528.x, 2.541.x
 |===
 
 == Quick start
 
-=== `settings.gradle.kts`
-
-[source,kotlin]
-----
-pluginManagement {
-    repositories {
-        gradlePluginPortal()
-    }
-}
-
-dependencyResolutionManagement {
-    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
-    repositories {
-        mavenCentral()
-        maven("https://repo.jenkins-ci.org/public/")
-    }
-}
-----
-
-The Jenkins Maven repository is required for HPI/JPI plugin resolution.
-
-=== `gradle/libs.versions.toml`
-
 [source,toml]
+.gradle/libs.versions.toml
 ----
 [versions]
-jenkins-bom = "5054.v620b_5d2b_d5e6"   # Renovate updates this
+jenkins-bom = "5054.v620b_5d2b_d5e6"
 
 [libraries]
 jenkins-bom = { module = "io.jenkins.tools.bom:bom-2.479.x", version.ref = "jenkins-bom" }
-# Change module to bom-2.528.x (and update the version) to move to a newer LTS line.
 
 [plugins]
 jenkins-shared-library = { id = "com.mkobit.jenkins.pipelines.shared-library", version = "0.11.0" }
 ----
 
-=== `build.gradle.kts`
-
 [source,kotlin]
+.build.gradle.kts
 ----
 plugins {
     alias(libs.plugins.jenkins.shared.library)
 }
 
 dependencies {
-    // BOM aligns all default workflow plugin versions automatically.
     jenkinsPlugin(platform(libs.jenkins.bom))
-
-    // Add extra Jenkins plugins by Maven coordinate; version is supplied by the BOM.
     jenkinsPlugin("org.jenkinsci.plugins:pipeline-model-definition")
-    jenkinsPlugin("org.6wind.jenkins:lockable-resources")
 }
 ----
 
