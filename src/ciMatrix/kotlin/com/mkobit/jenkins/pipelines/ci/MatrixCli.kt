@@ -9,6 +9,11 @@ import kotlin.io.path.writeText
  * Java version is always 17 — Java compat variation is handled by the java-compat CI job.
  * JenkinsSessionFixture was introduced in harness 2554; the 2.479.x entry overrides the
  * BOM-pinned harness so the base-class pattern in the example compiles.
+ *
+ * Maintenance:
+ * - [Jenkins LTS & Releases](https://www.jenkins.io/changelog-stable/)
+ * - [Jenkins BOM](https://github.com/jenkinsci/bom/releases)
+ * - [Jenkins Test Harness](https://github.com/jenkinsci/jenkins-test-harness/releases)
  */
 val jenkinsCompatEntries: List<JenkinsCompatEntry> =
   listOf(
@@ -37,6 +42,10 @@ val jenkinsCompatEntries: List<JenkinsCompatEntry> =
 
 internal val jenkinsCompatMatrix = CiMatrix(jenkinsCompatEntries)
 
+/**
+ * Gradle versions for gradle-compat CI.
+ * See [Gradle Releases](https://gradle.org/releases/)
+ */
 val gradleCompatVersions = setOf("9.0.0", "9.1.0", "9.2.1", "9.3.1", "9.4.1", "9.5.0")
 
 private val javaCompatVersions = setOf(21, 25)
