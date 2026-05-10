@@ -64,6 +64,7 @@ testing {
         implementation(libs.kotest.decoroutinator)
         implementation(libs.kotest.runner)
         implementation(project())
+        implementation(ciMatrixSourceSet.output)
       }
       targets.configureEach {
         testTask.configure {
@@ -99,19 +100,18 @@ testing {
   }
 }
 
-dependencies {
-  "functionalTestImplementation"(ciMatrixSourceSet.output)
-}
-
-val ftSuite = testing.suites.getByName<JvmTestSuite>("functionalTest")
+val ftSuite = testing.suites.named<JvmTestSuite>("functionalTest")
 
 // Stable task for CI jobs that test Java or platform variation (not Gradle version variation).
 // Pins to the current wrapper version; gradle-compat CI uses -Ptest.gradle.version=X directly.
 tasks.register<Test>("functionalTestCurrentWrapper") {
   group = "verification"
   description = "Functional tests for the current Gradle wrapper version (${GradleVersion.current().version})"
-  testClassesDirs = ftSuite.sources.output.classesDirs
-  classpath = ftSuite.sources.runtimeClasspath + files(tasks.pluginUnderTestMetadata)
+  testClassesDirs =
+    ftSuite
+      .get()
+      .sources.output.classesDirs
+  classpath = ftSuite.get().sources.runtimeClasspath + files(tasks.pluginUnderTestMetadata)
   useJUnitPlatform()
   mustRunAfter(tasks.named("test"))
   systemProperty("kotest.filter.tags", project.findProperty("kotest.tags") ?: "!resolution & !jenkins-compat")
