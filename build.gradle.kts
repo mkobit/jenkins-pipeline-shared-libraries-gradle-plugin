@@ -10,14 +10,6 @@ plugins {
   alias(libs.plugins.spotless)
 }
 
-// Not included in the published plugin JAR — matrix registry and data types only.
-val ciMatrixSourceSet =
-  sourceSets.create("ciMatrix") {
-    kotlin.srcDir("src/ciMatrix/kotlin")
-    compileClasspath += sourceSets.main.get().output + sourceSets.main.get().compileClasspath
-    runtimeClasspath += sourceSets.main.get().output + sourceSets.main.get().runtimeClasspath + output
-  }
-
 group = "com.mkobit.jenkins.pipelines"
 version = "0.11.0"
 description = "Gradle plugins for Jenkins Pipeline shared library development and testing"
@@ -39,6 +31,14 @@ gradlePlugin {
     }
   }
 }
+
+// Not included in the published plugin JAR — matrix registry and data types only.
+val ciMatrixSourceSet =
+  sourceSets.create("ciMatrix") {
+    kotlin.srcDir("src/ciMatrix/kotlin")
+    compileClasspath += sourceSets.main.get().output + sourceSets.main.get().compileClasspath
+    runtimeClasspath += sourceSets.main.get().output + sourceSets.main.get().runtimeClasspath + output
+  }
 
 dependencies {
   api(gradleApi())
@@ -104,20 +104,16 @@ testing {
   }
 }
 
-val ftSuite = testing.suites.named<JvmTestSuite>("functionalTest")
-
 // Stable task for CI jobs that test Java or platform variation (not Gradle version variation).
 // Pins to the current wrapper version; gradle-compat CI uses -Ptest.gradle.version=X directly.
-tasks.register<Test>("functionalTestCurrentWrapper") {
+val functionalTestCurrentWrapper = tasks.register<Test>("functionalTestCurrentWrapper") {
   group = "verification"
   description = "Functional tests for the current Gradle wrapper version (${GradleVersion.current().version})"
-  testClassesDirs =
-    ftSuite
-      .get()
-      .sources.output.classesDirs
-  classpath = ftSuite.get().sources.runtimeClasspath + files(tasks.pluginUnderTestMetadata)
+  val ftSuite = testing.suites.named<JvmTestSuite>("functionalTest").get()
+  testClassesDirs = ftSuite.sources.output.classesDirs
+  classpath = ftSuite.sources.runtimeClasspath + files(tasks.pluginUnderTestMetadata)
   useJUnitPlatform()
-  mustRunAfter(tasks.named("test"))
+  mustRunAfter(tasks.test)
   systemProperty("kotest.filter.tags", project.findProperty("kotest.tags") ?: "!resolution & !jenkins-compat")
   systemProperty("test.gradle.version", GradleVersion.current().version)
   maxParallelForks = 1
@@ -129,7 +125,7 @@ tasks.register<Test>("functionalTestCurrentWrapper") {
 }
 
 tasks.check {
-  dependsOn("functionalTestCurrentWrapper")
+  dependsOn(functionalTestCurrentWrapper)
 }
 
 tasks.withType<Test>().configureEach {
@@ -173,43 +169,23 @@ tasks.wrapper {
   distributionType = Wrapper.DistributionType.ALL
 }
 
-tasks.register<JavaExec>("generateGradleCompatMatrix") {
-  group = "CI"
-  description = "Writes the gradle-compat CI matrix JSON to build/ci/gradle-compat-matrix.json"
-  mainClass = "com.mkobit.jenkins.pipelines.ci.MatrixCliKt"
-  classpath = ciMatrixSourceSet.runtimeClasspath
-  val outFile = layout.buildDirectory.file("ci/gradle-compat-matrix.json")
-  outputs.file(outFile)
-  argumentProviders +=
-    CommandLineArgumentProvider {
-      listOf("gradle", outFile.get().asFile.absolutePath)
-    }
-}
-
-tasks.register<JavaExec>("generateJenkinsCompatMatrix") {
-  group = "CI"
-  description = "Writes the jenkins-compat CI matrix JSON to build/ci/jenkins-compat-matrix.json"
-  mainClass = "com.mkobit.jenkins.pipelines.ci.MatrixCliKt"
-  classpath = ciMatrixSourceSet.runtimeClasspath
-  val outFile = layout.buildDirectory.file("ci/jenkins-compat-matrix.json")
-  outputs.file(outFile)
-  argumentProviders +=
-    CommandLineArgumentProvider {
-      listOf("jenkins", outFile.get().asFile.absolutePath)
-    }
-}
-
-tasks.register<JavaExec>("generateJavaCompatMatrix") {
-  group = "CI"
-  description = "Writes the java-compat CI matrix JSON to build/ci/java-compat-matrix.json"
-  mainClass = "com.mkobit.jenkins.pipelines.ci.MatrixCliKt"
-  classpath = ciMatrixSourceSet.runtimeClasspath
-  val outFile = layout.buildDirectory.file("ci/java-compat-matrix.json")
-  outputs.file(outFile)
-  argumentProviders +=
-    CommandLineArgumentProvider {
-      listOf("java-compat", outFile.get().asFile.absolutePath)
-    }
+listOf(
+  Triple("generateGradleCompatMatrix", "gradle", "ci/gradle-compat-matrix.json"),
+  Triple("generateJenkinsCompatMatrix", "jenkins", "ci/jenkins-compat-matrix.json"),
+  Triple("generateJavaCompatMatrix", "java-compat", "ci/java-compat-matrix.json"),
+).forEach { (taskName, subcommand, outputPath) ->
+  tasks.register<JavaExec>(taskName) {
+    group = "CI"
+    description = "Writes the $subcommand CI matrix JSON to build/$outputPath"
+    mainClass = "com.mkobit.jenkins.pipelines.ci.MatrixCliKt"
+    classpath = ciMatrixSourceSet.runtimeClasspath
+    val outFile = layout.buildDirectory.file(outputPath)
+    outputs.file(outFile)
+    argumentProviders +=
+      CommandLineArgumentProvider {
+        listOf(subcommand, outFile.get().asFile.absolutePath)
+      }
+  }
 }
 
 spotless {
