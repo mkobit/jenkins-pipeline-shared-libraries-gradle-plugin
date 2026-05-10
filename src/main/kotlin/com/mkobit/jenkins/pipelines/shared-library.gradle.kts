@@ -154,7 +154,7 @@ configurations.register(GROOVY_ALL_RUNTIME_CONFIGURATION) {
 }
 dependencies.add(
   GROOVY_ALL_RUNTIME_CONFIGURATION,
-  "${GROOVY_ALL_MODULE}:${SharedLibraryDefaults.GROOVY_ALL_VERSION}",
+  SharedLibraryDefaults.GROOVY_ALL_COORDINATES,
 )
 
 val generateLocalLibraryFiles =
@@ -179,7 +179,7 @@ configurations.named("${LOCAL_LIBRARY_RETRIEVER_SOURCE_SET}CompileOnly") {
   extendsFrom(jenkinsPlugin.get())
 }
 // annotation-indexer processor generates the META-INF index for SharedLibraryAutoRegistrar.
-dependencies.add("${LOCAL_LIBRARY_RETRIEVER_SOURCE_SET}AnnotationProcessor", ANNOTATION_INDEXER)
+dependencies.add("${LOCAL_LIBRARY_RETRIEVER_SOURCE_SET}AnnotationProcessor", SharedLibraryDefaults.ANNOTATION_INDEXER)
 
 extensions.configure<TestingExtension> {
   suites {
@@ -242,7 +242,7 @@ fun applyJenkinsTestWiring(suite: JvmTestSuite) {
   // JvmTestSuitePlugin maps as the test task classpath convention. Adding it via
   // tasks.withType<Test>().configureEach { classpath += ivy } would race against the
   // convention registration for late-registered suites and bypass the runtime classpath.
-  depsHandler.add(suite.sources.runtimeOnlyConfigurationName, IVY_COORDINATES)
+  depsHandler.add(suite.sources.runtimeOnlyConfigurationName, SharedLibraryDefaults.IVY_COORDINATES)
   // Each suite gets its own subdirectory so multiple suites can run in parallel without
   // conflicting on WarExploder output or Gradle's task output tracking.
   val suiteJenkinsDir = layout.buildDirectory.dir("jenkins-for-test/$suiteName")
@@ -343,13 +343,13 @@ configurations.register(IVY_CONFIGURATION) {
   isCanBeConsumed = false
   description = "Ivy for @Grab support in shared library Groovy sources"
 }
-dependencies.add(IVY_CONFIGURATION, IVY_COORDINATES)
+dependencies.add(IVY_CONFIGURATION, SharedLibraryDefaults.IVY_COORDINATES)
 tasks.withType<GroovyCompile>().configureEach {
   groovyClasspath += configurations.getByName(IVY_CONFIGURATION)
 }
 // ivy on the test suite classpath: integration test suites get it via applyJenkinsTestWiring
 // (added to runtimeOnly). The unit test suite gets it here directly.
-dependencies.add("testRuntimeOnly", IVY_COORDINATES)
+dependencies.add("testRuntimeOnly", SharedLibraryDefaults.IVY_COORDINATES)
 
 // ── CodeNarc Enhanced Classpath Rule support ──────────────────────────────────
 

@@ -13,12 +13,6 @@ internal const val JENKINS_WAR_CONFIGURATION = "jenkinsWar"
 internal const val GROOVY_ALL_RUNTIME_CONFIGURATION = "integrationTestGroovyAllRuntime"
 internal const val IVY_CONFIGURATION = "sharedLibraryIvy"
 
-// ── Dependency coordinates ────────────────────────────────────────────────────
-
-internal const val GROOVY_ALL_MODULE = "org.codehaus.groovy:groovy-all"
-internal const val IVY_COORDINATES = "org.apache.ivy:ivy:2.4.0"
-internal const val ANNOTATION_INDEXER = "org.jenkins-ci:annotation-indexer:1.17"
-
 // ── Default Jenkins plugin modules (version-free; managed by the BOM) ─────────
 
 internal const val PIPELINE_GROOVY_LIB_MODULE = "io.jenkins.plugins:pipeline-groovy-lib"

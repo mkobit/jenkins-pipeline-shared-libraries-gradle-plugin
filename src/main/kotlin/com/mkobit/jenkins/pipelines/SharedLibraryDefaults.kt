@@ -21,8 +21,13 @@ object SharedLibraryDefaults {
   internal const val TEST_HARNESS_VERSION = "2565.vd1eb_7c961d1b_"
   const val PIPELINE_UNIT_VERSION = "1.29"
 
-  /** `groovy-all` version matching Jenkins 2.479.x's bundled Groovy runtime. Internal — subject to change once the Groovy 3 / 2.492.x strategy is resolved. */
-  internal const val GROOVY_ALL_VERSION = "2.4.21"
+  /**
+   * Full `groovy-all` coordinate matching Jenkins 2.479.x's bundled Groovy runtime.
+   * Internal — subject to change once the Groovy 3 / 2.492.x strategy is resolved.
+   */
+  internal const val GROOVY_ALL_COORDINATES = "org.codehaus.groovy:groovy-all:2.4.21"
+  internal const val IVY_COORDINATES = "org.apache.ivy:ivy:2.4.0"
+  internal const val ANNOTATION_INDEXER = "org.jenkins-ci:annotation-indexer:1.17"
   internal const val INTEGRATION_TEST_MAX_HEAP_SIZE = "2g"
 
   /**
