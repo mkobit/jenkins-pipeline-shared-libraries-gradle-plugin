@@ -25,41 +25,44 @@ plugins {
 val sharedLibrary =
   extensions.create<SharedLibraryExtension>("sharedLibrary").apply {
     jenkins.version.convention(SharedLibraryDefaults.CORE_VERSION)
-    jenkins.testHarnessVersion.convention(SharedLibraryDefaults.TEST_HARNESS_VERSION)
     jenkins.bomVersion.convention(SharedLibraryDefaults.BOM_VERSION)
     pipelineUnitVersion.convention(SharedLibraryDefaults.PIPELINE_UNIT_VERSION)
     autoRegisterLibrary.convention(true)
     libraryName.convention(project.name)
   }
 
-dependencies.components.all<JenkinsPluginRule>()
-dependencies.components.withModule<JenkinsTestHarnessServletApiRule>(
-  "org.jenkins-ci.main:jenkins-test-harness",
-)
+dependencies {
+  components {
+    all<JenkinsPluginRule>()
+    withModule<JenkinsTestHarnessServletApiRule>(
+      "org.jenkins-ci.main:jenkins-test-harness",
+    )
+  }
 
-dependencies.attributesSchema.attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE) {
-  compatibilityRules.add(JpiCompatibilityRule::class.java)
-}
-dependencies.attributesSchema.attribute(JenkinsPluginRule.JENKINS_ARTIFACT_ATTRIBUTE) {
-  disambiguationRules.add(JenkinsArtifactDisambiguationRule::class.java)
-}
-
-// Eagerly created so the Kotlin DSL generates the jenkinsPlugin(...) typed accessor at sync time.
-val depsHandler = dependencies
-configurations.register(JENKINS_PLUGIN_CONFIGURATION) {
-  isCanBeResolved = false
-  isCanBeConsumed = false
-  description = "Jenkins HPI/JPI plugin dependencies for shared library compilation and testing"
-  withDependencies {
-    sharedLibrary.jenkins.bomVersion.orNull?.let { bomVer ->
-      val (major, minor) =
-        sharedLibrary.jenkins.version
-          .get()
-          .split(".")
-      add(depsHandler.platform("io.jenkins.tools.bom:bom-$major.$minor.x:$bomVer"))
-    }
+  attributesSchema.attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE) {
+    compatibilityRules.add(JpiCompatibilityRule::class.java)
+  }
+  attributesSchema.attribute(JenkinsPluginRule.JENKINS_ARTIFACT_ATTRIBUTE) {
+    disambiguationRules.add(JenkinsArtifactDisambiguationRule::class.java)
   }
 }
+
+val depsHandler = dependencies
+val jenkinsPlugin =
+  configurations.register(JENKINS_PLUGIN_CONFIGURATION) {
+    isCanBeResolved = false
+    isCanBeConsumed = false
+    description = "Jenkins HPI/JPI plugin dependencies for shared library compilation and testing"
+    withDependencies {
+      sharedLibrary.jenkins.bomVersion.orNull?.let { bomVer ->
+        val (major, minor) =
+          sharedLibrary.jenkins.version
+            .get()
+            .split(".")
+        add(depsHandler.platform("io.jenkins.tools.bom:bom-$major.$minor.x:$bomVer"))
+      }
+    }
+  }
 dependencies.addProvider(
   JENKINS_PLUGIN_CONFIGURATION,
   sharedLibrary.jenkins.version.map { v -> "org.jenkins-ci.main:jenkins-core:$v" },
@@ -103,8 +106,6 @@ configurations.named("compileOnly") {
 }
 
 // ── Test suites ───────────────────────────────────────────────────────────────
-
-val jenkinsPlugin = configurations.named(JENKINS_PLUGIN_CONFIGURATION)
 
 // Lenient view so plain-JAR transitives that don't publish HPI are silently skipped
 // rather than failing resolution when artifactType=hpi is requested globally.
@@ -234,10 +235,7 @@ dependencies.addProvider(
 fun applyJenkinsTestWiring(suite: JvmTestSuite) {
   val suiteName = suite.name
   val implConfigName = suite.sources.implementationConfigurationName
-  depsHandler.addProvider(
-    implConfigName,
-    sharedLibrary.jenkins.testHarnessVersion.map { v: String -> "org.jenkins-ci.main:jenkins-test-harness:$v" },
-  )
+  depsHandler.add(implConfigName, "org.jenkins-ci.main:jenkins-test-harness:${SharedLibraryDefaults.TEST_HARNESS_VERSION}")
   // Provide compiled LocalLibraryRetriever + SharedLibraryAutoRegistrar + annotation index.
   depsHandler.add(implConfigName, localLibraryRetrieverSourceSet.output)
   // ivy goes through runtimeOnly so it is part of the suite's runtimeClasspath that

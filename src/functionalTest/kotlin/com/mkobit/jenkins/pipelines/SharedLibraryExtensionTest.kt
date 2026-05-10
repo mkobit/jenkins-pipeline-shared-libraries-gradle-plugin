@@ -70,12 +70,12 @@ class SharedLibraryExtensionTest :
       }
     }
 
-    describe("jenkins.testHarnessVersion default is the plugin built-in test harness version") {
+    describe("jenkins-test-harness is wired with the plugin's internal minimum version") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
         withBaseProject {
           val result = runner(gradleVersion).withArguments("printDeclaredDeps").build()
           result.output shouldContain
-            "integration:org.jenkins-ci.main:jenkins-test-harness:${DEFAULT_TEST_HARNESS_VERSION}"
+            "integration:org.jenkins-ci.main:jenkins-test-harness:$DEFAULT_TEST_HARNESS_VERSION"
         }
       }
     }
@@ -105,22 +105,4 @@ class SharedLibraryExtensionTest :
       }
     }
 
-    describe("jenkins.testHarnessVersion override changes test harness coordinate") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
-        withBaseProject(
-          """
-          sharedLibrary {
-              jenkins {
-                  testHarnessVersion = "9999.vFAKE"
-              }
-          }
-          """.trimIndent(),
-        ) {
-          val result = runner(gradleVersion).withArguments("printDeclaredDeps").build()
-          result.output shouldContain "integration:org.jenkins-ci.main:jenkins-test-harness:9999.vFAKE"
-          result.output shouldNotContain
-            "integration:org.jenkins-ci.main:jenkins-test-harness:${DEFAULT_TEST_HARNESS_VERSION}"
-        }
-      }
-    }
   })

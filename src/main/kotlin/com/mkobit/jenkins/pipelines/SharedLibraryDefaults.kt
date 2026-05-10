@@ -4,14 +4,21 @@ package com.mkobit.jenkins.pipelines
  * Default versions shipped with the plugin, corresponding to the Jenkins 2.479.x LTS line.
  *
  * These are the values wired into every consumer project unless overridden via:
- *   sharedLibrary { jenkins { version = "..."; testHarnessVersion = "..." } }
+ *   sharedLibrary { jenkins { version = "..."; bomVersion = "..." } }
  *
  * Unrelated to any versions a consumer declares in their own build for compilation or IDE support.
  */
 object SharedLibraryDefaults {
   const val CORE_VERSION = "2.479.1"
-  const val TEST_HARNESS_VERSION = "2565.vd1eb_7c961d1b_"
   const val BOM_VERSION = "5054.v620b_5d2b_d5e6"
+
+  /**
+   * Minimum `jenkins-test-harness` version wired into Jenkins test suites.
+   * Not consumer-configurable — if you need a newer harness, declare it in your suite:
+   * `dependencies { implementation("org.jenkins-ci.main:jenkins-test-harness:VERSION") }`
+   * Gradle conflict resolution picks the highest requested version.
+   */
+  internal const val TEST_HARNESS_VERSION = "2565.vd1eb_7c961d1b_"
   const val PIPELINE_UNIT_VERSION = "1.29"
 
   /** `groovy-all` version matching Jenkins 2.479.x's bundled Groovy runtime. Internal — subject to change once the Groovy 3 / 2.492.x strategy is resolved. */

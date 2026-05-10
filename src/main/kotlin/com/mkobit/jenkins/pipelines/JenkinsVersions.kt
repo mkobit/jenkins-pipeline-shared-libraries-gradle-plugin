@@ -3,7 +3,7 @@ package com.mkobit.jenkins.pipelines
 import org.gradle.api.provider.Property
 
 /**
- * Jenkins core and test-harness version coordinates for the `sharedLibrary` plugin.
+ * Jenkins core version coordinates for the `sharedLibrary` plugin.
  *
  * Defaults are sourced from [SharedLibraryDefaults]. Override inside the `jenkins { }` block:
  *
@@ -11,17 +11,18 @@ import org.gradle.api.provider.Property
  * sharedLibrary {
  *     jenkins {
  *         version = "2.492.1"
- *         testHarnessVersion = "2500.vb_4b_5ef084eb_4"
+ *         bomVersion = "3463.v23b_7bb_b_b_66d5"
  *     }
  * }
  * ```
+ *
+ * The `jenkins-test-harness` version is pinned automatically by the Jenkins BOM — no explicit
+ * override is needed. To use a newer harness than the BOM pins, declare it in your suite's
+ * `dependencies` block: `implementation("org.jenkins-ci.main:jenkins-test-harness:VERSION")`.
  */
 abstract class JenkinsVersions {
   /** Jenkins core version — governs the `jenkins-core` compile-only dependency and the `jenkins-war` artifact used by `JenkinsRule`. */
   abstract val version: Property<String>
-
-  /** `jenkins-test-harness` version added to the `integrationTest` compile and runtime classpaths. */
-  abstract val testHarnessVersion: Property<String>
 
   /**
    * Jenkins BOM version.
@@ -34,7 +35,6 @@ abstract class JenkinsVersions {
    * sharedLibrary {
    *     jenkins {
    *         version = "2.492.3"
-   *         testHarnessVersion = "2397.v5e2b_42e5e01c"
    *         bomVersion = "3463.v23b_7bb_b_b_66d5"
    *     }
    * }

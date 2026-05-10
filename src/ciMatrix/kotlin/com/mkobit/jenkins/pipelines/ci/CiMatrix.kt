@@ -10,7 +10,6 @@ data class JenkinsCompatEntry(
   val jenkinsLts: String,
   val jenkinsVersion: String,
   val jenkinsBomVersion: String,
-  val jenkinsTestHarness: String,
 )
 
 internal data class GradleCompatEntry(
@@ -36,7 +35,6 @@ internal fun CiMatrix<JenkinsCompatEntry>.toJson(): String =
             "jenkins-lts" to e.jenkinsLts,
             "jenkins-version" to e.jenkinsVersion,
             "jenkins-bom-version" to e.jenkinsBomVersion,
-            "jenkins-test-harness" to e.jenkinsTestHarness,
           )
         },
     ),

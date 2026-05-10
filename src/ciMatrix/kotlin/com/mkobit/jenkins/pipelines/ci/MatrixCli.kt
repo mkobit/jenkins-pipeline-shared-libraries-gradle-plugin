@@ -7,13 +7,10 @@ import kotlin.io.path.writeText
 /**
  * Jenkins LTS versions under test.
  * Java version is always 17 — Java compat variation is handled by the java-compat CI job.
- * JenkinsSessionFixture was introduced in harness 2554; the 2.479.x entry overrides the
- * BOM-pinned harness so the base-class pattern in the example compiles.
  *
  * Maintenance:
  * - [Jenkins LTS & Releases](https://www.jenkins.io/changelog-stable/)
  * - [Jenkins BOM](https://github.com/jenkinsci/bom/releases)
- * - [Jenkins Test Harness](https://github.com/jenkinsci/jenkins-test-harness/releases)
  */
 val jenkinsCompatEntries: List<JenkinsCompatEntry> =
   listOf(
@@ -22,21 +19,18 @@ val jenkinsCompatEntries: List<JenkinsCompatEntry> =
       jenkinsLts = "2.479.x",
       jenkinsVersion = "2.479.1",
       jenkinsBomVersion = "5054.v620b_5d2b_d5e6",
-      jenkinsTestHarness = "2554.v574c0503d196",
     ),
     JenkinsCompatEntry(
       java = 17,
       jenkinsLts = "2.528.x",
       jenkinsVersion = "2.528.3",
       jenkinsBomVersion = "6398.v1d26a_dd495e2",
-      jenkinsTestHarness = "2565.vd1eb_7c961d1b_",
     ),
     JenkinsCompatEntry(
       java = 17,
       jenkinsLts = "2.541.x",
       jenkinsVersion = "2.541.3",
       jenkinsBomVersion = "6364.v16b_76a_4023c7",
-      jenkinsTestHarness = "2565.vd1eb_7c961d1b_",
     ),
   )
 

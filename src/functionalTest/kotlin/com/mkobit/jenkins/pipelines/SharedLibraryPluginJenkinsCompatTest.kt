@@ -50,7 +50,6 @@ class SharedLibraryPluginJenkinsCompatTest :
             jenkins {
                 version = "${e.jenkinsVersion}"
                 bomVersion = "${e.jenkinsBomVersion}"
-                testHarnessVersion = "${e.jenkinsTestHarness}"
             }
         }
         dependencies {

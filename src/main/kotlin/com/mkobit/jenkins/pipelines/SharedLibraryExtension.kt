@@ -16,7 +16,7 @@ import javax.inject.Inject
  * sharedLibrary {
  *     jenkins {
  *         version = "2.492.3"
- *         testHarnessVersion = "2397.v5992a_d47f025"
+ *         bomVersion = "3463.v23b_7bb_b_b_66d5"
  *     }
  *     pipelineUnitVersion = "1.29"
  * }

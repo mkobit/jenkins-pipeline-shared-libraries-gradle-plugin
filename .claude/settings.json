@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(./gradlew *)"
+      "Bash(./gradlew *)",
+      "WebSearch",
+      "WebFetch(*)"
     ]
   },
   "hooks": {
