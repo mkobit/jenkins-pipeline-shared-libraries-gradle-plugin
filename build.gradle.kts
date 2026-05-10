@@ -53,7 +53,8 @@ testing {
         implementation(libs.mockk)
         implementation(libs.kotest.assertions)
         implementation(libs.kotest.decoroutinator)
-        implementation(libs.kotest.runner)
+        implementation(libs.kotest.engine)
+        runtimeOnly(libs.kotest.runner)
       }
     }
 
@@ -64,7 +65,8 @@ testing {
         implementation(platform(libs.kotest.bom))
         implementation(libs.kotest.assertions)
         implementation(libs.kotest.decoroutinator)
-        implementation(libs.kotest.runner)
+        implementation(libs.kotest.engine)
+        runtimeOnly(libs.kotest.runner)
         implementation(project())
         implementation(ciMatrixSourceSet.output)
       }
