@@ -11,32 +11,30 @@ import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.compile.GroovyCompile
 import org.gradle.api.tasks.javadoc.Groovydoc
-import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.*
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import org.gradle.testing.base.TestingExtension
+import kotlin.io.path.createDirectories
+import kotlin.io.path.outputStream
 
 plugins {
   groovy
 }
 
-// ── Extension ─────────────────────────────────────────────────────────────────
+val sharedLibrary =
+  extensions.create<SharedLibraryExtension>("sharedLibrary").apply {
+    jenkins.version.convention(SharedLibraryDefaults.CORE_VERSION)
+    jenkins.testHarnessVersion.convention(SharedLibraryDefaults.TEST_HARNESS_VERSION)
+    jenkins.bomVersion.convention(SharedLibraryDefaults.BOM_VERSION)
+    pipelineUnitVersion.convention(SharedLibraryDefaults.PIPELINE_UNIT_VERSION)
+    autoRegisterLibrary.convention(true)
+    libraryName.convention(project.name)
+  }
 
-val ext = extensions.create("sharedLibrary", SharedLibraryExtension::class.java)
-ext.jenkins.version.convention(SharedLibraryDefaults.CORE_VERSION)
-ext.jenkins.testHarnessVersion.convention(SharedLibraryDefaults.TEST_HARNESS_VERSION)
-ext.jenkins.bomVersion.convention(SharedLibraryDefaults.BOM_VERSION)
-ext.pipelineUnitVersion.convention(SharedLibraryDefaults.PIPELINE_UNIT_VERSION)
-ext.autoRegisterLibrary.convention(true)
-ext.libraryName.convention(project.name)
-
-// ── Jenkins plugin configurations ─────────────────────────────────────────────
-
-dependencies.components.all(JenkinsPluginRule::class.java)
-dependencies.components.withModule(
+dependencies.components.all<JenkinsPluginRule>()
+dependencies.components.withModule<JenkinsTestHarnessServletApiRule>(
   "org.jenkins-ci.main:jenkins-test-harness",
-  JenkinsTestHarnessServletApiRule::class.java,
 )
 
 dependencies.attributesSchema.attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE) {
@@ -53,9 +51,9 @@ configurations.register(JENKINS_PLUGIN_CONFIGURATION) {
   isCanBeConsumed = false
   description = "Jenkins HPI/JPI plugin dependencies for shared library compilation and testing"
   withDependencies {
-    ext.jenkins.bomVersion.orNull?.let { bomVer ->
+    sharedLibrary.jenkins.bomVersion.orNull?.let { bomVer ->
       val (major, minor) =
-        ext.jenkins.version
+        sharedLibrary.jenkins.version
           .get()
           .split(".")
       add(depsHandler.platform("io.jenkins.tools.bom:bom-$major.$minor.x:$bomVer"))
@@ -64,7 +62,7 @@ configurations.register(JENKINS_PLUGIN_CONFIGURATION) {
 }
 dependencies.addProvider(
   JENKINS_PLUGIN_CONFIGURATION,
-  ext.jenkins.version.map { v -> "org.jenkins-ci.main:jenkins-core:$v" },
+  sharedLibrary.jenkins.version.map { v -> "org.jenkins-ci.main:jenkins-core:$v" },
 )
 dependencies.add(JENKINS_PLUGIN_CONFIGURATION, PIPELINE_GROOVY_LIB_MODULE)
 dependencies.add(JENKINS_PLUGIN_CONFIGURATION, WORKFLOW_JOB_MODULE)
@@ -89,7 +87,7 @@ configurations.register(JENKINS_WAR_CONFIGURATION) {
 }
 dependencies.addProvider(
   JENKINS_WAR_CONFIGURATION,
-  ext.jenkins.version.map { v -> "org.jenkins-ci.main:jenkins-war:$v@war" },
+  sharedLibrary.jenkins.version.map { v -> "org.jenkins-ci.main:jenkins-war:$v@war" },
 )
 
 // ── Main source set ───────────────────────────────────────────────────────────
@@ -122,19 +120,11 @@ val hpiFiles =
     .artifactFiles
     .filter { it.name.endsWith(".hpi") || it.name.endsWith(".jpi") }
 
-val srcDir =
-  layout.projectDirectory
-    .dir("src")
-    .asFile.absolutePath
-val varsDir =
-  layout.projectDirectory
-    .dir("vars")
-    .asFile.absolutePath
-val resourcesDir =
-  layout.projectDirectory
-    .dir("resources")
-    .asFile.absolutePath
-val libraryRoot = layout.projectDirectory.asFile.absolutePath
+val projectRoot = layout.projectDirectory.asFile.toPath()
+val srcDir = projectRoot.resolve("src").toString()
+val varsDir = projectRoot.resolve("vars").toString()
+val resourcesDir = projectRoot.resolve("resources").toString()
+val libraryRoot = projectRoot.toString()
 
 val jenkinsWarFile: Provider<File> =
   configurations
@@ -170,7 +160,7 @@ val generateLocalLibraryFiles =
   tasks.register<GenerateLocalLibraryFiles>("generateLocalLibraryFiles") {
     javaOutputDir.set(layout.buildDirectory.dir("generated-src/localLibraryRetriever/java"))
     resourcesOutputDir.set(layout.buildDirectory.dir("generated-src/localLibraryRetriever/resources"))
-    generateAutoRegistrar.set(ext.autoRegisterLibrary)
+    generateAutoRegistrar.set(sharedLibrary.autoRegisterLibrary)
   }
 
 // Dedicated source set for generated helper classes (LocalLibraryRetriever,
@@ -229,7 +219,7 @@ the<TestingExtension>().suites.withType<JvmTestSuite>().configureEach {
 // add versioned deps here via DependencyHandler.addProvider which accepts Provider<?>.
 dependencies.addProvider(
   "testImplementation",
-  ext.pipelineUnitVersion.map { v: String -> "com.lesfurets:jenkins-pipeline-unit:$v" },
+  sharedLibrary.pipelineUnitVersion.map { v: String -> "com.lesfurets:jenkins-pipeline-unit:$v" },
 )
 
 // ── Jenkins test-harness wiring ───────────────────────────────────────────────
@@ -246,7 +236,7 @@ fun applyJenkinsTestWiring(suite: JvmTestSuite) {
   val implConfigName = suite.sources.implementationConfigurationName
   depsHandler.addProvider(
     implConfigName,
-    ext.jenkins.testHarnessVersion.map { v: String -> "org.jenkins-ci.main:jenkins-test-harness:$v" },
+    sharedLibrary.jenkins.testHarnessVersion.map { v: String -> "org.jenkins-ci.main:jenkins-test-harness:$v" },
   )
   // Provide compiled LocalLibraryRetriever + SharedLibraryAutoRegistrar + annotation index.
   depsHandler.add(implConfigName, localLibraryRetrieverSourceSet.output)
@@ -294,7 +284,7 @@ fun applyJenkinsTestWiring(suite: JvmTestSuite) {
       systemProperty("test.library.src", srcDir)
       systemProperty("test.library.vars", varsDir)
       systemProperty("test.library.resources", resourcesDir)
-      systemProperty("test.library.name", ext.libraryName.get())
+      systemProperty("test.library.name", sharedLibrary.libraryName.get())
       jvmArgumentProviders.add(
         objects.newInstance<JenkinsWarJvmArgumentProvider>().also {
           it.warFile.fileProvider(jenkinsWarFile)
@@ -326,7 +316,7 @@ val deferredUserSuites = mutableListOf<JvmTestSuite>()
 afterEvaluate {
   deferredUserSuites.forEach { applyJenkinsTestWiring(it) }
 }
-ext.setTestSuiteWirer { suite -> deferredUserSuites.add(suite) }
+sharedLibrary.setTestSuiteWirer { suite -> deferredUserSuites.add(suite) }
 
 tasks.named(LifecycleBasePlugin.CHECK_TASK_NAME) {
   dependsOn(integrationTestSuite)
@@ -387,11 +377,11 @@ pluginManager.withPlugin("codenarc") {
     tasks.register("extractJenkinsCodeNarcConfig") {
       outputs.file(jenkinsConfigFile)
       doLast {
-        val file = jenkinsConfigFile.get().asFile
-        file.parentFile.mkdirs()
+        val path = jenkinsConfigFile.get().asFile.toPath()
+        path.parent.createDirectories()
         SharedLibraryExtension::class.java.classLoader
           .getResourceAsStream("com/mkobit/jenkins/pipelines/codenarc-jenkins.xml")!!
-          .use { input -> file.outputStream().use { out -> input.copyTo(out) } }
+          .use { input -> path.outputStream().use { out -> input.copyTo(out) } }
       }
     }
 
@@ -423,4 +413,4 @@ private val SourceSetContainer.main: SourceSet
   get() = getByName("main")
 
 private val SourceSet.groovy: org.gradle.api.file.SourceDirectorySet
-  get() = extensions.getByType(GroovySourceDirectorySet::class.java)
+  get() = extensions.getByType<GroovySourceDirectorySet>()

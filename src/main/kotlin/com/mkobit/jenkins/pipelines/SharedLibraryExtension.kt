@@ -4,6 +4,7 @@ import org.gradle.api.Action
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.plugins.jvm.JvmTestSuite
 import org.gradle.api.provider.Property
+import org.gradle.kotlin.dsl.newInstance
 import javax.inject.Inject
 
 /**
@@ -39,7 +40,7 @@ abstract class SharedLibraryExtension
   constructor(
     objects: ObjectFactory,
   ) {
-    val jenkins: JenkinsVersions = objects.newInstance(JenkinsVersions::class.java)
+    val jenkins: JenkinsVersions = objects.newInstance(JenkinsVersions::class)
 
     /** Configures the Jenkins core and test-harness versions. */
     fun jenkins(action: Action<in JenkinsVersions>) = action.execute(jenkins)

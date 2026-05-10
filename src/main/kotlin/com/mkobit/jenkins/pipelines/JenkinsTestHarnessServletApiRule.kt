@@ -22,10 +22,7 @@ import org.gradle.api.artifacts.ComponentMetadataRule
 @CacheableRule
 internal abstract class JenkinsTestHarnessServletApiRule : ComponentMetadataRule {
   override fun execute(ctx: ComponentMetadataContext) {
-    val leadingVersion =
-      ctx.details.id.version
-        .substringBefore('.')
-        .toIntOrNull() ?: return
+    val leadingVersion = LEADING_INT.find(ctx.details.id.version)?.value?.toIntOrNull() ?: return
     if (leadingVersion < SERVLET_API_REQUIRED_FROM) return
     ctx.details.allVariants {
       withDependencies {
@@ -37,5 +34,9 @@ internal abstract class JenkinsTestHarnessServletApiRule : ComponentMetadataRule
   companion object {
     // Harness 2565 removed jakarta.servlet-api from its published POM.
     private const val SERVLET_API_REQUIRED_FROM = 2565
+
+    // Matches the leading integer in Jenkins version strings of any form:
+    // "2565.vd1eb_7c961d1b_", "2565.1", "2565-rc1", "2565-beta.2", etc.
+    private val LEADING_INT = Regex("""^\d+""")
   }
 }

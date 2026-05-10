@@ -37,9 +37,9 @@ val jenkinsCompatEntries: List<JenkinsCompatEntry> =
 
 internal val jenkinsCompatMatrix = CiMatrix(jenkinsCompatEntries)
 
-val gradleCompatVersions = listOf("9.0.0", "9.1.0", "9.2.1", "9.3.1", "9.4.1", "9.5.0")
+val gradleCompatVersions = setOf("9.0.0", "9.1.0", "9.2.1", "9.3.1", "9.4.1", "9.5.0")
 
-private val javaCompatVersions = listOf(21, 25)
+private val javaCompatVersions = setOf(21, 25)
 
 fun main(args: Array<String>) {
   require(args.size == 2) { "Usage: MatrixCli <subcommand> <output-file>" }

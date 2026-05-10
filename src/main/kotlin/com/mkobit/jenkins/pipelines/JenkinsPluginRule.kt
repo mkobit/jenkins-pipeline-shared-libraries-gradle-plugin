@@ -59,9 +59,11 @@ internal abstract class JenkinsPluginRule
       internal fun isJenkinsPluginGroup(group: String): Boolean =
         group.startsWith("org.jenkins-ci.plugins") ||
           group.startsWith("org.jenkins-ci.modules") ||
-          group.startsWith("io.jenkins.plugins") ||
           group.startsWith("org.jenkinsci.plugins") ||
-          group.startsWith("io.jenkins") ||
+          group.startsWith("org.jvnet.hudson.plugins") ||
+          // io.jenkins covers io.jenkins.plugins, io.jenkins.configuration-as-code, io.jenkins.blueocean, etc.
+          // Exclude io.jenkins.tools (BOM, tooling) which are not plugin artifacts.
+          (group.startsWith("io.jenkins") && !group.startsWith("io.jenkins.tools")) ||
           group.startsWith("org.6wind.jenkins") ||
           group.startsWith("com.cloudbees.jenkins.plugins") ||
           group.startsWith("com.cloudbees.plugins")
