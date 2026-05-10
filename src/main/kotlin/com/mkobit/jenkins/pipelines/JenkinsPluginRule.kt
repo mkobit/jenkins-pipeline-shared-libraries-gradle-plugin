@@ -3,10 +3,12 @@ package com.mkobit.jenkins.pipelines
 import org.gradle.api.artifacts.CacheableRule
 import org.gradle.api.artifacts.ComponentMetadataContext
 import org.gradle.api.artifacts.ComponentMetadataRule
+import org.gradle.api.artifacts.maven.PomModuleDescriptor
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition
 import org.gradle.api.attributes.Attribute
 import org.gradle.api.attributes.Usage
 import org.gradle.api.model.ObjectFactory
+import org.gradle.kotlin.dsl.named
 import javax.inject.Inject
 
 @CacheableRule
@@ -16,8 +18,11 @@ internal abstract class JenkinsPluginRule
     private val objects: ObjectFactory,
   ) : ComponentMetadataRule {
     override fun execute(ctx: ComponentMetadataContext) {
+      val pom = ctx.getDescriptor(PomModuleDescriptor::class.java) ?: return
+      if (pom.packaging !in PLUGIN_PACKAGINGS) return
+
       val id = ctx.details.id
-      if (!isJenkinsPluginGroup(id.group)) return
+      val packaging = pom.packaging
 
       ctx.details.withVariant("compile") {
         attributes {
@@ -31,10 +36,10 @@ internal abstract class JenkinsPluginRule
       }
 
       // Separate java-runtime variant backed by the JAR — unit test runtimeClasspaths
-      // resolve plugin classes without picking up the HPI runtime variant.
+      // resolve plugin classes without picking up the HPI/JPI runtime variant.
       ctx.details.addVariant("jar-runtime", "compile") {
         attributes {
-          attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage::class.java, Usage.JAVA_RUNTIME))
+          attribute(Usage.USAGE_ATTRIBUTE, objects.named<Usage>(Usage.JAVA_RUNTIME))
           attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, ArtifactTypeDefinition.JAR_TYPE)
           attribute(JENKINS_ARTIFACT_ATTRIBUTE, "jar")
         }
@@ -42,30 +47,20 @@ internal abstract class JenkinsPluginRule
 
       ctx.details.withVariant("runtime") {
         attributes {
-          attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, "hpi")
-          attribute(JENKINS_ARTIFACT_ATTRIBUTE, "hpi")
+          attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, packaging)
+          attribute(JENKINS_ARTIFACT_ATTRIBUTE, packaging)
         }
         withFiles {
           removeAllFiles()
-          addFile("${id.name}-${id.version}.hpi")
+          addFile("${id.name}-${id.version}.$packaging")
         }
       }
     }
 
     companion object {
+      private val PLUGIN_PACKAGINGS = setOf("hpi", "jpi")
+
       val JENKINS_ARTIFACT_ATTRIBUTE: Attribute<String> =
         Attribute.of("com.mkobit.jenkins.artifact", String::class.java)
-
-      internal fun isJenkinsPluginGroup(group: String): Boolean =
-        group.startsWith("org.jenkins-ci.plugins") ||
-          group.startsWith("org.jenkins-ci.modules") ||
-          group.startsWith("org.jenkinsci.plugins") ||
-          group.startsWith("org.jvnet.hudson.plugins") ||
-          // io.jenkins covers io.jenkins.plugins, io.jenkins.configuration-as-code, io.jenkins.blueocean, etc.
-          // Exclude io.jenkins.tools (BOM, tooling) which are not plugin artifacts.
-          (group.startsWith("io.jenkins") && !group.startsWith("io.jenkins.tools")) ||
-          group.startsWith("org.6wind.jenkins") ||
-          group.startsWith("com.cloudbees.jenkins.plugins") ||
-          group.startsWith("com.cloudbees.plugins")
     }
   }
