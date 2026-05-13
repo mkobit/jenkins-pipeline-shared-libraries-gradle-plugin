@@ -189,6 +189,22 @@ listOf(
   }
 }
 
+tasks.register("generateBuildConfig") {
+  group = "CI"
+  description = "Writes the wrapper Gradle version and Java toolchain spec to build/ci/build-config.json"
+  val wrapperVersion = tasks.named<Wrapper>("wrapper").map { it.gradleVersion }
+  val javaVersion = java.toolchain.languageVersion.map { it.asInt() }
+  val outFile = layout.buildDirectory.file("ci/build-config.json")
+  inputs.property("gradle-version", wrapperVersion)
+  inputs.property("java-version", javaVersion)
+  outputs.file(outFile)
+  doLast {
+    outFile.get().asFile.writeText(
+      """{"gradle-version":"${wrapperVersion.get()}","java-version":"${javaVersion.get()}"}""",
+    )
+  }
+}
+
 spotless {
   kotlin {
     ktlint()

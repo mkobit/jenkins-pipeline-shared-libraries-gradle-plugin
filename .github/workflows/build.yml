@@ -17,6 +17,27 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  build-config:
+    name: Generate build config
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      gradle-version: ${{ steps.gen.outputs.gradle-version }}
+      java-version: ${{ steps.gen.outputs.java-version }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: ./.github/actions/setup-env
+        with:
+          java-version: 17
+      - name: Generate build config
+        run: ./gradlew generateBuildConfig --console=plain
+      - id: gen
+        run: |
+          echo "gradle-version=$(jq -r '."gradle-version"' build/ci/build-config.json)" >> "$GITHUB_OUTPUT"
+          echo "java-version=$(jq -r '."java-version"' build/ci/build-config.json)" >> "$GITHUB_OUTPUT"
+
   matrix-gen:
     name: Generate CI matrices
     runs-on: ubuntu-latest
@@ -41,7 +62,8 @@ jobs:
           echo "jenkins-matrix=$(cat build/ci/jenkins-compat-matrix.json)" >> "$GITHUB_OUTPUT"
 
   gate:
-    name: Gate (Gradle 9.4.1 / Java 17)
+    name: Gate (Gradle ${{ needs.build-config.outputs.gradle-version }} / Java ${{ needs.build-config.outputs.java-version }})
+    needs: [build-config]
     runs-on: ubuntu-latest
     timeout-minutes: 25
     permissions:
@@ -53,7 +75,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
       - uses: ./.github/actions/setup-env
         with:
-          java-version: 17
+          java-version: ${{ needs.build-config.outputs.java-version }}
       - name: Compile, style, and unit tests
         run: ./gradlew spotlessCheck test
       - name: Functional tests (current Gradle)
@@ -67,8 +89,8 @@ jobs:
           fail_on_failure: false
 
   gradle-compat:
-    name: Gradle ${{ matrix.gradle }} / Java 17
-    needs: [gate, matrix-gen]
+    name: Gradle ${{ matrix.gradle }} / Java ${{ needs.build-config.outputs.java-version }}
+    needs: [gate, matrix-gen, build-config]
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -81,7 +103,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
       - uses: ./.github/actions/setup-env
         with:
-          java-version: 17
+          java-version: ${{ needs.build-config.outputs.java-version }}
       - name: Functional tests (Gradle ${{ matrix.gradle }})
         run: ./gradlew functionalTest --continue -Ptest.gradle.version="${{ matrix.gradle }}"
       - name: Functional tests (resolution)
@@ -95,8 +117,8 @@ jobs:
           fail_on_failure: false
 
   platform-compat:
-    name: ${{ matrix.os }} / Gradle 9.4.1 / Java 21
-    needs: gate
+    name: ${{ matrix.os }} / Gradle ${{ needs.build-config.outputs.gradle-version }} / Java 21
+    needs: [gate, build-config]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     permissions:
@@ -131,8 +153,8 @@ jobs:
           fail_on_failure: false
 
   jenkins-compat:
-    name: Jenkins ${{ matrix.jenkins-lts }} / Gradle 9.4.1 / Java 17
-    needs: [gate, matrix-gen]
+    name: Jenkins ${{ matrix.jenkins-lts }} / Gradle ${{ needs.build-config.outputs.gradle-version }} / Java ${{ needs.build-config.outputs.java-version }}
+    needs: [gate, matrix-gen, build-config]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -145,7 +167,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
       - uses: ./.github/actions/setup-env
         with:
-          java-version: 17
+          java-version: ${{ needs.build-config.outputs.java-version }}
       - name: Jenkins compat tests (Jenkins ${{ matrix.jenkins-lts }})
         run: ./gradlew functionalTest --continue -Pkotest.tags=jenkins-compat -Ptest.jenkins.version="${{ matrix.jenkins-version }}"
       - name: Publish test results
@@ -157,8 +179,8 @@ jobs:
           fail_on_failure: false
 
   java-compat:
-    name: Gradle 9.4.1 / Java ${{ matrix.java }}
-    needs: [gate, matrix-gen]
+    name: Gradle ${{ needs.build-config.outputs.gradle-version }} / Java ${{ matrix.java }}
+    needs: [gate, matrix-gen, build-config]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
