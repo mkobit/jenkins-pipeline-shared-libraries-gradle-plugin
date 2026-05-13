@@ -41,7 +41,7 @@ jobs:
           echo "jenkins-matrix=$(cat build/ci/jenkins-compat-matrix.json)" >> "$GITHUB_OUTPUT"
 
   gate:
-    name: Gate (Gradle 9.5.0 / Java 17)
+    name: Gate (Gradle 9.4.1 / Java 17)
     runs-on: ubuntu-latest
     timeout-minutes: 25
     permissions:
@@ -95,7 +95,7 @@ jobs:
           fail_on_failure: false
 
   platform-compat:
-    name: ${{ matrix.os }} / Gradle 9.5.0 / Java 21
+    name: ${{ matrix.os }} / Gradle 9.4.1 / Java 21
     needs: gate
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
@@ -131,7 +131,7 @@ jobs:
           fail_on_failure: false
 
   jenkins-compat:
-    name: Jenkins ${{ matrix.jenkins-lts }} / Gradle 9.5.0 / Java 17
+    name: Jenkins ${{ matrix.jenkins-lts }} / Gradle 9.4.1 / Java 17
     needs: [gate, matrix-gen]
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -157,7 +157,7 @@ jobs:
           fail_on_failure: false
 
   java-compat:
-    name: Gradle 9.5.0 / Java ${{ matrix.java }}
+    name: Gradle 9.4.1 / Java ${{ matrix.java }}
     needs: [gate, matrix-gen]
     runs-on: ubuntu-latest
     timeout-minutes: 15
