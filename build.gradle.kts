@@ -8,6 +8,7 @@ plugins {
   alias(libs.plugins.gradle.publish)
   alias(libs.plugins.openrewrite)
   alias(libs.plugins.spotless)
+  id("ci-tasks")
 }
 
 group = "com.mkobit.jenkins.pipelines"
@@ -31,14 +32,6 @@ gradlePlugin {
     }
   }
 }
-
-// Not included in the published plugin JAR — matrix registry and data types only.
-val ciMatrixSourceSet =
-  sourceSets.create("ciMatrix") {
-    kotlin.srcDir("src/ciMatrix/kotlin")
-    compileClasspath += sourceSets.main.get().output + sourceSets.main.get().compileClasspath
-    runtimeClasspath += sourceSets.main.get().output + sourceSets.main.get().runtimeClasspath + output
-  }
 
 dependencies {
   api(gradleApi())
@@ -68,7 +61,6 @@ testing {
         implementation(libs.kotest.engine)
         runtimeOnly(libs.kotest.runner)
         implementation(project())
-        implementation(ciMatrixSourceSet.output)
       }
       targets.configureEach {
         testTask.configure {
@@ -168,41 +160,6 @@ afterEvaluate {
 tasks.wrapper {
   gradleVersion = "9.4.1"
   distributionType = Wrapper.DistributionType.ALL
-}
-
-listOf(
-  Triple("generateGradleCompatMatrix", "gradle", "ci/gradle-compat-matrix.json"),
-  Triple("generateJenkinsCompatMatrix", "jenkins", "ci/jenkins-compat-matrix.json"),
-  Triple("generateJavaCompatMatrix", "java-compat", "ci/java-compat-matrix.json"),
-).forEach { (taskName, subcommand, outputPath) ->
-  tasks.register<JavaExec>(taskName) {
-    group = "CI"
-    description = "Writes the $subcommand CI matrix JSON to build/$outputPath"
-    mainClass = "com.mkobit.jenkins.pipelines.ci.MatrixCliKt"
-    classpath = ciMatrixSourceSet.runtimeClasspath
-    val outFile = layout.buildDirectory.file(outputPath)
-    outputs.file(outFile)
-    argumentProviders +=
-      CommandLineArgumentProvider {
-        listOf(subcommand, outFile.get().asFile.absolutePath)
-      }
-  }
-}
-
-tasks.register("generateBuildConfig") {
-  group = "CI"
-  description = "Writes the wrapper Gradle version and Java toolchain spec to build/ci/build-config.json"
-  val wrapperVersion = tasks.named<Wrapper>("wrapper").map { it.gradleVersion }
-  val javaVersion = java.toolchain.languageVersion.map { it.asInt() }
-  val outFile = layout.buildDirectory.file("ci/build-config.json")
-  inputs.property("gradle-version", wrapperVersion)
-  inputs.property("java-version", javaVersion)
-  outputs.file(outFile)
-  doLast {
-    outFile.get().asFile.writeText(
-      """{"gradle-version":"${wrapperVersion.get()}","java-version":"${javaVersion.get()}"}""",
-    )
-  }
 }
 
 spotless {
