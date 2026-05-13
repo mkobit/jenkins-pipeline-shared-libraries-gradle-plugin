@@ -47,7 +47,6 @@ dependencies {
   }
 }
 
-val depsHandler = dependencies
 val jenkinsPlugin =
   configurations.register(JENKINS_PLUGIN_CONFIGURATION) {
     isCanBeResolved = false
@@ -59,24 +58,26 @@ val jenkinsPlugin =
           sharedLibrary.jenkins.version
             .get()
             .split(".")
-        add(depsHandler.platform("io.jenkins.tools.bom:bom-$major.$minor.x:$bomVer"))
+        add(project.dependencies.platform("io.jenkins.tools.bom:bom-$major.$minor.x:$bomVer"))
       }
     }
   }
-dependencies.addProvider(
-  JENKINS_PLUGIN_CONFIGURATION,
-  sharedLibrary.jenkins.version.map { v -> "org.jenkins-ci.main:jenkins-core:$v" },
-)
-dependencies.add(JENKINS_PLUGIN_CONFIGURATION, PIPELINE_GROOVY_LIB_MODULE)
-dependencies.add(JENKINS_PLUGIN_CONFIGURATION, WORKFLOW_JOB_MODULE)
-dependencies.add(JENKINS_PLUGIN_CONFIGURATION, WORKFLOW_BASIC_STEPS_MODULE)
-dependencies.add(JENKINS_PLUGIN_CONFIGURATION, WORKFLOW_DURABLE_TASK_STEP_MODULE)
+dependencies {
+  addProvider(
+    JENKINS_PLUGIN_CONFIGURATION,
+    sharedLibrary.jenkins.version.map { v -> "org.jenkins-ci.main:jenkins-core:$v" },
+  )
+  add(JENKINS_PLUGIN_CONFIGURATION, PIPELINE_GROOVY_LIB_MODULE)
+  add(JENKINS_PLUGIN_CONFIGURATION, WORKFLOW_JOB_MODULE)
+  add(JENKINS_PLUGIN_CONFIGURATION, WORKFLOW_BASIC_STEPS_MODULE)
+  add(JENKINS_PLUGIN_CONFIGURATION, WORKFLOW_DURABLE_TASK_STEP_MODULE)
+}
 
 configurations.register(JENKINS_PLUGIN_HPIS_CONFIGURATION) {
   isCanBeResolved = true
   isCanBeConsumed = false
   description = "Jenkins plugin HPI archives for embedded Jenkins runtime (integration tests)"
-  extendsFrom(configurations.named(JENKINS_PLUGIN_CONFIGURATION).get())
+  extendsFrom(jenkinsPlugin.get())
   attributes {
     attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, "hpi")
     attribute(JenkinsPluginRule.JENKINS_ARTIFACT_ATTRIBUTE, "hpi")
@@ -88,10 +89,12 @@ configurations.register(JENKINS_WAR_CONFIGURATION) {
   isCanBeConsumed = false
   description = "Jenkins WAR file for the embedded Jenkins runtime (integration tests)"
 }
-dependencies.addProvider(
-  JENKINS_WAR_CONFIGURATION,
-  sharedLibrary.jenkins.version.map { v -> "org.jenkins-ci.main:jenkins-war:$v@war" },
-)
+dependencies {
+  addProvider(
+    JENKINS_WAR_CONFIGURATION,
+    sharedLibrary.jenkins.version.map { v -> "org.jenkins-ci.main:jenkins-war:$v@war" },
+  )
+}
 
 // ── Main source set ───────────────────────────────────────────────────────────
 
@@ -102,7 +105,7 @@ sourceSets.main.apply {
 }
 // Jenkins APIs are compile-only for the shared library; the library runs inside Jenkins at runtime.
 configurations.named("compileOnly") {
-  extendsFrom(configurations.named(JENKINS_PLUGIN_CONFIGURATION).get())
+  extendsFrom(jenkinsPlugin.get())
 }
 
 // ── Test suites ───────────────────────────────────────────────────────────────
@@ -121,11 +124,9 @@ val hpiFiles =
     .artifactFiles
     .filter { it.name.endsWith(".hpi") || it.name.endsWith(".jpi") }
 
-val projectRoot = layout.projectDirectory.asFile.toPath()
-val srcDir = projectRoot.resolve("src").toString()
-val varsDir = projectRoot.resolve("vars").toString()
-val resourcesDir = projectRoot.resolve("resources").toString()
-val libraryRoot = projectRoot.toString()
+val srcDir = layout.projectDirectory.dir("src")
+val varsDir = layout.projectDirectory.dir("vars")
+val resourcesDir = layout.projectDirectory.dir("resources")
 
 val jenkinsWarFile: Provider<File> =
   configurations
@@ -152,16 +153,15 @@ configurations.register(GROOVY_ALL_RUNTIME_CONFIGURATION) {
   isCanBeResolved = true
   isCanBeConsumed = false
 }
-dependencies.add(
-  GROOVY_ALL_RUNTIME_CONFIGURATION,
-  SharedLibraryDefaults.GROOVY_ALL_COORDINATES,
-)
+dependencies {
+  add(GROOVY_ALL_RUNTIME_CONFIGURATION, SharedLibraryDefaults.GROOVY_ALL_COORDINATES)
+}
 
 val generateLocalLibraryFiles =
   tasks.register<GenerateLocalLibraryFiles>("generateLocalLibraryFiles") {
-    javaOutputDir.set(layout.buildDirectory.dir("generated-src/localLibraryRetriever/java"))
-    resourcesOutputDir.set(layout.buildDirectory.dir("generated-src/localLibraryRetriever/resources"))
-    generateAutoRegistrar.set(sharedLibrary.autoRegisterLibrary)
+    javaOutputDir = layout.buildDirectory.dir("generated-src/localLibraryRetriever/java")
+    resourcesOutputDir = layout.buildDirectory.dir("generated-src/localLibraryRetriever/resources")
+    generateAutoRegistrar = sharedLibrary.autoRegisterLibrary
   }
 
 // Dedicated source set for generated helper classes (LocalLibraryRetriever,
@@ -179,13 +179,15 @@ configurations.named("${LOCAL_LIBRARY_RETRIEVER_SOURCE_SET}CompileOnly") {
   extendsFrom(jenkinsPlugin.get())
 }
 // annotation-indexer processor generates the META-INF index for SharedLibraryAutoRegistrar.
-dependencies.add("${LOCAL_LIBRARY_RETRIEVER_SOURCE_SET}AnnotationProcessor", SharedLibraryDefaults.ANNOTATION_INDEXER)
+dependencies {
+  add("${LOCAL_LIBRARY_RETRIEVER_SOURCE_SET}AnnotationProcessor", SharedLibraryDefaults.ANNOTATION_INDEXER)
+}
 
 extensions.configure<TestingExtension> {
   suites {
     named<JvmTestSuite>("test") {
       useJUnitJupiter()
-      sources.apply {
+      with(sources) {
         java.setSrcDirs(listOf("test/unit/java"))
         groovy.setSrcDirs(listOf("test/unit/groovy"))
         resources.setSrcDirs(listOf("test/unit/resources"))
@@ -193,7 +195,7 @@ extensions.configure<TestingExtension> {
     }
 
     register<JvmTestSuite>(INTEGRATION_TEST_SUITE) {
-      sources.apply {
+      with(sources) {
         java.setSrcDirs(listOf("test/integration/java"))
         groovy.setSrcDirs(listOf("test/integration/groovy"))
         resources.setSrcDirs(listOf("test/integration/resources"))
@@ -207,10 +209,9 @@ extensions.configure<TestingExtension> {
 // Exclude groovy-all (Groovy 2.4 bundled by jenkins-core): having it on the compile
 // classpath alongside groovy:3.x (from Spock 2.x) causes the Groovy compiler to pick up
 // the 2.4 runtime, breaking Spock compilation entirely.
-val projectConfigurations = configurations
 the<TestingExtension>().suites.withType<JvmTestSuite>().configureEach {
   val implConfigName = sources.implementationConfigurationName
-  projectConfigurations.named(implConfigName) {
+  project.configurations.named(implConfigName) {
     extendsFrom(jenkinsPlugin.get())
     exclude(mapOf("group" to "org.codehaus.groovy", "module" to "groovy-all"))
   }
@@ -218,10 +219,12 @@ the<TestingExtension>().suites.withType<JvmTestSuite>().configureEach {
 
 // DependencyCollector (used inside suites DSL) has no Provider<String> overload;
 // add versioned deps here via DependencyHandler.addProvider which accepts Provider<?>.
-dependencies.addProvider(
-  "testImplementation",
-  sharedLibrary.pipelineUnitVersion.map { v: String -> "com.lesfurets:jenkins-pipeline-unit:$v" },
-)
+dependencies {
+  addProvider(
+    "testImplementation",
+    sharedLibrary.pipelineUnitVersion.map { v -> "com.lesfurets:jenkins-pipeline-unit:$v" },
+  )
+}
 
 // ── Jenkins test-harness wiring ───────────────────────────────────────────────
 
@@ -235,14 +238,16 @@ dependencies.addProvider(
 fun applyJenkinsTestWiring(suite: JvmTestSuite) {
   val suiteName = suite.name
   val implConfigName = suite.sources.implementationConfigurationName
-  depsHandler.add(implConfigName, "org.jenkins-ci.main:jenkins-test-harness:${SharedLibraryDefaults.TEST_HARNESS_VERSION}")
-  // Provide compiled LocalLibraryRetriever + SharedLibraryAutoRegistrar + annotation index.
-  depsHandler.add(implConfigName, localLibraryRetrieverSourceSet.output)
-  // ivy goes through runtimeOnly so it is part of the suite's runtimeClasspath that
-  // JvmTestSuitePlugin maps as the test task classpath convention. Adding it via
-  // tasks.withType<Test>().configureEach { classpath += ivy } would race against the
-  // convention registration for late-registered suites and bypass the runtime classpath.
-  depsHandler.add(suite.sources.runtimeOnlyConfigurationName, SharedLibraryDefaults.IVY_COORDINATES)
+  project.dependencies {
+    add(implConfigName, "org.jenkins-ci.main:jenkins-test-harness:${SharedLibraryDefaults.TEST_HARNESS_VERSION}")
+    // Provide compiled LocalLibraryRetriever + SharedLibraryAutoRegistrar + annotation index.
+    add(implConfigName, localLibraryRetrieverSourceSet.output)
+    // ivy goes through runtimeOnly so it is part of the suite's runtimeClasspath that
+    // JvmTestSuitePlugin maps as the test task classpath convention. Adding it via
+    // tasks.withType<Test>().configureEach { classpath += ivy } would race against the
+    // convention registration for late-registered suites and bypass the runtime classpath.
+    add(suite.sources.runtimeOnlyConfigurationName, SharedLibraryDefaults.IVY_COORDINATES)
+  }
   // Each suite gets its own subdirectory so multiple suites can run in parallel without
   // conflicting on WarExploder output or Gradle's task output tracking.
   val suiteJenkinsDir = layout.buildDirectory.dir("jenkins-for-test/$suiteName")
@@ -251,8 +256,8 @@ fun applyJenkinsTestWiring(suite: JvmTestSuite) {
       mustRunAfter(tasks.test)
       // WarExploder reads buildDirectory (defaults to "target") as parent of its explode dir.
       jvmArgumentProviders.add(
-        objects.newInstance<BuildDirJvmArgumentProvider>().also {
-          it.dir.set(suiteJenkinsDir)
+        objects.newInstance<BuildDirJvmArgumentProvider>().apply {
+          dir = suiteJenkinsDir
         },
       )
       outputs.dir(suiteJenkinsDir)
@@ -278,14 +283,14 @@ fun applyJenkinsTestWiring(suite: JvmTestSuite) {
       }
       maxParallelForks = 1
       maxHeapSize = SharedLibraryDefaults.INTEGRATION_TEST_MAX_HEAP_SIZE
-      systemProperty("test.library.root", libraryRoot)
-      systemProperty("test.library.src", srcDir)
-      systemProperty("test.library.vars", varsDir)
-      systemProperty("test.library.resources", resourcesDir)
+      systemProperty("test.library.root", layout.projectDirectory.asFile.absolutePath)
+      systemProperty("test.library.src", srcDir.asFile.absolutePath)
+      systemProperty("test.library.vars", varsDir.asFile.absolutePath)
+      systemProperty("test.library.resources", resourcesDir.asFile.absolutePath)
       systemProperty("test.library.name", sharedLibrary.libraryName.get())
       jvmArgumentProviders.add(
-        objects.newInstance<JenkinsWarJvmArgumentProvider>().also {
-          it.warFile.fileProvider(jenkinsWarFile)
+        objects.newInstance<JenkinsWarJvmArgumentProvider>().apply {
+          warFile.fileProvider(jenkinsWarFile)
         },
       )
       // Jenkins uses XStream, Guice, and other reflection-heavy libraries that
@@ -325,13 +330,13 @@ tasks.named(LifecycleBasePlugin.CHECK_TASK_NAME) {
 tasks {
   register<Jar>("sourcesJar") {
     description = "Assembles a JAR of the source"
-    archiveClassifier.set("sources")
+    archiveClassifier = "sources"
     from(sourceSets.main.allSource)
   }
   val groovydoc = named<Groovydoc>(GroovyPlugin.GROOVYDOC_TASK_NAME)
   register<Jar>("groovydocJar") {
     description = "Assembles the Groovydoc JAR"
-    archiveClassifier.set("javadoc")
+    archiveClassifier = "javadoc"
     from(groovydoc.map { it.destinationDir })
   }
 }
@@ -343,13 +348,15 @@ configurations.register(IVY_CONFIGURATION) {
   isCanBeConsumed = false
   description = "Ivy for @Grab support in shared library Groovy sources"
 }
-dependencies.add(IVY_CONFIGURATION, SharedLibraryDefaults.IVY_COORDINATES)
+dependencies {
+  add(IVY_CONFIGURATION, SharedLibraryDefaults.IVY_COORDINATES)
+  // ivy on the test suite classpath: integration test suites get it via applyJenkinsTestWiring
+  // (added to runtimeOnly). The unit test suite gets it here directly.
+  add("testRuntimeOnly", SharedLibraryDefaults.IVY_COORDINATES)
+}
 tasks.withType<GroovyCompile>().configureEach {
   groovyClasspath += configurations.getByName(IVY_CONFIGURATION)
 }
-// ivy on the test suite classpath: integration test suites get it via applyJenkinsTestWiring
-// (added to runtimeOnly). The unit test suite gets it here directly.
-dependencies.add("testRuntimeOnly", SharedLibraryDefaults.IVY_COORDINATES)
 
 // ── CodeNarc Enhanced Classpath Rule support ──────────────────────────────────
 
@@ -390,10 +397,10 @@ pluginManager.withPlugin("codenarc") {
     config = resources.text.fromFile(jenkinsConfigFile)
     codenarcClasspath = configurations.getByName("codenarc")
     reports {
-      text.required.set(true)
-      xml.required.set(false)
-      html.required.set(false)
-      text.outputLocation.set(layout.buildDirectory.file("reports/codenarc/jenkinsMain.txt"))
+      text.required = true
+      xml.required = false
+      html.required = false
+      text.outputLocation = layout.buildDirectory.file("reports/codenarc/jenkinsMain.txt")
     }
   }
 
