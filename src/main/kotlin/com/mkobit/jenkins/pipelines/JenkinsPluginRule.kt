@@ -54,6 +54,12 @@ internal abstract class JenkinsPluginRule
           removeAllFiles()
           addFile("${id.name}-${id.version}.$packaging")
         }
+        // Dependencies whose artifact selector has no classifier point at JARs and must be
+        // stripped from the JPI/HPI runtime variant to avoid resolution conflicts when the
+        // consumer requests HPI artifacts (mirrors JpiVariantRule in gradle-jpi-plugin).
+        withDependencies {
+          removeIf { dep -> dep.artifactSelectors.any { it.classifier.isNullOrEmpty() } }
+        }
       }
     }
 

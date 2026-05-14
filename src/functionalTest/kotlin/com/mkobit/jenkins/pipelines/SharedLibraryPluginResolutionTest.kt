@@ -313,7 +313,8 @@ class SharedLibraryPluginResolutionTest :
               .build()
 
           val workflowLine = result.output.lines().firstOrNull { it.contains("workflow-api") }
-          workflowLine shouldContain Regex("workflow-api:\\d")
+          // BOM-constrained versionless deps show "workflow-api -> 1373.x" not "workflow-api:1373"
+          workflowLine shouldContain Regex("workflow-api(?::\\d| -> \\d)")
           result.output shouldNotContain "FAILED"
         }
       }
