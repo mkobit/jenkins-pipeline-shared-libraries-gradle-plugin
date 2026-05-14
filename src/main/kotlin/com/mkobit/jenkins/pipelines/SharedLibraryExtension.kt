@@ -23,13 +23,13 @@ import javax.inject.Inject
  * ```
  *
  * The built-in `integrationTest` suite is wired automatically. Additional suites
- * (JUnit Jupiter, Spock, Kotest, etc.) must opt in by calling [useJenkinsTestRunnerSuite]
- * inside their `register<JvmTestSuite>` block:
+ * (JUnit Jupiter, Spock, Kotest, etc.) opt in by calling [withJenkins] inside their
+ * `register<JvmTestSuite>` block:
  * ```kotlin
  * testing {
  *     suites {
  *         register<JvmTestSuite>("integrationTestKotest") {
- *             sharedLibrary.useJenkinsTestRunnerSuite(this)
+ *             sharedLibrary.withJenkins(this)
  *         }
  *     }
  * }
@@ -80,10 +80,10 @@ abstract class SharedLibraryExtension
      */
     abstract val autoRegisterLibrary: Property<Boolean>
 
-    private var testSuiteWirer: ((JvmTestSuite) -> Unit)? = null
+    private var jenkinsWirer: ((JvmTestSuite) -> Unit)? = null
 
-    internal fun setTestSuiteWirer(action: (JvmTestSuite) -> Unit) {
-      testSuiteWirer = action
+    internal fun setJenkinsWirer(action: (JvmTestSuite) -> Unit) {
+      jenkinsWirer = action
     }
 
     /**
@@ -91,9 +91,9 @@ abstract class SharedLibraryExtension
      * `integrationTest` suite: `jenkins-test-harness`, HPI classpath, WAR path,
      * system properties, JVM opens, and `mustRunAfter("test")` ordering.
      */
-    fun useJenkinsTestRunnerSuite(suite: JvmTestSuite) {
-      checkNotNull(testSuiteWirer) {
-        "useJenkinsTestRunnerSuite() called before plugin wiring is complete"
+    fun withJenkins(suite: JvmTestSuite) {
+      checkNotNull(jenkinsWirer) {
+        "withJenkins() called before plugin wiring is complete"
       }.invoke(suite)
     }
   }

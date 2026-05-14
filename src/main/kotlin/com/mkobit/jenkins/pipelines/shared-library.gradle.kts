@@ -228,25 +228,17 @@ dependencies {
 
 // ── Jenkins test-harness wiring ───────────────────────────────────────────────
 
-// Applies full Jenkins integration-test wiring to a JvmTestSuite:
-// - jenkins-test-harness on the implementation classpath
-// - ivy on the runtimeOnly classpath (must go through the configuration, not classpath +=,
-//   because classpath += before JvmTestSuitePlugin wires the convention would bypass it)
-// - HPI plugin archives + groovy-all on the test task classpath
-// Called explicitly for the built-in integrationTest suite and exposed via the extension
-// so consumers can opt-in their own additional suites (user suites via afterEvaluate below).
+// Applies full Jenkins integration-test wiring to a JvmTestSuite.
+// Uses suite.dependencies { } (JvmComponentDependencies) so dependency registration is lazy
+// and safe to call at any point during configuration — no afterEvaluate needed.
 fun applyJenkinsTestWiring(suite: JvmTestSuite) {
   val suiteName = suite.name
-  val implConfigName = suite.sources.implementationConfigurationName
-  project.dependencies {
-    add(implConfigName, "org.jenkins-ci.main:jenkins-test-harness:${SharedLibraryDefaults.TEST_HARNESS_VERSION}")
+  suite.dependencies {
+    implementation("org.jenkins-ci.main:jenkins-test-harness:${SharedLibraryDefaults.TEST_HARNESS_VERSION}")
     // Provide compiled LocalLibraryRetriever + SharedLibraryAutoRegistrar + annotation index.
-    add(implConfigName, localLibraryRetrieverSourceSet.output)
-    // ivy goes through runtimeOnly so it is part of the suite's runtimeClasspath that
-    // JvmTestSuitePlugin maps as the test task classpath convention. Adding it via
-    // tasks.withType<Test>().configureEach { classpath += ivy } would race against the
-    // convention registration for late-registered suites and bypass the runtime classpath.
-    add(suite.sources.runtimeOnlyConfigurationName, SharedLibraryDefaults.IVY_COORDINATES)
+    implementation(localLibraryRetrieverSourceSet.output)
+    // ivy provides @Grab / Grape support inside the embedded Jenkins runtime.
+    runtimeOnly(SharedLibraryDefaults.IVY_COORDINATES)
   }
   // Each suite gets its own subdirectory so multiple suites can run in parallel without
   // conflicting on WarExploder output or Gradle's task output tracking.
@@ -307,22 +299,18 @@ fun applyJenkinsTestWiring(suite: JvmTestSuite) {
   }
 }
 
-val integrationTestSuite = the<TestingExtension>().suites.named<JvmTestSuite>(INTEGRATION_TEST_SUITE)
-applyJenkinsTestWiring(integrationTestSuite.get())
-
-// Consumer-registered suites opt in via sharedLibrary.useJenkinsTestRunnerSuite(suite).
-// Those calls arrive during the consumer's build-script evaluation — before the suite
-// is added to the container and before JvmTestSuitePlugin's suites.all {} hook sets up
-// the Test.classpath convention. Deferring to afterEvaluate ensures the convention is
-// already in place when applyJenkinsTestWiring appends hpiFiles to the test classpath.
-val deferredUserSuites = mutableListOf<JvmTestSuite>()
-afterEvaluate {
-  deferredUserSuites.forEach { applyJenkinsTestWiring(it) }
+the<TestingExtension>().suites.named<JvmTestSuite>(INTEGRATION_TEST_SUITE).configure {
+  applyJenkinsTestWiring(this)
 }
-sharedLibrary.setTestSuiteWirer { suite -> deferredUserSuites.add(suite) }
 
+// Consumer suites opt in via sharedLibrary.withJenkins(this) inside their register block.
+// applyJenkinsTestWiring uses suite.dependencies { } which is lazy, so it is safe to call
+// immediately — no afterEvaluate needed.
+sharedLibrary.setJenkinsWirer { suite -> applyJenkinsTestWiring(suite) }
+
+val integrationTestSuiteProvider = the<TestingExtension>().suites.named(INTEGRATION_TEST_SUITE)
 tasks.named(LifecycleBasePlugin.CHECK_TASK_NAME) {
-  dependsOn(integrationTestSuite)
+  dependsOn(integrationTestSuiteProvider)
 }
 
 // ── Documentation ─────────────────────────────────────────────────────────────
