@@ -104,4 +104,21 @@ class SharedLibraryExtensionTest :
         }
       }
     }
+
+    describe("sharedLibrary.plugins.plugin registers a dependency on jenkinsPlugin configuration") {
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withBaseProject(
+          """
+          sharedLibrary {
+              plugins {
+                  plugin("org.example:fake:1.0")
+              }
+          }
+          """.trimIndent(),
+        ) {
+          val result = runner(gradleVersion).withArguments("printDeclaredDeps").build()
+          result.output shouldContain "plugin:org.example:fake:1.0"
+        }
+      }
+    }
   })

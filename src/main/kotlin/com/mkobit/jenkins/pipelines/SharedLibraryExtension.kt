@@ -19,6 +19,9 @@ import javax.inject.Inject
  *         bomVersion = "3463.v23b_7bb_b_b_66d5"
  *     }
  *     pipelineUnitVersion = "1.29"
+ *     plugins {
+ *         plugin("org.jenkins-ci.plugins.workflow:workflow-multibranch")
+ *     }
  * }
  * ```
  *
@@ -35,6 +38,7 @@ import javax.inject.Inject
  * }
  * ```
  */
+@Suppress("UnstableApiUsage")
 abstract class SharedLibraryExtension
   @Inject
   constructor(
@@ -44,6 +48,23 @@ abstract class SharedLibraryExtension
 
     /** Configures the Jenkins core and test-harness versions. */
     fun jenkins(action: Action<in JenkinsVersions>) = action.execute(jenkins)
+
+    /** Jenkins HPI/JPI plugin dependencies declared via [plugins]. */
+    val plugins: JenkinsPlugins = objects.newInstance<JenkinsPlugins>()
+
+    /**
+     * Declares Jenkins HPI/JPI plugin dependencies.
+     *
+     * ```kotlin
+     * sharedLibrary {
+     *     plugins {
+     *         plugin("org.jenkins-ci.plugins.workflow:workflow-multibranch")
+     *         plugin("org.6wind.jenkins:lockable-resources:2.18")
+     *     }
+     * }
+     * ```
+     */
+    fun plugins(action: Action<in JenkinsPlugins>) = action.execute(plugins)
 
     /** `com.lesfurets:jenkins-pipeline-unit` version used in the `test` suite. */
     abstract val pipelineUnitVersion: Property<String>

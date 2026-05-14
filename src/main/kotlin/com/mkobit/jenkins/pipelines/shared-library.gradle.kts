@@ -61,6 +61,8 @@ val jenkinsPlugin =
         add(project.dependencies.platform("io.jenkins.tools.bom:bom-$major.$minor.x:$bomVer"))
       }
     }
+    @Suppress("UnstableApiUsage")
+    fromDependencyCollector(sharedLibrary.plugins.pluginCollector)
   }
 dependencies {
   addProvider(

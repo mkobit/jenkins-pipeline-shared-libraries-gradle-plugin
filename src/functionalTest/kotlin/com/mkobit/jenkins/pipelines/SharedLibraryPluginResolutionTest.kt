@@ -43,8 +43,10 @@ class SharedLibraryPluginResolutionTest :
       plugins {
           id("com.mkobit.jenkins.pipelines.shared-library")
       }
-      dependencies {
-          jenkinsPlugin("$WORKFLOW_API")
+      sharedLibrary {
+          plugins {
+              plugin("$WORKFLOW_API")
+          }
       }
       tasks.register("printResolvedArtifacts") {
           doLast {
@@ -154,8 +156,10 @@ class SharedLibraryPluginResolutionTest :
             plugins {
                 id("com.mkobit.jenkins.pipelines.shared-library")
             }
-            dependencies {
-                jenkinsPlugin("$WORKFLOW_API")
+            sharedLibrary {
+                plugins {
+                    plugin("$WORKFLOW_API")
+                }
             }
             tasks.register("printGroovyAll") {
                 doLast {
@@ -232,8 +236,10 @@ class SharedLibraryPluginResolutionTest :
             plugins {
                 id("com.mkobit.jenkins.pipelines.shared-library")
             }
-            dependencies {
-                jenkinsPlugin("$WORKFLOW_API")
+            sharedLibrary {
+                plugins {
+                    plugin("$WORKFLOW_API")
+                }
             }
             tasks.register("printCompileClasspath") {
                 doLast {
