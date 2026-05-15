@@ -96,15 +96,15 @@ testing {
       }
 
       // Pins to the current wrapper; used by `check` and Java/platform compat CI.
-      targets.register("functionalTestCurrentWrapper") {
+      targets.register("functionalTestCurrent") {
         testTask.configure {
           systemProperty("kotest.filter.tags", project.findProperty("kotest.tags") ?: "!Resolution & !JenkinsCompat")
           systemProperty("test.gradle.version", GradleVersion.current().version)
           maxParallelForks = 1
           jvmArgumentProviders += CommandLineArgumentProvider { listOf("-Dkotest.framework.parallelism=3") }
           reports {
-            html.outputLocation.set(layout.buildDirectory.dir("reports/tests/functionalTestCurrentWrapper"))
-            junitXml.outputLocation.set(layout.buildDirectory.dir("test-results/functionalTestCurrentWrapper"))
+            html.outputLocation.set(layout.buildDirectory.dir("reports/tests/functionalTestCurrent"))
+            junitXml.outputLocation.set(layout.buildDirectory.dir("test-results/functionalTestCurrent"))
           }
         }
       }
@@ -147,7 +147,7 @@ testing {
 }
 
 tasks.check {
-  dependsOn("functionalTestCurrentWrapper")
+  dependsOn("functionalTestCurrent")
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
