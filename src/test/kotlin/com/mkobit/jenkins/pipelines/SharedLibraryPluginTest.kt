@@ -10,6 +10,8 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotBeBlank
 import io.kotest.matchers.types.shouldBeInstanceOf
+import testsupport.shouldBePresent
+import testsupport.shouldHaveValue
 import org.gradle.api.Project
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition
 import org.gradle.api.internal.project.ProjectInternal
@@ -173,12 +175,12 @@ internal class SharedLibraryPluginTest :
     describe("extension defaults") {
       it("autoRegisterLibrary defaults to true") {
         val ext = project.extensions.getByType(SharedLibraryExtension::class.java)
-        ext.autoRegisterLibrary.get().shouldBeTrue()
+        ext.autoRegisterLibrary.shouldBePresent().shouldBeTrue()
       }
 
       it("libraryName defaults to project name") {
         val ext = project.extensions.getByType(SharedLibraryExtension::class.java)
-        ext.libraryName.get() shouldBe project.name
+        ext.libraryName shouldHaveValue project.name
       }
     }
 
@@ -187,7 +189,7 @@ internal class SharedLibraryPluginTest :
         val ext = project.extensions.getByType(SharedLibraryExtension::class.java)
         val task = project.tasks.getByName("integrationTest") as org.gradle.api.tasks.testing.Test
         val provider = task.jvmArgumentProviders.filterIsInstance<LibraryNameArgumentProvider>().single()
-        provider.libraryName.get() shouldBe ext.libraryName.get()
+        provider.libraryName shouldHaveValue ext.libraryName.shouldBePresent()
       }
     }
 
@@ -225,7 +227,7 @@ internal class SharedLibraryPluginTest :
       it("integrationTest injects test.library.name system property") {
         val task = project.tasks.getByName("integrationTest") as org.gradle.api.tasks.testing.Test
         val provider = task.jvmArgumentProviders.filterIsInstance<LibraryNameArgumentProvider>().single()
-        provider.libraryName.get() shouldBe project.name
+        provider.libraryName shouldHaveValue project.name
       }
 
       it("generateLocalLibraryFiles task is registered") {
@@ -236,7 +238,7 @@ internal class SharedLibraryPluginTest :
 
       it("generateLocalLibraryFiles generateAutoRegistrar defaults to true") {
         val task = project.tasks.getByName("generateLocalLibraryFiles") as GenerateLocalLibraryFiles
-        task.generateAutoRegistrar.get() shouldBe true
+        task.generateAutoRegistrar shouldHaveValue true
       }
 
       it("groovydocJar is created with a description") {
