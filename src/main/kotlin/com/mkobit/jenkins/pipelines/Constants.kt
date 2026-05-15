@@ -3,6 +3,7 @@ package com.mkobit.jenkins.pipelines
 internal const val INTEGRATION_TEST_SUITE = "integrationTest"
 internal const val LOCAL_LIBRARY_RETRIEVER_SOURCE_SET = "localLibraryRetriever"
 
+internal const val JENKINS_BOM_CONFIGURATION = "jenkinsBom"
 internal const val JENKINS_PLUGIN_CONFIGURATION = "jenkinsPlugin"
 internal const val JENKINS_PLUGIN_HPIS_CONFIGURATION = "jenkinsPluginHpis"
 internal const val JENKINS_WAR_CONFIGURATION = "jenkinsWar"

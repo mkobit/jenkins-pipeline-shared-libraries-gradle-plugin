@@ -44,18 +44,15 @@ dependencies {
   }
 }
 
-val jenkinsPlugin =
-  configurations.register(JENKINS_PLUGIN_CONFIGURATION) {
+val jenkinsBom =
+  configurations.register(JENKINS_BOM_CONFIGURATION) {
     isCanBeResolved = false
     isCanBeConsumed = false
-    description = "Jenkins HPI/JPI plugin dependencies for shared library compilation and testing"
-    @Suppress("UnstableApiUsage")
-    fromDependencyCollector(sharedLibrary.plugins.pluginCollector)
+    description = "Jenkins BOM platform — version alignment for all Jenkins artifacts"
   }
-
 dependencies {
   // BOM is optional: absent when bomVersion is unset (consumer opted out).
-  jenkinsPlugin(
+  jenkinsBom(
     sharedLibrary.jenkins.bomVersion.flatMap { bomVer ->
       sharedLibrary.jenkins.version.map { v ->
         val (major, minor) = v.split(".")
@@ -63,6 +60,18 @@ dependencies {
       }
     },
   )
+}
+
+val jenkinsPlugin =
+  configurations.register(JENKINS_PLUGIN_CONFIGURATION) {
+    isCanBeResolved = false
+    isCanBeConsumed = false
+    description = "Jenkins HPI/JPI plugin dependencies for shared library compilation and testing"
+    extendsFrom(jenkinsBom)
+    @Suppress("UnstableApiUsage")
+    fromDependencyCollector(sharedLibrary.plugins.pluginCollector)
+  }
+dependencies {
   jenkinsPlugin(sharedLibrary.jenkins.version.map { v -> "org.jenkins-ci.main:jenkins-core:$v" })
   jenkinsPlugin(PIPELINE_GROOVY_LIB_MODULE)
   jenkinsPlugin(WORKFLOW_JOB_MODULE)
@@ -175,7 +184,9 @@ configurations.named(localLibraryRetrieverSourceSet.compileOnlyConfigurationName
 }
 // annotation-indexer processor generates the META-INF index for SharedLibraryAutoRegistrar.
 val localLibraryRetrieverAnnotationProcessor =
-  configurations.named(localLibraryRetrieverSourceSet.annotationProcessorConfigurationName)
+  configurations.named(localLibraryRetrieverSourceSet.annotationProcessorConfigurationName) {
+    extendsFrom(jenkinsBom)
+  }
 dependencies {
   localLibraryRetrieverAnnotationProcessor(SharedLibraryDefaults.ANNOTATION_INDEXER)
 }
@@ -316,7 +327,7 @@ tasks {
   register<Jar>("groovydocJar") {
     description = "Assembles the Groovydoc JAR"
     archiveClassifier = "javadoc"
-    from(tasks.named<Groovydoc>(GroovyPlugin.GROOVYDOC_TASK_NAME).map { it.destinationDir })
+    from(tasks.groovydoc.map { it.destinationDir })
   }
 }
 
@@ -359,7 +370,6 @@ pluginManager.withPlugin("codenarc") {
       outputs.file(jenkinsConfigFile)
       doLast {
         val path = jenkinsConfigFile.get().asFile.toPath()
-        path.parent.createDirectories()
         SharedLibraryExtension::class.java.classLoader
           .getResourceAsStream("com/mkobit/jenkins/pipelines/codenarc-jenkins.xml")!!
           .use { input -> path.outputStream().use { out -> input.copyTo(out) } }
@@ -372,12 +382,6 @@ pluginManager.withPlugin("codenarc") {
     dependsOn(extractJenkinsCodeNarcConfig)
     config = resources.text.fromFile(jenkinsConfigFile)
     codenarcClasspath = configurations.getByName("codenarc")
-    reports {
-      text.required = true
-      xml.required = false
-      html.required = false
-      text.outputLocation = layout.buildDirectory.file("reports/codenarc/jenkinsMain.txt")
-    }
   }
 
   tasks.named(LifecycleBasePlugin.CHECK_TASK_NAME) {
