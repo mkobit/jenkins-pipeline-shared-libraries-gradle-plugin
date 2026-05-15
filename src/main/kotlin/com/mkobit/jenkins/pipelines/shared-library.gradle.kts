@@ -50,20 +50,20 @@ val jenkinsPlugin =
     isCanBeResolved = false
     isCanBeConsumed = false
     description = "Jenkins HPI/JPI plugin dependencies for shared library compilation and testing"
-    withDependencies {
-      sharedLibrary.jenkins.bomVersion.orNull?.let { bomVer ->
-        val (major, minor) =
-          sharedLibrary.jenkins.version
-            .get()
-            .split(".")
-        add(project.dependencies.platform("io.jenkins.tools.bom:bom-$major.$minor.x:$bomVer"))
-      }
-    }
     @Suppress("UnstableApiUsage")
     fromDependencyCollector(sharedLibrary.plugins.pluginCollector)
   }
 
 dependencies {
+  // BOM is optional: absent when bomVersion is unset (consumer opted out).
+  jenkinsPlugin(
+    sharedLibrary.jenkins.bomVersion.flatMap { bomVer ->
+      sharedLibrary.jenkins.version.map { v ->
+        val (major, minor) = v.split(".")
+        project.dependencies.platform("io.jenkins.tools.bom:bom-$major.$minor.x:$bomVer")
+      }
+    },
+  )
   jenkinsPlugin(sharedLibrary.jenkins.version.map { v -> "org.jenkins-ci.main:jenkins-core:$v" })
   jenkinsPlugin(PIPELINE_GROOVY_LIB_MODULE)
   jenkinsPlugin(WORKFLOW_JOB_MODULE)
@@ -191,6 +191,7 @@ testing {
         resources.setSrcDirs(listOf("test/unit/resources"))
       }
       dependencies {
+        implementation(sharedLibrary.pipelineUnitVersion.map { v -> project.dependencies.create("com.lesfurets:jenkins-pipeline-unit:$v") })
         runtimeOnly(SharedLibraryDefaults.IVY_COORDINATES)
       }
     }
@@ -216,15 +217,6 @@ testing.suites.withType<JvmTestSuite>().configureEach {
     extendsFrom(jenkinsPlugin)
     exclude(mapOf("group" to "org.codehaus.groovy", "module" to "groovy-all"))
   }
-}
-
-// DependencyCollector (used inside suites DSL) has no Provider<String> overload;
-// add versioned deps here via DependencyHandler.addProvider which accepts Provider<?>.
-dependencies {
-  addProvider(
-    "testImplementation",
-    sharedLibrary.pipelineUnitVersion.map { v -> "com.lesfurets:jenkins-pipeline-unit:$v" },
-  )
 }
 
 // ── Jenkins test-harness wiring ───────────────────────────────────────────────
