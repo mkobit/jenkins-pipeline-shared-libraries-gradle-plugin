@@ -31,7 +31,7 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
-          path: plugin
+          path: jenkins-pipeline-shared-libraries-gradle-plugin
 
       # Resolve which example branch to test against:
       #   1. workflow_dispatch input (explicit override)
@@ -67,4 +67,4 @@ jobs:
 
       - name: Build
         working-directory: example
-        run: ./gradlew --include-build ../plugin build --continue
+        run: ./gradlew --include-build ../jenkins-pipeline-shared-libraries-gradle-plugin build --continue
