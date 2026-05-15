@@ -1,5 +1,5 @@
 pluginManagement {
-  includeBuild(file("build-logic").canonicalFile)
+  includeBuild("build-logic")
   repositories {
     gradlePluginPortal()
   }
