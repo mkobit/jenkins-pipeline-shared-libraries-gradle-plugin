@@ -2,7 +2,6 @@
 
 package com.mkobit.jenkins.pipelines
 
-import gradle.kotlin.dsl.accessors._51369cd3687f491fb3a2cb104bc1e545.groovy
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition
 import org.gradle.api.plugins.jvm.JvmTestSuite
 import org.gradle.api.plugins.quality.CodeNarc
@@ -15,6 +14,7 @@ import kotlin.io.path.outputStream
 plugins {
   groovy
   `jvm-test-suite`
+  codenarc
 }
 
 dependencies {
@@ -325,59 +325,42 @@ tasks.withType<GroovyCompile>().configureEach {
   groovyClasspath += files(ivy)
 }
 
-pluginManager.withPlugin("codenarc") {
-  // Enhanced Classpath Rules (rulesets/jenkins.xml) require both the Jenkins
-  // dependency JARs AND the compiled .class output of the source being analyzed.
-  // Without the .class files on compilationClasspath the rules silently skip.
-  // dependsOn(compileGroovy) guarantees the output exists when CodeNarc runs.
-  val compileGroovy = tasks.compileGroovy
-  tasks.withType<CodeNarc>().configureEach {
-    compilationClasspath += files(sourceSets.main.map { it.compileClasspath }, sourceSets.main.map { it.output.classesDirs })
-    dependsOn(compileGroovy) // todo agent: is this needed or do we
-  }
-  // todo agent: is there a better way to do dep management to provide codenarc claspath
-  //  Dependency management
-  //
-  //The CodeNarc plugin adds the following dependency configurations:
-  //Table 1. CodeNarc plugin - dependency configurations Name 	Meaning
-  //
-  //codenarc
-  //
-  //
-  //The CodeNarc libraries to use
-  //
-  //
-  //If CodeNarc requires a different Groovy version than that used to compile Groovy source, you can supply one using the codenarc configuration.
-  // end todo
+// Enhanced Classpath Rules (rulesets/jenkins.xml) require both the Jenkins
+// dependency JARs AND the compiled .class output of the source being analyzed.
+// Without the .class files on compilationClasspath the rules silently skip.
+// dependsOn(compileGroovy) guarantees the output exists when CodeNarc runs.
+val compileGroovy = tasks.compileGroovy
+tasks.withType<CodeNarc>().configureEach {
+  compilationClasspath += files(sourceSets.main.map { it.compileClasspath }, sourceSets.main.map { it.output.classesDirs })
+  dependsOn(compileGroovy)
+}
 
-  // Extract the bundled XML to a build-dir file with a .xml extension so CodeNarc
-  // parses it as XML rather than as a Groovy DSL script (resources.text.fromUri writes
-  // a .txt temp file, which CodeNarc would try to evaluate as Groovy).
-  val jenkinsConfigFile = layout.buildDirectory.file("generated/codenarc/codenarc-jenkins.xml")
-  // todo agent: is the below cacheable? it doent have a group or description or task action name
-  val extractJenkinsCodeNarcConfig =
-    tasks.register("extractJenkinsCodeNarcConfig") {
-      outputs.file(jenkinsConfigFile)
-      doLast {
-        // todo agent: i feel like we should be able to   project.resources.text.fromArchiveEntry style from this
-        val path = jenkinsConfigFile.get().asFile.toPath()
-        SharedLibraryExtension::class.java.classLoader
-          .getResourceAsStream("com/mkobit/jenkins/pipelines/codenarc-jenkins.xml")!!
-          .use { input -> path.outputStream().use { out -> input.copyTo(out) } }
-      }
+// Extract the bundled XML to a build-dir file with a .xml extension so CodeNarc
+// parses it as XML rather than as a Groovy DSL script. getResourceAsStream works
+// in both JAR and IDE classpath-directory layouts; fromArchiveEntry would require
+// a concrete archive file and fails when resources are unpacked during development.
+val jenkinsConfigFile = layout.buildDirectory.file("generated/codenarc/codenarc-jenkins.xml")
+val extractJenkinsCodeNarcConfig =
+  tasks.register("extractJenkinsCodeNarcConfig") {
+    group = "build setup"
+    description = "Extracts the bundled Jenkins CodeNarc XML ruleset into the build directory."
+    outputs.file(jenkinsConfigFile)
+    doLast {
+      val path = jenkinsConfigFile.get().asFile.toPath()
+      SharedLibraryExtension::class.java.classLoader
+        .getResourceAsStream("com/mkobit/jenkins/pipelines/codenarc-jenkins.xml")!!
+        .use { input -> path.outputStream().use { out -> input.copyTo(out) } }
     }
-
-  val codenarcJenkinsMain = tasks.register<CodeNarc>("codenarcJenkinsMain") {
-    description = "Runs Jenkins CPS/Serializable CodeNarc rules against the main source set."
-    setSource(sourceSets.main.map { it.groovy })
-    dependsOn(extractJenkinsCodeNarcConfig)
-    config = resources.text.fromFile(jenkinsConfigFile)
-    // todo agent: we should just use .codenarc and i feel like apply codnarc by default with our checks? wdyt?
-    // the checks are indeed useful for libraries, but may be too opioninated for users. i think we should do it though.
-    codenarcClasspath = configurations.getByName("codenarc")
   }
 
-  tasks.check {
-    dependsOn(codenarcJenkinsMain)
-  }
+val codenarcJenkinsMain = tasks.register<CodeNarc>("codenarcJenkinsMain") {
+  description = "Runs Jenkins CPS/Serializable CodeNarc rules against the main source set."
+  setSource(sourceSets.main.map { it.groovy })
+  dependsOn(extractJenkinsCodeNarcConfig)
+  config = resources.text.fromFile(jenkinsConfigFile)
+  codenarcClasspath = configurations.getByName("codenarc")
+}
+
+tasks.check {
+  dependsOn(codenarcJenkinsMain)
 }
