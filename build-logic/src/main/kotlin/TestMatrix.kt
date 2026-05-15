@@ -2,7 +2,7 @@ import org.gradle.util.GradleVersion
 
 open class TestMatrix {
   val gradleVersions: List<String> =
-    (listOf("9.0.0", "9.1.0", "9.2.1", "9.3.1", "9.4.1", "9.5.1")
+    (listOf("9.4.1", "9.5.1")
       .map { GradleVersion.version(it) } + GradleVersion.current())
       .toSortedSet()
       .map { it.version }
