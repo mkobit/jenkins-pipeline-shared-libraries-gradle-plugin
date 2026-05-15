@@ -101,7 +101,6 @@ dependencies {
   jenkinsWar(sharedLibrary.jenkins.version.map { v -> "org.jenkins-ci.main:jenkins-war:$v@war" })
 }
 
-// ── Main source set ───────────────────────────────────────────────────────────
 sourceSets.main.configure {
   java.setSrcDirs(emptyList<String>())
   groovy.setSrcDirs(listOf("src", "vars"))
@@ -111,8 +110,6 @@ sourceSets.main.configure {
 configurations.named("compileOnly") {
   extendsFrom(jenkinsPlugin)
 }
-
-// ── Test suites ───────────────────────────────────────────────────────────────
 
 // Lenient view so plain-JAR transitives that don't publish HPI are silently skipped
 // rather than failing resolution when artifactType=hpi is requested globally.
@@ -152,10 +149,11 @@ val jenkinsWarFile: Provider<File> =
 // WAR bundles it, and the integrationTestGroovyAllRuntime configuration requires that
 // capability — making Gradle skip the add when jenkins-core no longer satisfies it.
 // Track via GitHub issue (file after this branch merges). See docs/06-backlog.md M7.
-val groovyAllRuntime = configurations.register(GROOVY_ALL_RUNTIME_CONFIGURATION) {
-  isCanBeResolved = true
-  isCanBeConsumed = false
-}
+val groovyAllRuntime =
+  configurations.register(GROOVY_ALL_RUNTIME_CONFIGURATION) {
+    isCanBeResolved = true
+    isCanBeConsumed = false
+  }
 dependencies {
   groovyAllRuntime(SharedLibraryDefaults.GROOVY_ALL_COORDINATES)
 }
@@ -228,8 +226,6 @@ testing.suites.withType<JvmTestSuite>().configureEach {
     exclude(mapOf("group" to "org.codehaus.groovy", "module" to "groovy-all"))
   }
 }
-
-// ── Jenkins test-harness wiring ───────────────────────────────────────────────
 
 // Applies full Jenkins integration-test wiring to a JvmTestSuite.
 // Uses suite.dependencies { } (JvmComponentDependencies) so dependency registration is lazy
