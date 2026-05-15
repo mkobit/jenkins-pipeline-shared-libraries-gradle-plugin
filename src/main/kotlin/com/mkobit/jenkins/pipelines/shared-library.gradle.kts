@@ -7,19 +7,17 @@ import org.gradle.api.plugins.GroovyPlugin
 import org.gradle.api.plugins.jvm.JvmTestSuite
 import org.gradle.api.plugins.quality.CodeNarc
 import org.gradle.api.tasks.GroovySourceDirectorySet
-import org.gradle.api.tasks.SourceSet
-import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.compile.GroovyCompile
 import org.gradle.api.tasks.javadoc.Groovydoc
 import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.*
 import org.gradle.language.base.plugins.LifecycleBasePlugin
-import org.gradle.testing.base.TestingExtension
 import kotlin.io.path.createDirectories
 import kotlin.io.path.outputStream
 
 plugins {
   groovy
+  `jvm-test-suite`
 }
 
 val sharedLibrary =
@@ -64,6 +62,7 @@ val jenkinsPlugin =
     @Suppress("UnstableApiUsage")
     fromDependencyCollector(sharedLibrary.plugins.pluginCollector)
   }
+
 dependencies {
   addProvider(
     JENKINS_PLUGIN_CONFIGURATION,
@@ -99,8 +98,7 @@ dependencies {
 }
 
 // ── Main source set ───────────────────────────────────────────────────────────
-
-sourceSets.main.apply {
+sourceSets.main.configure {
   java.setSrcDirs(emptyList<String>())
   groovy.setSrcDirs(listOf("src", "vars"))
   resources.setSrcDirs(listOf("resources"))
@@ -161,6 +159,7 @@ dependencies {
 
 val generateLocalLibraryFiles =
   tasks.register<GenerateLocalLibraryFiles>("generateLocalLibraryFiles") {
+    description = "Generates LocalLibraryRetriever and SharedLibraryAutoRegistrar source files"
     javaOutputDir = layout.buildDirectory.dir("generated-src/localLibraryRetriever/java")
     resourcesOutputDir = layout.buildDirectory.dir("generated-src/localLibraryRetriever/resources")
     generateAutoRegistrar = sharedLibrary.autoRegisterLibrary
@@ -175,21 +174,21 @@ val localLibraryRetrieverSourceSet =
     java.setSrcDirs(listOf(generateLocalLibraryFiles.flatMap { it.javaOutputDir }))
     resources.setSrcDirs(listOf(generateLocalLibraryFiles.flatMap { it.resourcesOutputDir }))
   }
-localLibraryRetrieverSourceSet.groovy.setSrcDirs(emptyList<Any>())
+localLibraryRetrieverSourceSet.extensions.getByType<GroovySourceDirectorySet>().setSrcDirs(emptyList<Any>())
 // Jenkins APIs are needed to compile LocalLibraryRetriever / SharedLibraryAutoRegistrar.
 configurations.named("${LOCAL_LIBRARY_RETRIEVER_SOURCE_SET}CompileOnly") {
-  extendsFrom(jenkinsPlugin.get())
+  extendsFrom(jenkinsPlugin)
 }
 // annotation-indexer processor generates the META-INF index for SharedLibraryAutoRegistrar.
 dependencies {
   add("${LOCAL_LIBRARY_RETRIEVER_SOURCE_SET}AnnotationProcessor", SharedLibraryDefaults.ANNOTATION_INDEXER)
 }
 
-extensions.configure<TestingExtension> {
+testing {
   suites {
     named<JvmTestSuite>("test") {
       useJUnitJupiter()
-      with(sources) {
+      sources {
         java.setSrcDirs(listOf("test/unit/java"))
         groovy.setSrcDirs(listOf("test/unit/groovy"))
         resources.setSrcDirs(listOf("test/unit/resources"))
@@ -197,7 +196,7 @@ extensions.configure<TestingExtension> {
     }
 
     register<JvmTestSuite>(INTEGRATION_TEST_SUITE) {
-      with(sources) {
+      sources {
         java.setSrcDirs(listOf("test/integration/java"))
         groovy.setSrcDirs(listOf("test/integration/groovy"))
         resources.setSrcDirs(listOf("test/integration/resources"))
@@ -211,10 +210,10 @@ extensions.configure<TestingExtension> {
 // Exclude groovy-all (Groovy 2.4 bundled by jenkins-core): having it on the compile
 // classpath alongside groovy:3.x (from Spock 2.x) causes the Groovy compiler to pick up
 // the 2.4 runtime, breaking Spock compilation entirely.
-the<TestingExtension>().suites.withType<JvmTestSuite>().configureEach {
+testing.suites.withType<JvmTestSuite>().configureEach {
   val implConfigName = sources.implementationConfigurationName
   project.configurations.named(implConfigName) {
-    extendsFrom(jenkinsPlugin.get())
+    extendsFrom(jenkinsPlugin)
     exclude(mapOf("group" to "org.codehaus.groovy", "module" to "groovy-all"))
   }
 }
@@ -301,7 +300,7 @@ fun applyJenkinsTestWiring(suite: JvmTestSuite) {
   }
 }
 
-the<TestingExtension>().suites.named<JvmTestSuite>(INTEGRATION_TEST_SUITE).configure {
+testing.suites.named<JvmTestSuite>(INTEGRATION_TEST_SUITE).configure {
   applyJenkinsTestWiring(this)
 }
 
@@ -310,7 +309,7 @@ the<TestingExtension>().suites.named<JvmTestSuite>(INTEGRATION_TEST_SUITE).confi
 // immediately — no afterEvaluate needed.
 sharedLibrary.setJenkinsWirer { suite -> applyJenkinsTestWiring(suite) }
 
-val integrationTestSuiteProvider = the<TestingExtension>().suites.named(INTEGRATION_TEST_SUITE)
+val integrationTestSuiteProvider = testing.suites.named(INTEGRATION_TEST_SUITE)
 tasks.named(LifecycleBasePlugin.CHECK_TASK_NAME) {
   dependsOn(integrationTestSuiteProvider)
 }
@@ -321,13 +320,12 @@ tasks {
   register<Jar>("sourcesJar") {
     description = "Assembles a JAR of the source"
     archiveClassifier = "sources"
-    from(sourceSets.main.allSource)
+    from(sourceSets.main.map { it.allSource })
   }
-  val groovydoc = named<Groovydoc>(GroovyPlugin.GROOVYDOC_TASK_NAME)
   register<Jar>("groovydocJar") {
     description = "Assembles the Groovydoc JAR"
     archiveClassifier = "javadoc"
-    from(groovydoc.map { it.destinationDir })
+    from(tasks.named<Groovydoc>(GroovyPlugin.GROOVYDOC_TASK_NAME).map { it.destinationDir })
   }
 }
 
@@ -351,12 +349,12 @@ tasks.withType<GroovyCompile>().configureEach {
 // ── CodeNarc Enhanced Classpath Rule support ──────────────────────────────────
 
 pluginManager.withPlugin("codenarc") {
-  val mainCompileClasspath = sourceSets.main.compileClasspath
+  val mainCompileClasspath = sourceSets.main.get().compileClasspath
   // Enhanced Classpath Rules (rulesets/jenkins.xml) require both the Jenkins
   // dependency JARs AND the compiled .class output of the source being analyzed.
   // Without the .class files on compilationClasspath the rules silently skip.
   // dependsOn(compileGroovy) guarantees the output exists when CodeNarc runs.
-  val mainClassesDirs = sourceSets.main.output.classesDirs
+  val mainClassesDirs = sourceSets.main.get().output.classesDirs
   val compileGroovy = tasks.compileGroovy
   tasks.withType<CodeNarc>().configureEach {
     compilationClasspath += mainCompileClasspath
@@ -382,7 +380,7 @@ pluginManager.withPlugin("codenarc") {
 
   tasks.register<CodeNarc>("codenarcJenkinsMain") {
     description = "Runs Jenkins CPS/Serializable CodeNarc rules against the main source set."
-    source = sourceSets.main.groovy
+    source = sourceSets.main.get().extensions.getByType<GroovySourceDirectorySet>()
     dependsOn(extractJenkinsCodeNarcConfig)
     config = resources.text.fromFile(jenkinsConfigFile)
     codenarcClasspath = configurations.getByName("codenarc")
@@ -398,14 +396,3 @@ pluginManager.withPlugin("codenarc") {
     dependsOn("codenarcJenkinsMain")
   }
 }
-
-// ── Type-safe source set accessors ────────────────────────────────────────────
-
-private val Project.sourceSets: SourceSetContainer
-  get() = the()
-
-private val SourceSetContainer.main: SourceSet
-  get() = getByName("main")
-
-private val SourceSet.groovy: org.gradle.api.file.SourceDirectorySet
-  get() = extensions.getByType<GroovySourceDirectorySet>()
