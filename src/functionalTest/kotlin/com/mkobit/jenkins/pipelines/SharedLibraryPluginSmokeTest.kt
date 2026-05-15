@@ -2,6 +2,7 @@ package com.mkobit.jenkins.pipelines
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.paths.shouldExist
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -42,7 +43,7 @@ class SharedLibraryPluginSmokeTest :
       withData(TestedGradleVersion.filtered) { gradleVersion ->
         withSharedLibraryProject {
           val result = runner(gradleVersion).withArguments("help").build()
-          result.task(":help")!!.outcome shouldBe TaskOutcome.SUCCESS
+          result.task(":help") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
         }
       }
     }
@@ -68,7 +69,7 @@ class SharedLibraryPluginSmokeTest :
             runner(gradleVersion)
               .withArguments("generateLocalLibraryFiles")
               .build()
-          result.task(":generateLocalLibraryFiles")!!.outcome shouldBe TaskOutcome.SUCCESS
+          result.task(":generateLocalLibraryFiles") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
           val testingDir =
             dir.resolve(
               "build/generated-src/localLibraryRetriever/java/com/mkobit/jenkins/pipelines/testing",
@@ -114,7 +115,7 @@ class SharedLibraryPluginSmokeTest :
             runner(gradleVersion)
               .withArguments("generateLocalLibraryFiles")
               .build()
-          result.task(":generateLocalLibraryFiles")!!.outcome shouldBe TaskOutcome.SUCCESS
+          result.task(":generateLocalLibraryFiles") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
           dir
             .resolve(
               "build/generated-src/integrationTest/java/com/mkobit/jenkins/pipelines/testing/SharedLibraryAutoRegistrar.java",
@@ -162,7 +163,7 @@ class SharedLibraryPluginSmokeTest :
             """.trimIndent(),
           )
           val result = runner(gradleVersion).withArguments("help").build()
-          result.task(":help")!!.outcome shouldBe TaskOutcome.SUCCESS
+          result.task(":help") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
         }
       }
     }

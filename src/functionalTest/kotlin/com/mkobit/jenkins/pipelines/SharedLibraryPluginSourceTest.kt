@@ -2,6 +2,7 @@ package com.mkobit.jenkins.pipelines
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotContain
 import org.gradle.testkit.runner.TaskOutcome
@@ -49,7 +50,7 @@ class SharedLibraryPluginSourceTest :
           )
         }) {
           val result = runner(gradleVersion).withArguments("compileGroovy").build()
-          result.task(":compileGroovy")!!.outcome shouldBe TaskOutcome.SUCCESS
+          result.task(":compileGroovy") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
         }
       }
     }
@@ -60,7 +61,7 @@ class SharedLibraryPluginSourceTest :
           file("src/com/example/Bad.groovy").writeText("class { not valid groovy }")
         }) {
           val result = runner(gradleVersion).withArguments("compileGroovy").buildAndFail()
-          result.task(":compileGroovy")!!.outcome shouldBe TaskOutcome.FAILED
+          result.task(":compileGroovy") shouldNotBeNull { outcome shouldBe TaskOutcome.FAILED }
         }
       }
     }
@@ -71,7 +72,7 @@ class SharedLibraryPluginSourceTest :
           file("vars/badStep.groovy").writeText("def call( { unclosed paren and brace")
         }) {
           val result = runner(gradleVersion).withArguments("compileGroovy").buildAndFail()
-          result.task(":compileGroovy")!!.outcome shouldBe TaskOutcome.FAILED
+          result.task(":compileGroovy") shouldNotBeNull { outcome shouldBe TaskOutcome.FAILED }
         }
       }
     }
@@ -82,7 +83,7 @@ class SharedLibraryPluginSourceTest :
           file("src/com/example/Lib.groovy").writeText("package com.example; class Lib {}")
         }) {
           val result = runner(gradleVersion).withArguments("sourcesJar").build()
-          result.task(":sourcesJar")!!.outcome shouldBe TaskOutcome.SUCCESS
+          result.task(":sourcesJar") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
         }
       }
     }
@@ -95,7 +96,7 @@ class SharedLibraryPluginSourceTest :
           )
         }) {
           val result = runner(gradleVersion).withArguments("groovydocJar").build()
-          result.task(":groovydocJar")!!.outcome shouldBe TaskOutcome.SUCCESS
+          result.task(":groovydocJar") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
         }
       }
     }
@@ -114,7 +115,7 @@ class SharedLibraryPluginSourceTest :
           )
         }) {
           val result = runner(gradleVersion).withArguments("compileGroovy").build()
-          result.task(":compileGroovy")!!.outcome shouldBe TaskOutcome.SUCCESS
+          result.task(":compileGroovy") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
         }
       }
     }
@@ -151,7 +152,7 @@ class SharedLibraryPluginSourceTest :
           )
         }) {
           val result = runner(gradleVersion).withArguments("test").build()
-          result.task(":test")!!.outcome shouldBe TaskOutcome.SUCCESS
+          result.task(":test") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
         }
       }
     }

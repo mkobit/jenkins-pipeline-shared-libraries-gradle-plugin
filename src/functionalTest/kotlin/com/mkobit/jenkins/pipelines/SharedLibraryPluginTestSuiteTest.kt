@@ -2,6 +2,7 @@ package com.mkobit.jenkins.pipelines
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotContain
 import org.gradle.testkit.runner.TaskOutcome
@@ -60,7 +61,7 @@ class SharedLibraryPluginTestSuiteTest :
             """.trimIndent(),
           )
           val result = runner(gradleVersion).withArguments("compileTestJava").build()
-          result.task(":compileTestJava")!!.outcome shouldBe TaskOutcome.SUCCESS
+          result.task(":compileTestJava") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
         }
       }
     }
@@ -97,7 +98,7 @@ class SharedLibraryPluginTestSuiteTest :
           depsResult.output shouldNotContain "groovy-all"
 
           val compileResult = runner(gradleVersion).withArguments("compileTestGroovy").build()
-          compileResult.task(":compileTestGroovy")!!.outcome shouldBe TaskOutcome.SUCCESS
+          compileResult.task(":compileTestGroovy") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
         }
       }
     }
@@ -131,7 +132,7 @@ class SharedLibraryPluginTestSuiteTest :
             """.trimIndent(),
           )
           val result = runner(gradleVersion).withArguments("compileTestKotlin").build()
-          result.task(":compileTestKotlin")!!.outcome shouldBe TaskOutcome.SUCCESS
+          result.task(":compileTestKotlin") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
         }
       }
     }
@@ -168,7 +169,7 @@ class SharedLibraryPluginTestSuiteTest :
             """.trimIndent(),
           )
           val result = runner(gradleVersion).withArguments("compileIntegrationTestJava").build()
-          result.task(":compileIntegrationTestJava")!!.outcome shouldBe TaskOutcome.SUCCESS
+          result.task(":compileIntegrationTestJava") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
         }
       }
     }
@@ -210,7 +211,7 @@ class SharedLibraryPluginTestSuiteTest :
             """.trimIndent(),
           )
           val result = runner(gradleVersion).withArguments("compileIntegrationTestJunit6Java").build()
-          result.task(":compileIntegrationTestJunit6Java")!!.outcome shouldBe TaskOutcome.SUCCESS
+          result.task(":compileIntegrationTestJunit6Java") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
         }
       }
     }
