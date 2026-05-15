@@ -325,14 +325,19 @@ tasks.withType<GroovyCompile>().configureEach {
   groovyClasspath += files(ivy)
 }
 
-// Enhanced Classpath Rules (rulesets/jenkins.xml) require both the Jenkins
-// dependency JARs AND the compiled .class output of the source being analyzed.
-// Without the .class files on compilationClasspath the rules silently skip.
-// dependsOn(compileGroovy) guarantees the output exists when CodeNarc runs.
-val compileGroovy = tasks.compileGroovy
+// Enhanced Classpath Rules (rulesets/jenkins.xml) need Jenkins JARs to resolve
+// type hierarchies (Serializable checks, CPS annotations, etc.), and the compiled
+// class output so the rules can inspect the actual class hierarchy.
+// compileGroovyTask captured outside so the TaskProvider.flatMap overload is used
+// (inside configureEach, Kotlin resolves flatMap to Iterable.flatMap instead).
+// files() wraps the providers into FileCollection; Gradle traces through them to
+// infer the compileGroovy task dependency via @InputFiles — no dependsOn needed.
+val compileGroovyTask = tasks.compileGroovy
 tasks.withType<CodeNarc>().configureEach {
-  compilationClasspath += files(sourceSets.main.map { it.compileClasspath }, sourceSets.main.map { it.output.classesDirs })
-  dependsOn(compileGroovy)
+  compilationClasspath += files(
+    sourceSets.main.map { it.compileClasspath },
+    compileGroovyTask.flatMap { it.destinationDirectory },
+  )
 }
 
 // Extract the bundled XML to a build-dir file with a .xml extension so CodeNarc
@@ -358,7 +363,7 @@ val codenarcJenkinsMain = tasks.register<CodeNarc>("codenarcJenkinsMain") {
   setSource(sourceSets.main.map { it.groovy })
   dependsOn(extractJenkinsCodeNarcConfig)
   config = resources.text.fromFile(jenkinsConfigFile)
-  codenarcClasspath = configurations.getByName("codenarc")
+  codenarcClasspath = files(configurations.codenarc)
 }
 
 tasks.check {
