@@ -22,6 +22,7 @@ abstract class GenerateJenkinsCompatMatrix : DefaultTask() {
           "jenkins-lts" to lts,
           "jenkins-version" to version,
           "jenkins-bom-version" to bomVersion,
+          "task-suffix" to "Jenkins${lts.replace(".", "").replace("x", "")}",
         )
       }
     outputFile.get().asFile.writeText(mapOf("include" to matrix).toJson())

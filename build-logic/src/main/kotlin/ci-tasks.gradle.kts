@@ -12,14 +12,20 @@ tasks {
   register<GenerateJsonMatrix>("generateGradleCompatMatrix") {
     group = "CI"
     description = "Writes the Gradle compat CI matrix JSON to <build>/ci/gradle-compat-matrix.json"
-    matrixEntries = testMatrix.gradleVersions.map { mapOf("gradle" to it) }
+    matrixEntries =
+      testMatrix.gradleVersions.map {
+        mapOf("gradle" to it, "task-suffix" to "Gradle${it.replace(".", "_")}")
+      }
     outputFile = ciDir.map { it.file("gradle-compat-matrix.json") }
   }
 
   register<GenerateJsonMatrix>("generateJavaCompatMatrix") {
     group = "CI"
     description = "Writes the Java compat CI matrix JSON to <build>/ci/java-compat-matrix.json"
-    matrixEntries = testMatrix.javaVersions.map { mapOf("java" to it.toString()) }
+    matrixEntries =
+      testMatrix.javaVersions.map {
+        mapOf("java" to it.toString(), "task-suffix" to "Java$it")
+      }
     outputFile = ciDir.map { it.file("java-compat-matrix.json") }
   }
 
