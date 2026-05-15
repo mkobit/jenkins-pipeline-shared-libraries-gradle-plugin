@@ -4,7 +4,7 @@ plugins {
   java
 }
 
-val testMatrix = extensions.create("testMatrix", TestMatrix::class.java)
+val testMatrix = extensions.create<TestMatrix>("testMatrix")
 
 tasks {
   val ciDir = layout.buildDirectory.dir("ci")
@@ -26,15 +26,15 @@ tasks {
   register<GenerateJenkinsCompatMatrix>("generateJenkinsCompatMatrix") {
     group = "CI"
     description = "Writes the Jenkins LTS compat CI matrix JSON to <build>/ci/jenkins-compat-matrix.json"
-    for (entry in testMatrix.jenkinsLtsEntries) {
-      entries.add(
-        objects.newInstance<JenkinsMatrixEntry>().also {
-          it.lts = entry.lts
-          it.version = entry.version
-          it.bomVersion = entry.bomVersion
-        },
+    entries.addAll(
+        testMatrix.jenkinsLtsEntries.map { (lts, version, bomVersion) ->
+          objects.newInstance<JenkinsMatrixEntry>().also {
+            it.lts = lts
+            it.version = version
+            it.bomVersion = bomVersion
+          }
+        }
       )
-    }
     outputFile = ciDir.map { it.file("jenkins-compat-matrix.json") }
   }
 

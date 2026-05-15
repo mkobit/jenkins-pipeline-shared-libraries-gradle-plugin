@@ -7,6 +7,13 @@ import org.gradle.api.provider.Property
 import org.gradle.kotlin.dsl.newInstance
 import javax.inject.Inject
 
+// Functional interface for Jenkins test suite wiring. Using a named interface (rather than
+// a raw Kotlin function type) avoids JVM type erasure issues when Gradle's instantiator
+// matches constructor parameters by class at runtime.
+fun interface JenkinsTestSuiteWirer {
+  fun wire(suite: JvmTestSuite)
+}
+
 /**
  * Extension for the `com.mkobit.jenkins.pipelines.shared-library` plugin.
  *
@@ -42,7 +49,8 @@ import javax.inject.Inject
 abstract class SharedLibraryExtension
   @Inject
   constructor(
-    objects: ObjectFactory,
+    private val objects: ObjectFactory,
+    private val jenkinsWirer: JenkinsTestSuiteWirer,
   ) {
     val jenkins: JenkinsVersions = objects.newInstance(JenkinsVersions::class)
 
@@ -101,20 +109,22 @@ abstract class SharedLibraryExtension
      */
     abstract val autoRegisterLibrary: Property<Boolean>
 
-    private var jenkinsWirer: ((JvmTestSuite) -> Unit)? = null
-
-    internal fun setJenkinsWirer(action: (JvmTestSuite) -> Unit) {
-      jenkinsWirer = action
-    }
-
     /**
      * Applies full Jenkins test-harness wiring to [suite] — identical to the built-in
      * `integrationTest` suite: `jenkins-test-harness`, HPI classpath, WAR path,
      * system properties, JVM opens, and `mustRunAfter("test")` ordering.
      */
     fun withJenkins(suite: JvmTestSuite) {
-      checkNotNull(jenkinsWirer) {
-        "withJenkins() called before plugin wiring is complete"
-      }.invoke(suite)
+      jenkinsWirer.wire(suite)
+      // The library name is extension state — added here after the main wirer runs.
+      suite.targets.configureEach {
+        testTask.configure {
+          jvmArgumentProviders.add(
+            objects.newInstance<LibraryNameArgumentProvider>().apply {
+              libraryName.set(this@SharedLibraryExtension.libraryName)
+            },
+          )
+        }
+      }
     }
   }

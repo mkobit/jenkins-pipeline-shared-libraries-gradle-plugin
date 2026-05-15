@@ -14,6 +14,10 @@ interface JenkinsMatrixEntry {
   @get:Input val version: Property<String>
 
   @get:Input val bomVersion: Property<String>
+
+  operator fun component1(): Property<String> = lts
+  operator fun component2(): Property<String> = version
+  operator fun component3(): Property<String> = bomVersion
 }
 
 @CacheableTask
@@ -27,11 +31,11 @@ abstract class GenerateJenkinsCompatMatrix : DefaultTask() {
   @TaskAction
   fun generate() {
     val matrix =
-      entries.get().map { e ->
+      entries.get().map { (lts, version, bomVersion) ->
         mapOf(
-          "jenkins-lts" to e.lts.get(),
-          "jenkins-version" to e.version.get(),
-          "jenkins-bom-version" to e.bomVersion.get(),
+          "jenkins-lts" to lts.get(),
+          "jenkins-version" to version.get(),
+          "jenkins-bom-version" to bomVersion.get(),
         )
       }
     outputFile.get().asFile.writeText(mapOf("include" to matrix).toJson())
