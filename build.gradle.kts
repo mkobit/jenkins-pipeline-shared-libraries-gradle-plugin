@@ -96,57 +96,25 @@ testing {
         }
       }
 
-      // One target per Gradle compat version: smoke + resolution tests, no Jenkins compat.
-      matrix.gradleVersions.forEach { version ->
-        val suffix = "Gradle${version.replace(".", "_")}"
-        targets.register("functionalTest$suffix") {
+      // One target per matrix variant: Gradle compat, Jenkins compat, and Java compat.
+      // Each variant declares which axes are pinned; null means "not applicable".
+      matrix.variants.map { variant ->
+        targets.register(variant.taskName) {
           testTask.configure {
-            systemProperty("kotest.filter.tags", project.findProperty("kotest.tags") ?: "!JenkinsCompat")
-            systemProperty("test.gradle.version", version)
-            maxParallelForks = 1
-            jvmArgumentProviders += CommandLineArgumentProvider { listOf("-Dkotest.framework.parallelism=3") }
-            reports {
-              html.outputLocation.set(layout.buildDirectory.dir("reports/tests/functionalTest$suffix"))
-              junitXml.outputLocation.set(layout.buildDirectory.dir("test-results/functionalTest$suffix"))
+            variant.javaVersion?.let {
+              javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(it) }
             }
-          }
-        }
-      }
-
-      // One target per Jenkins LTS: Jenkins compat tests only, single entry injected.
-      matrix.jenkinsLtsEntries.forEach { entry ->
-        val suffix = "Jenkins${entry.lts.replace(".", "").replace("x", "")}"
-        targets.register("functionalTest$suffix") {
-          testTask.configure {
-            systemProperty("kotest.filter.tags", project.findProperty("kotest.tags") ?: "JenkinsCompat")
-            systemProperty("test.jenkins.entries", "${entry.lts}|${entry.version}|${entry.bomVersion}")
-            systemProperty("test.jenkins.version", entry.version)
-            maxParallelForks = 1
-            jvmArgumentProviders += CommandLineArgumentProvider { listOf("-Dkotest.framework.parallelism=3") }
-            reports {
-              html.outputLocation.set(layout.buildDirectory.dir("reports/tests/functionalTest$suffix"))
-              junitXml.outputLocation.set(layout.buildDirectory.dir("test-results/functionalTest$suffix"))
+            val effectiveTagFilter = project.findProperty("kotest.tags")?.toString() ?: variant.tagFilter
+            effectiveTagFilter?.let { systemProperty("kotest.filter.tags", it) }
+            variant.gradleVersion?.let { systemProperty("test.gradle.version", it) }
+            variant.jenkinsEntry?.let { entry ->
+              systemProperty("test.jenkins.entries", "${entry.lts}|${entry.version}|${entry.bomVersion}")
             }
-          }
-        }
-      }
-
-      // One target per Java version: smoke + resolution tests against current Gradle.
-      matrix.javaVersions.forEach { javaVersion ->
-        val suffix = "Java$javaVersion"
-        targets.register("functionalTest$suffix") {
-          testTask.configure {
-            javaLauncher =
-              javaToolchains.launcherFor {
-                languageVersion = JavaLanguageVersion.of(javaVersion)
-              }
-            systemProperty("kotest.filter.tags", project.findProperty("kotest.tags") ?: "!JenkinsCompat")
-            systemProperty("test.gradle.version", GradleVersion.current().version)
             maxParallelForks = 1
             jvmArgumentProviders += CommandLineArgumentProvider { listOf("-Dkotest.framework.parallelism=3") }
             reports {
-              html.outputLocation.set(layout.buildDirectory.dir("reports/tests/functionalTest$suffix"))
-              junitXml.outputLocation.set(layout.buildDirectory.dir("test-results/functionalTest$suffix"))
+              html.outputLocation.set(layout.buildDirectory.dir("reports/tests/${variant.taskName}"))
+              junitXml.outputLocation.set(layout.buildDirectory.dir("test-results/${variant.taskName}"))
             }
           }
         }
@@ -159,7 +127,7 @@ testing {
 tasks.register("functionalTestCurrent") {
   group = JavaBasePlugin.VERIFICATION_GROUP
   description = "Alias: current Gradle wrapper × all supported Java versions"
-  matrix.javaVersions.forEach { dependsOn("functionalTestJava$it") }
+  dependsOn(matrix.variants.filter { it.javaVersion != null }.map { it.taskName })
 }
 
 tasks.check {

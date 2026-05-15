@@ -15,4 +15,28 @@ open class TestMatrix {
       JenkinsLtsEntry("2.528.x", "2.528.3", "6398.v1d26a_dd495e2"),
       JenkinsLtsEntry("2.541.x", "2.541.3", "6364.v16b_76a_4023c7"),
     )
+
+  val variants: List<FunctionalTestVariant> =
+    gradleVersions.map { version ->
+      FunctionalTestVariant(
+        taskName = "functionalTestGradle${version.replace(".", "_")}",
+        gradleVersion = version,
+        tagFilter = "!JenkinsCompat",
+      )
+    } +
+      jenkinsLtsEntries.map { entry ->
+        FunctionalTestVariant(
+          taskName = "functionalTestJenkins${entry.lts.replace(".", "").replace("x", "")}",
+          jenkinsEntry = entry,
+          tagFilter = "JenkinsCompat",
+        )
+      } +
+      javaVersions.map { java ->
+        FunctionalTestVariant(
+          taskName = "functionalTestJava$java",
+          gradleVersion = GradleVersion.current().version,
+          javaVersion = java,
+          tagFilter = "!JenkinsCompat",
+        )
+      }
 }
