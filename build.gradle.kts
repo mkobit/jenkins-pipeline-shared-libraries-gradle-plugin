@@ -57,37 +57,37 @@ testing {
     register<JvmTestSuite>("functionalTest") {
       useJUnitJupiter(libs.versions.junit.jupiter)
       dependencies {
+        implementation(project())
         implementation(gradleTestKit())
         implementation(platform(libs.kotest.bom))
         implementation(libs.kotest.assertions)
         implementation(libs.kotest.decoroutinator)
         implementation(libs.kotest.engine)
         runtimeOnly(libs.kotest.runner)
-        implementation(project())
+        // Puts plugin-under-test-metadata.properties on the runtime classpath so
+        // GradleRunner.withPluginClasspath() can find the plugin under test.
+        runtimeOnly(files(tasks.pluginUnderTestMetadata.flatMap { it.outputDirectory }))
       }
 
-      // Applied to every target: plugin classpath, ordering, and version lists.
       targets.configureEach {
         testTask.configure {
           mustRunAfter(tasks.named("test"))
-          // java-gradle-plugin only wires pluginUnderTestMetadata into the test suite;
-          // add it explicitly so GradleRunner.withPluginClasspath() works here.
-          classpath += files(tasks.pluginUnderTestMetadata)
-          // Inject full version lists so TestedGradleVersion and TestedJenkinsVersion
-          // can read them. Scoped here (not tasks.withType) to avoid polluting unit tests.
-          systemProperty("test.gradle.versions", matrix.gradleVersions.joinToString(","))
-          systemProperty("test.jenkins.entries", matrix.jenkinsLtsEntries.joinToString(",") { "${it.lts}|${it.version}|${it.bomVersion}" })
         }
       }
 
-      // Default target: all-versions run, parallel forks, property overrides.
+      // Default target: run everything locally in one shot across all Gradle and Jenkins versions.
+      // No tag filter by default — pass -Pkotest.tags=... to narrow.
       targets.named("functionalTest") {
         testTask.configure {
-          systemProperty("kotest.filter.tags", project.findProperty("kotest.tags") ?: "!Resolution & !JenkinsCompat")
-          // GradleRunner builds are I/O-bound, so parallelism is safe.
           val cpuHalf = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
           maxParallelForks = cpuHalf
           jvmArgumentProviders += CommandLineArgumentProvider { listOf("-Dkotest.framework.parallelism=$cpuHalf") }
+          systemProperty("test.gradle.versions", matrix.gradleVersions.joinToString(","))
+          systemProperty(
+            "test.jenkins.entries",
+            matrix.jenkinsLtsEntries.joinToString(",") { "${it.lts}|${it.version}|${it.bomVersion}" },
+          )
+          project.findProperty("kotest.tags")?.let { systemProperty("kotest.filter.tags", it.toString()) }
           project.findProperty("test.gradle.version")?.let { prop ->
             val version = if (prop == "current") GradleVersion.current().version else prop.toString()
             systemProperty("test.gradle.version", version)
@@ -96,12 +96,12 @@ testing {
         }
       }
 
-      // One target per Gradle compat version for IDE visibility and targeted debugging.
+      // One target per Gradle compat version: smoke + resolution tests, no Jenkins compat.
       matrix.gradleVersions.forEach { version ->
         val suffix = "Gradle${version.replace(".", "_")}"
         targets.register("functionalTest$suffix") {
           testTask.configure {
-            systemProperty("kotest.filter.tags", project.findProperty("kotest.tags") ?: "!Resolution & !JenkinsCompat")
+            systemProperty("kotest.filter.tags", project.findProperty("kotest.tags") ?: "!JenkinsCompat")
             systemProperty("test.gradle.version", version)
             maxParallelForks = 1
             jvmArgumentProviders += CommandLineArgumentProvider { listOf("-Dkotest.framework.parallelism=3") }
@@ -113,13 +113,35 @@ testing {
         }
       }
 
-      // One target per Jenkins LTS for IDE visibility; defaults to JenkinsCompat tag filter.
+      // One target per Jenkins LTS: Jenkins compat tests only, single entry injected.
       matrix.jenkinsLtsEntries.forEach { entry ->
         val suffix = "Jenkins${entry.lts.replace(".", "").replace("x", "")}"
         targets.register("functionalTest$suffix") {
           testTask.configure {
             systemProperty("kotest.filter.tags", project.findProperty("kotest.tags") ?: "JenkinsCompat")
+            systemProperty("test.jenkins.entries", "${entry.lts}|${entry.version}|${entry.bomVersion}")
             systemProperty("test.jenkins.version", entry.version)
+            maxParallelForks = 1
+            jvmArgumentProviders += CommandLineArgumentProvider { listOf("-Dkotest.framework.parallelism=3") }
+            reports {
+              html.outputLocation.set(layout.buildDirectory.dir("reports/tests/functionalTest$suffix"))
+              junitXml.outputLocation.set(layout.buildDirectory.dir("test-results/functionalTest$suffix"))
+            }
+          }
+        }
+      }
+
+      // One target per Java version: smoke + resolution tests against current Gradle.
+      matrix.javaVersions.forEach { javaVersion ->
+        val suffix = "Java$javaVersion"
+        targets.register("functionalTest$suffix") {
+          testTask.configure {
+            javaLauncher =
+              javaToolchains.launcherFor {
+                languageVersion = JavaLanguageVersion.of(javaVersion)
+              }
+            systemProperty("kotest.filter.tags", project.findProperty("kotest.tags") ?: "!JenkinsCompat")
+            systemProperty("test.gradle.version", GradleVersion.current().version)
             maxParallelForks = 1
             jvmArgumentProviders += CommandLineArgumentProvider { listOf("-Dkotest.framework.parallelism=3") }
             reports {
@@ -133,11 +155,11 @@ testing {
   }
 }
 
-val currentGradleSuffix = "Gradle${GradleVersion.current().version.replace(".", "_")}"
+// Runs functional tests against the current Gradle wrapper across all supported Java versions.
 tasks.register("functionalTestCurrent") {
   group = JavaBasePlugin.VERIFICATION_GROUP
-  description = "Runs functional tests against the current Gradle wrapper version"
-  dependsOn("functionalTest$currentGradleSuffix")
+  description = "Alias: current Gradle wrapper × all supported Java versions"
+  matrix.javaVersions.forEach { dependsOn("functionalTestJava$it") }
 }
 
 tasks.check {

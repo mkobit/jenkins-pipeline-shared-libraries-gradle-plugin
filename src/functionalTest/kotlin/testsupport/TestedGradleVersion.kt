@@ -15,18 +15,16 @@ data class TestedGradleVersion(
         ?.map { TestedGradleVersion(it.trim()) }
         ?: emptyList()
 
-    // Returns versions matching -Ptest.gradle.version=X (or comma-separated X,Y,Z) when set,
+    // Returns versions from -Ptest.gradle.version=X (or comma-separated X,Y,Z) when set,
     // otherwise all entries. Use with withData(TestedGradleVersion.filtered) to pin during debugging.
     val filtered: List<TestedGradleVersion>
       get() {
         val only = System.getProperty("test.gradle.version") ?: return all
-        val targets =
-          only
-            .split(",")
-            .map { it.trim() }
-            .filter { it.isNotBlank() }
-            .toSet()
-        return all.filter { it.version in targets }
+        return only
+          .split(",")
+          .map { it.trim() }
+          .filter { it.isNotBlank() }
+          .map { TestedGradleVersion(it) }
       }
   }
 }
