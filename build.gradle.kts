@@ -96,9 +96,9 @@ testing {
         }
       }
 
-      // One target per matrix variant: Gradle compat, Jenkins compat, and Java compat.
+      // One target per matrix variant (gate + CI fan-out).
       // Each variant declares which axes are pinned; null means "not applicable".
-      matrix.variants.map { variant ->
+      matrix.allVariants.map { variant ->
         targets.register(variant.taskName) {
           testTask.configure {
             variant.javaVersion?.let {
@@ -107,8 +107,11 @@ testing {
             val effectiveTagFilter = project.findProperty("kotest.tags")?.toString() ?: variant.tagFilter
             effectiveTagFilter?.let { systemProperty("kotest.filter.tags", it) }
             variant.gradleVersion?.let { systemProperty("test.gradle.version", it) }
-            variant.jenkinsEntry?.let { entry ->
-              systemProperty("test.jenkins.entries", "${entry.lts}|${entry.version}|${entry.bomVersion}")
+            variant.jenkinsEntries?.let { entries ->
+              systemProperty(
+                "test.jenkins.entries",
+                entries.joinToString(",") { "${it.lts}|${it.version}|${it.bomVersion}" },
+              )
             }
             maxParallelForks = 1
             jvmArgumentProviders += CommandLineArgumentProvider { listOf("-Dkotest.framework.parallelism=3") }
@@ -123,11 +126,11 @@ testing {
   }
 }
 
-// Runs functional tests against the current Gradle wrapper across all supported Java versions.
+// Gate: build Java + current Gradle wrapper + all Jenkins LTS, no tag filter.
 tasks.register("functionalTestCurrent") {
   group = JavaBasePlugin.VERIFICATION_GROUP
-  description = "Alias: current Gradle wrapper × all supported Java versions"
-  dependsOn(matrix.variants.filter { it.javaVersion != null }.map { it.taskName })
+  description = "Gate: build Java × current Gradle wrapper × all Jenkins LTS entries"
+  dependsOn(matrix.currentVariant.taskName)
 }
 
 tasks.check {
