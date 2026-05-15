@@ -70,14 +70,7 @@ testing {
 
       targets.configureEach {
         testTask.configure {
-          mustRunAfter(tasks.named("test"))
-        }
-      }
-
-      // Default target: aggregate all matrix variants — no direct test execution.
-      targets.named("functionalTest") {
-        testTask.configure {
-          dependsOn(matrix.allVariants.map { it.taskName })
+          mustRunAfter(testSuite)
         }
       }
 
@@ -100,10 +93,6 @@ testing {
             }
             maxParallelForks = 1
             jvmArgumentProviders += CommandLineArgumentProvider { listOf("-Dkotest.framework.parallelism=3") }
-            reports {
-              html.outputLocation.set(layout.buildDirectory.dir("reports/tests/${variant.taskName}"))
-              junitXml.outputLocation.set(layout.buildDirectory.dir("test-results/${variant.taskName}"))
-            }
           }
         }
       }
