@@ -347,18 +347,11 @@ tasks.withType<CodeNarc>().configureEach {
 // a concrete archive file and fails when resources are unpacked during development.
 val jenkinsConfigFile = layout.buildDirectory.file("generated/codenarc/codenarc-jenkins.xml")
 val extractJenkinsCodeNarcConfig =
-  tasks.register("extractJenkinsCodeNarcConfig") {
+  tasks.register<ExtractJenkinsCodeNarcConfig>("extractJenkinsCodeNarcConfig") {
     group = "build setup"
     description = "Extracts the bundled Jenkins CodeNarc XML ruleset into the build directory."
-    outputs.file(jenkinsConfigFile)
-    doLast {
-      val path = jenkinsConfigFile.get().asFile.toPath()
-      SharedLibraryExtension::class.java.classLoader
-        .getResourceAsStream("com/mkobit/jenkins/pipelines/codenarc-jenkins.xml")!!
-        .use { input -> path.outputStream().use { out -> input.copyTo(out) } }
-    }
+    outputFile = jenkinsConfigFile
   }
-
 val codenarcJenkinsMain =
   tasks.register<CodeNarc>("codenarcJenkinsMain") {
     description = "Runs Jenkins CPS/Serializable CodeNarc rules against the main source set."
