@@ -1,6 +1,5 @@
 package com.mkobit.jenkins.pipelines
 
-import io.kotest.core.annotation.Tags
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
 import io.kotest.inspectors.forAtLeastOne
@@ -11,9 +10,11 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldEndWith
 import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
+import testsupport.Resolution
 import testsupport.TestProject
 import testsupport.TestedGradleVersion
 import testsupport.WORKFLOW_API
+import testsupport.jenkinsSettings
 import testsupport.withTestProject
 import kotlin.io.path.appendText
 import kotlin.io.path.writeText
@@ -21,22 +22,11 @@ import kotlin.io.path.writeText
 /**
  * Resolution-tier tests hit the Jenkins Maven repo on first run (cold cache) and are fast
  * on subsequent runs once Gradle's module cache is warm.
- * Exclude from PR checks with `-P kotest.tags=!resolution`; run on merge or scheduled builds.
+ * Exclude from PR checks with `-P kotest.tags=!Resolution`; run on merge or scheduled builds.
  */
-@Tags("resolution")
 class SharedLibraryPluginResolutionTest :
   DescribeSpec({
-    val settingsContent =
-      """
-      dependencyResolutionManagement {
-          repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-          repositories {
-              mavenCentral()
-              maven("https://repo.jenkins-ci.org/public/")
-          }
-      }
-      rootProject.name = "resolution-test"
-      """.trimIndent()
+    tags(Resolution)
 
     val jenkinsProjectBuildFile =
       """
@@ -68,7 +58,7 @@ class SharedLibraryPluginResolutionTest :
 
     fun withJenkinsProject(block: TestProject.() -> Unit) =
       withTestProject {
-        settingsFile.writeText(settingsContent)
+        settingsFile.writeText(jenkinsSettings("resolution-test"))
         buildFile.writeText(jenkinsProjectBuildFile)
         block()
       }

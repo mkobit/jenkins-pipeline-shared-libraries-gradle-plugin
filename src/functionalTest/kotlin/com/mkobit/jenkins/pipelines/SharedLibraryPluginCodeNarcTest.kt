@@ -1,14 +1,15 @@
 package com.mkobit.jenkins.pipelines
 
-import io.kotest.core.annotation.Tags
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import org.gradle.testkit.runner.TaskOutcome
+import testsupport.Resolution
 import testsupport.TestProject
 import testsupport.TestedGradleVersion
+import testsupport.jenkinsSettings
 import testsupport.withTestProject
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
@@ -16,22 +17,11 @@ import kotlin.io.path.writeText
 /**
  * Verifies that shared-library + codenarc together fire the Jenkins Enhanced Classpath Rules
  * and catch violations from rulesets/jenkins.xml using the bundled codenarc-jenkins.xml resource.
- * Requires Jenkins JARs on compilationClasspath — exclude with `-P kotest.tags=!resolution`.
+ * Requires Jenkins JARs on compilationClasspath — exclude with `-P kotest.tags=!Resolution`.
  */
-@Tags("resolution")
 class SharedLibraryPluginCodeNarcTest :
   DescribeSpec({
-    val settingsContent =
-      """
-      dependencyResolutionManagement {
-          repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-          repositories {
-              mavenCentral()
-              maven("https://repo.jenkins-ci.org/public/")
-          }
-      }
-      rootProject.name = "codenarc-test"
-      """.trimIndent()
+    tags(Resolution)
 
     // No configFile — codenarcJenkinsMain uses the bundled resource from the plugin JAR.
     val buildFileContent =
@@ -48,7 +38,7 @@ class SharedLibraryPluginCodeNarcTest :
 
     fun withBaseProject(block: TestProject.() -> Unit) =
       withTestProject {
-        settingsFile.writeText(settingsContent)
+        settingsFile.writeText(jenkinsSettings("codenarc-test"))
         block()
       }
 

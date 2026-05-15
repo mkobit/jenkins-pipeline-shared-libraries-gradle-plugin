@@ -74,7 +74,7 @@ testing {
           // other Kotest tag expression) to target a specific subset.
           systemProperty(
             "kotest.filter.tags",
-            project.findProperty("kotest.tags") ?: "!resolution & !jenkins-compat",
+            project.findProperty("kotest.tags") ?: "!Resolution & !JenkinsCompat",
           )
           // GradleRunner builds are I/O-bound and start no Jenkins instance, so
           // parallelism is safe. Split test classes across N forks and let Kotest
@@ -107,7 +107,7 @@ val functionalTestCurrentWrapper =
     classpath = ftSuite.sources.runtimeClasspath + files(tasks.pluginUnderTestMetadata)
     useJUnitPlatform()
     mustRunAfter(tasks.test)
-    systemProperty("kotest.filter.tags", project.findProperty("kotest.tags") ?: "!resolution & !jenkins-compat")
+    systemProperty("kotest.filter.tags", project.findProperty("kotest.tags") ?: "!Resolution & !JenkinsCompat")
     systemProperty("test.gradle.version", GradleVersion.current().version)
     maxParallelForks = 1
     jvmArgumentProviders += CommandLineArgumentProvider { listOf("-Dkotest.framework.parallelism=3") }
@@ -119,6 +119,10 @@ val functionalTestCurrentWrapper =
 
 tasks.check {
   dependsOn(functionalTestCurrentWrapper)
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+  compilerOptions.freeCompilerArgs.add("-Xcontext-parameters")
 }
 
 tasks.withType<Test>().configureEach {

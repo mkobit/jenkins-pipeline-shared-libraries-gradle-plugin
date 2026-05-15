@@ -10,12 +10,18 @@ data class TestedGradleVersion(
   companion object {
     val all: List<TestedGradleVersion> = gradleCompatVersions.map { TestedGradleVersion(it) }
 
-    // Returns only the version matching -Ptest.gradle.version=X when set, otherwise all entries.
-    // Use with withData(TestedGradleVersion.filtered) to pin a single version during debugging.
+    // Returns versions matching -Ptest.gradle.version=X (or comma-separated X,Y,Z) when set,
+    // otherwise all entries. Use with withData(TestedGradleVersion.filtered) to pin during debugging.
     val filtered: List<TestedGradleVersion>
       get() {
-        val only = System.getProperty("test.gradle.version")
-        return if (only.isNullOrBlank()) all else all.filter { it.version == only }
+        val only = System.getProperty("test.gradle.version") ?: return all
+        val targets =
+          only
+            .split(",")
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+            .toSet()
+        return all.filter { it.version in targets }
       }
   }
 }

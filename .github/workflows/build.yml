@@ -107,7 +107,7 @@ jobs:
       - name: Functional tests (Gradle ${{ matrix.gradle }})
         run: ./gradlew functionalTest --continue -Ptest.gradle.version="${{ matrix.gradle }}"
       - name: Functional tests (resolution)
-        run: ./gradlew functionalTest --continue -Pkotest.tags=resolution -Ptest.gradle.version="${{ matrix.gradle }}"
+        run: ./gradlew functionalTest --continue -Pkotest.tags=Resolution -Ptest.gradle.version="${{ matrix.gradle }}"
       - name: Publish test results
         if: always()
         uses: mikepenz/action-junit-report@3585e9575db828022551b4231f165eb59a0e74e3
@@ -169,7 +169,7 @@ jobs:
         with:
           java-version: ${{ needs.build-config.outputs.java-version }}
       - name: Jenkins compat tests (Jenkins ${{ matrix.jenkins-lts }})
-        run: ./gradlew functionalTest --continue -Pkotest.tags=jenkins-compat -Ptest.jenkins.version="${{ matrix.jenkins-version }}"
+        run: ./gradlew functionalTest --continue -Pkotest.tags=JenkinsCompat -Ptest.jenkins.version="${{ matrix.jenkins-version }}"
       - name: Publish test results
         if: always()
         uses: mikepenz/action-junit-report@3585e9575db828022551b4231f165eb59a0e74e3
@@ -200,7 +200,7 @@ jobs:
       - name: Functional tests (current Gradle)
         run: ./gradlew functionalTestCurrentWrapper --continue
       - name: Functional tests (resolution)
-        run: ./gradlew functionalTest --continue -Pkotest.tags=resolution -Ptest.gradle.version=current
+        run: ./gradlew functionalTest --continue -Pkotest.tags=Resolution -Ptest.gradle.version=current
       - name: Publish test results
         if: always()
         uses: mikepenz/action-junit-report@3585e9575db828022551b4231f165eb59a0e74e3

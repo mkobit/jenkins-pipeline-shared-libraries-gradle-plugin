@@ -1,6 +1,5 @@
 package com.mkobit.jenkins.pipelines
 
-import io.kotest.core.annotation.Tags
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
 import io.kotest.inspectors.forAtLeastOne
@@ -10,9 +9,13 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import org.gradle.util.GradleVersion
+import testsupport.JenkinsCompat
+import testsupport.JenkinsCompatEntry
+import testsupport.TestProject
 import testsupport.TestedGradleVersion
 import testsupport.TestedJenkinsVersion
 import testsupport.WORKFLOW_API
+import testsupport.jenkinsSettings
 import testsupport.withTestProject
 import kotlin.io.path.writeText
 
@@ -21,59 +24,55 @@ import kotlin.io.path.writeText
  * LTS version. Run per-version by the jenkins-compat CI job; each run pins `test.jenkins.version`
  * so [TestedJenkinsVersion.filtered] returns a single entry.
  */
-@Tags("jenkins-compat")
 class SharedLibraryPluginJenkinsCompatTest :
   DescribeSpec({
+    tags(JenkinsCompat)
+
     val gradleVersion = TestedGradleVersion(GradleVersion.current().version)
+
+    fun buildContent(e: JenkinsCompatEntry) =
+      """
+      plugins {
+          id("com.mkobit.jenkins.pipelines.shared-library")
+      }
+      sharedLibrary {
+          jenkins {
+              version = "${e.jenkinsVersion}"
+              bomVersion = "${e.jenkinsBomVersion}"
+          }
+      }
+      dependencies {
+          jenkinsPlugin("$WORKFLOW_API")
+      }
+      tasks.register("printClasspaths") {
+          doLast {
+              configurations.getByName("compileClasspath").resolvedConfiguration.resolvedArtifacts.forEach {
+                  println("compile:" + it.file.name)
+              }
+              configurations.getByName("testRuntimeClasspath").resolvedConfiguration.resolvedArtifacts.forEach {
+                  println("testRuntime:" + it.file.name)
+              }
+              configurations.getByName("jenkinsWar").resolvedConfiguration.resolvedArtifacts
+                  .filter { it.file.name.endsWith(".war") }
+                  .forEach { println("war:" + it.file.name) }
+          }
+      }
+      """.trimIndent()
+
+    fun withJenkinsCompatProject(
+      e: JenkinsCompatEntry,
+      block: TestProject.() -> Unit,
+    ) = withTestProject {
+      settingsFile.writeText(jenkinsSettings("jenkins-compat-test"))
+      buildFile.writeText(buildContent(e))
+      block()
+    }
 
     withData(TestedJenkinsVersion.filtered) { jenkins ->
       val e = jenkins.entry
 
-      val settingsContent =
-        """
-        dependencyResolutionManagement {
-            repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-            repositories {
-                mavenCentral()
-                maven("https://repo.jenkins-ci.org/public/")
-            }
-        }
-        rootProject.name = "jenkins-compat-test"
-        """.trimIndent()
-
-      val buildContent =
-        """
-        plugins {
-            id("com.mkobit.jenkins.pipelines.shared-library")
-        }
-        sharedLibrary {
-            jenkins {
-                version = "${e.jenkinsVersion}"
-                bomVersion = "${e.jenkinsBomVersion}"
-            }
-        }
-        dependencies {
-            jenkinsPlugin("$WORKFLOW_API")
-        }
-        tasks.register("printClasspaths") {
-            doLast {
-                configurations.getByName("compileClasspath").resolvedConfiguration.resolvedArtifacts.forEach {
-                    println("compile:" + it.file.name)
-                }
-                configurations.getByName("testRuntimeClasspath").resolvedConfiguration.resolvedArtifacts.forEach {
-                    println("testRuntime:" + it.file.name)
-                }
-                configurations.getByName("jenkinsWar").resolvedConfiguration.resolvedArtifacts
-                    .filter { it.file.name.endsWith(".war") }
-                    .forEach { println("war:" + it.file.name) }
-            }
-        }
-        """.trimIndent()
-
       describe("jenkins-core resolves at declared version") {
-        withTestProject {
-          settingsFile.writeText(settingsContent)
-          buildFile.writeText(buildContent)
+        withJenkinsCompatProject(e) {
           val result = runner(gradleVersion).withArguments("printClasspaths").build()
 
           val compileFiles =
@@ -87,9 +86,7 @@ class SharedLibraryPluginJenkinsCompatTest :
       }
 
       describe("BOM constraint propagates through jenkinsPlugin") {
-        withTestProject {
-          settingsFile.writeText(settingsContent)
-          buildFile.writeText(buildContent)
+        withJenkinsCompatProject(e) {
           val result =
             runner(gradleVersion)
               .withArguments("dependencies", "--configuration", "testRuntimeClasspath")
@@ -101,9 +98,7 @@ class SharedLibraryPluginJenkinsCompatTest :
       }
 
       describe("groovy-all absent from testRuntimeClasspath") {
-        withTestProject {
-          settingsFile.writeText(settingsContent)
-          buildFile.writeText(buildContent)
+        withJenkinsCompatProject(e) {
           val result = runner(gradleVersion).withArguments("printClasspaths").build()
 
           val testRuntimeFiles =
@@ -117,9 +112,7 @@ class SharedLibraryPluginJenkinsCompatTest :
       }
 
       describe("jenkinsWar resolves exactly one WAR at declared version") {
-        withTestProject {
-          settingsFile.writeText(settingsContent)
-          buildFile.writeText(buildContent)
+        withJenkinsCompatProject(e) {
           val result = runner(gradleVersion).withArguments("printClasspaths").build()
 
           val warFiles =

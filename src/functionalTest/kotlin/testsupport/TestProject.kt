@@ -1,10 +1,10 @@
 package testsupport
 
+import io.kotest.core.TestConfiguration
+import io.kotest.engine.spec.tempdir
 import org.gradle.testkit.runner.GradleRunner
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
-import kotlin.io.path.createTempDirectory
-import kotlin.io.path.writeText
 
 class TestProject(
   val dir: Path,
@@ -25,13 +25,8 @@ class TestProject(
       }
 }
 
-inline fun withTestProject(block: TestProject.() -> Unit) {
-  val dir = createTempDirectory("shared-library-functional-test")
-  val project = TestProject(dir)
-  project.settingsFile.writeText("""rootProject.name = "test-project"""")
-  try {
-    project.block()
-  } finally {
-    dir.toFile().deleteRecursively()
-  }
+context(config: TestConfiguration)
+fun withTestProject(block: TestProject.() -> Unit) {
+  val project = TestProject(config.tempdir("shared-library-functional-test").toPath())
+  project.block()
 }

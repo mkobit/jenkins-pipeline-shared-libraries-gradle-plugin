@@ -10,11 +10,18 @@ data class TestedJenkinsVersion(
   companion object {
     val all: List<TestedJenkinsVersion> = jenkinsCompatEntries.map { TestedJenkinsVersion(it) }
 
-    // Returns only the entry matching -Ptest.jenkins.version=X when set, otherwise all entries.
+    // Returns entries matching -Ptest.jenkins.version=X (or comma-separated X,Y,Z) when set,
+    // otherwise all entries.
     val filtered: List<TestedJenkinsVersion>
       get() {
-        val only = System.getProperty("test.jenkins.version")
-        return if (only.isNullOrBlank()) all else all.filter { it.entry.jenkinsVersion == only }
+        val only = System.getProperty("test.jenkins.version") ?: return all
+        val targets =
+          only
+            .split(",")
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+            .toSet()
+        return all.filter { it.entry.jenkinsVersion in targets }
       }
   }
 }

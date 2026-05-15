@@ -1,39 +1,29 @@
 package com.mkobit.jenkins.pipelines
 
-import io.kotest.core.annotation.Tags
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotContain
 import org.gradle.testkit.runner.TaskOutcome
+import testsupport.Resolution
 import testsupport.TestProject
 import testsupport.TestedGradleVersion
+import testsupport.jenkinsSettings
 import testsupport.withTestProject
 import kotlin.io.path.writeText
 
 /**
  * Tests that the shared-library plugin correctly wires jenkinsPlugin JARs into
  * consumer-defined test suites across all three JVM languages.
- * Requires the Jenkins Maven repo — exclude with `-P kotest.tags=!resolution`.
+ * Requires the Jenkins Maven repo — exclude with `-P kotest.tags=!Resolution`.
  */
-@Tags("resolution")
 class SharedLibraryPluginTestSuiteTest :
   DescribeSpec({
-    val settingsContent =
-      """
-      dependencyResolutionManagement {
-          repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-          repositories {
-              mavenCentral()
-              maven("https://repo.jenkins-ci.org/public/")
-          }
-      }
-      rootProject.name = "suite-test"
-      """.trimIndent()
+    tags(Resolution)
 
     fun withBaseProject(block: TestProject.() -> Unit) =
       withTestProject {
-        settingsFile.writeText(settingsContent)
+        settingsFile.writeText(jenkinsSettings("suite-test"))
         block()
       }
 

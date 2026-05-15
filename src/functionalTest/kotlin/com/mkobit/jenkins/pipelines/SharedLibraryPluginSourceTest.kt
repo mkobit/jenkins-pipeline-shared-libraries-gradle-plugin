@@ -1,40 +1,30 @@
 package com.mkobit.jenkins.pipelines
 
-import io.kotest.core.annotation.Tags
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotContain
 import org.gradle.testkit.runner.TaskOutcome
+import testsupport.Resolution
 import testsupport.TestProject
 import testsupport.TestedGradleVersion
+import testsupport.jenkinsSettings
 import testsupport.withTestProject
 import kotlin.io.path.writeText
 
 /**
  * Source compilation and unit test execution tests require the Jenkins Maven repo on first run.
- * Exclude from fast PR checks with `-P kotest.tags=!resolution`.
+ * Exclude from fast PR checks with `-P kotest.tags=!Resolution`.
  */
-@Tags("resolution")
 class SharedLibraryPluginSourceTest :
   DescribeSpec({
-    val settingsContent =
-      """
-      dependencyResolutionManagement {
-          repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-          repositories {
-              mavenCentral()
-              maven("https://repo.jenkins-ci.org/public/")
-          }
-      }
-      rootProject.name = "source-test"
-      """.trimIndent()
+    tags(Resolution)
 
     fun withSharedLibraryProject(
       configure: TestProject.() -> Unit = {},
       block: TestProject.() -> Unit,
     ) = withTestProject {
-      settingsFile.writeText(settingsContent)
+      settingsFile.writeText(jenkinsSettings("source-test"))
       buildFile.writeText(
         """
         plugins {
