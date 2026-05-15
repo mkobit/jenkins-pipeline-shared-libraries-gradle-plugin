@@ -1,6 +1,8 @@
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestStackTraceFilter
+import org.gradle.kotlin.dsl.testMatrix
+import org.gradle.util.GradleVersion
 
 plugins {
   `kotlin-dsl`
@@ -33,11 +35,15 @@ gradlePlugin {
   }
 }
 
+kotlin {
+  compilerOptions {
+    freeCompilerArgs.add("-Xcontext-parameters")
+  }
+}
+
 dependencies {
   api(gradleApi())
 }
-
-val matrix = testMatrix
 
 testing {
   suites {
@@ -74,45 +80,57 @@ testing {
         }
       }
 
-      // One target per matrix variant (gate + CI fan-out).
-      // Each variant declares which axes are pinned; null means "not applicable".
-      matrix.allVariants.map { variant ->
-        targets.register(variant.taskName) {
-          testTask.configure {
-            variant.javaVersion?.let {
-              javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(it) }
-            }
-            val effectiveTagFilter = project.findProperty("kotest.tags")?.toString() ?: variant.tagFilter
-            effectiveTagFilter?.let { systemProperty("kotest.filter.tags", it) }
-            variant.gradleVersion?.let { systemProperty("test.gradle.version", it) }
-            variant.jenkinsEntries?.let { entries ->
-              systemProperty(
-                "test.jenkins.entries",
-                entries.joinToString(",") { "${it.lts}|${it.version}|${it.bomVersion}" },
-              )
-            }
-            maxParallelForks = 1
-            jvmArgumentProviders += CommandLineArgumentProvider { listOf("-Dkotest.framework.parallelism=3") }
-          }
+      // Gate: default suite target — toolchain Java × current Gradle × all Jenkins LTS × no tag filter.
+      val gate = targets.named("functionalTest")
+      val gateTask = gate.flatMap { it.testTask }
+      gate.configure {
+        testTask.configure {
+          javaLauncher = javaToolchains.launcherFor { languageVersion = java.toolchain.languageVersion }
+          systemProperty("test.gradle.version", GradleVersion.current().version)
+          systemProperty(
+            "test.jenkins.entries",
+            testMatrix.jenkinsLtsEntries.joinToString(",") { "${it.lts}|${it.version}|${it.bomVersion}" },
+          )
+          maxParallelForks = 1
+          jvmArgumentProviders += CommandLineArgumentProvider { listOf("-Dkotest.framework.parallelism=3") }
         }
+      }
+
+      // CI fan-out: one target per matrix variant; each axis is pinned via nullable fields.
+      val variantTasks =
+        testMatrix.variants.map { variant ->
+          targets
+            .register(variant.taskName) {
+              testTask.configure {
+                variant.javaVersion?.let {
+                  javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(it) }
+                }
+                val effectiveTagFilter = project.findProperty("kotest.tags")?.toString() ?: variant.tagFilter
+                effectiveTagFilter?.let { systemProperty("kotest.filter.tags", it) }
+                variant.gradleVersion?.let { systemProperty("test.gradle.version", it) }
+                variant.jenkinsEntries?.let { entries ->
+                  systemProperty(
+                    "test.jenkins.entries",
+                    entries.joinToString(",") { "${it.lts}|${it.version}|${it.bomVersion}" },
+                  )
+                }
+                maxParallelForks = 1
+                jvmArgumentProviders += CommandLineArgumentProvider { listOf("-Dkotest.framework.parallelism=3") }
+              }
+            }.flatMap { it.testTask }
+        }
+
+      tasks.register("functionalTestAll") {
+        group = JavaBasePlugin.VERIFICATION_GROUP
+        description = "Runs the gate and all CI fan-out matrix variants"
+        dependsOn(listOf(gateTask) + variantTasks)
+      }
+
+      tasks.check {
+        dependsOn(gateTask)
       }
     }
   }
-}
-
-// Gate: build Java + current Gradle wrapper + all Jenkins LTS, no tag filter.
-tasks.register("functionalTestCurrent") {
-  group = JavaBasePlugin.VERIFICATION_GROUP
-  description = "Gate: build Java × current Gradle wrapper × all Jenkins LTS entries"
-  dependsOn(matrix.currentVariant.taskName)
-}
-
-tasks.check {
-  dependsOn("functionalTestCurrent")
-}
-
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-  compilerOptions.freeCompilerArgs.add("-Xcontext-parameters")
 }
 
 tasks.withType<Test>().configureEach {
@@ -122,7 +140,7 @@ tasks.withType<Test>().configureEach {
   testLogging {
     events("failed", "skipped")
     showStackTraces = true
-    exceptionFormat = TestExceptionFormat.FULL
+    exceptionFormat = TestExceptionFormat.SHORT
     stackTraceFilters = setOf(TestStackTraceFilter.TRUNCATE)
   }
 }
@@ -130,12 +148,11 @@ tasks.withType<Test>().configureEach {
 val dokkaHtmlJar =
   tasks.register<Jar>("dokkaHtmlJar") {
     description = "Assembles Dokka HTML documentation into a JAR"
-    archiveClassifier.set("javadoc")
+    archiveClassifier = "javadoc"
     val dokkaHtml =
       tasks.named<org.jetbrains.dokka.gradle.tasks.DokkaGeneratePublicationTask>(
         "dokkaGeneratePublicationHtml",
       )
-    dependsOn(dokkaHtml)
     from(dokkaHtml.flatMap { it.outputDirectory })
   }
 

@@ -78,11 +78,10 @@ jobs:
           java-version: ${{ needs.build-config.outputs.java-version }}
       - name: Compile, style, and unit tests
         run: ./gradlew spotlessCheck test
-      - name: Functional tests (current Gradle × all Java versions)
-        # functionalTestCurrent runs functionalTestJava21 + functionalTestJava25.
+      - name: Functional tests (gate)
         # Foojay auto-provisions any JDK not already on the runner.
         # This also runs Resolution tests, warming the Jenkins artifact cache for downstream jobs.
-        run: ./gradlew assemble validatePlugins functionalTestCurrent
+        run: ./gradlew assemble validatePlugins functionalTest
       - name: Publish test results
         if: always()
         uses: mikepenz/action-junit-report@3585e9575db828022551b4231f165eb59a0e74e3
@@ -145,7 +144,7 @@ jobs:
       - name: Unit tests
         run: ./gradlew test --continue
       - name: Functional tests (current Gradle × all Java versions)
-        run: ./gradlew functionalTestCurrent --continue
+        run: ./gradlew functionalTest --continue
       - name: Publish test results
         if: always()
         uses: mikepenz/action-junit-report@3585e9575db828022551b4231f165eb59a0e74e3

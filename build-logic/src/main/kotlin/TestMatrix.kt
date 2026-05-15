@@ -16,16 +16,6 @@ open class TestMatrix {
       JenkinsLtsEntry("2.541.x", "2.541.3", "6364.v16b_76a_4023c7"),
     )
 
-  /** Gate variant: build Java + current Gradle wrapper + all Jenkins LTS + no tag filter. */
-  val currentVariant: FunctionalTestVariant =
-    FunctionalTestVariant(
-      taskName = "functionalTestJava17",
-      gradleVersion = GradleVersion.current().version,
-      javaVersion = 17,
-      jenkinsEntries = jenkinsLtsEntries,
-      tagFilter = null,
-    )
-
   /** CI fan-out variants: one per Gradle version, Jenkins LTS, and additional Java version. */
   val variants: List<FunctionalTestVariant> =
     gradleVersions.map { version ->
@@ -50,7 +40,4 @@ open class TestMatrix {
           tagFilter = "!JenkinsCompat",
         )
       }
-
-  /** All variants to register as suite targets, including the gate variant. */
-  val allVariants: List<FunctionalTestVariant> = listOf(currentVariant) + variants
 }
