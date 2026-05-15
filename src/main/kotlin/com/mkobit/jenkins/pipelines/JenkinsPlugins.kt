@@ -2,6 +2,7 @@
 
 package com.mkobit.jenkins.pipelines
 
+import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.MinimalExternalModuleDependency
 import org.gradle.api.artifacts.dsl.Dependencies
 import org.gradle.api.artifacts.dsl.DependencyCollector
@@ -34,5 +35,5 @@ abstract class JenkinsPlugins
     fun plugin(dependency: Provider<out MinimalExternalModuleDependency>) = pluginCollector.add(dependency)
 
     /** Declares all Jenkins plugins from a version catalog bundle (e.g. `jenkinsPlugins.bundles.allPlugins`). */
-    fun plugins(bundle: Provider<out Iterable<MinimalExternalModuleDependency>>) = pluginCollector.bundle(bundle)
+    fun plugins(bundle: Provider<out Iterable<Dependency>>) = pluginCollector.bundle(bundle)
   }
