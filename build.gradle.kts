@@ -37,6 +37,8 @@ dependencies {
   api(gradleApi())
 }
 
+val matrix = testMatrix
+
 testing {
   suites {
     named<JvmTestSuite>("test") {
@@ -62,29 +64,29 @@ testing {
         runtimeOnly(libs.kotest.runner)
         implementation(project())
       }
+
+      // Applied to every target: plugin classpath, ordering, and version lists.
       targets.configureEach {
         testTask.configure {
           mustRunAfter(tasks.named("test"))
           // java-gradle-plugin only wires pluginUnderTestMetadata into the test suite;
           // add it explicitly so GradleRunner.withPluginClasspath() works here.
           classpath += files(tasks.pluginUnderTestMetadata)
-          // Resolution tests hit the Jenkins Maven repo and are slow on a cold cache.
-          // Default to excluding them from the normal check so CI can run them as a
-          // separate cacheable step. Override with -Pkotest.tags=resolution (or any
-          // other Kotest tag expression) to target a specific subset.
-          systemProperty(
-            "kotest.filter.tags",
-            project.findProperty("kotest.tags") ?: "!Resolution & !JenkinsCompat",
-          )
-          // GradleRunner builds are I/O-bound and start no Jenkins instance, so
-          // parallelism is safe. Split test classes across N forks and let Kotest
-          // run N specs concurrently within each fork via coroutines.
-          // jvmArgumentProviders (not systemProperty) so parallelism doesn't pollute the cache key.
+          // Inject full version lists so TestedGradleVersion and TestedJenkinsVersion
+          // can read them. Scoped here (not tasks.withType) to avoid polluting unit tests.
+          systemProperty("test.gradle.versions", matrix.gradleVersions.joinToString(","))
+          systemProperty("test.jenkins.entries", matrix.jenkinsLtsEntries.joinToString(",") { "${it.lts}|${it.version}|${it.bomVersion}" })
+        }
+      }
+
+      // Default target: all-versions run, parallel forks, property overrides.
+      targets.named("functionalTest") {
+        testTask.configure {
+          systemProperty("kotest.filter.tags", project.findProperty("kotest.tags") ?: "!Resolution & !JenkinsCompat")
+          // GradleRunner builds are I/O-bound, so parallelism is safe.
           val cpuHalf = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
           maxParallelForks = cpuHalf
           jvmArgumentProviders += CommandLineArgumentProvider { listOf("-Dkotest.framework.parallelism=$cpuHalf") }
-          // Pin to a single Gradle version for fast debugging: -Ptest.gradle.version=9.5.0
-          // Use -Ptest.gradle.version=current to target the wrapper version automatically.
           project.findProperty("test.gradle.version")?.let { prop ->
             val version = if (prop == "current") GradleVersion.current().version else prop.toString()
             systemProperty("test.gradle.version", version)
@@ -92,33 +94,60 @@ testing {
           project.findProperty("test.jenkins.version")?.let { systemProperty("test.jenkins.version", it.toString()) }
         }
       }
+
+      // Pins to the current wrapper; used by `check` and Java/platform compat CI.
+      targets.register("functionalTestCurrentWrapper") {
+        testTask.configure {
+          systemProperty("kotest.filter.tags", project.findProperty("kotest.tags") ?: "!Resolution & !JenkinsCompat")
+          systemProperty("test.gradle.version", GradleVersion.current().version)
+          maxParallelForks = 1
+          jvmArgumentProviders += CommandLineArgumentProvider { listOf("-Dkotest.framework.parallelism=3") }
+          reports {
+            html.outputLocation.set(layout.buildDirectory.dir("reports/tests/functionalTestCurrentWrapper"))
+            junitXml.outputLocation.set(layout.buildDirectory.dir("test-results/functionalTestCurrentWrapper"))
+          }
+        }
+      }
+
+      // One target per Gradle compat version for IDE visibility and targeted debugging.
+      matrix.gradleVersions.forEach { version ->
+        val suffix = "Gradle${version.replace(".", "_")}"
+        targets.register("functionalTest$suffix") {
+          testTask.configure {
+            systemProperty("kotest.filter.tags", project.findProperty("kotest.tags") ?: "!Resolution & !JenkinsCompat")
+            systemProperty("test.gradle.version", version)
+            maxParallelForks = 1
+            jvmArgumentProviders += CommandLineArgumentProvider { listOf("-Dkotest.framework.parallelism=3") }
+            reports {
+              html.outputLocation.set(layout.buildDirectory.dir("reports/tests/functionalTest$suffix"))
+              junitXml.outputLocation.set(layout.buildDirectory.dir("test-results/functionalTest$suffix"))
+            }
+          }
+        }
+      }
+
+      // One target per Jenkins LTS for IDE visibility; defaults to JenkinsCompat tag filter.
+      matrix.jenkinsLtsEntries.forEach { entry ->
+        val suffix = "Jenkins${entry.lts.replace(".", "").replace("x", "")}"
+        targets.register("functionalTest$suffix") {
+          testTask.configure {
+            systemProperty("kotest.filter.tags", project.findProperty("kotest.tags") ?: "JenkinsCompat")
+            systemProperty("test.jenkins.version", entry.version)
+            maxParallelForks = 1
+            jvmArgumentProviders += CommandLineArgumentProvider { listOf("-Dkotest.framework.parallelism=3") }
+            reports {
+              html.outputLocation.set(layout.buildDirectory.dir("reports/tests/functionalTest$suffix"))
+              junitXml.outputLocation.set(layout.buildDirectory.dir("test-results/functionalTest$suffix"))
+            }
+          }
+        }
+      }
     }
   }
 }
 
-// Stable task for CI jobs that test Java or platform variation (not Gradle version variation).
-// Pins to the current wrapper version; gradle-compat CI uses -Ptest.gradle.version=X directly.
-val functionalTestCurrentWrapper =
-  tasks.register<Test>("functionalTestCurrentWrapper") {
-    group = "verification"
-    description = "Functional tests for the current Gradle wrapper version (${GradleVersion.current().version})"
-    val ftSuite = testing.suites.named<JvmTestSuite>("functionalTest").get()
-    testClassesDirs = ftSuite.sources.output.classesDirs
-    classpath = ftSuite.sources.runtimeClasspath + files(tasks.pluginUnderTestMetadata)
-    useJUnitPlatform()
-    mustRunAfter(tasks.test)
-    systemProperty("kotest.filter.tags", project.findProperty("kotest.tags") ?: "!Resolution & !JenkinsCompat")
-    systemProperty("test.gradle.version", GradleVersion.current().version)
-    maxParallelForks = 1
-    jvmArgumentProviders += CommandLineArgumentProvider { listOf("-Dkotest.framework.parallelism=3") }
-    reports {
-      html.outputLocation.set(layout.buildDirectory.dir("reports/tests/functionalTestCurrentWrapper"))
-      junitXml.outputLocation.set(layout.buildDirectory.dir("test-results/functionalTestCurrentWrapper"))
-    }
-  }
-
 tasks.check {
-  dependsOn(functionalTestCurrentWrapper)
+  dependsOn("functionalTestCurrentWrapper")
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
@@ -127,8 +156,7 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach 
 
 tasks.withType<Test>().configureEach {
   // Share a TestKit working directory across GradleRunner invocations so Jenkins artifact
-  // downloads are cached between test cases in the same job. Controlled by GRADLE_USER_HOME
-  // (set by gradle/actions/setup-gradle in CI); absent locally, each runner uses a fresh temp dir.
+  // downloads are cached between test cases in the same job.
   System.getenv("GRADLE_USER_HOME")?.let { systemProperty("test.gradle.user.home", it) }
   testLogging {
     events("failed", "skipped")
