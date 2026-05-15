@@ -75,24 +75,10 @@ testing {
         }
       }
 
-      // Default target: run everything locally in one shot across all Gradle and Jenkins versions.
-      // No tag filter by default — pass -Pkotest.tags=... to narrow.
+      // Default target: aggregate all matrix variants — no direct test execution.
       targets.named("functionalTest") {
         testTask.configure {
-          val cpuHalf = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
-          maxParallelForks = cpuHalf
-          jvmArgumentProviders += CommandLineArgumentProvider { listOf("-Dkotest.framework.parallelism=$cpuHalf") }
-          systemProperty("test.gradle.versions", matrix.gradleVersions.joinToString(","))
-          systemProperty(
-            "test.jenkins.entries",
-            matrix.jenkinsLtsEntries.joinToString(",") { "${it.lts}|${it.version}|${it.bomVersion}" },
-          )
-          project.findProperty("kotest.tags")?.let { systemProperty("kotest.filter.tags", it.toString()) }
-          project.findProperty("test.gradle.version")?.let { prop ->
-            val version = if (prop == "current") GradleVersion.current().version else prop.toString()
-            systemProperty("test.gradle.version", version)
-          }
-          project.findProperty("test.jenkins.version")?.let { systemProperty("test.jenkins.version", it.toString()) }
+          dependsOn(matrix.allVariants.map { it.taskName })
         }
       }
 
