@@ -41,7 +41,7 @@ val matrix = testMatrix
 
 testing {
   suites {
-    named<JvmTestSuite>("test") {
+    val testSuite = named<JvmTestSuite>("test") {
       useJUnitJupiter(libs.versions.junit.jupiter)
       dependencies {
         implementation(platform(libs.kotest.bom))
