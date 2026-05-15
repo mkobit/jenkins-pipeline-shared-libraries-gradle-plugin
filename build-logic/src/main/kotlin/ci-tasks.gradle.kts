@@ -26,15 +26,7 @@ tasks {
   register<GenerateJenkinsCompatMatrix>("generateJenkinsCompatMatrix") {
     group = "CI"
     description = "Writes the Jenkins LTS compat CI matrix JSON to <build>/ci/jenkins-compat-matrix.json"
-    entries.addAll(
-        testMatrix.jenkinsLtsEntries.map { (lts, version, bomVersion) ->
-          objects.newInstance<JenkinsMatrixEntry>().also {
-            it.lts = lts
-            it.version = version
-            it.bomVersion = bomVersion
-          }
-        }
-      )
+    entries = testMatrix.jenkinsLtsEntries
     outputFile = ciDir.map { it.file("jenkins-compat-matrix.json") }
   }
 
