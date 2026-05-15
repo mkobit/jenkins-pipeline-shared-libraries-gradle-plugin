@@ -8,7 +8,19 @@ data class TestedGradleVersion(
   override fun dataTestName() = "Gradle $version"
 
   companion object {
-    val all: List<TestedGradleVersion> = gradleCompatVersions.map { TestedGradleVersion(it) }
+    val all: List<TestedGradleVersion> =
+      System
+        .getProperty("test.gradle.versions")
+        ?.split(",")
+        ?.map { TestedGradleVersion(it.trim()) }
+        ?: run {
+          System.err.println(
+            "[WARNING] test.gradle.versions system property is not set — " +
+              "TestedGradleVersion.all is empty. " +
+              "Ensure the ci-tasks convention plugin is applied to the test task.",
+          )
+          emptyList()
+        }
 
     // Returns versions matching -Ptest.gradle.version=X (or comma-separated X,Y,Z) when set,
     // otherwise all entries. Use with withData(TestedGradleVersion.filtered) to pin during debugging.

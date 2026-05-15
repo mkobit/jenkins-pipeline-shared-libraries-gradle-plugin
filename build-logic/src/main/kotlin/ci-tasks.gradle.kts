@@ -12,6 +12,24 @@ val gradleCompatVersions =
 
 val javaCompatVersions = listOf(21, 25)
 
+// lts label, version, BOM version — drives both the CI matrix JSON and TestedJenkinsVersion.all.
+val jenkinsLtsEntries: List<Triple<String, String, String>> =
+  listOf(
+    Triple("2.479.x", "2.479.1", "5054.v620b_5d2b_d5e6"),
+    Triple("2.528.x", "2.528.3", "6398.v1d26a_dd495e2"),
+    Triple("2.541.x", "2.541.3", "6364.v16b_76a_4023c7"),
+  )
+
+// Inject version lists into every Test task so test-support classes can read them
+// without hardcoding anything in functional-test source.
+tasks.withType<Test>().configureEach {
+  systemProperty("test.gradle.versions", gradleCompatVersions.joinToString(","))
+  systemProperty(
+    "test.jenkins.entries",
+    jenkinsLtsEntries.joinToString(",") { (lts, v, bom) -> "$lts|$v|$bom" },
+  )
+}
+
 tasks {
   val ciDir = layout.buildDirectory.dir("ci")
 
@@ -32,27 +50,15 @@ tasks {
   register<GenerateJenkinsCompatMatrix>("generateJenkinsCompatMatrix") {
     group = "CI"
     description = "Writes the Jenkins LTS compat CI matrix JSON to <build>/ci/jenkins-compat-matrix.json"
-    entries.add(
-      objects.newInstance<JenkinsMatrixEntry>().also {
-        it.lts = "2.479.x"
-        it.version = "2.479.1"
-        it.bomVersion = "5054.v620b_5d2b_d5e6"
-      },
-    )
-    entries.add(
-      objects.newInstance<JenkinsMatrixEntry>().also {
-        it.lts = "2.528.x"
-        it.version = "2.528.3"
-        it.bomVersion = "6398.v1d26a_dd495e2"
-      },
-    )
-    entries.add(
-      objects.newInstance<JenkinsMatrixEntry>().also {
-        it.lts = "2.541.x"
-        it.version = "2.541.3"
-        it.bomVersion = "6364.v16b_76a_4023c7"
-      },
-    )
+    for ((lts, version, bom) in jenkinsLtsEntries) {
+      entries.add(
+        objects.newInstance<JenkinsMatrixEntry>().also {
+          it.lts = lts
+          it.version = version
+          it.bomVersion = bom
+        },
+      )
+    }
     outputFile = ciDir.map { it.file("jenkins-compat-matrix.json") }
   }
 
