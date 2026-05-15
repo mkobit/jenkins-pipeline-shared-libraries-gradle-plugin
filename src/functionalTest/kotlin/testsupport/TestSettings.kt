@@ -1,5 +1,7 @@
 package testsupport
 
+const val WORKFLOW_API = "org.jenkins-ci.plugins.workflow:workflow-api"
+
 fun jenkinsSettings(projectName: String = "test-project") =
   """
   dependencyResolutionManagement {

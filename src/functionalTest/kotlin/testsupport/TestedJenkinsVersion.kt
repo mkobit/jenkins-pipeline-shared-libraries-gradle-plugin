@@ -22,14 +22,7 @@ data class TestedJenkinsVersion(
           val (lts, version, bom) = raw.split("|")
           TestedJenkinsVersion(JenkinsCompatEntry(lts, version, bom))
         }
-        ?: run {
-          System.err.println(
-            "[WARNING] test.jenkins.entries system property is not set — " +
-              "TestedJenkinsVersion.all is empty. " +
-              "Ensure the ci-tasks convention plugin is applied to the test task.",
-          )
-          emptyList()
-        }
+        ?: emptyList()
 
     // Returns entries matching -Ptest.jenkins.version=X (or comma-separated X,Y,Z) when set,
     // otherwise all entries.

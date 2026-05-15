@@ -4,9 +4,6 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
-import testsupport.DEFAULT_CORE_VERSION
-import testsupport.DEFAULT_PIPELINE_UNIT_VERSION
-import testsupport.DEFAULT_TEST_HARNESS_VERSION
 import testsupport.TestProject
 import testsupport.TestedGradleVersion
 import testsupport.withTestProject
@@ -47,7 +44,7 @@ class SharedLibraryExtensionTest :
       withData(TestedGradleVersion.filtered) { gradleVersion ->
         withBaseProject {
           val result = runner(gradleVersion).withArguments("printDeclaredDeps").build()
-          result.output shouldContain "plugin:org.jenkins-ci.main:jenkins-core:${DEFAULT_CORE_VERSION}"
+          result.output shouldContain "plugin:org.jenkins-ci.main:jenkins-core:2.479.1"
         }
       }
     }
@@ -65,7 +62,7 @@ class SharedLibraryExtensionTest :
         ) {
           val result = runner(gradleVersion).withArguments("printDeclaredDeps").build()
           result.output shouldContain "plugin:org.jenkins-ci.main:jenkins-core:2.123.4"
-          result.output shouldNotContain "plugin:org.jenkins-ci.main:jenkins-core:${DEFAULT_CORE_VERSION}"
+          result.output shouldNotContain "plugin:org.jenkins-ci.main:jenkins-core:2.479.1"
         }
       }
     }
@@ -75,7 +72,7 @@ class SharedLibraryExtensionTest :
         withBaseProject {
           val result = runner(gradleVersion).withArguments("printDeclaredDeps").build()
           result.output shouldContain
-            "integration:org.jenkins-ci.main:jenkins-test-harness:$DEFAULT_TEST_HARNESS_VERSION"
+            "integration:org.jenkins-ci.main:jenkins-test-harness:2565.vd1eb_7c961d1b_"
         }
       }
     }
@@ -84,7 +81,7 @@ class SharedLibraryExtensionTest :
       withData(TestedGradleVersion.filtered) { gradleVersion ->
         withBaseProject {
           val result = runner(gradleVersion).withArguments("printDeclaredDeps").build()
-          result.output shouldContain "test:com.lesfurets:jenkins-pipeline-unit:$DEFAULT_PIPELINE_UNIT_VERSION"
+          result.output shouldContain "test:com.lesfurets:jenkins-pipeline-unit:1.29"
         }
       }
     }
@@ -100,7 +97,7 @@ class SharedLibraryExtensionTest :
         ) {
           val result = runner(gradleVersion).withArguments("printDeclaredDeps").build()
           result.output shouldContain "test:com.lesfurets:jenkins-pipeline-unit:9.9.9"
-          result.output shouldNotContain "test:com.lesfurets:jenkins-pipeline-unit:$DEFAULT_PIPELINE_UNIT_VERSION"
+          result.output shouldNotContain "test:com.lesfurets:jenkins-pipeline-unit:1.29"
         }
       }
     }
