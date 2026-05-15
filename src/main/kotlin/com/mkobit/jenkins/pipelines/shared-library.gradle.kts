@@ -334,10 +334,11 @@ tasks.withType<GroovyCompile>().configureEach {
 // infer the compileGroovy task dependency via @InputFiles — no dependsOn needed.
 val compileGroovyTask = tasks.compileGroovy
 tasks.withType<CodeNarc>().configureEach {
-  compilationClasspath += files(
-    sourceSets.main.map { it.compileClasspath },
-    compileGroovyTask.flatMap { it.destinationDirectory },
-  )
+  compilationClasspath +=
+    files(
+      sourceSets.main.map { it.compileClasspath },
+      compileGroovyTask.flatMap { it.destinationDirectory },
+    )
 }
 
 // Extract the bundled XML to a build-dir file with a .xml extension so CodeNarc
@@ -358,13 +359,14 @@ val extractJenkinsCodeNarcConfig =
     }
   }
 
-val codenarcJenkinsMain = tasks.register<CodeNarc>("codenarcJenkinsMain") {
-  description = "Runs Jenkins CPS/Serializable CodeNarc rules against the main source set."
-  setSource(sourceSets.main.map { it.groovy })
-  dependsOn(extractJenkinsCodeNarcConfig)
-  config = resources.text.fromFile(jenkinsConfigFile)
-  codenarcClasspath = files(configurations.codenarc)
-}
+val codenarcJenkinsMain =
+  tasks.register<CodeNarc>("codenarcJenkinsMain") {
+    description = "Runs Jenkins CPS/Serializable CodeNarc rules against the main source set."
+    setSource(sourceSets.main.map { it.groovy })
+    dependsOn(extractJenkinsCodeNarcConfig)
+    config = resources.text.fromFile(jenkinsConfigFile)
+    codenarcClasspath = files(configurations.codenarc)
+  }
 
 tasks.check {
   dependsOn(codenarcJenkinsMain)

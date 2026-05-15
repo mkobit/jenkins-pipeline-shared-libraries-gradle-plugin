@@ -186,7 +186,8 @@ internal class SharedLibraryPluginTest :
       it("integrationTest injects libraryName as test.library.name") {
         val ext = project.extensions.getByType(SharedLibraryExtension::class.java)
         val task = project.tasks.getByName("integrationTest") as org.gradle.api.tasks.testing.Test
-        task.systemProperties["test.library.name"] shouldBe ext.libraryName.get()
+        val provider = task.jvmArgumentProviders.filterIsInstance<LibraryNameArgumentProvider>().single()
+        provider.libraryName.get() shouldBe ext.libraryName.get()
       }
     }
 
@@ -223,7 +224,8 @@ internal class SharedLibraryPluginTest :
 
       it("integrationTest injects test.library.name system property") {
         val task = project.tasks.getByName("integrationTest") as org.gradle.api.tasks.testing.Test
-        task.systemProperties["test.library.name"] shouldBe project.name
+        val provider = task.jvmArgumentProviders.filterIsInstance<LibraryNameArgumentProvider>().single()
+        provider.libraryName.get() shouldBe project.name
       }
 
       it("generateLocalLibraryFiles task is registered") {
