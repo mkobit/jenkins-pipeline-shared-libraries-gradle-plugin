@@ -6,7 +6,6 @@ import org.gradle.api.artifacts.type.ArtifactTypeDefinition
 import org.gradle.api.plugins.GroovyPlugin
 import org.gradle.api.plugins.jvm.JvmTestSuite
 import org.gradle.api.plugins.quality.CodeNarc
-import org.gradle.api.tasks.GroovySourceDirectorySet
 import org.gradle.api.tasks.compile.GroovyCompile
 import org.gradle.api.tasks.javadoc.Groovydoc
 import org.gradle.jvm.tasks.Jar
@@ -169,14 +168,14 @@ val localLibraryRetrieverSourceSet =
     java.setSrcDirs(listOf(generateLocalLibraryFiles.flatMap { it.javaOutputDir }))
     resources.setSrcDirs(listOf(generateLocalLibraryFiles.flatMap { it.resourcesOutputDir }))
   }
-localLibraryRetrieverSourceSet.extensions.getByType<GroovySourceDirectorySet>().setSrcDirs(emptyList<Any>())
+localLibraryRetrieverSourceSet.groovy.setSrcDirs(emptyList<Any>())
 // Jenkins APIs are needed to compile LocalLibraryRetriever / SharedLibraryAutoRegistrar.
-configurations.named("${LOCAL_LIBRARY_RETRIEVER_SOURCE_SET}CompileOnly") {
+configurations.named(localLibraryRetrieverSourceSet.compileOnlyConfigurationName) {
   extendsFrom(jenkinsPlugin)
 }
 // annotation-indexer processor generates the META-INF index for SharedLibraryAutoRegistrar.
 val localLibraryRetrieverAnnotationProcessor =
-  configurations.named("${LOCAL_LIBRARY_RETRIEVER_SOURCE_SET}AnnotationProcessor")
+  configurations.named(localLibraryRetrieverSourceSet.annotationProcessorConfigurationName)
 dependencies {
   localLibraryRetrieverAnnotationProcessor(SharedLibraryDefaults.ANNOTATION_INDEXER)
 }
@@ -369,7 +368,7 @@ pluginManager.withPlugin("codenarc") {
 
   tasks.register<CodeNarc>("codenarcJenkinsMain") {
     description = "Runs Jenkins CPS/Serializable CodeNarc rules against the main source set."
-    setSource(sourceSets.main.map { it.extensions.getByType<GroovySourceDirectorySet>() })
+    setSource(sourceSets.main.map { it.groovy })
     dependsOn(extractJenkinsCodeNarcConfig)
     config = resources.text.fromFile(jenkinsConfigFile)
     codenarcClasspath = configurations.getByName("codenarc")
