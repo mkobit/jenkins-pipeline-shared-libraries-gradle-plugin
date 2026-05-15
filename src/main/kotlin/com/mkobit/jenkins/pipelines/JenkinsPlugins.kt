@@ -34,6 +34,5 @@ abstract class JenkinsPlugins
     fun plugin(dependency: Provider<out MinimalExternalModuleDependency>) = pluginCollector.add(dependency)
 
     /** Declares all Jenkins plugins from a version catalog bundle (e.g. `jenkinsPlugins.bundles.allPlugins`). */
-    fun plugins(bundle: Provider<out Iterable<MinimalExternalModuleDependency>>) =
-      bundle.get().forEach { pluginCollector.add(it) }
+    fun plugins(bundle: Provider<out Iterable<MinimalExternalModuleDependency>>) = pluginCollector.bundle(bundle)
   }
