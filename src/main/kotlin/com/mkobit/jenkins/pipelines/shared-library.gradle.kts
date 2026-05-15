@@ -64,37 +64,33 @@ val jenkinsPlugin =
   }
 
 dependencies {
-  addProvider(
-    JENKINS_PLUGIN_CONFIGURATION,
-    sharedLibrary.jenkins.version.map { v -> "org.jenkins-ci.main:jenkins-core:$v" },
-  )
-  add(JENKINS_PLUGIN_CONFIGURATION, PIPELINE_GROOVY_LIB_MODULE)
-  add(JENKINS_PLUGIN_CONFIGURATION, WORKFLOW_JOB_MODULE)
-  add(JENKINS_PLUGIN_CONFIGURATION, WORKFLOW_BASIC_STEPS_MODULE)
-  add(JENKINS_PLUGIN_CONFIGURATION, WORKFLOW_DURABLE_TASK_STEP_MODULE)
+  jenkinsPlugin(sharedLibrary.jenkins.version.map { v -> "org.jenkins-ci.main:jenkins-core:$v" })
+  jenkinsPlugin(PIPELINE_GROOVY_LIB_MODULE)
+  jenkinsPlugin(WORKFLOW_JOB_MODULE)
+  jenkinsPlugin(WORKFLOW_BASIC_STEPS_MODULE)
+  jenkinsPlugin(WORKFLOW_DURABLE_TASK_STEP_MODULE)
 }
 
-configurations.register(JENKINS_PLUGIN_HPIS_CONFIGURATION) {
-  isCanBeResolved = true
-  isCanBeConsumed = false
-  description = "Jenkins plugin HPI archives for embedded Jenkins runtime (integration tests)"
-  extendsFrom(jenkinsPlugin.get())
-  attributes {
-    attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, "hpi")
-    attribute(JenkinsPluginRule.JENKINS_ARTIFACT_ATTRIBUTE, "hpi")
+val jenkinsPluginHpis =
+  configurations.register(JENKINS_PLUGIN_HPIS_CONFIGURATION) {
+    isCanBeResolved = true
+    isCanBeConsumed = false
+    description = "Jenkins plugin HPI archives for embedded Jenkins runtime (integration tests)"
+    extendsFrom(jenkinsPlugin)
+    attributes {
+      attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, "hpi")
+      attribute(JenkinsPluginRule.JENKINS_ARTIFACT_ATTRIBUTE, "hpi")
+    }
   }
-}
 
-configurations.register(JENKINS_WAR_CONFIGURATION) {
-  isCanBeResolved = true
-  isCanBeConsumed = false
-  description = "Jenkins WAR file for the embedded Jenkins runtime (integration tests)"
-}
+val jenkinsWar =
+  configurations.register(JENKINS_WAR_CONFIGURATION) {
+    isCanBeResolved = true
+    isCanBeConsumed = false
+    description = "Jenkins WAR file for the embedded Jenkins runtime (integration tests)"
+  }
 dependencies {
-  addProvider(
-    JENKINS_WAR_CONFIGURATION,
-    sharedLibrary.jenkins.version.map { v -> "org.jenkins-ci.main:jenkins-war:$v@war" },
-  )
+  jenkinsWar(sharedLibrary.jenkins.version.map { v -> "org.jenkins-ci.main:jenkins-war:$v@war" })
 }
 
 // ── Main source set ───────────────────────────────────────────────────────────
@@ -105,7 +101,7 @@ sourceSets.main.configure {
 }
 // Jenkins APIs are compile-only for the shared library; the library runs inside Jenkins at runtime.
 configurations.named("compileOnly") {
-  extendsFrom(jenkinsPlugin.get())
+  extendsFrom(jenkinsPlugin)
 }
 
 // ── Test suites ───────────────────────────────────────────────────────────────
@@ -115,14 +111,13 @@ configurations.named("compileOnly") {
 // JpiCompatibilityRule makes plain JARs compatible with the HPI request; filter to actual
 // .hpi/.jpi files so transitive JARs (e.g. groovy-all) don't leak onto the test classpath.
 val hpiFiles =
-  configurations
-    .named(JENKINS_PLUGIN_HPIS_CONFIGURATION)
-    .get()
-    .incoming
-    .artifactView { isLenient = true }
-    .artifacts
-    .artifactFiles
-    .filter { it.name.endsWith(".hpi") || it.name.endsWith(".jpi") }
+  jenkinsPluginHpis.map { cfg ->
+    cfg.incoming
+      .artifactView { isLenient = true }
+      .artifacts
+      .artifactFiles
+      .filter { it.name.endsWith(".hpi") || it.name.endsWith(".jpi") }
+  }
 
 val srcDir = layout.projectDirectory.dir("src")
 val varsDir = layout.projectDirectory.dir("vars")
@@ -149,12 +144,12 @@ val jenkinsWarFile: Provider<File> =
 // WAR bundles it, and the integrationTestGroovyAllRuntime configuration requires that
 // capability — making Gradle skip the add when jenkins-core no longer satisfies it.
 // Track via GitHub issue (file after this branch merges). See docs/06-backlog.md M7.
-configurations.register(GROOVY_ALL_RUNTIME_CONFIGURATION) {
+val groovyAllRuntime = configurations.register(GROOVY_ALL_RUNTIME_CONFIGURATION) {
   isCanBeResolved = true
   isCanBeConsumed = false
 }
 dependencies {
-  add(GROOVY_ALL_RUNTIME_CONFIGURATION, SharedLibraryDefaults.GROOVY_ALL_COORDINATES)
+  groovyAllRuntime(SharedLibraryDefaults.GROOVY_ALL_COORDINATES)
 }
 
 val generateLocalLibraryFiles =
@@ -180,8 +175,10 @@ configurations.named("${LOCAL_LIBRARY_RETRIEVER_SOURCE_SET}CompileOnly") {
   extendsFrom(jenkinsPlugin)
 }
 // annotation-indexer processor generates the META-INF index for SharedLibraryAutoRegistrar.
+val localLibraryRetrieverAnnotationProcessor =
+  configurations.named("${LOCAL_LIBRARY_RETRIEVER_SOURCE_SET}AnnotationProcessor")
 dependencies {
-  add("${LOCAL_LIBRARY_RETRIEVER_SOURCE_SET}AnnotationProcessor", SharedLibraryDefaults.ANNOTATION_INDEXER)
+  localLibraryRetrieverAnnotationProcessor(SharedLibraryDefaults.ANNOTATION_INDEXER)
 }
 
 testing {
@@ -192,6 +189,9 @@ testing {
         java.setSrcDirs(listOf("test/unit/java"))
         groovy.setSrcDirs(listOf("test/unit/groovy"))
         resources.setSrcDirs(listOf("test/unit/resources"))
+      }
+      dependencies {
+        runtimeOnly(SharedLibraryDefaults.IVY_COORDINATES)
       }
     }
 
@@ -254,13 +254,13 @@ fun applyJenkinsTestWiring(suite: JvmTestSuite) {
         },
       )
       outputs.dir(suiteJenkinsDir)
-      classpath += hpiFiles
+      classpath += files(hpiFiles)
       // groovy-all:2.4 provides the Groovy runtime to the embedded Jenkins pipeline engine.
       // The plugin excludes groovy-all from all suite implementation configs (to prevent
       // groovy 2.4/3.x classpath conflicts in test code), but CpsFlowDefinition needs
       // groovy.lang.Script and the full Groovy runtime at test-task time. += bypasses
       // version-conflict resolution that would otherwise suppress it when groovy 3.x is present.
-      classpath += configurations.getByName(GROOVY_ALL_RUNTIME_CONFIGURATION)
+      classpath += files(groovyAllRuntime)
       doFirst {
         val names = classpath.map { it.name }
         val hasGroovyAll2x = names.any { it.startsWith("groovy-all-2.") }
@@ -331,34 +331,31 @@ tasks {
 
 // ── Ivy / @Grab support ───────────────────────────────────────────────────────
 
-configurations.register(IVY_CONFIGURATION) {
-  isCanBeResolved = true
-  isCanBeConsumed = false
-  description = "Ivy for @Grab support in shared library Groovy sources"
-}
+val ivy =
+  configurations.register(IVY_CONFIGURATION) {
+    isCanBeResolved = true
+    isCanBeConsumed = false
+    description = "Ivy for @Grab support in shared library Groovy sources"
+  }
 dependencies {
-  add(IVY_CONFIGURATION, SharedLibraryDefaults.IVY_COORDINATES)
   // ivy on the test suite classpath: integration test suites get it via applyJenkinsTestWiring
-  // (added to runtimeOnly). The unit test suite gets it here directly.
-  add("testRuntimeOnly", SharedLibraryDefaults.IVY_COORDINATES)
+  // (added to runtimeOnly). The unit test suite gets it via testing.suites.named("test").
+  ivy(SharedLibraryDefaults.IVY_COORDINATES)
 }
 tasks.withType<GroovyCompile>().configureEach {
-  groovyClasspath += configurations.getByName(IVY_CONFIGURATION)
+  groovyClasspath += files(ivy)
 }
 
 // ── CodeNarc Enhanced Classpath Rule support ──────────────────────────────────
 
 pluginManager.withPlugin("codenarc") {
-  val mainCompileClasspath = sourceSets.main.get().compileClasspath
   // Enhanced Classpath Rules (rulesets/jenkins.xml) require both the Jenkins
   // dependency JARs AND the compiled .class output of the source being analyzed.
   // Without the .class files on compilationClasspath the rules silently skip.
   // dependsOn(compileGroovy) guarantees the output exists when CodeNarc runs.
-  val mainClassesDirs = sourceSets.main.get().output.classesDirs
   val compileGroovy = tasks.compileGroovy
   tasks.withType<CodeNarc>().configureEach {
-    compilationClasspath += mainCompileClasspath
-    compilationClasspath += mainClassesDirs
+    compilationClasspath += files(sourceSets.main.map { it.compileClasspath }, sourceSets.main.map { it.output.classesDirs })
     dependsOn(compileGroovy)
   }
 
@@ -380,7 +377,7 @@ pluginManager.withPlugin("codenarc") {
 
   tasks.register<CodeNarc>("codenarcJenkinsMain") {
     description = "Runs Jenkins CPS/Serializable CodeNarc rules against the main source set."
-    source = sourceSets.main.get().extensions.getByType<GroovySourceDirectorySet>()
+    setSource(sourceSets.main.map { it.extensions.getByType<GroovySourceDirectorySet>() })
     dependsOn(extractJenkinsCodeNarcConfig)
     config = resources.text.fromFile(jenkinsConfigFile)
     codenarcClasspath = configurations.getByName("codenarc")
