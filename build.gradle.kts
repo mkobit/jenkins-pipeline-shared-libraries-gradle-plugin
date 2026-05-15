@@ -1,7 +1,6 @@
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestStackTraceFilter
-import org.gradle.util.GradleVersion
 
 plugins {
   `kotlin-dsl`
