@@ -16,6 +16,8 @@ import javax.inject.Inject
  *   plugins {
  *     plugin("org.jenkins-ci.plugins.workflow:workflow-multibranch")
  *     plugin("org.6wind.jenkins:lockable-resources:2.18")
+ *     plugin(libs.workflow.multibranch)           // single version catalog entry
+ *     plugins(libs.bundles.allPlugins)            // version catalog bundle
  *   }
  * }
  * ```
@@ -30,4 +32,8 @@ abstract class JenkinsPlugins
 
     /** Declares a Jenkins plugin from a version catalog entry. */
     fun plugin(dependency: Provider<out MinimalExternalModuleDependency>) = pluginCollector.add(dependency)
+
+    /** Declares all Jenkins plugins from a version catalog bundle (e.g. `jenkinsPlugins.bundles.allPlugins`). */
+    fun plugins(bundle: Provider<out Iterable<MinimalExternalModuleDependency>>) =
+      bundle.get().forEach { pluginCollector.add(it) }
   }
