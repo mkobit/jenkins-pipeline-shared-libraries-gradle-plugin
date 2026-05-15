@@ -1,3 +1,4 @@
+import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestStackTraceFilter
 import org.gradle.util.GradleVersion
@@ -95,20 +96,6 @@ testing {
         }
       }
 
-      // Pins to the current wrapper; used by `check` and Java/platform compat CI.
-      targets.register("functionalTestCurrent") {
-        testTask.configure {
-          systemProperty("kotest.filter.tags", project.findProperty("kotest.tags") ?: "!Resolution & !JenkinsCompat")
-          systemProperty("test.gradle.version", GradleVersion.current().version)
-          maxParallelForks = 1
-          jvmArgumentProviders += CommandLineArgumentProvider { listOf("-Dkotest.framework.parallelism=3") }
-          reports {
-            html.outputLocation.set(layout.buildDirectory.dir("reports/tests/functionalTestCurrent"))
-            junitXml.outputLocation.set(layout.buildDirectory.dir("test-results/functionalTestCurrent"))
-          }
-        }
-      }
-
       // One target per Gradle compat version for IDE visibility and targeted debugging.
       matrix.gradleVersions.forEach { version ->
         val suffix = "Gradle${version.replace(".", "_")}"
@@ -144,6 +131,13 @@ testing {
       }
     }
   }
+}
+
+val currentGradleSuffix = "Gradle${GradleVersion.current().version.replace(".", "_")}"
+tasks.register("functionalTestCurrent") {
+  group = JavaBasePlugin.VERIFICATION_GROUP
+  description = "Runs functional tests against the current Gradle wrapper version"
+  dependsOn("functionalTest$currentGradleSuffix")
 }
 
 tasks.check {
