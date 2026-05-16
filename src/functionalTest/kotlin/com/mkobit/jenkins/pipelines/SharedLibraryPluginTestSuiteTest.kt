@@ -110,7 +110,7 @@ class SharedLibraryPluginTestSuiteTest :
             """
             plugins {
                 id("com.mkobit.jenkins.pipelines.shared-library")
-                kotlin("jvm") version "2.0.21"
+                kotlin("jvm") version "2.1.20"
             }
             dependencies {
                 testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
