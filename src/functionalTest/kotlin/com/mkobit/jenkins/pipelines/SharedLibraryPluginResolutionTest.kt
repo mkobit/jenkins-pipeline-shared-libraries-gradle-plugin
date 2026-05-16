@@ -10,12 +10,12 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldEndWith
 import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
-import testsupport.Resolution
-import testsupport.TestProject
-import testsupport.TestedGradleVersion
-import testsupport.WORKFLOW_API
-import testsupport.jenkinsSettings
-import testsupport.withTestProject
+import testsupport.gradle.TestProject
+import testsupport.gradle.TestedGradleVersion
+import testsupport.gradle.withTestProject
+import testsupport.jenkins.WORKFLOW_API
+import testsupport.jenkins.jenkinsSettings
+import testsupport.kotest.Resolution
 import kotlin.io.path.appendText
 import kotlin.io.path.writeText
 
@@ -56,12 +56,11 @@ class SharedLibraryPluginResolutionTest :
       }
       """.trimIndent()
 
-    fun withJenkinsProject(block: TestProject.() -> Unit) =
-      withTestProject {
-        settingsFile.writeText(jenkinsSettings("resolution-test"))
-        buildFile.writeText(jenkinsProjectBuildFile)
-        block()
-      }
+    fun withJenkinsProject(block: TestProject.() -> Unit) = withTestProject {
+      settingsFile.writeText(jenkinsSettings("resolution-test"))
+      buildFile.writeText(jenkinsProjectBuildFile)
+      block()
+    }
 
     describe("testRuntimeClasspath") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->

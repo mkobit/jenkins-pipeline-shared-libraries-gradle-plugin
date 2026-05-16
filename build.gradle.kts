@@ -173,7 +173,7 @@ tasks.wrapper {
 
 spotless {
   kotlin {
-    ktlint()
+    ktlint().editorConfigOverride(mapOf("ktlint_standard_filename" to "disabled"))
     target("src/**/*.kt")
     targetExclude("src/integrationTest/**/*.kt")
   }

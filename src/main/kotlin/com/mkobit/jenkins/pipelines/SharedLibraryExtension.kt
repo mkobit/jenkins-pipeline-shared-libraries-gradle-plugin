@@ -47,84 +47,84 @@ fun interface JenkinsTestSuiteWirer {
  */
 @Suppress("UnstableApiUsage")
 abstract class SharedLibraryExtension
-  @Inject
-  constructor(
-    private val objects: ObjectFactory,
-    private val jenkinsWirer: JenkinsTestSuiteWirer,
-  ) {
-    val jenkins: JenkinsVersions = objects.newInstance(JenkinsVersions::class)
+@Inject
+constructor(
+  private val objects: ObjectFactory,
+  private val jenkinsWirer: JenkinsTestSuiteWirer,
+) {
+  val jenkins: JenkinsVersions = objects.newInstance(JenkinsVersions::class)
 
-    /** Configures the Jenkins core and test-harness versions. */
-    fun jenkins(action: Action<in JenkinsVersions>) = action.execute(jenkins)
+  /** Configures the Jenkins core and test-harness versions. */
+  fun jenkins(action: Action<in JenkinsVersions>) = action.execute(jenkins)
 
-    /** Jenkins HPI/JPI plugin dependencies declared via [plugins]. */
-    val plugins: JenkinsPlugins = objects.newInstance<JenkinsPlugins>()
+  /** Jenkins HPI/JPI plugin dependencies declared via [plugins]. */
+  val plugins: JenkinsPlugins = objects.newInstance<JenkinsPlugins>()
 
-    /**
-     * Declares Jenkins HPI/JPI plugin dependencies.
-     *
-     * ```kotlin
-     * sharedLibrary {
-     *     plugins {
-     *         plugin("org.jenkins-ci.plugins.workflow:workflow-multibranch")
-     *         plugin("org.6wind.jenkins:lockable-resources:2.18")
-     *     }
-     * }
-     * ```
-     */
-    fun plugins(action: Action<in JenkinsPlugins>) = action.execute(plugins)
+  /**
+   * Declares Jenkins HPI/JPI plugin dependencies.
+   *
+   * ```kotlin
+   * sharedLibrary {
+   *     plugins {
+   *         plugin("org.jenkins-ci.plugins.workflow:workflow-multibranch")
+   *         plugin("org.6wind.jenkins:lockable-resources:2.18")
+   *     }
+   * }
+   * ```
+   */
+  fun plugins(action: Action<in JenkinsPlugins>) = action.execute(plugins)
 
-    /** `com.lesfurets:jenkins-pipeline-unit` version used in the `test` suite. */
-    abstract val pipelineUnitVersion: Property<String>
+  /** `com.lesfurets:jenkins-pipeline-unit` version used in the `test` suite. */
+  abstract val pipelineUnitVersion: Property<String>
 
-    /**
-     * Name of the shared library injected into the embedded Jenkins test instance.
-     * Defaults to `project.name`.
-     *
-     * This value is injected as the `test.library.name` system property on all Jenkins test
-     * suites. Pipelines reference the library by this name:
-     * ```groovy
-     * @Library('my-shared-lib') _
-     * ```
-     * Override when the Jenkins library name must differ from the Gradle project name:
-     * ```kotlin
-     * sharedLibrary {
-     *     libraryName = "my-shared-lib"
-     * }
-     * ```
-     */
-    abstract val libraryName: Property<String>
+  /**
+   * Name of the shared library injected into the embedded Jenkins test instance.
+   * Defaults to `project.name`.
+   *
+   * This value is injected as the `test.library.name` system property on all Jenkins test
+   * suites. Pipelines reference the library by this name:
+   * ```groovy
+   * @Library('my-shared-lib') _
+   * ```
+   * Override when the Jenkins library name must differ from the Gradle project name:
+   * ```kotlin
+   * sharedLibrary {
+   *     libraryName = "my-shared-lib"
+   * }
+   * ```
+   */
+  abstract val libraryName: Property<String>
 
-    /**
-     * When `true` (default), generates `SharedLibraryAutoRegistrar.java` and registers the SezPoz
-     * annotation processor so Jenkins auto-registers the shared library at embedded Jenkins startup.
-     * No explicit `GlobalLibraries.get().setLibraries(...)` call is needed in test code.
-     *
-     * Set to `false` to revert to the manual registration pattern:
-     * ```kotlin
-     * sharedLibrary {
-     *     autoRegisterLibrary = false
-     * }
-     * ```
-     */
-    abstract val autoRegisterLibrary: Property<Boolean>
+  /**
+   * When `true` (default), generates `SharedLibraryAutoRegistrar.java` and registers the SezPoz
+   * annotation processor so Jenkins auto-registers the shared library at embedded Jenkins startup.
+   * No explicit `GlobalLibraries.get().setLibraries(...)` call is needed in test code.
+   *
+   * Set to `false` to revert to the manual registration pattern:
+   * ```kotlin
+   * sharedLibrary {
+   *     autoRegisterLibrary = false
+   * }
+   * ```
+   */
+  abstract val autoRegisterLibrary: Property<Boolean>
 
-    /**
-     * Applies full Jenkins test-harness wiring to [suite] — identical to the built-in
-     * `integrationTest` suite: `jenkins-test-harness`, HPI classpath, WAR path,
-     * system properties, JVM opens, and `mustRunAfter("test")` ordering.
-     */
-    fun withJenkins(suite: JvmTestSuite) {
-      jenkinsWirer.wire(suite)
-      // The library name is extension state — added here after the main wirer runs.
-      suite.targets.configureEach {
-        testTask.configure {
-          jvmArgumentProviders.add(
-            objects.newInstance<LibraryNameArgumentProvider>().apply {
-              libraryName.set(this@SharedLibraryExtension.libraryName)
-            },
-          )
-        }
+  /**
+   * Applies full Jenkins test-harness wiring to [suite] — identical to the built-in
+   * `integrationTest` suite: `jenkins-test-harness`, HPI classpath, WAR path,
+   * system properties, JVM opens, and `mustRunAfter("test")` ordering.
+   */
+  fun withJenkins(suite: JvmTestSuite) {
+    jenkinsWirer.wire(suite)
+    // The library name is extension state — added here after the main wirer runs.
+    suite.targets.configureEach {
+      testTask.configure {
+        jvmArgumentProviders.add(
+          objects.newInstance<LibraryNameArgumentProvider>().apply {
+            libraryName.set(this@SharedLibraryExtension.libraryName)
+          },
+        )
       }
     }
   }
+}

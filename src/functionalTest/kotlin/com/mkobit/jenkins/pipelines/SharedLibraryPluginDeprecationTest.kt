@@ -3,8 +3,8 @@ package com.mkobit.jenkins.pipelines
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
 import io.kotest.matchers.string.shouldNotContain
-import testsupport.TestedGradleVersion
-import testsupport.withTestProject
+import testsupport.gradle.TestedGradleVersion
+import testsupport.gradle.withTestProject
 import kotlin.io.path.writeText
 
 class SharedLibraryPluginDeprecationTest :

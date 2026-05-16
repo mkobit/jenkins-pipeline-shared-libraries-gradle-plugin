@@ -6,11 +6,11 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotContain
 import org.gradle.testkit.runner.TaskOutcome
-import testsupport.Resolution
-import testsupport.TestProject
-import testsupport.TestedGradleVersion
-import testsupport.jenkinsSettings
-import testsupport.withTestProject
+import testsupport.gradle.TestProject
+import testsupport.gradle.TestedGradleVersion
+import testsupport.gradle.withTestProject
+import testsupport.jenkins.jenkinsSettings
+import testsupport.kotest.Resolution
 import kotlin.io.path.writeText
 
 /**
@@ -22,11 +22,10 @@ class SharedLibraryPluginTestSuiteTest :
   DescribeSpec({
     tags(Resolution)
 
-    fun withBaseProject(block: TestProject.() -> Unit) =
-      withTestProject {
-        settingsFile.writeText(jenkinsSettings("suite-test"))
-        block()
-      }
+    fun withBaseProject(block: TestProject.() -> Unit) = withTestProject {
+      settingsFile.writeText(jenkinsSettings("suite-test"))
+      block()
+    }
 
     describe("Java-only test suite: Jenkins API types compile without Groovy dependency") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->

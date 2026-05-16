@@ -6,11 +6,11 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import org.gradle.testkit.runner.TaskOutcome
-import testsupport.Resolution
-import testsupport.TestProject
-import testsupport.TestedGradleVersion
-import testsupport.jenkinsSettings
-import testsupport.withTestProject
+import testsupport.gradle.TestProject
+import testsupport.gradle.TestedGradleVersion
+import testsupport.gradle.withTestProject
+import testsupport.jenkins.jenkinsSettings
+import testsupport.kotest.Resolution
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
@@ -36,11 +36,10 @@ class SharedLibraryPluginCodeNarcTest :
       }
       """.trimIndent()
 
-    fun withBaseProject(block: TestProject.() -> Unit) =
-      withTestProject {
-        settingsFile.writeText(jenkinsSettings("codenarc-test"))
-        block()
-      }
+    fun withBaseProject(block: TestProject.() -> Unit) = withTestProject {
+      settingsFile.writeText(jenkinsSettings("codenarc-test"))
+      block()
+    }
 
     fun TestProject.codenarcReport() = dir.resolve("build/reports/codenarc/jenkinsMain.txt").readText()
 

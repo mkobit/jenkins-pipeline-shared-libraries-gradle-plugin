@@ -1,4 +1,4 @@
-package testsupport
+package testsupport.kotest
 
 import io.kotest.matchers.shouldBe
 import org.gradle.api.provider.Provider

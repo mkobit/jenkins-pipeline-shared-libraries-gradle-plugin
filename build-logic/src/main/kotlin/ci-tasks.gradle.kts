@@ -13,8 +13,8 @@ tasks {
     group = "CI"
     description = "Writes the Gradle compat CI matrix JSON to <build>/ci/gradle-compat-matrix.json"
     matrixEntries =
-      testMatrix.gradleVersions.map {
-        mapOf("gradle" to it, "task-suffix" to "Gradle${it.replace(".", "_")}")
+      testMatrix.gradleVersions.map { version ->
+        MatrixEntry(mapOf("gradle" to version, "task-suffix" to "Gradle${version.replace(".", "_")}"))
       }
     outputFile = ciDir.map { it.file("gradle-compat-matrix.json") }
   }
@@ -23,8 +23,8 @@ tasks {
     group = "CI"
     description = "Writes the Java compat CI matrix JSON to <build>/ci/java-compat-matrix.json"
     matrixEntries =
-      testMatrix.javaVersions.map {
-        mapOf("java" to it.toString(), "task-suffix" to "Java$it")
+      testMatrix.javaVersions.map { java ->
+        MatrixEntry(mapOf("java" to java.toString(), "task-suffix" to "Java$java"))
       }
     outputFile = ciDir.map { it.file("java-compat-matrix.json") }
   }

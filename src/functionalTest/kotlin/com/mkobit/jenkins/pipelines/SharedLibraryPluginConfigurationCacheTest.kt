@@ -6,8 +6,8 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import org.gradle.testkit.runner.TaskOutcome
-import testsupport.TestedGradleVersion
-import testsupport.withTestProject
+import testsupport.gradle.TestedGradleVersion
+import testsupport.gradle.withTestProject
 import kotlin.io.path.writeText
 
 class SharedLibraryPluginConfigurationCacheTest :

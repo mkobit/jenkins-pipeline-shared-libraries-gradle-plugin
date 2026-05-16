@@ -13,60 +13,60 @@ import javax.inject.Inject
 
 @CacheableRule
 internal abstract class JenkinsPluginRule
-  @Inject
-  constructor(
-    private val objects: ObjectFactory,
-  ) : ComponentMetadataRule {
-    override fun execute(ctx: ComponentMetadataContext) {
-      val pom = ctx.getDescriptor(PomModuleDescriptor::class.java) ?: return
-      if (pom.packaging !in PLUGIN_PACKAGINGS) return
+@Inject
+constructor(
+  private val objects: ObjectFactory,
+) : ComponentMetadataRule {
+  override fun execute(ctx: ComponentMetadataContext) {
+    val pom = ctx.getDescriptor(PomModuleDescriptor::class.java) ?: return
+    if (pom.packaging !in PLUGIN_PACKAGINGS) return
 
-      val id = ctx.details.id
-      val packaging = pom.packaging
+    val id = ctx.details.id
+    val packaging = pom.packaging
 
-      ctx.details.withVariant("compile") {
-        attributes {
-          attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, ArtifactTypeDefinition.JAR_TYPE)
-          attribute(JENKINS_ARTIFACT_ATTRIBUTE, "jar")
-        }
-        withFiles {
-          removeAllFiles()
-          addFile("${id.name}-${id.version}.jar")
-        }
+    ctx.details.withVariant("compile") {
+      attributes {
+        attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, ArtifactTypeDefinition.JAR_TYPE)
+        attribute(JENKINS_ARTIFACT_ATTRIBUTE, "jar")
       }
-
-      // Separate java-runtime variant backed by the JAR — unit test runtimeClasspaths
-      // resolve plugin classes without picking up the HPI/JPI runtime variant.
-      ctx.details.addVariant("jar-runtime", "compile") {
-        attributes {
-          attribute(Usage.USAGE_ATTRIBUTE, objects.named<Usage>(Usage.JAVA_RUNTIME))
-          attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, ArtifactTypeDefinition.JAR_TYPE)
-          attribute(JENKINS_ARTIFACT_ATTRIBUTE, "jar")
-        }
-      }
-
-      ctx.details.withVariant("runtime") {
-        attributes {
-          attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, packaging)
-          attribute(JENKINS_ARTIFACT_ATTRIBUTE, packaging)
-        }
-        withFiles {
-          removeAllFiles()
-          addFile("${id.name}-${id.version}.$packaging")
-        }
-        // Dependencies whose artifact selector has no classifier point at JARs and must be
-        // stripped from the JPI/HPI runtime variant to avoid resolution conflicts when the
-        // consumer requests HPI artifacts (mirrors JpiVariantRule in gradle-jpi-plugin).
-        withDependencies {
-          removeIf { dep -> dep.artifactSelectors.any { it.classifier.isNullOrEmpty() } }
-        }
+      withFiles {
+        removeAllFiles()
+        addFile("${id.name}-${id.version}.jar")
       }
     }
 
-    companion object {
-      private val PLUGIN_PACKAGINGS = setOf("hpi", "jpi")
+    // Separate java-runtime variant backed by the JAR — unit test runtimeClasspaths
+    // resolve plugin classes without picking up the HPI/JPI runtime variant.
+    ctx.details.addVariant("jar-runtime", "compile") {
+      attributes {
+        attribute(Usage.USAGE_ATTRIBUTE, objects.named<Usage>(Usage.JAVA_RUNTIME))
+        attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, ArtifactTypeDefinition.JAR_TYPE)
+        attribute(JENKINS_ARTIFACT_ATTRIBUTE, "jar")
+      }
+    }
 
-      val JENKINS_ARTIFACT_ATTRIBUTE: Attribute<String> =
-        Attribute.of("com.mkobit.jenkins.artifact", String::class.java)
+    ctx.details.withVariant("runtime") {
+      attributes {
+        attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, packaging)
+        attribute(JENKINS_ARTIFACT_ATTRIBUTE, packaging)
+      }
+      withFiles {
+        removeAllFiles()
+        addFile("${id.name}-${id.version}.$packaging")
+      }
+      // Dependencies whose artifact selector has no classifier point at JARs and must be
+      // stripped from the JPI/HPI runtime variant to avoid resolution conflicts when the
+      // consumer requests HPI artifacts (mirrors JpiVariantRule in gradle-jpi-plugin).
+      withDependencies {
+        removeIf { dep -> dep.artifactSelectors.any { it.classifier.isNullOrEmpty() } }
+      }
     }
   }
+
+  companion object {
+    private val PLUGIN_PACKAGINGS = setOf("hpi", "jpi")
+
+    val JENKINS_ARTIFACT_ATTRIBUTE: Attribute<String> =
+      Attribute.of("com.mkobit.jenkins.artifact", String::class.java)
+  }
+}

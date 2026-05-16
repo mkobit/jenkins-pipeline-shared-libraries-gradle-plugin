@@ -9,14 +9,14 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import org.gradle.util.GradleVersion
-import testsupport.JenkinsCompat
-import testsupport.JenkinsCompatEntry
-import testsupport.TestProject
-import testsupport.TestedGradleVersion
-import testsupport.TestedJenkinsVersion
-import testsupport.WORKFLOW_API
-import testsupport.jenkinsSettings
-import testsupport.withTestProject
+import testsupport.gradle.TestProject
+import testsupport.gradle.TestedGradleVersion
+import testsupport.gradle.withTestProject
+import testsupport.jenkins.JenkinsCompatEntry
+import testsupport.jenkins.TestedJenkinsVersion
+import testsupport.jenkins.WORKFLOW_API
+import testsupport.jenkins.jenkinsSettings
+import testsupport.kotest.JenkinsCompat
 import kotlin.io.path.writeText
 
 /**

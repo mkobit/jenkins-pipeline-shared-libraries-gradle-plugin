@@ -4,9 +4,9 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
-import testsupport.TestProject
-import testsupport.TestedGradleVersion
-import testsupport.withTestProject
+import testsupport.gradle.TestProject
+import testsupport.gradle.TestedGradleVersion
+import testsupport.gradle.withTestProject
 import kotlin.io.path.writeText
 
 /** Smoke-tier: inspects declared dependency coordinates only — no artifact resolution, no network. */

@@ -1,4 +1,4 @@
-package testsupport
+package testsupport.gradle
 
 import io.kotest.engine.names.WithDataTestName
 

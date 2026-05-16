@@ -1,4 +1,4 @@
-package testsupport
+package testsupport.jenkins
 
 const val WORKFLOW_API = "org.jenkins-ci.plugins.workflow:workflow-api"
 

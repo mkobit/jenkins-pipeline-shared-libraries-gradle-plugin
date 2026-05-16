@@ -1,4 +1,4 @@
-package testsupport
+package testsupport.jenkins
 
 import io.kotest.engine.names.WithDataTestName
 

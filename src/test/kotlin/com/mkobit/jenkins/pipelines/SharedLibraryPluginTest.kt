@@ -18,8 +18,8 @@ import org.gradle.api.tasks.GroovySourceDirectorySet
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.jvm.tasks.Jar
 import org.gradle.testfixtures.ProjectBuilder
-import testsupport.shouldBePresent
-import testsupport.shouldHaveValue
+import testsupport.kotest.shouldBePresent
+import testsupport.kotest.shouldHaveValue
 
 internal class SharedLibraryPluginTest :
   DescribeSpec({
