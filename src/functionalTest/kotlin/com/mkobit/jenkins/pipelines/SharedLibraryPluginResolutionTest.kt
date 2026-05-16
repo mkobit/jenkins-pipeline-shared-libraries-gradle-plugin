@@ -2,6 +2,7 @@ package com.mkobit.jenkins.pipelines
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
+import io.kotest.inspectors.filterMatching
 import io.kotest.inspectors.forAtLeastOne
 import io.kotest.inspectors.forNone
 import io.kotest.matchers.collections.shouldNotBeEmpty
@@ -59,14 +60,11 @@ class SharedLibraryPluginResolutionTest :
         withJenkinsProject {
           val result = runner(gradleVersion).withArguments("printResolvedArtifacts").build()
 
-          val testRuntimeFiles =
-            result.output
-              .lines()
-              .filter { it.startsWith("testRuntime:") }
-              .map { it.removePrefix("testRuntime:") }
+          val testRuntimeFiles = result.output.lines()
+            .filterMatching { it.shouldStartWith("testRuntime:") }
 
           testRuntimeFiles.shouldNotBeEmpty()
-          testRuntimeFiles.forAtLeastOne { it shouldStartWith "workflow-api" }
+          testRuntimeFiles.forAtLeastOne { it shouldContain "workflow-api" }
           testRuntimeFiles.forNone { it shouldEndWith ".hpi" }
           testRuntimeFiles.forNone { it shouldEndWith ".jpi" }
         }
@@ -78,16 +76,13 @@ class SharedLibraryPluginResolutionTest :
         withJenkinsProject {
           val result = runner(gradleVersion).withArguments("printResolvedArtifacts").build()
 
-          val hpiFiles =
-            result.output
-              .lines()
-              .filter { it.startsWith("hpis:") }
-              .map { it.removePrefix("hpis:") }
+          val hpiFiles = result.output.lines()
+            .filterMatching { it.shouldStartWith("hpis:") }
 
           hpiFiles.shouldNotBeEmpty()
           // Jenkins plugin artifacts must appear as .hpi — plain Java lib transitives may appear as .jar via JpiCompatibilityRule.
           hpiFiles.forAtLeastOne {
-            it shouldStartWith "workflow-api"
+            it shouldContain "workflow-api"
             it shouldEndWith ".hpi"
           }
         }
@@ -99,20 +94,12 @@ class SharedLibraryPluginResolutionTest :
         withJenkinsProject {
           val result = runner(gradleVersion).withArguments("printResolvedArtifacts").build()
 
-          val compileFiles =
-            result.output
-              .lines()
-              .filter { it.startsWith("compile:") }
-              .map { it.removePrefix("compile:") }
+          val lines = result.output.lines()
+          val compileFiles = lines.filterMatching { it.shouldStartWith("compile:") }
+          val runtimeFiles = lines.filterMatching { it.shouldStartWith("runtime:") }
 
-          val runtimeFiles =
-            result.output
-              .lines()
-              .filter { it.startsWith("runtime:") }
-              .map { it.removePrefix("runtime:") }
-
-          compileFiles.forAtLeastOne { it shouldStartWith "jenkins-core" }
-          runtimeFiles.forNone { it shouldStartWith "jenkins-core" }
+          compileFiles.forAtLeastOne { it shouldContain "jenkins-core" }
+          runtimeFiles.forNone { it shouldContain "jenkins-core" }
         }
       }
     }
@@ -156,13 +143,14 @@ class SharedLibraryPluginResolutionTest :
           )
           val result = runner(gradleVersion).withArguments("printGroovyAll").build()
 
-          val testFiles = result.output.lines().filter { it.startsWith("test:") }
-          val integrationFiles = result.output.lines().filter { it.startsWith("integration:") }
+          val lines = result.output.lines()
+          val testLines = lines.filterMatching { it.shouldStartWith("test:") }
+          testLines.shouldNotBeEmpty()
+          testLines.forNone { it shouldContain "groovy-all" }
 
-          testFiles.shouldNotBeEmpty()
-          integrationFiles.shouldNotBeEmpty()
-          testFiles.forNone { it shouldContain "groovy-all" }
-          integrationFiles.forNone { it shouldContain "groovy-all" }
+          val integrationLines = lines.filterMatching { it.shouldStartWith("integration:") }
+          integrationLines.shouldNotBeEmpty()
+          integrationLines.forNone { it shouldContain "groovy-all" }
         }
       }
     }
@@ -184,12 +172,11 @@ class SharedLibraryPluginResolutionTest :
           )
           val result = runner(gradleVersion).withArguments("printJenkinsWar").build()
 
-          val warFiles =
-            result.output
-              .lines()
-              .filter { it.startsWith("war:") }
-              .map { it.removePrefix("war:") }
-              .filter { it.endsWith(".war") }
+          val warFiles = result.output.lines()
+            .filterMatching {
+              it.shouldStartWith("war:")
+              it.shouldEndWith(".war")
+            }
 
           warFiles.size shouldBe 1
           warFiles.single() shouldContain "jenkins-war"
@@ -236,8 +223,9 @@ class SharedLibraryPluginResolutionTest :
           )
           val result = runner(gradleVersion).withArguments("printCompileClasspath").build()
 
-          val compileFiles = result.output.lines().filter { it.startsWith("compile:") }
-          val runtimeFiles = result.output.lines().filter { it.startsWith("runtime:") }
+          val lines = result.output.lines()
+          val compileFiles = lines.filterMatching { it.shouldStartWith("compile:") }
+          val runtimeFiles = lines.filterMatching { it.shouldStartWith("runtime:") }
           compileFiles.shouldNotBeEmpty()
           runtimeFiles.shouldNotBeEmpty()
           compileFiles.forNone { it shouldContain "groovy-all" }
@@ -267,11 +255,8 @@ class SharedLibraryPluginResolutionTest :
           )
           val result = runner(gradleVersion).withArguments("printGroovyAllRuntime").build()
 
-          val groovyAllFiles =
-            result.output
-              .lines()
-              .filter { it.startsWith("groovyAllRuntime:") }
-              .map { it.removePrefix("groovyAllRuntime:") }
+          val groovyAllFiles = result.output.lines()
+            .filterMatching { it.shouldStartWith("groovyAllRuntime:") }
 
           groovyAllFiles.size shouldBe 1
           groovyAllFiles.single() shouldContain "groovy-all"

@@ -2,12 +2,14 @@ package com.mkobit.jenkins.pipelines
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
+import io.kotest.inspectors.filterMatching
 import io.kotest.inspectors.forAtLeastOne
 import io.kotest.inspectors.forNone
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
+import io.kotest.matchers.string.shouldStartWith
 import org.gradle.util.GradleVersion
 import testsupport.gradle.TestProject
 import testsupport.gradle.TestedGradleVersion
@@ -75,11 +77,8 @@ class SharedLibraryPluginJenkinsCompatTest :
         withJenkinsCompatProject(e) {
           val result = runner(gradleVersion).withArguments("printClasspaths").build()
 
-          val compileFiles =
-            result.output
-              .lines()
-              .filter { it.startsWith("compile:") }
-              .map { it.removePrefix("compile:") }
+          val compileFiles = result.output.lines()
+            .filterMatching { it.shouldStartWith("compile:") }
           compileFiles.shouldNotBeEmpty()
           compileFiles.forAtLeastOne { it shouldContain "jenkins-core-${e.jenkinsVersion}" }
         }
@@ -101,11 +100,8 @@ class SharedLibraryPluginJenkinsCompatTest :
         withJenkinsCompatProject(e) {
           val result = runner(gradleVersion).withArguments("printClasspaths").build()
 
-          val testRuntimeFiles =
-            result.output
-              .lines()
-              .filter { it.startsWith("testRuntime:") }
-              .map { it.removePrefix("testRuntime:") }
+          val testRuntimeFiles = result.output.lines()
+            .filterMatching { it.shouldStartWith("testRuntime:") }
           testRuntimeFiles.shouldNotBeEmpty()
           testRuntimeFiles.forNone { it shouldContain "groovy-all" }
         }
@@ -115,11 +111,8 @@ class SharedLibraryPluginJenkinsCompatTest :
         withJenkinsCompatProject(e) {
           val result = runner(gradleVersion).withArguments("printClasspaths").build()
 
-          val warFiles =
-            result.output
-              .lines()
-              .filter { it.startsWith("war:") }
-              .map { it.removePrefix("war:") }
+          val warFiles = result.output.lines()
+            .filterMatching { it.shouldStartWith("war:") }
           warFiles.size shouldBe 1
           warFiles.single() shouldContain "jenkins-war-${e.jenkinsVersion}"
         }

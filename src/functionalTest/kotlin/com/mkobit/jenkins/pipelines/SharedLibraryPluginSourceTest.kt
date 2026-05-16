@@ -158,4 +158,48 @@ class SharedLibraryPluginSourceTest :
         }
       }
     }
+
+    xdescribe("Spock integrationTest with sandbox=true (known failure: groovy-all conflict)") {
+      // groovyAllRuntime injects groovy-all:2.4.x alongside Spock's groovy:3.x at JVM runtime.
+      // CPS transform fails: Cannot reference 'toArray' before supertype constructor has been called.
+      // Remove xdescribe when Jenkins upgrades embedded Groovy beyond 2.4.
+      // Tracked: https://github.com/jenkinsci/jenkins/issues/19976
+      //          https://issues.jenkins.io/browse/JENKINS-51823
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withSharedLibraryProject(configure = {
+          buildFile.writeText(
+            """
+            plugins {
+                id("com.mkobit.jenkins.pipelines.shared-library")
+            }
+            dependencies {
+                integrationTestImplementation("org.spockframework:spock-core:2.3-groovy-3.0")
+            }
+            """.trimIndent(),
+          )
+          file("vars/sandboxStep.groovy").writeText("def call() { echo 'sandbox step' }")
+          file("test/integration/groovy/SandboxStepSpec.groovy").writeText(
+            """
+            import org.jvnet.hudson.test.JenkinsRule
+            import org.junit.Rule
+            import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition
+            import org.jenkinsci.plugins.workflow.job.WorkflowJob
+            import spock.lang.Specification
+            class SandboxStepSpec extends Specification {
+              @Rule JenkinsRule jenkins = new JenkinsRule()
+              def 'sandboxStep runs with sandbox enabled'() {
+                given:
+                def job = jenkins.createProject(WorkflowJob)
+                job.definition = new CpsFlowDefinition('sandboxStep()', true)
+                expect:
+                jenkins.assertLogContains('sandbox step', jenkins.buildAndAssertSuccess(job))
+              }
+            }
+            """.trimIndent(),
+          )
+        }) {
+          runner(gradleVersion).withArguments("integrationTest").buildAndFail()
+        }
+      }
+    }
   })
