@@ -23,7 +23,6 @@ class SharedLibraryPluginCodeNarcTest :
   DescribeSpec({
     tags(Resolution)
 
-    // No configFile — codenarcJenkinsMain uses the bundled resource from the plugin JAR.
     val buildFileContent =
       """
       plugins {
@@ -64,8 +63,7 @@ class SharedLibraryPluginCodeNarcTest :
         withBaseProject {
           buildFile.writeText(buildFileContent)
           file("vars/greeting.groovy").writeText(
-            // ${'$'} produces a literal $ so Kotlin doesn't try to interpolate {-> name}
-            """def call(String name) { "Hello ${'$'}{-> name}" }""",
+            $$"""def call(String name) { "Hello ${-> name}" }""",
           )
           runner(gradleVersion).withArguments("codenarcJenkinsMain").buildAndFail()
           codenarcReport() shouldContain "ClosureInGString"
