@@ -7,6 +7,7 @@ import io.kotest.matchers.shouldBe
 import org.gradle.testkit.runner.TaskOutcome
 import testsupport.gradle.TestedGradleVersion
 import testsupport.gradle.withTestProject
+import testsupport.jenkins.jenkinsSettings
 import kotlin.io.path.writeText
 
 class SharedLibraryPluginCacheableTaskTest :
@@ -117,6 +118,45 @@ class SharedLibraryPluginCacheableTaskTest :
 
             runner(gradleVersion).withArguments("extractJenkinsCodeNarcConfig", "--build-cache").build()
               .task(":extractJenkinsCodeNarcConfig").shouldNotBeNull().outcome shouldBe TaskOutcome.FROM_CACHE
+          }
+        }
+      }
+    }
+
+    describe("compileLocalLibraryRetrieverJava") {
+      describe("is UP-TO-DATE on second run when inputs are unchanged") {
+        withData(TestedGradleVersion.filtered) { gradleVersion ->
+          withTestProject {
+            settingsFile.writeText(jenkinsSettings("compile-cache-test"))
+            buildFile.writeText(sharedLibraryPluginBuild)
+
+            runner(gradleVersion).withArguments("compileLocalLibraryRetrieverJava").build()
+              .task(":compileLocalLibraryRetrieverJava").shouldNotBeNull().outcome shouldBe TaskOutcome.SUCCESS
+
+            runner(gradleVersion).withArguments("compileLocalLibraryRetrieverJava").build()
+              .task(":compileLocalLibraryRetrieverJava").shouldNotBeNull().outcome shouldBe TaskOutcome.UP_TO_DATE
+          }
+        }
+      }
+
+      describe("is loaded FROM-CACHE when outputs are deleted and cache is populated") {
+        withData(TestedGradleVersion.filtered) { gradleVersion ->
+          withTestProject {
+            settingsFile.writeText(
+              """
+              $buildCacheSettings
+              ${jenkinsSettings("compile-cache-test")}
+              """.trimIndent(),
+            )
+            buildFile.writeText(sharedLibraryPluginBuild)
+
+            runner(gradleVersion).withArguments("compileLocalLibraryRetrieverJava", "--build-cache").build()
+              .task(":compileLocalLibraryRetrieverJava").shouldNotBeNull().outcome shouldBe TaskOutcome.SUCCESS
+
+            dir.resolve("build/classes/java/localLibraryRetriever").toFile().deleteRecursively()
+
+            runner(gradleVersion).withArguments("compileLocalLibraryRetrieverJava", "--build-cache").build()
+              .task(":compileLocalLibraryRetrieverJava").shouldNotBeNull().outcome shouldBe TaskOutcome.FROM_CACHE
           }
         }
       }

@@ -15,19 +15,11 @@ import testsupport.gradle.TestedGradleVersion
 import testsupport.gradle.withTestProject
 import testsupport.jenkins.WORKFLOW_API
 import testsupport.jenkins.jenkinsSettings
-import testsupport.kotest.Resolution
 import kotlin.io.path.appendText
 import kotlin.io.path.writeText
 
-/**
- * Resolution-tier tests hit the Jenkins Maven repo on first run (cold cache) and are fast
- * on subsequent runs once Gradle's module cache is warm.
- * Exclude from PR checks with `-P kotest.tags=!Resolution`; run on merge or scheduled builds.
- */
 class SharedLibraryPluginResolutionTest :
   DescribeSpec({
-    tags(Resolution)
-
     val jenkinsProjectBuildFile =
       """
       plugins {

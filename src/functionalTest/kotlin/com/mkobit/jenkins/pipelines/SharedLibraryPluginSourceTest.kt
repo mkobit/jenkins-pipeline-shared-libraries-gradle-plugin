@@ -10,17 +10,10 @@ import testsupport.gradle.TestProject
 import testsupport.gradle.TestedGradleVersion
 import testsupport.gradle.withTestProject
 import testsupport.jenkins.jenkinsSettings
-import testsupport.kotest.Resolution
 import kotlin.io.path.writeText
 
-/**
- * Source compilation and unit test execution tests require the Jenkins Maven repo on first run.
- * Exclude from fast PR checks with `-P kotest.tags=!Resolution`.
- */
 class SharedLibraryPluginSourceTest :
   DescribeSpec({
-    tags(Resolution)
-
     fun withSharedLibraryProject(
       configure: TestProject.() -> Unit = {},
       block: TestProject.() -> Unit,

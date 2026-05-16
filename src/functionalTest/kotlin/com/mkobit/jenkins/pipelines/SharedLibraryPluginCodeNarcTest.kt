@@ -3,6 +3,7 @@ package com.mkobit.jenkins.pipelines
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
 import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.paths.shouldBeReadable
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import org.gradle.testkit.runner.TaskOutcome
@@ -10,19 +11,15 @@ import testsupport.gradle.TestProject
 import testsupport.gradle.TestedGradleVersion
 import testsupport.gradle.withTestProject
 import testsupport.jenkins.jenkinsSettings
-import testsupport.kotest.Resolution
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
 /**
  * Verifies that shared-library + codenarc together fire the Jenkins Enhanced Classpath Rules
  * and catch violations from rulesets/jenkins.xml using the bundled codenarc-jenkins.xml resource.
- * Requires Jenkins JARs on compilationClasspath — exclude with `-P kotest.tags=!Resolution`.
  */
 class SharedLibraryPluginCodeNarcTest :
   DescribeSpec({
-    tags(Resolution)
-
     val buildFileContent =
       """
       plugins {
@@ -40,7 +37,11 @@ class SharedLibraryPluginCodeNarcTest :
       block()
     }
 
-    fun TestProject.codenarcReport() = dir.resolve("build/reports/codenarc/jenkinsMain.txt").readText()
+    fun TestProject.codenarcReport(): String {
+      val report = dir.resolve("build/reports/codenarc/jenkinsMain.txt")
+      report.shouldBeReadable()
+      return report.readText()
+    }
 
     describe("ClassNotSerializable: class without Serializable is flagged") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->

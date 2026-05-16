@@ -10,18 +10,10 @@ import testsupport.gradle.TestProject
 import testsupport.gradle.TestedGradleVersion
 import testsupport.gradle.withTestProject
 import testsupport.jenkins.jenkinsSettings
-import testsupport.kotest.Resolution
 import kotlin.io.path.writeText
 
-/**
- * Tests that the shared-library plugin correctly wires jenkinsPlugin JARs into
- * consumer-defined test suites across all three JVM languages.
- * Requires the Jenkins Maven repo — exclude with `-P kotest.tags=!Resolution`.
- */
 class SharedLibraryPluginTestSuiteTest :
   DescribeSpec({
-    tags(Resolution)
-
     fun withBaseProject(block: TestProject.() -> Unit) = withTestProject {
       settingsFile.writeText(jenkinsSettings("suite-test"))
       block()
