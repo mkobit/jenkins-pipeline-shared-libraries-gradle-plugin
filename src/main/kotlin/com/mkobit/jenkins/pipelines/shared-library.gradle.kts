@@ -17,6 +17,12 @@ plugins {
   codenarc
 }
 
+java {
+  toolchain {
+    languageVersion = JavaLanguageVersion.of(17)
+  }
+}
+
 dependencies {
   components {
     all<JenkinsPluginRule>()
