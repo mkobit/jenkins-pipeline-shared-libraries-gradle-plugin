@@ -1,10 +1,10 @@
 package com.mkobit.jenkins.pipelines
 
-import kotlin.io.path.outputStream
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
+import kotlin.io.path.outputStream
 
 abstract class ExtractJenkinsCodeNarcConfig : DefaultTask() {
   @get:OutputFile

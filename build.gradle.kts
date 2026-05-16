@@ -46,17 +46,18 @@ dependencies {
 
 testing {
   suites {
-    val testSuite = named<JvmTestSuite>("test") {
-      useJUnitJupiter(libs.versions.junit.jupiter)
-      dependencies {
-        implementation(platform(libs.kotest.bom))
-        implementation(libs.mockk)
-        implementation(libs.kotest.assertions)
-        implementation(libs.kotest.decoroutinator)
-        implementation(libs.kotest.engine)
-        runtimeOnly(libs.kotest.runner)
+    val testSuite =
+      named<JvmTestSuite>("test") {
+        useJUnitJupiter(libs.versions.junit.jupiter)
+        dependencies {
+          implementation(platform(libs.kotest.bom))
+          implementation(libs.mockk)
+          implementation(libs.kotest.assertions)
+          implementation(libs.kotest.decoroutinator)
+          implementation(libs.kotest.engine)
+          runtimeOnly(libs.kotest.runner)
+        }
       }
-    }
 
     register<JvmTestSuite>("functionalTest") {
       useJUnitJupiter(libs.versions.junit.jupiter)
