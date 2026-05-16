@@ -55,6 +55,18 @@ class SharedLibraryPluginResolutionTest :
       block()
     }
 
+    fun groovyAllExclusionSettings(projectName: String) =
+      """
+      dependencyResolutionManagement {
+          repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+          repositories {
+              mavenCentral()
+              maven("https://repo.jenkins-ci.org/public/")
+          }
+      }
+      rootProject.name = "$projectName"
+      """.trimIndent()
+
     describe("testRuntimeClasspath") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
         withJenkinsProject {
@@ -107,18 +119,7 @@ class SharedLibraryPluginResolutionTest :
     describe("groovy-all absent from testRuntimeClasspath and integrationTestRuntimeClasspath") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
         withTestProject {
-          settingsFile.writeText(
-            """
-            dependencyResolutionManagement {
-                repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-                repositories {
-                    mavenCentral()
-                    maven("https://repo.jenkins-ci.org/public/")
-                }
-            }
-            rootProject.name = "groovy-all-exclusion-test"
-            """.trimIndent(),
-          )
+          settingsFile.writeText(groovyAllExclusionSettings("groovy-all-exclusion-test"))
           buildFile.writeText(
             """
             plugins {
@@ -187,18 +188,7 @@ class SharedLibraryPluginResolutionTest :
     describe("groovy-all absent from integrationTestCompileClasspath") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
         withTestProject {
-          settingsFile.writeText(
-            """
-            dependencyResolutionManagement {
-                repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-                repositories {
-                    mavenCentral()
-                    maven("https://repo.jenkins-ci.org/public/")
-                }
-            }
-            rootProject.name = "groovy-all-compile-exclusion-test"
-            """.trimIndent(),
-          )
+          settingsFile.writeText(groovyAllExclusionSettings("groovy-all-compile-exclusion-test"))
           buildFile.writeText(
             """
             plugins {

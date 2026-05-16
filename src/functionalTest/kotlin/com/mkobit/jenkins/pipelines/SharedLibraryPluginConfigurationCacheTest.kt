@@ -27,14 +27,14 @@ class SharedLibraryPluginConfigurationCacheTest :
             runner(gradleVersion)
               .withArguments("generateLocalLibraryFiles", "--configuration-cache")
               .build()
-          store.task(":generateLocalLibraryFiles").shouldNotBeNull().outcome shouldBe TaskOutcome.SUCCESS
+          store.task(":generateLocalLibraryFiles") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
           store.output shouldContain "Configuration cache entry stored"
 
           val reuse =
             runner(gradleVersion)
               .withArguments("generateLocalLibraryFiles", "--configuration-cache")
               .build()
-          reuse.task(":generateLocalLibraryFiles").shouldNotBeNull().outcome shouldBe TaskOutcome.UP_TO_DATE
+          reuse.task(":generateLocalLibraryFiles") shouldNotBeNull { outcome shouldBe TaskOutcome.UP_TO_DATE }
           reuse.output shouldContain "Reusing configuration cache"
         }
       }

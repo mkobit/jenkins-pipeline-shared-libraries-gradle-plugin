@@ -196,7 +196,7 @@ class SharedLibraryPluginCodeNarcTest :
             """.trimIndent(),
           )
           val result = runner(gradleVersion).withArguments("codenarcJenkinsMain").build()
-          result.task(":codenarcJenkinsMain").shouldNotBeNull().outcome shouldBe TaskOutcome.SUCCESS
+          result.task(":codenarcJenkinsMain") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
         }
       }
     }

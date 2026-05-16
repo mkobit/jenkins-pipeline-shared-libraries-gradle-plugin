@@ -39,10 +39,10 @@ class SharedLibraryPluginCacheableTaskTest :
             buildFile.writeText(sharedLibraryPluginBuild)
 
             runner(gradleVersion).withArguments("generateLocalLibraryFiles").build()
-              .task(":generateLocalLibraryFiles").shouldNotBeNull().outcome shouldBe TaskOutcome.SUCCESS
+              .task(":generateLocalLibraryFiles") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
 
             runner(gradleVersion).withArguments("generateLocalLibraryFiles").build()
-              .task(":generateLocalLibraryFiles").shouldNotBeNull().outcome shouldBe TaskOutcome.UP_TO_DATE
+              .task(":generateLocalLibraryFiles") shouldNotBeNull { outcome shouldBe TaskOutcome.UP_TO_DATE }
           }
         }
       }
@@ -53,7 +53,7 @@ class SharedLibraryPluginCacheableTaskTest :
             buildFile.writeText(sharedLibraryPluginBuild)
 
             runner(gradleVersion).withArguments("generateLocalLibraryFiles").build()
-              .task(":generateLocalLibraryFiles").shouldNotBeNull().outcome shouldBe TaskOutcome.SUCCESS
+              .task(":generateLocalLibraryFiles") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
 
             buildFile.writeText(
               """
@@ -67,7 +67,7 @@ class SharedLibraryPluginCacheableTaskTest :
             )
 
             runner(gradleVersion).withArguments("generateLocalLibraryFiles").build()
-              .task(":generateLocalLibraryFiles").shouldNotBeNull().outcome shouldBe TaskOutcome.SUCCESS
+              .task(":generateLocalLibraryFiles") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
           }
         }
       }
@@ -79,12 +79,12 @@ class SharedLibraryPluginCacheableTaskTest :
             buildFile.writeText(sharedLibraryPluginBuild)
 
             runner(gradleVersion).withArguments("generateLocalLibraryFiles", "--build-cache").build()
-              .task(":generateLocalLibraryFiles").shouldNotBeNull().outcome shouldBe TaskOutcome.SUCCESS
+              .task(":generateLocalLibraryFiles") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
 
             dir.resolve("build/generated-src/localLibraryRetriever").toFile().deleteRecursively()
 
             runner(gradleVersion).withArguments("generateLocalLibraryFiles", "--build-cache").build()
-              .task(":generateLocalLibraryFiles").shouldNotBeNull().outcome shouldBe TaskOutcome.FROM_CACHE
+              .task(":generateLocalLibraryFiles") shouldNotBeNull { outcome shouldBe TaskOutcome.FROM_CACHE }
           }
         }
       }
@@ -97,10 +97,10 @@ class SharedLibraryPluginCacheableTaskTest :
             buildFile.writeText(sharedLibraryPluginBuild)
 
             runner(gradleVersion).withArguments("extractJenkinsCodeNarcConfig").build()
-              .task(":extractJenkinsCodeNarcConfig").shouldNotBeNull().outcome shouldBe TaskOutcome.SUCCESS
+              .task(":extractJenkinsCodeNarcConfig") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
 
             runner(gradleVersion).withArguments("extractJenkinsCodeNarcConfig").build()
-              .task(":extractJenkinsCodeNarcConfig").shouldNotBeNull().outcome shouldBe TaskOutcome.UP_TO_DATE
+              .task(":extractJenkinsCodeNarcConfig") shouldNotBeNull { outcome shouldBe TaskOutcome.UP_TO_DATE }
           }
         }
       }
@@ -112,12 +112,12 @@ class SharedLibraryPluginCacheableTaskTest :
             buildFile.writeText(sharedLibraryPluginBuild)
 
             runner(gradleVersion).withArguments("extractJenkinsCodeNarcConfig", "--build-cache").build()
-              .task(":extractJenkinsCodeNarcConfig").shouldNotBeNull().outcome shouldBe TaskOutcome.SUCCESS
+              .task(":extractJenkinsCodeNarcConfig") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
 
             dir.resolve("build/generated/codenarc/codenarc-jenkins.xml").toFile().delete()
 
             runner(gradleVersion).withArguments("extractJenkinsCodeNarcConfig", "--build-cache").build()
-              .task(":extractJenkinsCodeNarcConfig").shouldNotBeNull().outcome shouldBe TaskOutcome.FROM_CACHE
+              .task(":extractJenkinsCodeNarcConfig") shouldNotBeNull { outcome shouldBe TaskOutcome.FROM_CACHE }
           }
         }
       }
@@ -131,10 +131,10 @@ class SharedLibraryPluginCacheableTaskTest :
             buildFile.writeText(sharedLibraryPluginBuild)
 
             runner(gradleVersion).withArguments("compileLocalLibraryRetrieverJava").build()
-              .task(":compileLocalLibraryRetrieverJava").shouldNotBeNull().outcome shouldBe TaskOutcome.SUCCESS
+              .task(":compileLocalLibraryRetrieverJava") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
 
             runner(gradleVersion).withArguments("compileLocalLibraryRetrieverJava").build()
-              .task(":compileLocalLibraryRetrieverJava").shouldNotBeNull().outcome shouldBe TaskOutcome.UP_TO_DATE
+              .task(":compileLocalLibraryRetrieverJava") shouldNotBeNull { outcome shouldBe TaskOutcome.UP_TO_DATE }
           }
         }
       }
@@ -151,12 +151,12 @@ class SharedLibraryPluginCacheableTaskTest :
             buildFile.writeText(sharedLibraryPluginBuild)
 
             runner(gradleVersion).withArguments("compileLocalLibraryRetrieverJava", "--build-cache").build()
-              .task(":compileLocalLibraryRetrieverJava").shouldNotBeNull().outcome shouldBe TaskOutcome.SUCCESS
+              .task(":compileLocalLibraryRetrieverJava") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
 
             dir.resolve("build/classes/java/localLibraryRetriever").toFile().deleteRecursively()
 
             runner(gradleVersion).withArguments("compileLocalLibraryRetrieverJava", "--build-cache").build()
-              .task(":compileLocalLibraryRetrieverJava").shouldNotBeNull().outcome shouldBe TaskOutcome.FROM_CACHE
+              .task(":compileLocalLibraryRetrieverJava") shouldNotBeNull { outcome shouldBe TaskOutcome.FROM_CACHE }
           }
         }
       }
