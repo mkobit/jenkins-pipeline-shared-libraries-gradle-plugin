@@ -1,6 +1,8 @@
 import org.gradle.util.GradleVersion
 
 open class TestMatrix {
+  val current: String = GradleVersion.current().version
+
   val gradleVersions: List<String> =
     listOf("9.4.1", "9.5.1")
       .map { GradleVersion.version(it) }

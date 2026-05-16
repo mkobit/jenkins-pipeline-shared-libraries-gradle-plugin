@@ -2,7 +2,6 @@ import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestStackTraceFilter
 import org.gradle.kotlin.dsl.testMatrix
-import org.gradle.util.GradleVersion
 
 plugins {
   `kotlin-dsl`
@@ -82,11 +81,10 @@ testing {
 
       // Gate: default suite target — toolchain Java × current Gradle × all Jenkins LTS × no tag filter.
       val gate = targets.named("functionalTest")
-      val gateTask = gate.flatMap { it.testTask }
       gate.configure {
-        testTask.configure {
+        testTask {
           javaLauncher = javaToolchains.launcherFor { languageVersion = java.toolchain.languageVersion }
-          systemProperty("test.gradle.version", GradleVersion.current().version)
+          systemProperty("test.gradle.version", testMatrix.current)
           systemProperty(
             "test.jenkins.entries",
             testMatrix.jenkinsLtsEntries.joinToString(",") { "${it.lts}|${it.version}|${it.bomVersion}" },
@@ -123,11 +121,11 @@ testing {
       tasks.register("functionalTestAll") {
         group = JavaBasePlugin.VERIFICATION_GROUP
         description = "Runs the gate and all CI fan-out matrix variants"
-        dependsOn(listOf(gateTask) + variantTasks)
+        dependsOn(gate, variantTasks)
       }
 
       tasks.check {
-        dependsOn(gateTask)
+        dependsOn(gate)
       }
     }
   }
