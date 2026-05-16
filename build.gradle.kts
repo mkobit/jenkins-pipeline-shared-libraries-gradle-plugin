@@ -80,6 +80,10 @@ testing {
         }
       }
 
+      val kotestParallelism =
+        (findProperty("kotest.parallelism") as? String)?.toInt()
+          ?: Runtime.getRuntime().availableProcessors()
+
       // Gate: default suite target — toolchain Java × current Gradle × all Jenkins LTS × no tag filter.
       val gate = targets.named("functionalTest")
       gate.configure {
@@ -91,12 +95,12 @@ testing {
             testMatrix.jenkinsLtsEntries.joinToString(",") { "${it.lts}|${it.version}|${it.bomVersion}" },
           )
           maxParallelForks = 1
-          jvmArgumentProviders += CommandLineArgumentProvider { listOf("-Dkotest.framework.parallelism=3") }
+          jvmArgumentProviders += CommandLineArgumentProvider { listOf("-Dkotest.framework.parallelism=$kotestParallelism") }
         }
       }
 
       // CI fan-out: one target per matrix variant; each axis is pinned via nullable fields.
-      val variantTasks =
+      val variants =
         testMatrix.variants.map { variant ->
           targets
             .register(variant.taskName) {
@@ -114,15 +118,15 @@ testing {
                   )
                 }
                 maxParallelForks = 1
-                jvmArgumentProviders += CommandLineArgumentProvider { listOf("-Dkotest.framework.parallelism=3") }
+                jvmArgumentProviders += CommandLineArgumentProvider { listOf("-Dkotest.framework.parallelism=$kotestParallelism") }
               }
-            }.flatMap { it.testTask }
+            }
         }
 
       tasks.register("functionalTestAll") {
         group = JavaBasePlugin.VERIFICATION_GROUP
         description = "Runs the gate and all CI fan-out matrix variants"
-        dependsOn(gate, variantTasks)
+        dependsOn(gate, variants)
       }
 
       tasks.check {
