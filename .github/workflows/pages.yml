@@ -1,0 +1,50 @@
+name: Deploy docs to GitHub Pages
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+# Allow only one deployment at a time; cancel any in-progress run for the same trigger.
+concurrency:
+  group: pages-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Build and deploy Dokka HTML
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
+        with:
+          java-version: '17'
+          distribution: temurin
+      - uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e
+      - name: Generate Dokka HTML
+        run: ./gradlew dokkaGeneratePublicationHtml
+
+      # On main: overwrite root with latest docs.
+      - name: Deploy to root (main → latest)
+        if: github.ref_name == 'main'
+        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: build/dokka/html
+          destination_dir: .
+          commit_message: "docs: update root from main (${{ github.sha }})"
+          keep_files: true
+
+      # On tag: deploy to /v{tag}/ without disturbing other versions.
+      - name: Deploy to versioned path (tag)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: build/dokka/html
+          destination_dir: ${{ github.ref_name }}
+          commit_message: "docs: publish ${{ github.ref_name }}"
+          keep_files: true

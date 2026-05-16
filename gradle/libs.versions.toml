@@ -1,0 +1,29 @@
+[versions]
+dokka = "2.0.0"
+foojay = "1.0.0"
+junit-jupiter = "6.0.3"
+kotest = "6.1.11"
+kotlin-logging = "7.0.0"
+mockk = "1.13.12"
+okhttp = "4.12.0"
+openrewrite = "6.26.0"
+plugin-publish = "2.1.1"
+spotless = "8.5.1"
+
+[libraries]
+kotest-assertions = { module = "io.kotest:kotest-assertions-core" }
+kotest-bom = { module = "io.kotest:kotest-bom", version.ref = "kotest" }
+kotest-decoroutinator = { module = "io.kotest:kotest-extensions-decoroutinator", version.ref = "kotest" }
+kotest-engine = { module = "io.kotest:kotest-framework-engine" }
+kotest-runner = { module = "io.kotest:kotest-runner-junit5" }
+kotlin-logging = { module = "io.github.oshai:kotlin-logging-jvm", version.ref = "kotlin-logging" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
+okhttp-mockwebserver = { module = "com.squareup.okhttp3:mockwebserver", version.ref = "okhttp" }
+
+[plugins]
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
+foojay = { id = "org.gradle.toolchains.foojay-resolver-convention", version.ref = "foojay" }
+gradle-publish = { id = "com.gradle.plugin-publish", version.ref = "plugin-publish" }
+openrewrite = { id = "org.openrewrite.rewrite", version.ref = "openrewrite" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }

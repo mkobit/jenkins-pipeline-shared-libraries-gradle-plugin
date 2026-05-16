@@ -1,0 +1,22 @@
+name: Set up build environment
+description: Check out the repository, set up Java, and configure Gradle.
+
+inputs:
+  java-version:
+    description: Java version (temurin distribution)
+    required: true
+  cache-read-only:
+    description: Use Gradle dependency cache read-only
+    required: false
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
+      with:
+        java-version: ${{ inputs.java-version }}
+        distribution: temurin
+    - uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e
+      with:
+        cache-read-only: ${{ inputs.cache-read-only }}

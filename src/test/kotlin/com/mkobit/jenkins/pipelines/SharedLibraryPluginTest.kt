@@ -1,275 +1,259 @@
 package com.mkobit.jenkins.pipelines
 
-import com.mkobit.jenkins.pipelines.codegen.GenerateJavaFile
-import org.gradle.api.JavaVersion
+import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.booleans.shouldBeFalse
+import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldNotBeBlank
+import io.kotest.matchers.types.shouldBeInstanceOf
 import org.gradle.api.Project
-import org.gradle.api.artifacts.repositories.MavenArtifactRepository
-import org.gradle.api.internal.HasConvention
+import org.gradle.api.artifacts.type.ArtifactTypeDefinition
 import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.api.plugins.JavaBasePlugin
-import org.gradle.api.plugins.JavaPluginConvention
-import org.gradle.api.tasks.GroovySourceSet
+import org.gradle.api.tasks.GroovySourceDirectorySet
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.jvm.tasks.Jar
 import org.gradle.testfixtures.ProjectBuilder
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.DynamicNode
-import org.junit.jupiter.api.DynamicTest
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestFactory
-import strikt.api.expectThat
-import strikt.assertions.all
-import strikt.assertions.any
-import strikt.assertions.contains
-import strikt.assertions.endsWith
-import strikt.assertions.first
-import strikt.assertions.hasEntry
-import strikt.assertions.hasSize
-import strikt.assertions.isA
-import strikt.assertions.isEmpty
-import strikt.assertions.isEqualTo
-import strikt.assertions.isFalse
-import strikt.assertions.isNotBlank
-import strikt.assertions.isNotEmpty
-import strikt.assertions.isNotNull
-import strikt.assertions.isNull
-import strikt.assertions.map
-import strikt.java.name
-import testsupport.junit.Issue
-import testsupport.junit.NotImplementedYet
-import testsupport.strikt.authority
-import testsupport.strikt.scheme
-import java.util.stream.Stream
+import testsupport.kotest.shouldBePresent
+import testsupport.kotest.shouldHaveValue
 
-internal class SharedLibraryPluginTest {
-  private lateinit var project: Project
+internal class SharedLibraryPluginTest :
+  DescribeSpec({
+    lateinit var project: Project
 
-  @BeforeEach
-  internal fun setUp() {
-    project = ProjectBuilder.builder().build()
-    project.pluginManager.apply(SharedLibraryPlugin::class.java)
-  }
+    beforeTest {
+      project = ProjectBuilder.builder().build()
+      project.pluginManager.apply("com.mkobit.jenkins.pipelines.shared-library")
+      (project as ProjectInternal).evaluate()
+    }
 
-  @Test
-  internal fun `Groovy plugin is applied`() {
-    expectThat(project)
-      .get { pluginManager }
-      .assertThat("'groovy' plugin applied") { it.hasPlugin("groovy") }
-  }
+    it("applies the Groovy plugin") {
+      project.pluginManager.hasPlugin("groovy") shouldBe true
+    }
 
-  @Test
-  internal fun `JenkinsIntegrationPlugin is applied`() {
-    expectThat(project)
-      .get { plugins }
-      .assertThat("${JenkinsIntegrationPlugin::class.simpleName} is applied") { it.hasPlugin(JenkinsIntegrationPlugin::class.java) }
-  }
-
-  @Test
-  @Issue("https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/101")
-  internal fun `Jenkins repository is added`() {
-    expectThat(project)
-      .get { repositories }
-      .and {
-        get { size }.describedAs("a single repository is added").isEqualTo(1)
+    describe("main source set") {
+      it("includes src as a Groovy source directory") {
+        val main = project.extensions.getByType(SourceSetContainer::class.java).getByName("main")
+        main.extensions
+          .getByType(GroovySourceDirectorySet::class.java)
+          .srcDirs
+          .map { it.name }
+          .shouldContain("src")
       }
-      .get("repository named '${SharedLibraryPlugin.JENKINS_REPOSITORY_NAME}'") { getByName(SharedLibraryPlugin.JENKINS_REPOSITORY_NAME) }
-      .isA<MavenArtifactRepository>()
-      .and {
-        get { url }.and {
-          authority.isEqualTo("repo.jenkins-ci.org")
-          scheme.isEqualTo("https")
+
+      it("includes vars as a Groovy source directory") {
+        val main = project.extensions.getByType(SourceSetContainer::class.java).getByName("main")
+        main.extensions
+          .getByType(GroovySourceDirectorySet::class.java)
+          .srcDirs
+          .map { it.name }
+          .shouldContain("vars")
+      }
+
+      it("has resources as the only resources directory") {
+        val main = project.extensions.getByType(SourceSetContainer::class.java).getByName("main")
+        main.resources.srcDirs shouldHaveSize 1
+        main.resources.srcDirs
+          .first()
+          .name shouldBe "resources"
+      }
+
+      it("has no Java sources") {
+        val main = project.extensions.getByType(SourceSetContainer::class.java).getByName("main")
+        main.java.srcDirs.shouldBeEmpty()
+      }
+    }
+
+    describe("configurations") {
+      it("jenkinsPlugin is a user-facing declaration bucket") {
+        val config = project.configurations.getByName("jenkinsPlugin")
+        config.isCanBeResolved shouldBe false
+        config.isCanBeConsumed shouldBe false
+        config.description.shouldNotBeNull().shouldNotBeBlank()
+      }
+
+      it("compileOnly extends jenkinsPlugin") {
+        project.configurations
+          .getByName("compileOnly")
+          .extendsFrom
+          .map { it.name }
+          .shouldContain("jenkinsPlugin")
+      }
+
+      it("testImplementation extends jenkinsPlugin") {
+        project.configurations
+          .getByName("testImplementation")
+          .extendsFrom
+          .map { it.name }
+          .shouldContain("jenkinsPlugin")
+      }
+
+      it("integrationTestImplementation extends jenkinsPlugin") {
+        project.configurations
+          .getByName("integrationTestImplementation")
+          .extendsFrom
+          .map { it.name }
+          .shouldContain("jenkinsPlugin")
+      }
+
+      describe("jenkinsPluginHpis") {
+        it("is resolvable") {
+          project.configurations
+            .getByName("jenkinsPluginHpis")
+            .isCanBeResolved
+            .shouldBeTrue()
         }
-        get { name }.isEqualTo("JenkinsPublic")
-      }
-  }
 
-  @Test
-  internal fun `sourceCompatibility is Java 8`() {
-    expectThat(project)
-      .get { convention }
-      .get("Java Plugin convention") { getPlugin(JavaPluginConvention::class.java) }
-      .and {
-        get { sourceCompatibility }.isEqualTo(JavaVersion.VERSION_1_8)
-        get { targetCompatibility }.isEqualTo(JavaVersion.VERSION_1_8)
-      }
-  }
+        it("is not consumable") {
+          project.configurations
+            .getByName("jenkinsPluginHpis")
+            .isCanBeConsumed
+            .shouldBeFalse()
+        }
 
-  @Test
-  internal fun `src is a Groovy source directory`() {
-    expectThat(project)
-      .get { extensions }
-      .get("Source Sets containers") { getByType(SourceSetContainer::class.java) }
-      .get("main") { getByName("main") }
-      .isA<HasConvention>()
-      .get { convention }
-      .get { getPlugin(GroovySourceSet::class.java) }
-      .get { groovy }
-      .get { srcDirs }
-      .any {
-        name.endsWith("src")
-      }
-//    val convention = project.convention.getPlugin(JavaPluginConvention::class.java)
-//    val main = convention.sourceSets.getByName("main")
-//    expectThat(main).isNotNull()
-//    expectThat((main as HasConvention).convention.getPlugin(GroovySourceSet::class.java).groovy.srcDirs).anySatisfy {
-//      expectThat(it.endsWith("src"))
-//    }
-  }
+        it("has a description") {
+          project.configurations
+            .getByName("jenkinsPluginHpis")
+            .description
+            .shouldNotBeNull()
+            .shouldNotBeBlank()
+        }
 
-  @Test
-  internal fun `vars is a Groovy source directory`() {
-    expectThat(project)
-      .get { extensions }
-      .get("Source Sets containers") { getByType(SourceSetContainer::class.java) }
-      .get("main") { getByName("main") }
-      .isA<HasConvention>()
-      .get { convention }
-      .get { getPlugin(GroovySourceSet::class.java) }
-      .get { groovy }
-      .get { srcDirs }
-      .any {
-        name.endsWith("vars")
-      }
-  }
+        it("requests hpi artifact type") {
+          val attr =
+            project.configurations
+              .getByName("jenkinsPluginHpis")
+              .attributes
+              .getAttribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE)
+          attr shouldBe "hpi"
+        }
 
-  @Test
-  internal fun `resources is a resources source directory`() {
-    expectThat(project)
-      .get { extensions }
-      .get("Source Sets containers") { getByType(SourceSetContainer::class.java) }
-      .get("main") { getByName("main") }
-      .get { resources }
-      .get { srcDirs }
-      .hasSize(1)
-      .first()
-      .and {
-        name.endsWith("resources")
-      }
-  }
+        it("requests hpi jenkins artifact attribute") {
+          val attr =
+            project.configurations
+              .getByName("jenkinsPluginHpis")
+              .attributes
+              .getAttribute(JenkinsPluginRule.JENKINS_ARTIFACT_ATTRIBUTE)
+          attr shouldBe "hpi"
+        }
 
-  @Test
-  internal fun `main has no Java sources`() {
-    expectThat(project)
-      .get { extensions }
-      .get("Source Sets containers") { getByType(SourceSetContainer::class.java) }
-      .get("main") { getByName("main") }
-      .get { java }
-      .get { srcDirs }
-      .isEmpty()
-  }
-
-  @Test
-  internal fun `main implementation configuration extends from Shared Library Groovy configuration`() {
-    expectThat(project)
-      .get { configurations }
-      .get { getByName("implementation") }
-      .get { extendsFrom }
-      .map { it.name }
-      .contains("sharedLibraryGroovy")
-  }
-
-  @Test
-  internal fun `integrationTest task sets the system property for the buildDirectory`() {
-    expectThat(project)
-      .get { tasks }
-      .get { getByName("integrationTest") }
-      .isA<org.gradle.api.tasks.testing.Test>()
-      .get { systemProperties }
-      .hasEntry("buildDirectory", project.buildDir.absolutePath)
-  }
-
-  @Test
-  internal fun `integrationTest task is in the verification group`() {
-    expectThat(project)
-      .get { tasks }
-      .get { getByName("integrationTest") }
-      .isA<org.gradle.api.tasks.testing.Test>()
-      .and {
-        get { group }.isEqualTo(JavaBasePlugin.VERIFICATION_GROUP)
-        get { description }.isNotBlank()
-      }
-  }
-
-  @Test
-  internal fun `groovydocJar task is created`() {
-    expectThat(project)
-      .get { tasks }
-      .get { getByName("groovydocJar") }
-      .isA<Jar>()
-      .get { description }
-      .isNotBlank()
-  }
-
-  @Test
-  internal fun `sourcesJar task is created`() {
-    expectThat(project)
-      .get { tasks }
-      .get { getByName("sourcesJar") }
-      .isA<Jar>()
-      .get { description }
-      .isNotBlank()
-  }
-
-  @TestFactory
-  internal fun `configuration setup`(): Stream<DynamicNode> {
-    val configurations = mapOf(
-      "jenkinsPlugins" to "Jenkins Plugins",
-      "jenkinsPipelineUnitTestLibraries" to "Jenkins Pipeline Unit dependencies",
-      "jenkinsPluginHpisAndJpis" to "Jenkins plugins HPI and JPI dependencies",
-      "jenkinsPluginLibraries" to "Jenkins plugins JAR dependencies",
-      "jenkinsCoreLibraries" to "Jenkins core dependencies",
-      "jenkinsTestLibraries" to "Jenkins test dependencies",
-      "sharedLibraryGroovy" to "Shared Library Groovy",
-      "sharedLibraryIvy" to "Ivy (@Grab support)",
-      "jenkinsWar" to "Jenkins WAR and modules bundle",
-      "jenkinsModules" to "Only Jenkins WAR modules",
-      "jenkinsOnlyWarExtension" to "Only Jenkins WAR bundle"
-    )
-
-    return configurations.entries.stream()
-      .map { (key, value) ->
-        DynamicTest.dynamicTest("configuration $value has a description and is not visible") {
-          expectThat(project)
-            .get { this.configurations }
-            .get("configuration $key") { getByName(key) }
-            .and {
-              get { description }.isNotNull().isNotBlank()
-              get { isVisible }.isFalse()
-            }
+        it("extends jenkinsPlugin") {
+          project.configurations
+            .getByName("jenkinsPluginHpis")
+            .extendsFrom
+            .map { it.name }
+            .shouldContain("jenkinsPlugin")
         }
       }
-  }
 
-  @Test
-  internal fun `code generation tasks do not have a group`() {
-    expectThat(project)
-      .get { tasks }
-      .get { withType(GenerateJavaFile::class.java) }
-      .isNotEmpty()
-      .all {
-        get { group as String? } // not sure why it is not nullable right now
-          .isNull()
+      describe("sharedLibraryIvy") {
+        it("is not consumable") {
+          project.configurations
+            .getByName("sharedLibraryIvy")
+            .isCanBeConsumed
+            .shouldBeFalse()
+        }
+        it("has a description") {
+          project.configurations
+            .getByName("sharedLibraryIvy")
+            .description
+            .shouldNotBeNull()
+            .shouldNotBeBlank()
+        }
       }
-  }
 
-  @NotImplementedYet
-  @Test
-  internal fun `Jenkins Global Library plugin implementation and HPI dependencies are added`() {
-  }
+      it("localLibraryRetrieverAnnotationProcessor includes annotation-indexer") {
+        val deps = project.configurations.getByName("localLibraryRetrieverAnnotationProcessor").dependencies
+        deps.any { it.group == "org.jenkins-ci" && it.name == "annotation-indexer" }.shouldBeTrue()
+      }
+    }
 
-  @NotImplementedYet
-  @Test
-  internal fun `additional resources directory available for main to be able to use the Jenkins GDSL in IntelliJ`() {
-  }
+    describe("extension defaults") {
+      it("autoRegisterLibrary defaults to true") {
+        val ext = project.extensions.getByType(SharedLibraryExtension::class.java)
+        ext.autoRegisterLibrary.shouldBePresent().shouldBeTrue()
+      }
 
-  // TODO: having this is incredibly useful for authoring integration tests with source code completion in global shared libraries
-  @NotImplementedYet
-  @Test
-  internal fun `integrationTestPipelineResources directory is a source set and available on integrationRuntimeOnly classpath`() {
-  }
+      it("libraryName defaults to project name") {
+        val ext = project.extensions.getByType(SharedLibraryExtension::class.java)
+        ext.libraryName shouldHaveValue project.name
+      }
+    }
 
-  // Internal function needed here to trigger evaluation
-  private fun Project.evaluate() {
-    (this as ProjectInternal).evaluate()
-  }
-}
+    describe("libraryName is reflected in test.library.name system property") {
+      it("integrationTest injects libraryName as test.library.name") {
+        val ext = project.extensions.getByType(SharedLibraryExtension::class.java)
+        val task = project.tasks.getByName("integrationTest") as org.gradle.api.tasks.testing.Test
+        val provider = task.jvmArgumentProviders.filterIsInstance<LibraryNameArgumentProvider>().single()
+        provider.libraryName shouldHaveValue ext.libraryName.shouldBePresent()
+      }
+    }
+
+    describe("attribute schema") {
+      it("registers JENKINS_ARTIFACT_ATTRIBUTE disambiguation rule") {
+        val schema = project.dependencies.attributesSchema
+        val attr = JenkinsPluginRule.JENKINS_ARTIFACT_ATTRIBUTE
+        schema.hasAttribute(attr).shouldBeTrue()
+      }
+    }
+
+    describe("tasks") {
+      it("integrationTest is in the verification group") {
+        val task = project.tasks.getByName("integrationTest")
+        task.shouldBeInstanceOf<org.gradle.api.tasks.testing.Test>()
+        task.group shouldBe JavaBasePlugin.VERIFICATION_GROUP
+        task.description.shouldNotBeBlank()
+      }
+
+      it("integrationTest has maxParallelForks = 1") {
+        val task = project.tasks.getByName("integrationTest") as org.gradle.api.tasks.testing.Test
+        task.maxParallelForks shouldBe 1
+      }
+
+      it("integrationTest has maxHeapSize = 2g") {
+        val task = project.tasks.getByName("integrationTest") as org.gradle.api.tasks.testing.Test
+        task.maxHeapSize shouldBe "2g"
+      }
+
+      it("integrationTest injects test.library.root system property") {
+        val task = project.tasks.getByName("integrationTest") as org.gradle.api.tasks.testing.Test
+        task.systemProperties["test.library.root"] shouldBe project.projectDir.absolutePath
+      }
+
+      it("integrationTest injects test.library.name system property") {
+        val task = project.tasks.getByName("integrationTest") as org.gradle.api.tasks.testing.Test
+        val provider = task.jvmArgumentProviders.filterIsInstance<LibraryNameArgumentProvider>().single()
+        provider.libraryName shouldHaveValue project.name
+      }
+
+      it("generateLocalLibraryFiles task is registered") {
+        project.tasks
+          .getByName("generateLocalLibraryFiles")
+          .shouldBeInstanceOf<GenerateLocalLibraryFiles>()
+      }
+
+      it("generateLocalLibraryFiles generateAutoRegistrar defaults to true") {
+        val task = project.tasks.getByName("generateLocalLibraryFiles") as GenerateLocalLibraryFiles
+        task.generateAutoRegistrar shouldHaveValue true
+      }
+
+      it("groovydocJar is created with a description") {
+        val task = project.tasks.getByName("groovydocJar")
+        task.shouldBeInstanceOf<Jar>()
+        task.description.shouldNotBeBlank()
+      }
+
+      it("sourcesJar is created with a description") {
+        val task = project.tasks.getByName("sourcesJar")
+        task.shouldBeInstanceOf<Jar>()
+        task.description.shouldNotBeBlank()
+      }
+    }
+
+    xit("Jenkins Global Library plugin implementation and HPI dependencies are added") {}
+    xit("resources directory is available for GDSL support in IntelliJ") {}
+  })

@@ -1,7 +1,0 @@
-plugins {
-  id 'com.mkobit.jenkins.pipelines.shared-library'
-}
-
-repositories {
-  jcenter()
-}

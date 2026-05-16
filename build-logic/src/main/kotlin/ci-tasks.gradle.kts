@@ -1,0 +1,46 @@
+import org.gradle.util.GradleVersion
+
+plugins {
+  java
+}
+
+val testMatrix = extensions.create<TestMatrix>("testMatrix")
+
+tasks {
+  val ciDir = layout.buildDirectory.dir("ci")
+
+  register<GenerateJsonMatrix>("generateGradleCompatMatrix") {
+    group = "CI"
+    description = "Writes the Gradle compat CI matrix JSON to <build>/ci/gradle-compat-matrix.json"
+    matrixEntries =
+      testMatrix.gradleVersions.map { version ->
+        MatrixEntry(mapOf("gradle" to version, "task-suffix" to "Gradle${version.replace(".", "_")}"))
+      }
+    outputFile = ciDir.map { it.file("gradle-compat-matrix.json") }
+  }
+
+  register<GenerateJsonMatrix>("generateJavaCompatMatrix") {
+    group = "CI"
+    description = "Writes the Java compat CI matrix JSON to <build>/ci/java-compat-matrix.json"
+    matrixEntries =
+      testMatrix.javaVersions.map { java ->
+        MatrixEntry(mapOf("java" to java.toString(), "task-suffix" to "Java$java"))
+      }
+    outputFile = ciDir.map { it.file("java-compat-matrix.json") }
+  }
+
+  register<GenerateJenkinsCompatMatrix>("generateJenkinsCompatMatrix") {
+    group = "CI"
+    description = "Writes the Jenkins LTS compat CI matrix JSON to <build>/ci/jenkins-compat-matrix.json"
+    entries = testMatrix.jenkinsLtsEntries
+    outputFile = ciDir.map { it.file("jenkins-compat-matrix.json") }
+  }
+
+  register<GenerateBuildConfig>("generateBuildConfig") {
+    group = "CI"
+    description = "Writes the wrapper Gradle version and Java toolchain spec to <build>/ci/build-config.json"
+    gradleVersion = GradleVersion.current().version
+    javaVersion = project.java.toolchain.languageVersion.map { it.asInt() }
+    outputFile = ciDir.map { it.file("build-config.json") }
+  }
+}

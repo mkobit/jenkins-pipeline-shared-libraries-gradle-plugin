@@ -1,0 +1,278 @@
+package com.mkobit.jenkins.pipelines
+
+import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.datatest.withData
+import io.kotest.inspectors.filterMatching
+import io.kotest.inspectors.forAtLeastOne
+import io.kotest.inspectors.forNone
+import io.kotest.matchers.collections.shouldNotBeEmpty
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldEndWith
+import io.kotest.matchers.string.shouldNotContain
+import io.kotest.matchers.string.shouldStartWith
+import testsupport.gradle.TestProject
+import testsupport.gradle.TestedGradleVersion
+import testsupport.gradle.withTestProject
+import testsupport.jenkins.WORKFLOW_API
+import testsupport.jenkins.jenkinsSettings
+import kotlin.io.path.appendText
+import kotlin.io.path.writeText
+
+class SharedLibraryPluginResolutionTest :
+  DescribeSpec({
+    val jenkinsProjectBuildFile =
+      """
+      plugins {
+          id("com.mkobit.jenkins.pipelines.shared-library")
+      }
+      sharedLibrary {
+          plugins {
+              plugin("$WORKFLOW_API")
+          }
+      }
+      tasks.register("printResolvedArtifacts") {
+          doLast {
+              configurations.getByName("testRuntimeClasspath").resolvedConfiguration.resolvedArtifacts.forEach {
+                  println("testRuntime:" + it.file.name)
+              }
+              configurations.getByName("jenkinsPluginHpis").incoming.artifactView { isLenient = true }.artifacts.forEach {
+                  println("hpis:" + it.file.name)
+              }
+              configurations.getByName("compileClasspath").resolvedConfiguration.resolvedArtifacts.forEach {
+                  println("compile:" + it.file.name)
+              }
+              configurations.getByName("runtimeClasspath").resolvedConfiguration.resolvedArtifacts.forEach {
+                  println("runtime:" + it.file.name)
+              }
+          }
+      }
+      """.trimIndent()
+
+    fun withJenkinsProject(block: TestProject.() -> Unit) = withTestProject {
+      settingsFile.writeText(jenkinsSettings("resolution-test"))
+      buildFile.writeText(jenkinsProjectBuildFile)
+      block()
+    }
+
+    fun groovyAllExclusionSettings(projectName: String) =
+      """
+      dependencyResolutionManagement {
+          repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+          repositories {
+              mavenCentral()
+              maven("https://repo.jenkins-ci.org/public/")
+          }
+      }
+      rootProject.name = "$projectName"
+      """.trimIndent()
+
+    describe("testRuntimeClasspath") {
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withJenkinsProject {
+          val result = runner(gradleVersion).withArguments("printResolvedArtifacts").build()
+
+          val testRuntimeFiles = result.output.lines()
+            .filterMatching { it.shouldStartWith("testRuntime:") }
+
+          testRuntimeFiles.shouldNotBeEmpty()
+          testRuntimeFiles.forAtLeastOne { it shouldContain "workflow-api" }
+          testRuntimeFiles.forNone { it shouldEndWith ".hpi" }
+          testRuntimeFiles.forNone { it shouldEndWith ".jpi" }
+        }
+      }
+    }
+
+    describe("jenkinsPluginHpis") {
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withJenkinsProject {
+          val result = runner(gradleVersion).withArguments("printResolvedArtifacts").build()
+
+          val hpiFiles = result.output.lines()
+            .filterMatching { it.shouldStartWith("hpis:") }
+
+          hpiFiles.shouldNotBeEmpty()
+          // Jenkins plugin artifacts must appear as .hpi — plain Java lib transitives may appear as .jar via JpiCompatibilityRule.
+          hpiFiles.forAtLeastOne {
+            it shouldContain "workflow-api"
+            it shouldEndWith ".hpi"
+          }
+        }
+      }
+    }
+
+    describe("jenkins-core on compile classpath but not main runtime") {
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withJenkinsProject {
+          val result = runner(gradleVersion).withArguments("printResolvedArtifacts").build()
+
+          val lines = result.output.lines()
+          val compileFiles = lines.filterMatching { it.shouldStartWith("compile:") }
+          val runtimeFiles = lines.filterMatching { it.shouldStartWith("runtime:") }
+
+          compileFiles.forAtLeastOne { it shouldContain "jenkins-core" }
+          runtimeFiles.forNone { it shouldContain "jenkins-core" }
+        }
+      }
+    }
+
+    describe("groovy-all absent from testRuntimeClasspath and integrationTestRuntimeClasspath") {
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withTestProject {
+          settingsFile.writeText(groovyAllExclusionSettings("groovy-all-exclusion-test"))
+          buildFile.writeText(
+            """
+            plugins {
+                id("com.mkobit.jenkins.pipelines.shared-library")
+            }
+            sharedLibrary {
+                plugins {
+                    plugin("$WORKFLOW_API")
+                }
+            }
+            tasks.register("printGroovyAll") {
+                doLast {
+                    configurations.getByName("testRuntimeClasspath").resolvedConfiguration.resolvedArtifacts.forEach {
+                        println("test:" + it.file.name)
+                    }
+                    configurations.getByName("integrationTestRuntimeClasspath").resolvedConfiguration.resolvedArtifacts.forEach {
+                        println("integration:" + it.file.name)
+                    }
+                }
+            }
+            """.trimIndent(),
+          )
+          val result = runner(gradleVersion).withArguments("printGroovyAll").build()
+
+          val lines = result.output.lines()
+          val testLines = lines.filterMatching { it.shouldStartWith("test:") }
+          testLines.shouldNotBeEmpty()
+          testLines.forNone { it shouldContain "groovy-all" }
+
+          val integrationLines = lines.filterMatching { it.shouldStartWith("integration:") }
+          integrationLines.shouldNotBeEmpty()
+          integrationLines.forNone { it shouldContain "groovy-all" }
+        }
+      }
+    }
+
+    describe("jenkinsWar resolves exactly one WAR artifact") {
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withJenkinsProject {
+          buildFile.appendText(
+            """
+
+            tasks.register("printJenkinsWar") {
+                doLast {
+                    configurations.getByName("jenkinsWar").resolvedConfiguration.resolvedArtifacts.forEach {
+                        println("war:" + it.file.name)
+                    }
+                }
+            }
+            """.trimIndent(),
+          )
+          val result = runner(gradleVersion).withArguments("printJenkinsWar").build()
+
+          val warFiles = result.output.lines()
+            .filterMatching {
+              it.shouldStartWith("war:")
+              it.shouldEndWith(".war")
+            }
+
+          warFiles.size shouldBe 1
+          warFiles.single() shouldContain "jenkins-war"
+        }
+      }
+    }
+
+    describe("groovy-all absent from integrationTestCompileClasspath") {
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withTestProject {
+          settingsFile.writeText(groovyAllExclusionSettings("groovy-all-compile-exclusion-test"))
+          buildFile.writeText(
+            """
+            plugins {
+                id("com.mkobit.jenkins.pipelines.shared-library")
+            }
+            sharedLibrary {
+                plugins {
+                    plugin("$WORKFLOW_API")
+                }
+            }
+            tasks.register("printCompileClasspath") {
+                doLast {
+                    configurations.getByName("integrationTestCompileClasspath").resolvedConfiguration.resolvedArtifacts.forEach {
+                        println("compile:" + it.file.name)
+                    }
+                    configurations.getByName("integrationTestRuntimeClasspath").resolvedConfiguration.resolvedArtifacts.forEach {
+                        println("runtime:" + it.file.name)
+                    }
+                }
+            }
+            """.trimIndent(),
+          )
+          val result = runner(gradleVersion).withArguments("printCompileClasspath").build()
+
+          val lines = result.output.lines()
+          val compileFiles = lines.filterMatching { it.shouldStartWith("compile:") }
+          val runtimeFiles = lines.filterMatching { it.shouldStartWith("runtime:") }
+          compileFiles.shouldNotBeEmpty()
+          runtimeFiles.shouldNotBeEmpty()
+          compileFiles.forNone { it shouldContain "groovy-all" }
+          // ComponentMetadataRule restores jakarta.servlet-api to all variants of jenkins-test-harness.
+          // Must be present on both compile (Groovy type-checker) and runtime (JVM class verification
+          // before Winstone starts) classpaths.
+          compileFiles.forAtLeastOne { it shouldContain "jakarta.servlet-api" }
+          runtimeFiles.forAtLeastOne { it shouldContain "jakarta.servlet-api" }
+        }
+      }
+    }
+
+    describe("integrationTestGroovyAllRuntime contains groovy-all:2.4.x") {
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withJenkinsProject {
+          buildFile.appendText(
+            """
+
+            tasks.register("printGroovyAllRuntime") {
+                doLast {
+                    configurations.getByName("integrationTestGroovyAllRuntime").resolvedConfiguration.resolvedArtifacts.forEach {
+                        println("groovyAllRuntime:" + it.file.name)
+                    }
+                }
+            }
+            """.trimIndent(),
+          )
+          val result = runner(gradleVersion).withArguments("printGroovyAllRuntime").build()
+
+          val groovyAllFiles = result.output.lines()
+            .filterMatching { it.shouldStartWith("groovyAllRuntime:") }
+
+          groovyAllFiles.size shouldBe 1
+          groovyAllFiles.single() shouldContain "groovy-all"
+          groovyAllFiles.single() shouldContain "2.4"
+        }
+      }
+    }
+
+    describe("BOM version constraint propagates through jenkinsPlugin") {
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        // workflow-api is declared without a version — the BOM must supply it.
+        // If BOM wiring is broken Gradle throws an unresolvable dependency error,
+        // which causes the runner to throw UnexpectedBuildFailure (test fails).
+        // The positive assertion is that the resolved line shows a concrete version
+        // (not an empty coordinate), proving the BOM actually constrained it.
+        withJenkinsProject {
+          val result =
+            runner(gradleVersion)
+              .withArguments("dependencies", "--configuration", "testRuntimeClasspath")
+              .build()
+
+          val workflowLine = result.output.lines().firstOrNull { it.contains("workflow-api") }
+          // BOM-constrained versionless deps show "workflow-api -> 1373.x" not "workflow-api:1373"
+          workflowLine shouldContain Regex("workflow-api(?::\\d| -> \\d)")
+          result.output shouldNotContain "FAILED"
+        }
+      }
+    }
+  })

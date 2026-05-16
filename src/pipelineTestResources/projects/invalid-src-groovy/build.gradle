@@ -1,3 +1,0 @@
-plugins {
-  id 'com.mkobit.jenkins.pipelines.shared-library'
-}

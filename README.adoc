@@ -1,209 +1,413 @@
-= Jenkins Pipeline Shared Library Gradle Plugin
+= Jenkins Pipeline Shared Library Gradle plugin
 :toc:
-:supports-gradle: 5.0 - 6.x
-:does-not-support-gradle: ≥7.x
 :github-repo-id: jenkins-pipeline-shared-libraries-gradle-plugin
 :uri-github-releases: https://github.com/mkobit/{github-repo-id}/releases
-:uri-github-issue-105: https://github.com/mkobit/{github-repo-id}/issues/105
-:uri-jenkins-test-harness: https://github.com/jenkinsci/jenkins-test-harness.git
+:uri-jenkins-test-harness: https://github.com/jenkinsci/jenkins-test-harness
 :uri-jenkins-shared-library-docs: https://jenkins.io/doc/book/pipeline/shared-libraries/
 :uri-jenkins-pipeline-unit: https://github.com/lesfurets/JenkinsPipelineUnit
 :uri-consumer-example: https://github.com/mkobit/jenkins-pipeline-shared-library-example
-:uri-version-badge-image: https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/com/mkobit/jenkins/pipelines/jenkins-pipeline-shared-libraries-gradle-plugin/maven-metadata.xml.svg?label=Gradle Plugin Portal
-:uri-gradle-support-badge-image: https://img.shields.io/badge/Supports%20Gradle-5.x≤Gradle<7.x-blue.svg
-:uri-gradle-unsupported-badge-image: https://img.shields.io/badge/Unsupported%20Gradle-≥7.x%2B-red.svg
-:supports-gradle-badge: image:{uri-gradle-support-badge-image}["Supported Gradle Version"]
-:unsupported-gradle-badge: image:{uri-gradle-unsupported-badge-image}["Unsupported Gradle Version"]
 :uri-gradle-plugin-portal: https://plugins.gradle.org/plugin/com.mkobit.jenkins.pipelines.shared-library
+:uri-version-badge-image: https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/com/mkobit/jenkins/pipelines/jenkins-pipeline-shared-libraries-gradle-plugin/maven-metadata.xml.svg?label=Gradle%20Plugin%20Portal
+:uri-build-badge: https://github.com/mkobit/{github-repo-id}/actions/workflows/build.yml/badge.svg?branch=main
+:uri-build-link: https://github.com/mkobit/{github-repo-id}/actions/workflows/build.yml
 :version-badge: image:{uri-version-badge-image}["Plugin Version", link="{uri-gradle-plugin-portal}"]
+:build-badge: image:{uri-build-badge}["Build", link="{uri-build-link}"]
 
-[IMPORTANT]
-====
-This plugin is currently undergoing a modernization effort tracked in link:{uri-github-issue-105}[issue #105].
-The current latest stable release (`0.10.x`) **does not support Gradle {does-not-support-gradle}**.
-Work is in progress to add support for modern Gradle, Java, and Jenkins versions.
-====
+{version-badge} {build-badge}
 
-{version-badge}
-{supports-gradle-badge}
-{unsupported-gradle-badge}
+NOTE: This documentation tracks the `HEAD` of the repository.
+For a specific released version see the link:{uri-github-releases}[GitHub Releases page].
 
-NOTE: This documentation is for the `HEAD` of the repository.
-      To see documentation at a specific version see the link:{uri-github-releases}[GitHub Releases page]
+A Gradle plugin for developing and testing link:{uri-jenkins-shared-library-docs}[Jenkins Pipeline Shared Libraries].
 
-== Purpose
+== Features
 
-This plugin intends to help with development of link:{uri-jenkins-shared-library-docs}[_Shared Libraries_].
+* Groovy compilation of `src/` and `vars/` against Jenkins APIs.
+* Unit testing via link:{uri-jenkins-pipeline-unit}[Jenkins Pipeline Unit].
+* Integration testing via link:{uri-jenkins-test-harness}[Jenkins Test Harness] (`JenkinsRule`).
+* Automatic Jenkins BOM injection and dependency alignment.
+* Local library auto-registration for integration tests (no network needed).
+* Configuration cache compliant.
 
-.Features
-* Basic Groovy compilation to validate source code
-* Unit test using link:{uri-jenkins-pipeline-unit}[_Jenkins Pipeline Unit_]
-* Usage of plugin and Jenkins core classes in library
-* `@Grab` support for libraries (testing limited to `@JenkinsRule` style integration tests due to link:https://stackoverflow.com/questions/4611230/no-suitable-classloader-found-for-grab[an issue])
-* `@NonCPS` annotation can be used in main source code
-* Source code generation to assist with development (for example, `com.mkobit.jenkins.pipelines.codegen.LocalLibraryRetriever`)
-* Integration test using the link:{uri-jenkins-test-harness}[_Jenkins Test Harness_]
-* Code completion in IDE
+== Compatibility
 
-== Example Consumer
+[cols="1,2"]
+|===
+|Dimension |Supported versions
 
-See the link:{uri-consumer-example}[example repository] for a demonstration of using this plugin.
+|Gradle |9.x
+|Java |17, 21
+|Jenkins LTS |2.479.x, 2.492.x, 2.528.x, 2.541.x
+|===
 
-== 5 minute onboarding
+== Quick start
 
-. Consume plugin from Gradle plugin portal
-+
-[source, kotlin]
+[source,toml]
+.gradle/libs.versions.toml
+----
+[versions]
+jenkins-bom = "5054.v620b_5d2b_d5e6"
+
+[libraries]
+jenkins-bom = { module = "io.jenkins.tools.bom:bom-2.479.x", version.ref = "jenkins-bom" }
+
+[plugins]
+jenkins-shared-library = { id = "com.mkobit.jenkins.pipelines.shared-library", version = "0.11.0" }
+----
+
+[source,kotlin]
+.build.gradle.kts
 ----
 plugins {
-  id("com.mkobit.jenkins.pipelines.shared-library") version "x.x.x"
-}
-----
-. Set up preferred test dependencies (for example, JUnit or Spock)
-+
-[source, groovy]
-----
-repositories {
-  jcenter()
+    alias(libs.plugins.jenkins.shared.library)
 }
 
 dependencies {
-  testImplementation(group: 'junit', name: 'junit', version: '4.12')
-}
-----
-. Write some shared library code
-+
-.Library class - `src/com/mkobit/LibHelper.groovy`
-[source, groovy]
-----
-package com.mkobit
-
-class LibHelper {
-  private script
-  LibHelper(script) {
-    this.script = script
-  }
-
-  void sayHelloTo(String name) {
-    script.echo("LibHelper says hello to $name!")
-  }
-}
-----
-+
-.Global variable - `vars/myGlobal.groovy`
-[source, groovy]
-----
-def call() {
-  echo 'Hello from myGlobal'
+    jenkinsPlugin(platform(libs.jenkins.bom))
+    jenkinsPlugin("org.jenkinsci.plugins:pipeline-model-definition")
 }
 ----
 
-. Write integration tests by utilizing a local `JenkinsRule` and setting up the shared library
-+
-.Integration tests - `test/integration/groovy/com/mkobit/JenkinsGlobalLibraryUsageTest.groovy`
-[source, groovy]
+The plugin configures by convention:
+
+* `src/` and `vars/` compile as Groovy against Jenkins core and the default workflow plugins
+* `test/unit/` → `test` suite with JenkinsPipelineUnit on the classpath
+* `test/integration/` → `integrationTest` suite with `jenkins-test-harness`
+
+No `sharedLibrary {}` block is required for the default configuration.
+
+== Source layout
+
+Jenkins SCM loading imposes hard constraints on the main source directories.
+When Jenkins loads a shared library, it places `src/` directly on the Groovy classpath, so classes must be rooted there (`src/com/example/Util.groovy` → `com.example.Util`).
+`vars/` and `resources/` must also sit at the repository root.
+
 ----
-package com.mkobit
-
-import com.mkobit.jenkins.pipelines.codegen.LocalLibraryRetriever
-import org.jenkinsci.plugins.workflow.libs.GlobalLibraries
-import org.jenkinsci.plugins.workflow.libs.LibraryConfiguration
-import org.jenkinsci.plugins.workflow.libs.LibraryRetriever
-import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition
-import org.jenkinsci.plugins.workflow.job.WorkflowJob
-import org.jenkinsci.plugins.workflow.job.WorkflowRun
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
-import org.jvnet.hudson.test.JenkinsRule
-
-class JenkinsGlobalLibraryUsageTest {
-
-  @Rule
-  public JenkinsRule rule = new JenkinsRule()
-
-  @Before
-  void configureGlobalLibraries() {
-    rule.timeout = 30
-    final LibraryRetriever retriever = new LocalLibraryRetriever()
-    final LibraryConfiguration localLibrary =
-      new LibraryConfiguration('testLibrary', retriever)
-    localLibrary.implicit = true
-    localLibrary.defaultVersion = 'unused'
-    localLibrary.allowVersionOverride = false
-    GlobalLibraries.get().setLibraries(Collections.singletonList(localLibrary))
-  }
-
-  @Test
-  void testingMyLibrary() {
-    CpsFlowDefinition flow = new CpsFlowDefinition('''
-        import com.mkobit.LibHelper
-
-        final libHelper = new LibHelper(this)
-        libHelper.sayHelloTo('mkobit')
-    '''.stripIndent(), true)
-    WorkflowJob workflowJob = rule.createProject(WorkflowJob, 'project')
-    workflowJob.definition = flow
-    WorkflowRun result = rule.buildAndAssertSuccess(workflowJob)
-    rule.assertLogContains('LibHelper says hello to mkobit!', result)
-  }
-
-  @Test
-  void testingMyGlobalVar() {
-    CpsFlowDefinition flow = new CpsFlowDefinition('''
-        import myGlobal
-
-        myGlobal()
-    '''.stripIndent(), true)
-    WorkflowJob workflowJob = rule.createProject(WorkflowJob, 'project')
-    workflowJob.definition = flow
-    WorkflowRun result = rule.buildAndAssertSuccess(workflowJob)
-    rule.assertLogContains('Hello from myGlobal', result)
-  }
-}
+src/                              ← Groovy shared library classes
+vars/                             ← pipeline step scripts (filename = step name)
+resources/                        ← files accessible via libraryResource()
+test/
+  unit/groovy/                    ← JenkinsPipelineUnit (fast, no Jenkins runtime)
+  unit/java/                      ← Java unit tests (optional)
+  integration/groovy/             ← JenkinsRule integration tests (embedded Jenkins)
+  integration/java/               ← Java integration tests (optional)
 ----
 
-== Configuring Versions
+Test sources may also be in `test/unit/kotlin/` or `test/integration/kotlin/` for Kotlin consumers.
 
-The `sharedLibrary` extension can be used to add additional plugin dependencies, Groovy version dependency, Jenkins Core dependency, etc.
-As of right now, most of the `workflow`-type plugins are automatically added based on default or configured versions.
-See the code for full details, but here is an example of what you can configure:
+== `sharedLibrary {}` extension
 
-.Groovy build script - `build.gradle`
-[source, kotlin]
+All properties have sensible defaults and are optional.
+
+[source,kotlin]
 ----
 sharedLibrary {
-  coreVersion = "2.86"
-  testHarnessVersion = "2.24"
-  pluginDependencies {
-    workflowCpsGlobalLibraryPluginVersion = "2.8"
-    dependency("io.jenkins.blueocean", "blueocean-web", "1.2.4")
-  }
+    jenkins {
+        version = "2.528.3"                        // Jenkins core version (default: 2.479.1)
+        testHarnessVersion = "2565.vd1eb_7c961d1b_" // jenkins-test-harness version
+        bomVersion = "6398.v1d26a_dd495e2"         // BOM version auto-injected into jenkinsPlugin
+    }
+    pipelineUnitVersion = "1.29"                   // JenkinsPipelineUnit version (test suite)
+    libraryName = "my-shared-lib"                  // Jenkins library name (default: project.name)
+    autoRegisterLibrary = true                     // generate SharedLibraryAutoRegistrar (default: true)
 }
 ----
 
-NOTE: Due to link:https://github.com/gradle/kotlin-dsl/issues/380[kotlin-dsl/380], you will nee to use the `.set` methods instead of assignment.
-      For example, `coreVersion.set("2.86")` is required.
+The Jenkins BOM for the configured LTS line is injected automatically into `jenkinsPlugin` — no explicit `jenkinsPlugin(platform(...))` call is needed unless you want to pin a specific BOM version.
+The BOM module coordinate is derived from `jenkins.version` (e.g., `2.479.1` → `bom-2.479.x`).
 
-== Limitations/Restrictions
+== Writing unit tests
 
-=== Jenkins Public Default Repository
+Unit tests live in `test/unit/` and run with link:{uri-jenkins-pipeline-unit}[Jenkins Pipeline Unit].
+They are fast, classpath-only tests with no embedded Jenkins runtime.
 
-The repository at https://repo.jenkins-ci.org is added to the repository list to retrieve the Jenkins artifacts.
-This decision was made to simplify first use by new consumers.
-
-If you do not wish to use this default, remove the repository after applying the plugin.
-
-[source, kotlin]
+[source,groovy]
 ----
-repositories.removeIf { it.name == "JenkinsPublic" }
+// test/unit/groovy/com/example/DoStuffSpec.groovy
+import com.lesfurets.jenkins.unit.BasePipelineTest
+
+class DoStuffSpec extends BasePipelineTest {
+    def 'doStuff calls echo'() {
+        given:
+        helper.registerAllowedMethod('echo', [String]) {}
+        def script = loadScript('vars/doStuff.groovy')
+
+        when:
+        script.call('hello')
+
+        then:
+        helper.callStack.any { it.methodName == 'echo' }
+    }
+}
 ----
 
-Then, you can add your own repository in normal Gradle fashion.
+== Writing integration tests
 
-=== Consuming the Gradle Configurations
+Integration tests live in `test/integration/` and run against an embedded Jenkins instance.
+The plugin generates `LocalLibraryRetriever.java` into the `integrationTest` source set and auto-registers the local library via `SharedLibraryAutoRegistrar` — no manual `GlobalLibraries` setup is required.
 
-There are several configurations that are created to group the different types of Jenkins dependencies used in this plugin.
-It is not recommended that you consume/`extendsFrom` these configurations as they may be changed underneath.
-Instead, use the configurations for each source set and make alterations to them (like link:https://docs.gradle.org/current/javadoc/org/gradle/api/tasks/SourceSet.html#getImplementationConfigurationName--[`sourceSets.integrationTest.implementationConfigurationName`] and link:https://docs.gradle.org/current/javadoc/org/gradle/api/tasks/SourceSet.html#getRuntimeOnlyConfigurationName--[`sourceSets.integrationTest.runtimeOnlyConfigurationName`]).
-If you have a specific use case please file an issue.
+=== JUnit 4 (Java)
+
+[source,java]
+----
+import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.junit.Rule;
+import org.junit.Test;
+import org.jvnet.hudson.test.JenkinsRule;
+
+public class MyStepTest {
+    @Rule public JenkinsRule rule = new JenkinsRule();
+
+    @Test
+    public void myStepRuns() throws Exception {
+        WorkflowJob job = rule.createProject(WorkflowJob.class, "test");
+        job.setDefinition(new CpsFlowDefinition(
+            "@Library('my-shared-lib') _\nmyStep()", true));
+        rule.buildAndAssertSuccess(job);
+    }
+}
+----
+
+=== JUnit 4 (Groovy / `GroovyJenkinsRule`)
+
+[source,groovy]
+----
+import org.junit.Rule
+import org.junit.Test
+import org.jvnet.hudson.test.GroovyJenkinsRule
+
+class MyStepTest {
+    @Rule public GroovyJenkinsRule rule = new GroovyJenkinsRule()
+
+    @Test
+    void myStepRuns() {
+        def job = rule.createProject(WorkflowJob, "test")
+        job.setDefinition(new CpsFlowDefinition("myStep()", true))
+        rule.buildAndAssertSuccess(job)
+    }
+}
+----
+
+NOTE: The `@Library` annotation in the pipeline script is not required when `autoRegisterLibrary = true` (the default) and you use the library name returned by `LocalLibraryRetriever.implicitLibrary()`.
+The library is registered at embedded Jenkins startup under the name configured in `sharedLibrary.libraryName`.
+
+=== Opting out of auto-registration
+
+[source,kotlin]
+----
+sharedLibrary {
+    autoRegisterLibrary = false
+}
+----
+
+With auto-registration disabled, register the library manually in each test:
+
+[source,java]
+----
+import com.mkobit.jenkins.pipelines.LocalLibraryRetriever;
+import org.jenkins.plugins.lockableresources.model.LockableResourcesConfiguration;
+import org.jenkinsci.plugins.workflow.libs.GlobalLibraries;
+import org.jenkinsci.plugins.workflow.libs.LibraryConfiguration;
+
+LibraryConfiguration lib = LocalLibraryRetriever.implicitLibrary();
+GlobalLibraries.get().setLibraries(List.of(lib));
+----
+
+== Additional test suites
+
+Register extra suites and opt them into full Jenkins wiring with `useJenkinsTestRunnerSuite()`.
+This applies the same wiring as the built-in `integrationTest` suite: `jenkins-test-harness`, HPI classpath, WAR path, system properties, JVM `--add-opens` flags, `maxParallelForks = 1`, and heap defaults.
+
+=== JUnit Jupiter
+
+[source,kotlin]
+----
+testing {
+    suites {
+        register<JvmTestSuite>("integrationTestJunit5") {
+            sharedLibrary.useJenkinsTestRunnerSuite(this)
+            sources { java.setSrcDirs(listOf("test/integration-junit5/java")) }
+            dependencies {
+                implementation(libs.junit.jupiter.api)
+                runtimeOnly(libs.junit.jupiter.engine)
+                runtimeOnly(libs.junit.platform.launcher)
+            }
+            targets.all { testTask.configure { useJUnitPlatform() } }
+        }
+    }
+}
+----
+
+=== Spock 2.x
+
+[source,kotlin]
+----
+testing {
+    suites {
+        register<JvmTestSuite>("integrationTestSpock") {
+            sharedLibrary.useJenkinsTestRunnerSuite(this)
+            sources { groovy.setSrcDirs(listOf("test/integration-spock/groovy")) }
+            dependencies {
+                implementation(libs.spock.core)
+                compileOnly(libs.groovy.core)
+            }
+        }
+    }
+}
+----
+
+NOTE: Spock 2.x brings Groovy 3.x onto the runtime classpath.
+On Jenkins 2.479.x LTS this conflicts with the bundled `groovy-all:2.4.21` when `sandbox=true`.
+Use `sandbox=false` in `CpsFlowDefinition` for Spock suites on 2.479.x.
+This restriction is expected to lift on Jenkins 2.492.x+ once its internal Groovy 3 migration completes.
+
+=== Kotest
+
+[source,kotlin]
+----
+testing {
+    suites {
+        register<JvmTestSuite>("integrationTestKotest") {
+            sharedLibrary.useJenkinsTestRunnerSuite(this)
+            useJUnitJupiter()
+            sources { extensions.configure<SourceDirectorySet>("kotlin") {
+                setSrcDirs(listOf("test/integration-kotest/kotlin"))
+            }}
+            dependencies {
+                implementation(libs.kotest.runner)
+                implementation(libs.kotest.assertions)
+                implementation(libs.coroutines.core)
+            }
+        }
+    }
+}
+----
+
+Wire additional suites into `check` if they should run in CI:
+
+[source,kotlin]
+----
+tasks.check {
+    dependsOn(
+        tasks.named("integrationTestJunit5"),
+        tasks.named("integrationTestSpock"),
+        tasks.named("integrationTestKotest"),
+    )
+}
+----
+
+== Running tests
+
+[source,shell]
+----
+./gradlew test             # JenkinsPipelineUnit unit tests
+./gradlew integrationTest  # JenkinsRule integration tests (downloads Jenkins WAR on first run)
+./gradlew check            # all suites
+----
+
+Jenkins downloads the WAR and plugins on first run; subsequent runs use the Gradle module cache.
+
+== Changing the Jenkins LTS line
+
+To upgrade the Jenkins LTS line:
+
+1. Update `jenkins-bom` in `gradle/libs.versions.toml` to the new module and version:
++
+[source,toml]
+----
+[libraries]
+jenkins-bom = { module = "io.jenkins.tools.bom:bom-2.528.x", version.ref = "jenkins-bom" }
+----
+
+2. Optionally override the Jenkins core and test harness versions in `sharedLibrary {}` if you need a specific minor:
++
+[source,kotlin]
+----
+sharedLibrary {
+    jenkins {
+        version = "2.528.3"
+        testHarnessVersion = "2565.vd1eb_7c961d1b_"
+    }
+}
+----
+
+Renovate keeps the BOM version up to date within the pinned LTS line.
+Changing the LTS module coordinate is a manual step.
+
+== Migration from 0.10.x
+
+Version 0.11.0 is a clean break from the 0.10.x series.
+The following table maps old API to its replacement.
+
+[cols="1,1"]
+|===
+|0.10.x |0.11.0
+
+|`sharedLibrary { pluginDependencies { dependency("git") { ... } } }`
+|`dependencies { jenkinsPlugin("org.jenkins-ci.plugins:git") }`
+
+|`sharedLibrary { coreVersion.set("2.222.4") }`
+|`sharedLibrary { jenkins { version = "2.528.3" } }` or let the BOM default apply
+
+|`sharedLibrary { pipelineTestUnitVersion.set("...") }`
+|`sharedLibrary { pipelineUnitVersion = "..." }`
+
+|`sharedLibrary { testHarnessVersion.set("...") }`
+|`sharedLibrary { jenkins { testHarnessVersion = "..." } }`
+
+|Named `*Version` properties on `PluginDependencySpec`
+|Removed — declare versions in `gradle/libs.versions.toml`; use BOM for Jenkins plugins
+
+|`workflowCpsPluginVersion`, `workflowJobPluginVersion`, …
+|Removed — these plugins are managed by the BOM
+
+|Custom configurations (`jenkinsPlugins`, `jenkinsPluginHpisAndJpis`, …)
+|`jenkinsPlugin` is the single user-facing configuration
+|===
+
+An OpenRewrite migration recipe is bundled in the plugin JAR:
+
+[source,kotlin]
+----
+// build.gradle.kts (migration only)
+plugins {
+    id("org.openrewrite.rewrite") version "6.x"
+}
+rewrite {
+    activeRecipe("com.mkobit.jenkins.pipelines.MigrateSharedLibraryPlugin010To011")
+}
+----
+
+The recipe automates: plugin version bump, `jenkinsPlugins` → `jenkinsPlugin` rename, and two other configuration renames.
+Extension restructuring and BOM setup require manual steps documented in `MigrateSharedLibraryPlugin010To011Full`.
+
+== Example consumer
+
+See the link:{uri-consumer-example}[example repository] for a complete project using all supported test frameworks (JUnit 4, JUnit 5, Spock 2.x, Kotest) against a real Jenkins instance.
+
+== Troubleshooting
+
+=== Jenkins WAR not found at runtime
+
+Symptom: `WarExploder` or `JenkinsRule` fails with "WAR not found".
+The plugin injects `jth.jenkins-war.path` automatically.
+If you see this error, verify that `integrationTest` is configured by the plugin (not manually) and that `jenkins-war` is on the `jenkinsPlugin` configuration.
+
+=== `groovy-all` conflict with `sandbox=true` and Spock 2.x on Jenkins 2.479.x
+
+The plugin injects `groovy-all:2.4.21` at integration test runtime to satisfy `SandboxInterceptor`.
+Spock 2.x also brings `groovy:3.x` onto the classpath.
+These conflict when `sandbox=true`.
+Use `sandbox=false` on 2.479.x LTS, or move to a 2.492.x+ Jenkins line where the internal Groovy runtime is 3.x.
+
+=== `@Grab` in shared library source
+
+`@Grab` annotations resolve at Jenkins runtime via Grape/Ivy — not at Gradle build time.
+Gradle's `compileGroovy` task runs in an isolated classloader that cannot resolve `@Grab` dependencies.
+For tests that exercise `@Grab`-annotated code, use `JenkinsRule` (`integrationTest`) with network access, or set up a local Ivy repository pointed at the Gradle module cache.
+
+=== `ClassFilter` errors with custom `LocalLibraryRetriever`
+
+The generated `META-INF/hudson.remoting.ClassFilter` resource whitelists `LocalLibraryRetriever` for Jenkins remoting.
+If you see `ClassFilter` rejections for the generated class, ensure `generateLocalLibraryFiles` has run (it is wired as a dependency of `compileIntegrationTestJava` automatically).

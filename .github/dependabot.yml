@@ -1,0 +1,35 @@
+version: 2
+updates:
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 14
+    groups:
+      junit:
+        patterns:
+          - "org.junit.*:*"
+      kotest:
+        patterns:
+          - "io.kotest:*"
+      okhttp:
+        patterns:
+          - "com.squareup.okhttp3:*"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 30
+    groups:
+      github-actions-first-party:
+        patterns:
+          - "actions/*"
+      gradle-actions:
+        patterns:
+          - "gradle/*"
+      third-party-actions:
+        patterns:
+          - "*"
