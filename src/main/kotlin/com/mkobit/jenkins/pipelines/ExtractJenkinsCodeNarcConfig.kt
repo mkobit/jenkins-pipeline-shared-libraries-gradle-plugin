@@ -15,8 +15,10 @@ abstract class ExtractJenkinsCodeNarcConfig : DefaultTask() {
   @TaskAction
   fun extract() {
     val path = outputFile.get().asFile.toPath()
-    SharedLibraryExtension::class.java.classLoader
-      .getResourceAsStream("com/mkobit/jenkins/pipelines/codenarc-jenkins.xml")!!
-      .use { input -> path.outputStream().use { out -> input.copyTo(out) } }
+    val stream =
+      SharedLibraryExtension::class.java.classLoader
+        .getResourceAsStream("com/mkobit/jenkins/pipelines/codenarc-jenkins.xml")
+        ?: error("codenarc-jenkins.xml not found on plugin classpath — packaging bug")
+    stream.use { input -> path.outputStream().use { out -> input.copyTo(out) } }
   }
 }
