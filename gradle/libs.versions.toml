@@ -1,5 +1,5 @@
 [versions]
-dokka = "2.0.0"
+dokka = "2.2.0"
 foojay = "1.0.0"
 junit-jupiter = "6.0.3"
 kotest = "6.1.11"
