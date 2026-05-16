@@ -2,6 +2,7 @@ import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestStackTraceFilter
 import org.gradle.kotlin.dsl.testMatrix
+import org.gradle.plugin.compatibility.compatibility
 
 plugins {
   `kotlin-dsl`
@@ -30,6 +31,11 @@ gradlePlugin {
       displayName = "Jenkins Pipeline Shared Library Development"
       description = "Configures and sets up a Gradle project for development and testing of a Jenkins Pipeline shared library"
       tags = listOf("jenkins", "pipeline", "shared library")
+      compatibility {
+        features {
+          configurationCache = true
+        }
+      }
     }
   }
 }
