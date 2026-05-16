@@ -7,9 +7,13 @@ import org.gradle.api.provider.Property
 import org.gradle.kotlin.dsl.newInstance
 import javax.inject.Inject
 
-// Functional interface for Jenkins test suite wiring. Using a named interface (rather than
-// a raw Kotlin function type) avoids JVM type erasure issues when Gradle's instantiator
-// matches constructor parameters by class at runtime.
+/**
+ * Wires Jenkins test-harness infrastructure onto a [JvmTestSuite].
+ *
+ * Named functional interface rather than a raw Kotlin function type so Gradle's object
+ * instantiator matches it by class when injecting constructor parameters. Consumers use
+ * [SharedLibraryExtension.withJenkins] and do not implement this interface directly.
+ */
 fun interface JenkinsTestSuiteWirer {
   fun wire(suite: JvmTestSuite)
 }
