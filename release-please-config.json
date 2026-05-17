@@ -1,0 +1,18 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "release-type": "simple",
+  "extra-files": [
+    {
+      "type": "generic",
+      "path": "build.gradle.kts"
+    }
+  ],
+  "bump-minor-pre-major": true,
+  "changelog-sections": [
+    {"type": "feat", "section": "Features"},
+    {"type": "fix", "section": "Bug fixes"},
+    {"type": "perf", "section": "Performance improvements"},
+    {"type": "deps", "section": "Dependencies"},
+    {"type": "chore", "section": "Miscellaneous", "hidden": false}
+  ]
+}

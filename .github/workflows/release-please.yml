@@ -1,0 +1,27 @@
+name: Release Please
+
+on:
+  push:
+    branches:
+      - main
+
+permissions: {}
+
+jobs:
+  release-please:
+    name: Manage release PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7
+        with:
+          # Use RELEASE_PLEASE_TOKEN (a fine-grained PAT with contents:write and
+          # pull-requests:write) so that when Release Please pushes the release tag,
+          # the resulting push event triggers publish.yml. Falls back to GITHUB_TOKEN
+          # which still creates the PR but won't trigger downstream tag workflows.
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
