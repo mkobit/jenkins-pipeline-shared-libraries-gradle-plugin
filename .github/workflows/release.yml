@@ -22,7 +22,7 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
     # workflow_run path: Build passed on main AND commit is a Release Please release commit.
     # Dispatch path: always runs (gated by repo write access).
     if: >-
@@ -78,9 +78,6 @@ jobs:
           GRADLE_PUBLISH_SECRET: ${{ secrets.GRADLE_PUBLISH_SECRET }}
         run: ./gradlew publishPlugins --no-build-cache
 
-      - name: Build KDoc
-        run: ./gradlew dokkaGeneratePublicationHtml --no-build-cache
-
       - name: Create and push tag
         env:
           VERSION: ${{ steps.version.outputs.version }}
@@ -107,50 +104,3 @@ jobs:
               --title "Release v${VERSION}" \
               build/libs/*.jar
           fi
-
-      - name: Deploy versioned KDoc
-        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: build/dokka/html
-          destination_dir: v${{ steps.version.outputs.version }}
-          commit_message: "docs: publish v${{ steps.version.outputs.version }}"
-          keep_files: true
-
-      - name: Deploy root KDoc (latest)
-        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: build/dokka/html
-          destination_dir: .
-          commit_message: "docs: update root from v${{ steps.version.outputs.version }}"
-          keep_files: true
-
-      - name: Update versions index
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          mkdir -p /tmp/versions-index
-          {
-            printf '<!DOCTYPE html>\n<html lang="en">\n<head><meta charset="utf-8">\n'
-            printf '<title>Versions — Jenkins Pipeline Shared Library Plugin</title>\n'
-            printf '<style>body{font-family:sans-serif;max-width:600px;margin:2em auto}'
-            printf 'a{display:block;margin:.5em 0}small{color:#666}</style>\n'
-            printf '</head>\n<body>\n<h1>Published versions</h1>\n'
-            printf '<p><a href="../">Latest (main)</a></p>\n'
-            gh release list \
-              --repo mkobit/jenkins-pipeline-shared-libraries-gradle-plugin \
-              --limit 50 --json tagName,publishedAt \
-              --jq '.[] | "<a href=\"../" + .tagName + "/\">" + .tagName
-                    + " <small>(" + (.publishedAt | split("T")[0]) + ")</small></a>"'
-            printf '\n</body>\n</html>\n'
-          } > /tmp/versions-index/index.html
-
-      - name: Deploy versions index
-        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: /tmp/versions-index
-          destination_dir: versions
-          commit_message: "docs: update versions index for v${{ steps.version.outputs.version }}"
-          keep_files: true
