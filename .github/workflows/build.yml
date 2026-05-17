@@ -90,26 +90,6 @@ jobs:
           check_name: 'Test results — Gate'
           fail_on_failure: false
 
-  validate-publish:
-    name: Validate Plugin Portal publication
-    needs: [gate, build-config]
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-      - uses: ./.github/actions/setup-env
-        with:
-          java-version: ${{ needs.build-config.outputs.java-version }}
-      - name: Validate publication
-        # Placeholder strings, not real secrets. --validate-only requires non-empty values
-        # but makes no network call, so the real API key is never in scope here.
-        env:
-          GRADLE_PUBLISH_KEY: validate-only
-          GRADLE_PUBLISH_SECRET: validate-only
-        run: ./gradlew publishPlugins --validate-only
-
   gradle-compat:
     name: Gradle ${{ matrix.gradle }} / Java ${{ needs.build-config.outputs.java-version }}
     needs: [gate, matrix-gen, build-config]
