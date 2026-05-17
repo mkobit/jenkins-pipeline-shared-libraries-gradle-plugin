@@ -48,10 +48,8 @@ jobs:
           java-version: '17'
           distribution: temurin
       - uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e
-        with:
-          cache-disabled: true
       - name: Publish to Gradle Plugin Portal
         env:
           GRADLE_PUBLISH_KEY: ${{ secrets.GRADLE_PUBLISH_KEY }}
           GRADLE_PUBLISH_SECRET: ${{ secrets.GRADLE_PUBLISH_SECRET }}
-        run: ./gradlew publishPlugins
+        run: ./gradlew publishPlugins --no-build-cache
