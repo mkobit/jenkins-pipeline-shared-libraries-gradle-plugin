@@ -39,9 +39,10 @@ jobs:
       #   3. main (fallback for plugin-only changes)
       - name: Resolve example ref
         id: example-ref
+        env:
+          OVERRIDE: ${{ inputs.example-ref }}
+          BRANCH: ${{ github.head_ref || github.ref_name }}
         run: |
-          OVERRIDE="${{ inputs.example-ref }}"
-          BRANCH="${{ github.head_ref || github.ref_name }}"
           if [ -n "$OVERRIDE" ]; then
             echo "ref=$OVERRIDE" >> "$GITHUB_OUTPUT"
           elif git ls-remote --exit-code \
