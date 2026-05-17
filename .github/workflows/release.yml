@@ -26,11 +26,22 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Validate version format
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if ! [[ "$INPUT_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "ERROR: version must be MAJOR.MINOR.PATCH digits only, got: $INPUT_VERSION"
+            exit 1
+          fi
+
       - name: Verify version matches build.gradle.kts
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
           CURRENT=$(grep '^version = ' build.gradle.kts | sed 's/version = "//;s/"//')
-          if [ "$CURRENT" != "${{ inputs.version }}" ]; then
-            echo "ERROR: build.gradle.kts has '$CURRENT' but release input is '${{ inputs.version }}'"
+          if [ "$CURRENT" != "$INPUT_VERSION" ]; then
+            echo "ERROR: build.gradle.kts has '$CURRENT' but release input is '$INPUT_VERSION'"
             exit 1
           fi
 
@@ -50,26 +61,29 @@ jobs:
         run: ./gradlew dokkaGeneratePublicationHtml
 
       - name: Create and push tag
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if git rev-parse "v${{ inputs.version }}" > /dev/null 2>&1; then
-            echo "Tag v${{ inputs.version }} already exists — skipping"
+          if git rev-parse "v${INPUT_VERSION}" > /dev/null 2>&1; then
+            echo "Tag v${INPUT_VERSION} already exists — skipping"
           else
-            git tag -a "v${{ inputs.version }}" -m "Release ${{ inputs.version }}"
-            git push origin "v${{ inputs.version }}"
+            git tag -a "v${INPUT_VERSION}" -m "Release ${INPUT_VERSION}"
+            git push origin "v${INPUT_VERSION}"
           fi
 
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
-          if gh release view "v${{ inputs.version }}" > /dev/null 2>&1; then
-            echo "Release v${{ inputs.version }} already exists — skipping"
+          if gh release view "v${INPUT_VERSION}" > /dev/null 2>&1; then
+            echo "Release v${INPUT_VERSION} already exists — skipping"
           else
-            gh release create "v${{ inputs.version }}" \
+            gh release create "v${INPUT_VERSION}" \
               --generate-notes \
-              --title "Release v${{ inputs.version }}" \
+              --title "Release v${INPUT_VERSION}" \
               build/libs/*.jar
           fi
 
