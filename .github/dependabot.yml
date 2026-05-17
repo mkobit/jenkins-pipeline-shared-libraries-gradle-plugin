@@ -7,15 +7,17 @@ updates:
     cooldown:
       default-days: 14
     groups:
-      junit:
+      jetbrains:
         patterns:
-          - "org.junit.*:*"
+          - "org.jetbrains.*:*"
       kotest:
         patterns:
           - "io.kotest:*"
-      okhttp:
+      testing:
         patterns:
+          - "io.mockk:*"
           - "com.squareup.okhttp3:*"
+          - "org.junit.*:*"
 
   - package-ecosystem: "github-actions"
     directory: "/"
