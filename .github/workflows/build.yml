@@ -84,7 +84,7 @@ jobs:
         run: ./gradlew assemble validatePlugins functionalTest
       - name: Publish test results
         if: always()
-        uses: mikepenz/action-junit-report@3585e9575db828022551b4231f165eb59a0e74e3
+        uses: mikepenz/action-junit-report@bccf2e31636835cf0874589931c4116687171386
         with:
           report_paths: 'build/test-results/**/*.xml'
           check_name: 'Test results — Gate'
@@ -111,7 +111,7 @@ jobs:
         run: ./gradlew functionalTest${{ matrix.task-suffix }}
       - name: Publish test results
         if: always()
-        uses: mikepenz/action-junit-report@3585e9575db828022551b4231f165eb59a0e74e3
+        uses: mikepenz/action-junit-report@bccf2e31636835cf0874589931c4116687171386
         with:
           report_paths: 'build/test-results/**/*.xml'
           check_name: 'Test results — Gradle ${{ matrix.gradle }}'
@@ -147,7 +147,7 @@ jobs:
         run: ./gradlew functionalTest --continue
       - name: Publish test results
         if: always()
-        uses: mikepenz/action-junit-report@3585e9575db828022551b4231f165eb59a0e74e3
+        uses: mikepenz/action-junit-report@bccf2e31636835cf0874589931c4116687171386
         with:
           report_paths: 'build/test-results/**/*.xml'
           check_name: 'Test results — ${{ matrix.os }}'
@@ -174,7 +174,7 @@ jobs:
         run: ./gradlew functionalTest${{ matrix.task-suffix }}
       - name: Publish test results
         if: always()
-        uses: mikepenz/action-junit-report@3585e9575db828022551b4231f165eb59a0e74e3
+        uses: mikepenz/action-junit-report@bccf2e31636835cf0874589931c4116687171386
         with:
           report_paths: 'build/test-results/**/*.xml'
           check_name: 'Test results — Jenkins ${{ matrix.jenkins-lts }}'
@@ -203,7 +203,7 @@ jobs:
         run: ./gradlew functionalTest${{ matrix.task-suffix }} --continue
       - name: Publish test results
         if: always()
-        uses: mikepenz/action-junit-report@3585e9575db828022551b4231f165eb59a0e74e3
+        uses: mikepenz/action-junit-report@bccf2e31636835cf0874589931c4116687171386
         with:
           report_paths: 'build/test-results/**/*.xml'
           check_name: 'Test results — Java ${{ matrix.java }}'
