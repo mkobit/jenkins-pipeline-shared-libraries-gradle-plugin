@@ -3,6 +3,7 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestStackTraceFilter
 import org.gradle.kotlin.dsl.testMatrix
 import org.gradle.plugin.compatibility.compatibility
+import org.jetbrains.dokka.gradle.tasks.DokkaGeneratePublicationTask
 
 plugins {
   `kotlin-dsl`
@@ -154,25 +155,13 @@ tasks.withType<Test>().configureEach {
   }
 }
 
-val dokkaHtmlJar =
-  tasks.register<Jar>("dokkaHtmlJar") {
-    description = "Assembles Dokka HTML documentation into a JAR"
-    archiveClassifier = "javadoc"
-    val dokkaHtml =
-      tasks.named<org.jetbrains.dokka.gradle.tasks.DokkaGeneratePublicationTask>(
-        "dokkaGeneratePublicationHtml",
-      )
-    from(dokkaHtml.flatMap { it.outputDirectory })
-  }
-
-// gradle-publish creates pluginMaven lazily; wire the javadoc artifact after evaluation.
+// gradle-plugin-publish creates javadocJar in its own afterEvaluate; configure it in ours
+// (which runs after the plugin's) to replace the empty standard-javadoc output with Dokka HTML.
 afterEvaluate {
-  publishing {
-    publications {
-      named<MavenPublication>("pluginMaven") {
-        artifact(dokkaHtmlJar)
-      }
-    }
+  tasks.named("javadoc") { enabled = false }
+  tasks.named<Jar>("javadocJar") {
+    val dokkaHtml = tasks.named<DokkaGeneratePublicationTask>("dokkaGeneratePublicationHtml")
+    from(dokkaHtml.flatMap { it.outputDirectory })
   }
 }
 
