@@ -103,6 +103,9 @@ jobs:
         with:
           java-version: ${{ needs.build-config.outputs.java-version }}
       - name: Validate publication
+        env:
+          GRADLE_PUBLISH_KEY: validate-only
+          GRADLE_PUBLISH_SECRET: validate-only
         run: ./gradlew publishPlugins --validate-only
 
   gradle-compat:

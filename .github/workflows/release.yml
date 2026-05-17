@@ -64,10 +64,14 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create "v${{ inputs.version }}" \
-            --generate-notes \
-            --title "Release v${{ inputs.version }}" \
-            build/libs/*.jar
+          if gh release view "v${{ inputs.version }}" > /dev/null 2>&1; then
+            echo "Release v${{ inputs.version }} already exists — skipping"
+          else
+            gh release create "v${{ inputs.version }}" \
+              --generate-notes \
+              --title "Release v${{ inputs.version }}" \
+              build/libs/*.jar
+          fi
 
       - name: Deploy versioned KDoc
         uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e
