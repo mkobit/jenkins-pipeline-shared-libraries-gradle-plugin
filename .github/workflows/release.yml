@@ -1,8 +1,9 @@
 name: Release
 
 on:
-  pull_request:
-    types: [closed]
+  workflow_run:
+    workflows: ["Build"]
+    types: [completed]
     branches: [main]
   workflow_dispatch:
     inputs:
@@ -22,22 +23,20 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    # PR path: merged by mkobit from a Release Please branch with its autorelease label.
+    # workflow_run path: Build passed on main AND commit is a Release Please release commit.
     # Dispatch path: always runs (gated by repo write access).
     if: >-
       github.event_name == 'workflow_dispatch' || (
-      github.event_name == 'pull_request' &&
-      github.event.pull_request.merged == true &&
-      github.event.pull_request.merged_by.login == 'mkobit' &&
-      startsWith(github.event.pull_request.head.ref, 'release-please--branches--main') &&
-      contains(github.event.pull_request.labels.*.name, 'autorelease: pending'))
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      startsWith(github.event.workflow_run.head_commit.message, 'chore: release '))
     permissions:
       contents: write
     steps:
-      # Pin to merge commit on PR path; HEAD of default branch on dispatch.
+      # Pin to the exact commit Build ran on; HEAD of default branch on dispatch.
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
-          ref: ${{ github.event.pull_request.merge_commit_sha || github.sha }}
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
           fetch-depth: 0
 
       - name: Read and validate version
@@ -45,20 +44,20 @@ jobs:
         env:
           INPUT_VERSION: ${{ inputs.version }}
         run: |
-          FILE_VERSION=$(grep '^version = ' build.gradle.kts | sed 's/version = "//;s/"//')
+          FILE_VERSION=$(grep '^version=' gradle.properties | cut -d= -f2)
           if [ -n "$INPUT_VERSION" ]; then
             if ! [[ "$INPUT_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
               echo "ERROR: version must be MAJOR.MINOR.PATCH, got: $INPUT_VERSION"
               exit 1
             fi
             if [ "$FILE_VERSION" != "$INPUT_VERSION" ]; then
-              echo "ERROR: build.gradle.kts has '$FILE_VERSION' but input is '$INPUT_VERSION'"
+              echo "ERROR: gradle.properties has '$FILE_VERSION' but input is '$INPUT_VERSION'"
               exit 1
             fi
             echo "version=$INPUT_VERSION" >> "$GITHUB_OUTPUT"
           else
             if ! [[ "$FILE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-              echo "ERROR: version in build.gradle.kts must be MAJOR.MINOR.PATCH, got: $FILE_VERSION"
+              echo "ERROR: version in gradle.properties must be MAJOR.MINOR.PATCH, got: $FILE_VERSION"
               exit 1
             fi
             echo "version=$FILE_VERSION" >> "$GITHUB_OUTPUT"

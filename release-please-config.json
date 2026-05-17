@@ -4,7 +4,7 @@
   "extra-files": [
     {
       "type": "generic",
-      "path": "build.gradle.kts"
+      "path": "gradle.properties"
     }
   ],
   "bump-minor-pre-major": true,
