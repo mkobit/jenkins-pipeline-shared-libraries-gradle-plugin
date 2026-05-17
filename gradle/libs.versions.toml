@@ -1,10 +1,10 @@
 [versions]
-dokka = "2.0.0"
+dokka = "2.2.0"
 foojay = "1.0.0"
 junit-jupiter = "6.0.3"
 kotest = "6.1.11"
-mockk = "1.13.12"
-okhttp = "4.12.0"
+mockk = "1.14.9"
+okhttp = "5.3.2"
 openrewrite = "6.26.0"
 plugin-publish = "2.1.1"
 spotless = "8.5.1"
