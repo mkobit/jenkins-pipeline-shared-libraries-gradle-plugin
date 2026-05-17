@@ -103,6 +103,8 @@ jobs:
         with:
           java-version: ${{ needs.build-config.outputs.java-version }}
       - name: Validate publication
+        # Placeholder strings, not real secrets. --validate-only requires non-empty values
+        # but makes no network call, so the real API key is never in scope here.
         env:
           GRADLE_PUBLISH_KEY: validate-only
           GRADLE_PUBLISH_SECRET: validate-only
