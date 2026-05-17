@@ -1,9 +1,9 @@
 name: Release
 
 on:
-  push:
-    branches:
-      - main
+  pull_request:
+    types: [closed]
+    branches: [main]
   workflow_dispatch:
     inputs:
       version:
@@ -18,76 +18,61 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  check:
-    name: Check release trigger
-    runs-on: ubuntu-latest
-    outputs:
-      release: ${{ steps.check.outputs.release }}
-      version: ${{ steps.check.outputs.version }}
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-      - name: Determine if release needed
-        id: check
-        env:
-          EVENT: ${{ github.event_name }}
-          COMMIT_MSG: ${{ github.event.head_commit.message }}
-          INPUT_VERSION: ${{ inputs.version }}
-        run: |
-          read_version_from_file() {
-            grep '^version = ' build.gradle.kts | sed 's/version = "//;s/"//'
-          }
-          validate_format() {
-            if ! [[ "$1" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-              echo "ERROR: version must be MAJOR.MINOR.PATCH, got: $1"
-              exit 1
-            fi
-          }
-
-          if [ "$EVENT" = "workflow_dispatch" ]; then
-            if [ -n "$INPUT_VERSION" ]; then
-              validate_format "$INPUT_VERSION"
-              CURRENT=$(read_version_from_file)
-              if [ "$CURRENT" != "$INPUT_VERSION" ]; then
-                echo "ERROR: build.gradle.kts has '$CURRENT' but input is '$INPUT_VERSION'"
-                exit 1
-              fi
-              VERSION="$INPUT_VERSION"
-            else
-              VERSION=$(read_version_from_file)
-              validate_format "$VERSION"
-            fi
-            echo "release=true" >> "$GITHUB_OUTPUT"
-            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          else
-            # Push to main — fire only on Release Please merge commits
-            if echo "$COMMIT_MSG" | grep -qE '^chore: release [0-9]+\.[0-9]+\.[0-9]+'; then
-              VERSION=$(echo "$COMMIT_MSG" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
-              echo "release=true" >> "$GITHUB_OUTPUT"
-              echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-            else
-              echo "release=false" >> "$GITHUB_OUTPUT"
-              echo "version=" >> "$GITHUB_OUTPUT"
-            fi
-          fi
-
   release:
-    name: Release v${{ needs.check.outputs.version }}
-    needs: check
-    if: needs.check.outputs.release == 'true'
+    name: Release
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # PR path: merged by mkobit from a Release Please branch with its autorelease label.
+    # Dispatch path: always runs (gated by repo write access).
+    if: >-
+      github.event_name == 'workflow_dispatch' || (
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.merged_by.login == 'mkobit' &&
+      startsWith(github.event.pull_request.head.ref, 'release-please--branches--main') &&
+      contains(github.event.pull_request.labels.*.name, 'autorelease: pending'))
     permissions:
       contents: write
     steps:
+      # Pin to merge commit on PR path; HEAD of default branch on dispatch.
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
+          ref: ${{ github.event.pull_request.merge_commit_sha || github.sha }}
           fetch-depth: 0
+
+      - name: Read and validate version
+        id: version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          FILE_VERSION=$(grep '^version = ' build.gradle.kts | sed 's/version = "//;s/"//')
+          if [ -n "$INPUT_VERSION" ]; then
+            if ! [[ "$INPUT_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "ERROR: version must be MAJOR.MINOR.PATCH, got: $INPUT_VERSION"
+              exit 1
+            fi
+            if [ "$FILE_VERSION" != "$INPUT_VERSION" ]; then
+              echo "ERROR: build.gradle.kts has '$FILE_VERSION' but input is '$INPUT_VERSION'"
+              exit 1
+            fi
+            echo "version=$INPUT_VERSION" >> "$GITHUB_OUTPUT"
+          else
+            if ! [[ "$FILE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "ERROR: version in build.gradle.kts must be MAJOR.MINOR.PATCH, got: $FILE_VERSION"
+              exit 1
+            fi
+            echo "version=$FILE_VERSION" >> "$GITHUB_OUTPUT"
+          fi
 
       - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
         with:
           java-version: '17'
           distribution: temurin
+
+      # Disable cache for release builds to prevent cache poisoning from PR builds.
       - uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e
+        with:
+          cache-disabled: true
 
       - name: Publish to Gradle Plugin Portal
         env:
@@ -100,7 +85,7 @@ jobs:
 
       - name: Create and push tag
         env:
-          VERSION: ${{ needs.check.outputs.version }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -114,7 +99,7 @@ jobs:
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ needs.check.outputs.version }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           if gh release view "v${VERSION}" > /dev/null 2>&1; then
             echo "Release v${VERSION} already exists — skipping"
@@ -130,8 +115,8 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: build/dokka/html
-          destination_dir: v${{ needs.check.outputs.version }}
-          commit_message: "docs: publish v${{ needs.check.outputs.version }}"
+          destination_dir: v${{ steps.version.outputs.version }}
+          commit_message: "docs: publish v${{ steps.version.outputs.version }}"
           keep_files: true
 
       - name: Deploy root KDoc (latest)
@@ -140,7 +125,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: build/dokka/html
           destination_dir: .
-          commit_message: "docs: update root from v${{ needs.check.outputs.version }}"
+          commit_message: "docs: update root from v${{ steps.version.outputs.version }}"
           keep_files: true
 
       - name: Update versions index
@@ -169,5 +154,5 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: /tmp/versions-index
           destination_dir: versions
-          commit_message: "docs: update versions index for v${{ needs.check.outputs.version }}"
+          commit_message: "docs: update versions index for v${{ steps.version.outputs.version }}"
           keep_files: true
