@@ -1,11 +1,14 @@
 name: Release
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to release (e.g. 0.11.0) — must match version in build.gradle.kts'
-        required: true
+        description: 'Version override — leave blank to read from build.gradle.kts'
+        required: false
         type: string
 
 permissions: {}
@@ -15,8 +18,62 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  check:
+    name: Check release trigger
+    runs-on: ubuntu-latest
+    outputs:
+      release: ${{ steps.check.outputs.release }}
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - name: Determine if release needed
+        id: check
+        env:
+          EVENT: ${{ github.event_name }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          read_version_from_file() {
+            grep '^version = ' build.gradle.kts | sed 's/version = "//;s/"//'
+          }
+          validate_format() {
+            if ! [[ "$1" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "ERROR: version must be MAJOR.MINOR.PATCH, got: $1"
+              exit 1
+            fi
+          }
+
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            if [ -n "$INPUT_VERSION" ]; then
+              validate_format "$INPUT_VERSION"
+              CURRENT=$(read_version_from_file)
+              if [ "$CURRENT" != "$INPUT_VERSION" ]; then
+                echo "ERROR: build.gradle.kts has '$CURRENT' but input is '$INPUT_VERSION'"
+                exit 1
+              fi
+              VERSION="$INPUT_VERSION"
+            else
+              VERSION=$(read_version_from_file)
+              validate_format "$VERSION"
+            fi
+            echo "release=true" >> "$GITHUB_OUTPUT"
+            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          else
+            # Push to main — fire only on Release Please merge commits
+            if echo "$COMMIT_MSG" | grep -qE '^chore: release [0-9]+\.[0-9]+\.[0-9]+'; then
+              VERSION=$(echo "$COMMIT_MSG" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+              echo "release=true" >> "$GITHUB_OUTPUT"
+              echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+            else
+              echo "release=false" >> "$GITHUB_OUTPUT"
+              echo "version=" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
   release:
-    name: Release v${{ inputs.version }}
+    name: Release v${{ needs.check.outputs.version }}
+    needs: check
+    if: needs.check.outputs.release == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -25,25 +82,6 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           fetch-depth: 0
-
-      - name: Validate version format
-        env:
-          INPUT_VERSION: ${{ inputs.version }}
-        run: |
-          if ! [[ "$INPUT_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "ERROR: version must be MAJOR.MINOR.PATCH digits only, got: $INPUT_VERSION"
-            exit 1
-          fi
-
-      - name: Verify version matches build.gradle.kts
-        env:
-          INPUT_VERSION: ${{ inputs.version }}
-        run: |
-          CURRENT=$(grep '^version = ' build.gradle.kts | sed 's/version = "//;s/"//')
-          if [ "$CURRENT" != "$INPUT_VERSION" ]; then
-            echo "ERROR: build.gradle.kts has '$CURRENT' but release input is '$INPUT_VERSION'"
-            exit 1
-          fi
 
       - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
         with:
@@ -62,28 +100,28 @@ jobs:
 
       - name: Create and push tag
         env:
-          INPUT_VERSION: ${{ inputs.version }}
+          VERSION: ${{ needs.check.outputs.version }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if git rev-parse "v${INPUT_VERSION}" > /dev/null 2>&1; then
-            echo "Tag v${INPUT_VERSION} already exists — skipping"
+          if git rev-parse "v${VERSION}" > /dev/null 2>&1; then
+            echo "Tag v${VERSION} already exists — skipping"
           else
-            git tag -a "v${INPUT_VERSION}" -m "Release ${INPUT_VERSION}"
-            git push origin "v${INPUT_VERSION}"
+            git tag -a "v${VERSION}" -m "Release ${VERSION}"
+            git push origin "v${VERSION}"
           fi
 
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          INPUT_VERSION: ${{ inputs.version }}
+          VERSION: ${{ needs.check.outputs.version }}
         run: |
-          if gh release view "v${INPUT_VERSION}" > /dev/null 2>&1; then
-            echo "Release v${INPUT_VERSION} already exists — skipping"
+          if gh release view "v${VERSION}" > /dev/null 2>&1; then
+            echo "Release v${VERSION} already exists — skipping"
           else
-            gh release create "v${INPUT_VERSION}" \
+            gh release create "v${VERSION}" \
               --generate-notes \
-              --title "Release v${INPUT_VERSION}" \
+              --title "Release v${VERSION}" \
               build/libs/*.jar
           fi
 
@@ -92,8 +130,8 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: build/dokka/html
-          destination_dir: v${{ inputs.version }}
-          commit_message: "docs: publish v${{ inputs.version }}"
+          destination_dir: v${{ needs.check.outputs.version }}
+          commit_message: "docs: publish v${{ needs.check.outputs.version }}"
           keep_files: true
 
       - name: Deploy root KDoc (latest)
@@ -102,7 +140,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: build/dokka/html
           destination_dir: .
-          commit_message: "docs: update root from v${{ inputs.version }}"
+          commit_message: "docs: update root from v${{ needs.check.outputs.version }}"
           keep_files: true
 
       - name: Update versions index
@@ -131,5 +169,5 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: /tmp/versions-index
           destination_dir: versions
-          commit_message: "docs: update versions index for v${{ inputs.version }}"
+          commit_message: "docs: update versions index for v${{ needs.check.outputs.version }}"
           keep_files: true
