@@ -99,8 +99,9 @@ jobs:
           if gh release view "v${VERSION}" > /dev/null 2>&1; then
             echo "Release v${VERSION} already exists — skipping"
           else
+            awk -v ver="${VERSION}" '/^## \[/{if(found)exit; if(index($0,"["ver"]"))found=1; next} found{print}' CHANGELOG.md > /tmp/release-notes.md
             gh release create "v${VERSION}" \
-              --generate-notes \
+              --notes-file /tmp/release-notes.md \
               --title "Release v${VERSION}" \
               build/libs/*.jar
           fi
