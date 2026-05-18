@@ -26,8 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Built-in Jenkins CodeNarc rules (`codenarcJenkinsMain` task) — validates CPS-safety and `@Serializable` annotations on shared library sources.
 - OpenRewrite migration recipe `com.mkobit.jenkins.pipelines.MigrateSharedLibraryPlugin010To011` for automated 0.10.x → 0.11.x migration.
 - Configuration cache support.
-- Java 17 and Java 21 toolchain support.
-- Jenkins LTS 2.479.x, 2.492.x, 2.528.x, and 2.541.x compatibility with full BOM alignment.
+- Java 17, 21, and 25 toolchain support.
+- Jenkins LTS 2.479.x, 2.528.x, and 2.541.x compatibility with full BOM alignment.
 
 ### Changed
 

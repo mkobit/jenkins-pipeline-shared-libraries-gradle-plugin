@@ -14,14 +14,15 @@ class TestProject(
 
   fun file(path: String): Path = dir.resolve(path).also { it.parent.createDirectories() }
 
-  fun runner(gradleVersion: TestedGradleVersion): GradleRunner = GradleRunner
-    .create()
-    .withProjectDir(dir.toFile())
-    .withGradleVersion(gradleVersion.version)
-    .withPluginClasspath()
-    .apply {
-      System.getProperty("test.gradle.user.home")?.let { withTestKitDir(Path.of(it).toFile()) }
-    }
+  fun runner(gradleVersion: TestedGradleVersion): GradleRunner =
+    GradleRunner
+      .create()
+      .withProjectDir(dir.toFile())
+      .withGradleVersion(gradleVersion.version)
+      .withPluginClasspath()
+      .apply {
+        System.getProperty("test.gradle.user.home")?.let { withTestKitDir(Path.of(it).toFile()) }
+      }
 }
 
 context(config: TestConfiguration)

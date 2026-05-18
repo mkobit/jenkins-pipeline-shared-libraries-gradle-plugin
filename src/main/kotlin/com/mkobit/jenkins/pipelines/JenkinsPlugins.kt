@@ -24,16 +24,16 @@ import javax.inject.Inject
  * ```
  */
 abstract class JenkinsPlugins
-@Inject
-constructor() : Dependencies {
-  abstract val pluginCollector: DependencyCollector
+  @Inject
+  constructor() : Dependencies {
+    abstract val pluginCollector: DependencyCollector
 
-  /** Declares a Jenkins plugin by `"group:artifact"` or `"group:artifact:version"` notation. */
-  fun plugin(notation: CharSequence) = pluginCollector.add(notation)
+    /** Declares a Jenkins plugin by `"group:artifact"` or `"group:artifact:version"` notation. */
+    fun plugin(notation: CharSequence) = pluginCollector.add(notation)
 
-  /** Declares a Jenkins plugin from a version catalog entry. */
-  fun plugin(dependency: Provider<out MinimalExternalModuleDependency>) = pluginCollector.add(dependency)
+    /** Declares a Jenkins plugin from a version catalog entry. */
+    fun plugin(dependency: Provider<out MinimalExternalModuleDependency>) = pluginCollector.add(dependency)
 
-  /** Declares all Jenkins plugins from a version catalog bundle (e.g. `jenkinsPlugins.bundles.allPlugins`). */
-  fun plugins(bundle: Provider<out Iterable<Dependency>>) = pluginCollector.bundle(bundle)
-}
+    /** Declares all Jenkins plugins from a version catalog bundle (e.g. `jenkinsPlugins.bundles.allPlugins`). */
+    fun plugins(bundle: Provider<out Iterable<Dependency>>) = pluginCollector.bundle(bundle)
+  }

@@ -14,10 +14,11 @@ import kotlin.io.path.writeText
 
 class SharedLibraryPluginTestSuiteTest :
   DescribeSpec({
-    fun withBaseProject(block: TestProject.() -> Unit) = withTestProject {
-      settingsFile.writeText(jenkinsSettings("suite-test"))
-      block()
-    }
+    fun withBaseProject(block: TestProject.() -> Unit) =
+      withTestProject {
+        settingsFile.writeText(jenkinsSettings("suite-test"))
+        block()
+      }
 
     describe("Java-only test suite: Jenkins API types compile without Groovy dependency") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->

@@ -16,9 +16,10 @@ import kotlin.io.path.writeText
 
 class SharedLibraryPluginSmokeTest :
   DescribeSpec({
-    fun withSharedLibraryProject(block: TestProject.() -> Unit) = withTestProject {
-      buildFile.writeText(
-        """
+    fun withSharedLibraryProject(block: TestProject.() -> Unit) =
+      withTestProject {
+        buildFile.writeText(
+          """
           plugins {
               id("com.mkobit.jenkins.pipelines.shared-library")
           }
@@ -33,10 +34,10 @@ class SharedLibraryPluginSmokeTest :
                   println("outputDirs=" + testTask.outputs.files.joinToString(",") { it.absolutePath })
               }
           }
-        """.trimIndent(),
-      )
-      block()
-    }
+          """.trimIndent(),
+        )
+        block()
+      }
 
     describe("plugin application") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
