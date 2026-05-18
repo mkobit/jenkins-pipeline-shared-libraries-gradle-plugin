@@ -4,7 +4,7 @@ open class TestMatrix {
   val current: String = GradleVersion.current().version
 
   val gradleVersions: List<String> =
-    listOf("9.4.1", "9.5.1")
+    listOf("9.4.0", "9.4.1", "9.5.0", "9.5.1")
       .map { GradleVersion.version(it) }
       .filter { it != GradleVersion.current() }
       .sorted()
