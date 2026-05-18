@@ -20,7 +20,7 @@ A Gradle plugin for developing and testing [Jenkins Pipeline Shared Libraries](h
 
 ## Compatibility
 
-![Gradle](https://img.shields.io/badge/Gradle-9.4.x_%7C_9.5.x-02303A?logo=gradle&logoColor=white)
+![Gradle](https://img.shields.io/badge/Gradle-9.4.0_%7C_9.4.1_%7C_9.5.0_%7C_9.5.1-02303A?logo=gradle&logoColor=white)
 ![Java](https://img.shields.io/badge/Java-17_%7C_21_%7C_25-ED8B00?logo=openjdk&logoColor=white)
 ![Jenkins LTS](https://img.shields.io/badge/Jenkins_LTS-2.479.x_%7C_2.528.x_%7C_2.541.x-D24939?logo=jenkins&logoColor=white)
 
