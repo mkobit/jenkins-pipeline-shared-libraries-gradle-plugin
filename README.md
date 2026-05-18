@@ -22,21 +22,15 @@ A Gradle plugin for developing and testing [Jenkins Pipeline Shared Libraries](h
 
 | Dimension | Supported versions |
 |---|---|
-| Gradle | 9.x |
+| Gradle | 9.4.0, 9.4.1, 9.5.0, 9.5.1 |
 | Java | 17, 21 |
-| Jenkins LTS | 2.479.x, 2.492.x, 2.528.x, 2.541.x |
+| Jenkins LTS | 2.479.x, 2.528.x, 2.541.x |
 
 ## Quick start
 
 `gradle/libs.versions.toml`
 
 ```toml
-[versions]
-jenkins-bom = "5054.v620b_5d2b_d5e6"
-
-[libraries]
-jenkins-bom = { module = "io.jenkins.tools.bom:bom-2.479.x", version.ref = "jenkins-bom" }
-
 [plugins]
 jenkins-shared-library = { id = "com.mkobit.jenkins.pipelines.shared-library", version = "0.11.0" }
 ```
@@ -49,7 +43,6 @@ plugins {
 }
 
 dependencies {
-    jenkinsPlugin(platform(libs.jenkins.bom))
     jenkinsPlugin("org.jenkinsci.plugins:pipeline-model-definition")
 }
 ```
@@ -61,6 +54,7 @@ The plugin configures by convention:
 - `test/integration/` → `integrationTest` suite with `jenkins-test-harness`
 
 No `sharedLibrary {}` block is required for the default configuration.
+The default Jenkins line is 2.479.x LTS — see [Changing the Jenkins LTS line](#changing-the-jenkins-lts-line) to target a different version.
 
 ## Source layout
 
@@ -89,8 +83,10 @@ All properties have sensible defaults and are optional.
 sharedLibrary {
     jenkins {
         version = "2.528.3"                         // Jenkins core version (default: 2.479.1)
-        testHarnessVersion = "2565.vd1eb_7c961d1b_" // jenkins-test-harness version
-        bomVersion = "6398.v1d26a_dd495e2"          // BOM version auto-injected into jenkinsPlugin
+        bomVersion = "6398.v1d26a_dd495e2"          // BOM auto-injected into jenkinsPlugin
+    }
+    plugins {
+        plugin("org.jenkins-ci.plugins:git")        // additional Jenkins plugins
     }
     pipelineUnitVersion = "1.29"                    // JenkinsPipelineUnit version (test suite)
     libraryName = "my-shared-lib"                   // Jenkins library name (default: project.name)
@@ -98,8 +94,9 @@ sharedLibrary {
 }
 ```
 
-The Jenkins BOM for the configured LTS line is injected automatically into `jenkinsPlugin` — no explicit `jenkinsPlugin(platform(...))` call is needed unless you want to pin a specific BOM version.
+The Jenkins BOM for the configured LTS line is injected automatically into `jenkinsPlugin` — no explicit `jenkinsPlugin(platform(...))` call is needed.
 The BOM module coordinate is derived from `jenkins.version` (e.g., `2.479.1` → `bom-2.479.x`).
+The `plugins {}` block is equivalent to `dependencies { jenkinsPlugin("...") }` — use whichever reads more naturally in your build.
 
 ## Writing unit tests
 
@@ -196,7 +193,7 @@ GlobalLibraries.get().setLibraries(List.of(lib));
 
 ## Additional test suites
 
-Register extra suites and opt them into full Jenkins wiring with `useJenkinsTestRunnerSuite()`.
+Register extra suites and opt them into full Jenkins wiring with `withJenkins()`.
 This applies the same wiring as the built-in `integrationTest` suite: `jenkins-test-harness`, HPI classpath, WAR path, system properties, JVM `--add-opens` flags, `maxParallelForks = 1`, and heap defaults.
 
 ### JUnit Jupiter
@@ -205,7 +202,7 @@ This applies the same wiring as the built-in `integrationTest` suite: `jenkins-t
 testing {
     suites {
         register<JvmTestSuite>("integrationTestJunit5") {
-            sharedLibrary.useJenkinsTestRunnerSuite(this)
+            sharedLibrary.withJenkins(this)
             sources { java.setSrcDirs(listOf("test/integration-junit5/java")) }
             dependencies {
                 implementation(libs.junit.jupiter.api)
@@ -224,7 +221,7 @@ testing {
 testing {
     suites {
         register<JvmTestSuite>("integrationTestSpock") {
-            sharedLibrary.useJenkinsTestRunnerSuite(this)
+            sharedLibrary.withJenkins(this)
             sources { groovy.setSrcDirs(listOf("test/integration-spock/groovy")) }
             dependencies {
                 implementation(libs.spock.core)
@@ -247,7 +244,7 @@ testing {
 testing {
     suites {
         register<JvmTestSuite>("integrationTestKotest") {
-            sharedLibrary.useJenkinsTestRunnerSuite(this)
+            sharedLibrary.withJenkins(this)
             useJUnitJupiter()
             sources { extensions.configure<SourceDirectorySet>("kotlin") {
                 setSrcDirs(listOf("test/integration-kotest/kotlin"))
@@ -295,13 +292,12 @@ To upgrade the Jenkins LTS line:
    jenkins-bom = { module = "io.jenkins.tools.bom:bom-2.528.x", version.ref = "jenkins-bom" }
    ```
 
-2. Optionally override the Jenkins core and test harness versions in `sharedLibrary {}` if you need a specific minor:
+2. Optionally pin the Jenkins core version in `sharedLibrary {}` to target a specific minor release:
 
    ```kotlin
    sharedLibrary {
        jenkins {
            version = "2.528.3"
-           testHarnessVersion = "2565.vd1eb_7c961d1b_"
        }
    }
    ```
@@ -319,7 +315,7 @@ The following table maps old API to its replacement.
 | `sharedLibrary { pluginDependencies { dependency("git") { ... } } }` | `dependencies { jenkinsPlugin("org.jenkins-ci.plugins:git") }` |
 | `sharedLibrary { coreVersion.set("2.222.4") }` | `sharedLibrary { jenkins { version = "2.528.3" } }` or let the BOM default apply |
 | `sharedLibrary { pipelineTestUnitVersion.set("...") }` | `sharedLibrary { pipelineUnitVersion = "..." }` |
-| `sharedLibrary { testHarnessVersion.set("...") }` | `sharedLibrary { jenkins { testHarnessVersion = "..." } }` |
+| `sharedLibrary { testHarnessVersion.set("...") }` | Removed — managed by the Jenkins BOM; to override, add `implementation("org.jenkins-ci.main:jenkins-test-harness:VERSION")` in the suite's `dependencies` block |
 | Named `*Version` properties on `PluginDependencySpec` | Removed — declare versions in `gradle/libs.versions.toml`; use BOM for Jenkins plugins |
 | `workflowCpsPluginVersion`, `workflowJobPluginVersion`, … | Removed — these plugins are managed by the BOM |
 | Custom configurations (`jenkinsPlugins`, `jenkinsPluginHpisAndJpis`, …) | `jenkinsPlugin` is the single user-facing configuration |

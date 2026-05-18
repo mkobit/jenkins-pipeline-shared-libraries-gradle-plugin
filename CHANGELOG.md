@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Single `jenkinsPlugin` configuration for all plugin dependencies — replaces the old multi-configuration model.
+- Jenkins BOM auto-injection — no explicit `jenkinsPlugin(platform(...))` call is needed; the BOM coordinate is derived from `jenkins.version` (e.g., `2.479.1` → `bom-2.479.x`).
+- `sharedLibrary.plugins { plugin("group:artifact") }` DSL block for declaring Jenkins plugin dependencies inline inside the extension; equivalent to `dependencies { jenkinsPlugin("...") }`.
+- `sharedLibrary.withJenkins(suite)` for opt-in Jenkins test-harness wiring on additional `JvmTestSuite` registrations (JUnit Jupiter, Spock 2.x, Kotest, or any framework).
+- `autoRegisterLibrary` property (default: `true`) — generates `SharedLibraryAutoRegistrar` and registers the library in embedded Jenkins at startup; no `GlobalLibraries.get().setLibraries(...)` call needed in tests.
+- `libraryName` property (default: `project.name`) — controls the Jenkins library identifier used in `@Library("...")` pipeline scripts and `LocalLibraryRetriever.implicitLibrary()`.
+- Generated `LocalLibraryRetriever` class — loads the local shared library in integration tests without network access.
+- Built-in Jenkins CodeNarc rules (`codenarcJenkinsMain` task) — validates CPS-safety and `@Serializable` annotations on shared library sources.
+- OpenRewrite migration recipe `com.mkobit.jenkins.pipelines.MigrateSharedLibraryPlugin010To011` for automated 0.10.x → 0.11.x migration.
+- Configuration cache support.
+- Java 17 and Java 21 toolchain support.
+- Jenkins LTS 2.479.x, 2.492.x, 2.528.x, and 2.541.x compatibility with full BOM alignment.
+
+### Changed
+
+- Minimum Gradle version is now 9.x (previously 4.x–8.x).
+- Minimum Java version is now 17 (previously 8).
+- Minimum Jenkins LTS is now 2.479.x.
+- `sharedLibrary { coreVersion }` replaced by `sharedLibrary { jenkins { version = "..." } }`.
+- `sharedLibrary { pipelineTestUnitVersion }` renamed to `sharedLibrary { pipelineUnitVersion }`.
+
+### Removed
+
+- `sharedLibrary { pluginDependencies { dependency(...) } }` — use `dependencies { jenkinsPlugin("group:artifact") }` or `sharedLibrary { plugins { plugin("group:artifact") } }`.
+- `sharedLibrary { testHarnessVersion }` — managed by the Jenkins BOM; to override, add `implementation("org.jenkins-ci.main:jenkins-test-harness:VERSION")` in the suite's `dependencies` block.
+- Named `*Version` properties on `PluginDependencySpec` — declare versions in `gradle/libs.versions.toml` and use the BOM for Jenkins plugins.
+- All individual workflow plugin version properties (`workflowCpsPluginVersion`, `workflowJobPluginVersion`, etc.) — these plugins are managed by the Jenkins BOM.
+- Custom configurations (`jenkinsPlugins`, `jenkinsPluginHpisAndJpis`, etc.) — `jenkinsPlugin` is the only user-facing configuration.
+
 ---
 
 > [!NOTE]
