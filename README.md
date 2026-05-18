@@ -300,42 +300,19 @@ Jenkins downloads the WAR and plugins on first run; subsequent runs use the Grad
 
 ## Changing the Jenkins LTS line
 
-To upgrade the Jenkins LTS line:
+Set `version` in `sharedLibrary {}` to target a different LTS line:
 
-1. Set `version` and `bomVersion` in `sharedLibrary {}`:
+```kotlin
+sharedLibrary {
+    jenkins {
+        version = "2.528.3"
+    }
+}
+```
 
-   ```kotlin
-   sharedLibrary {
-       jenkins {
-           version = "2.528.3"
-           bomVersion = "3413.v04c6e7e6c81d"
-       }
-   }
-   ```
-
-   The plugin derives the BOM module coordinate automatically from `version` (e.g., `2.528.3` → `bom-2.528.x`).
-   Look up the `bomVersion` value on the [Jenkins BOM releases page](https://github.com/jenkinsci/bom/releases).
-
-2. Optionally track the BOM version in `gradle/libs.versions.toml` so Renovate can keep it up to date within the pinned LTS line:
-
-   ```toml
-   [versions]
-   jenkins-bom = "3413.v04c6e7e6c81d"
-
-   [libraries]
-   jenkins-bom = { module = "io.jenkins.tools.bom:bom-2.528.x", version.ref = "jenkins-bom" }
-   ```
-
-   Then reference it in `build.gradle.kts`:
-
-   ```kotlin
-   sharedLibrary {
-       jenkins {
-           version = "2.528.3"
-           bomVersion = libs.versions.jenkins.bom.get()
-       }
-   }
-   ```
+The plugin derives the BOM module coordinate automatically from `version` (e.g., `2.528.3` → `bom-2.528.x`).
+Renovate keeps the BOM version up to date within the configured LTS line.
+To override the BOM version explicitly, set `bomVersion` as well.
 
 ## Migration from 0.10.x
 
