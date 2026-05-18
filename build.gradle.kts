@@ -154,6 +154,17 @@ tasks.withType<Test>().configureEach {
   }
 }
 
+// Restrict Dokka to only the hand-written src/main/kotlin sources. Without this, Dokka also
+// picks up build/generated-sources/kotlin-dsl-plugins/kotlin/SharedLibraryPlugin.kt — the
+// adapter Gradle generates for the precompiled script plugin — which has a KDoc @see reference
+// to Shared_library_gradle that Dokka cannot resolve (the class is compiled from a .gradle.kts
+// file and has no corresponding .kt source for Dokka to index).
+dokka {
+  dokkaSourceSets.main {
+    sourceRoots.setFrom(layout.projectDirectory.dir("src/main/kotlin"))
+  }
+}
+
 // gradle-plugin-publish creates javadocJar in its own afterEvaluate; configure it in ours
 // (which runs after the plugin's) to replace the empty standard-javadoc output with Dokka HTML.
 afterEvaluate {

@@ -32,7 +32,7 @@ A Gradle plugin for developing and testing [Jenkins Pipeline Shared Libraries](h
 
 ```toml
 [plugins]
-jenkins-shared-library = { id = "com.mkobit.jenkins.pipelines.shared-library", version = "0.11.0" }
+jenkins-shared-library = { id = "com.mkobit.jenkins.pipelines.shared-library", version = "VERSION" }
 ```
 
 `build.gradle.kts`
@@ -127,42 +127,22 @@ class DoStuffSpec extends BasePipelineTest {
 Integration tests live in `test/integration/` and run against an embedded Jenkins instance.
 The plugin generates `LocalLibraryRetriever.java` into the `integrationTest` source set and auto-registers the local library via `SharedLibraryAutoRegistrar` — no manual `GlobalLibraries` setup is required.
 
-### JUnit 4 (Java)
+### JUnit Jupiter (Java)
 
 ```java
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
-public class MyStepTest {
-    @Rule public JenkinsRule rule = new JenkinsRule();
-
+@WithJenkins
+class MyStepTest {
     @Test
-    public void myStepRuns() throws Exception {
+    void myStepRuns(JenkinsRule rule) throws Exception {
         WorkflowJob job = rule.createProject(WorkflowJob.class, "test");
         job.setDefinition(new CpsFlowDefinition("myStep()", true));
         rule.buildAndAssertSuccess(job);
-    }
-}
-```
-
-### JUnit 4 (Groovy / `GroovyJenkinsRule`)
-
-```groovy
-import org.junit.Rule
-import org.junit.Test
-import org.jvnet.hudson.test.GroovyJenkinsRule
-
-class MyStepTest {
-    @Rule public GroovyJenkinsRule rule = new GroovyJenkinsRule()
-
-    @Test
-    void myStepRuns() {
-        def job = rule.createProject(WorkflowJob, "test")
-        job.setDefinition(new CpsFlowDefinition("myStep()", true))
-        rule.buildAndAssertSuccess(job)
     }
 }
 ```
@@ -200,9 +180,9 @@ This applies the same wiring as the built-in `integrationTest` suite: `jenkins-t
 ```kotlin
 testing {
     suites {
-        register<JvmTestSuite>("integrationTestJunit5") {
+        register<JvmTestSuite>("integrationTestJunit") {
             sharedLibrary.withJenkins(this)
-            sources { java.setSrcDirs(listOf("test/integration-junit5/java")) }
+            sources { java.setSrcDirs(listOf("test/integration-junit/java")) }
             dependencies {
                 implementation(libs.junit.jupiter.api)
                 runtimeOnly(libs.junit.jupiter.engine)
@@ -224,7 +204,6 @@ testing {
             sources { groovy.setSrcDirs(listOf("test/integration-spock/groovy")) }
             dependencies {
                 implementation(libs.spock.core)
-                compileOnly(libs.groovy.core)
             }
         }
     }
@@ -249,7 +228,8 @@ testing {
                 setSrcDirs(listOf("test/integration-kotest/kotlin"))
             }}
             dependencies {
-                implementation(libs.kotest.runner)
+                implementation(libs.kotest.engine)
+                runtimeOnly(libs.kotest.runner)
                 implementation(libs.kotest.assertions)
                 implementation(libs.coroutines.core)
             }
@@ -263,7 +243,7 @@ Wire additional suites into `check` if they should run in CI:
 ```kotlin
 tasks.check {
     dependsOn(
-        tasks.named("integrationTestJunit5"),
+        tasks.named("integrationTestJunit"),
         tasks.named("integrationTestSpock"),
         tasks.named("integrationTestKotest"),
     )
@@ -282,27 +262,57 @@ Jenkins downloads the WAR and plugins on first run; subsequent runs use the Grad
 
 ## Changing the Jenkins LTS line
 
-To upgrade the Jenkins LTS line:
+Set `version` in `sharedLibrary {}` to target a different LTS line:
 
-1. Update `jenkins-bom` in `gradle/libs.versions.toml` to the new module and version:
+```kotlin
+sharedLibrary {
+    jenkins {
+        version = "2.528.3"
+    }
+}
+```
 
-   ```toml
-   [libraries]
-   jenkins-bom = { module = "io.jenkins.tools.bom:bom-2.528.x", version.ref = "jenkins-bom" }
-   ```
+The plugin derives the BOM module coordinate automatically from `version` (e.g., `2.528.3` → `bom-2.528.x`).
+Renovate keeps the BOM version up to date within the configured LTS line.
+To override the BOM version explicitly, set `bomVersion` as well.
 
-2. Optionally pin the Jenkins core version in `sharedLibrary {}` to target a specific minor release:
+## JUnit 4
 
-   ```kotlin
-   sharedLibrary {
-       jenkins {
-           version = "2.528.3"
-       }
-   }
-   ```
+The built-in `integrationTest` suite defaults to JUnit Jupiter.
+If you have an existing JUnit 4 test suite, configure it explicitly:
 
-Renovate keeps the BOM version up to date within the pinned LTS line.
-Changing the LTS module coordinate is a manual step.
+```kotlin
+// build.gradle.kts
+testing {
+    suites {
+        named<JvmTestSuite>("integrationTest") {
+            useJUnit()
+            dependencies {
+                implementation(libs.junit)
+            }
+        }
+    }
+}
+```
+
+```java
+import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.junit.Rule;
+import org.junit.Test;
+import org.jvnet.hudson.test.JenkinsRule;
+
+public class MyStepTest {
+    @Rule public JenkinsRule rule = new JenkinsRule();
+
+    @Test
+    public void myStepRuns() throws Exception {
+        WorkflowJob job = rule.createProject(WorkflowJob.class, "test");
+        job.setDefinition(new CpsFlowDefinition("myStep()", true));
+        rule.buildAndAssertSuccess(job);
+    }
+}
+```
 
 ## Migration from 0.10.x
 
@@ -336,7 +346,7 @@ Extension restructuring and BOM setup require manual steps documented in `Migrat
 
 ## Example consumer
 
-See the [example repository](https://github.com/mkobit/jenkins-pipeline-shared-library-example) for a complete project using all supported test frameworks (JUnit 4, JUnit 5, Spock 2.x, Kotest) against a real Jenkins instance.
+See the [example repository](https://github.com/mkobit/jenkins-pipeline-shared-library-example) for a complete project using all supported test frameworks (JUnit Jupiter, Spock 2.x, Kotest) against a real Jenkins instance.
 
 ## Troubleshooting
 
