@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+> [!IMPORTANT]
+> **This is a complete rewrite.**
+> Version 0.11.0 is the first release since 0.10.1 (July 2019) — nearly seven years.
+> The plugin has been rebuilt from the ground up for Gradle 9.x, Java 17/21, and modern Jenkins LTS lines.
+> All 0.10.x APIs have been removed.
+> See the [migration guide in the README](README.md#migration-from-010x) or run the bundled OpenRewrite recipe.
+
 ### Added
 
 - Single `jenkinsPlugin` configuration for all plugin dependencies — replaces the old multi-configuration model.
