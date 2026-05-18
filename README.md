@@ -22,9 +22,9 @@ A Gradle plugin for developing and testing [Jenkins Pipeline Shared Libraries](h
 
 | | Tested versions |
 |---|---|
-| ![Gradle](https://img.shields.io/badge/Gradle--02303A?logo=gradle&logoColor=white) | ![9.4.0](https://img.shields.io/badge/9.4.0--02303A) ![9.4.1](https://img.shields.io/badge/9.4.1--02303A) ![9.5.0](https://img.shields.io/badge/9.5.0--02303A) ![9.5.1](https://img.shields.io/badge/9.5.1--02303A) |
-| ![Java](https://img.shields.io/badge/Java--ED8B00?logo=openjdk&logoColor=white) | ![17](https://img.shields.io/badge/17--ED8B00) ![21](https://img.shields.io/badge/21--ED8B00) ![25](https://img.shields.io/badge/25--ED8B00) |
-| ![Jenkins LTS](https://img.shields.io/badge/Jenkins_LTS--D24939?logo=jenkins&logoColor=white) | ![2.479.x](https://img.shields.io/badge/2.479.x--D24939) ![2.528.x](https://img.shields.io/badge/2.528.x--D24939) ![2.541.x](https://img.shields.io/badge/2.541.x--D24939) |
+| ![Gradle](https://img.shields.io/badge/Gradle--green?logo=gradle&logoColor=white) | ![9.4.0](https://img.shields.io/badge/9.4.0--green) ![9.4.1](https://img.shields.io/badge/9.4.1--green) ![9.5.0](https://img.shields.io/badge/9.5.0--green) ![9.5.1](https://img.shields.io/badge/9.5.1--green) |
+| ![Java](https://img.shields.io/badge/Java--orange?logo=openjdk&logoColor=white) | ![17](https://img.shields.io/badge/17--orange) ![21](https://img.shields.io/badge/21--orange) ![25](https://img.shields.io/badge/25--orange) |
+| ![Jenkins LTS](https://img.shields.io/badge/Jenkins_LTS--red?logo=jenkins&logoColor=white) | ![2.479.x](https://img.shields.io/badge/2.479.x--red) ![2.528.x](https://img.shields.io/badge/2.528.x--red) ![2.541.x](https://img.shields.io/badge/2.541.x--red) |
 
 ## Quick start
 
