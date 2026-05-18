@@ -147,44 +147,6 @@ class MyStepTest {
 }
 ```
 
-### JUnit 4 (Java)
-
-The built-in `integrationTest` suite defaults to JUnit Jupiter.
-To use JUnit 4, configure the suite to use it and add the necessary dependencies:
-
-```kotlin
-// build.gradle.kts
-testing {
-    suites {
-        named<JvmTestSuite>("integrationTest") {
-            useJUnit()
-            dependencies {
-                implementation(libs.junit)
-            }
-        }
-    }
-}
-```
-
-```java
-import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
-import org.jenkinsci.plugins.workflow.job.WorkflowJob;
-import org.junit.Rule;
-import org.junit.Test;
-import org.jvnet.hudson.test.JenkinsRule;
-
-public class MyStepTest {
-    @Rule public JenkinsRule rule = new JenkinsRule();
-
-    @Test
-    public void myStepRuns() throws Exception {
-        WorkflowJob job = rule.createProject(WorkflowJob.class, "test");
-        job.setDefinition(new CpsFlowDefinition("myStep()", true));
-        rule.buildAndAssertSuccess(job);
-    }
-}
-```
-
 > [!NOTE]
 > The `@Library` annotation in the pipeline script is not required when `autoRegisterLibrary = true` (the default) and you use the library name returned by `LocalLibraryRetriever.implicitLibrary()`.
 > The library is registered at embedded Jenkins startup under the name configured in `sharedLibrary.libraryName`.
@@ -314,6 +276,44 @@ The plugin derives the BOM module coordinate automatically from `version` (e.g.,
 Renovate keeps the BOM version up to date within the configured LTS line.
 To override the BOM version explicitly, set `bomVersion` as well.
 
+## JUnit 4
+
+The built-in `integrationTest` suite defaults to JUnit Jupiter.
+If you have an existing JUnit 4 test suite, configure it explicitly:
+
+```kotlin
+// build.gradle.kts
+testing {
+    suites {
+        named<JvmTestSuite>("integrationTest") {
+            useJUnit()
+            dependencies {
+                implementation(libs.junit)
+            }
+        }
+    }
+}
+```
+
+```java
+import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.junit.Rule;
+import org.junit.Test;
+import org.jvnet.hudson.test.JenkinsRule;
+
+public class MyStepTest {
+    @Rule public JenkinsRule rule = new JenkinsRule();
+
+    @Test
+    public void myStepRuns() throws Exception {
+        WorkflowJob job = rule.createProject(WorkflowJob.class, "test");
+        job.setDefinition(new CpsFlowDefinition("myStep()", true));
+        rule.buildAndAssertSuccess(job);
+    }
+}
+```
+
 ## Migration from 0.10.x
 
 Version 0.11.0 is a clean break from the 0.10.x series.
@@ -346,7 +346,7 @@ Extension restructuring and BOM setup require manual steps documented in `Migrat
 
 ## Example consumer
 
-See the [example repository](https://github.com/mkobit/jenkins-pipeline-shared-library-example) for a complete project using all supported test frameworks (JUnit 4, JUnit 5, Spock 2.x, Kotest) against a real Jenkins instance.
+See the [example repository](https://github.com/mkobit/jenkins-pipeline-shared-library-example) for a complete project using all supported test frameworks (JUnit Jupiter, Spock 2.x, Kotest) against a real Jenkins instance.
 
 ## Troubleshooting
 
