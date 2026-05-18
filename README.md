@@ -32,7 +32,7 @@ A Gradle plugin for developing and testing [Jenkins Pipeline Shared Libraries](h
 
 ```toml
 [plugins]
-jenkins-shared-library = { id = "com.mkobit.jenkins.pipelines.shared-library", version = "0.11.0" }
+jenkins-shared-library = { id = "com.mkobit.jenkins.pipelines.shared-library", version = "VERSION" }
 ```
 
 `build.gradle.kts`
@@ -127,7 +127,44 @@ class DoStuffSpec extends BasePipelineTest {
 Integration tests live in `test/integration/` and run against an embedded Jenkins instance.
 The plugin generates `LocalLibraryRetriever.java` into the `integrationTest` source set and auto-registers the local library via `SharedLibraryAutoRegistrar` — no manual `GlobalLibraries` setup is required.
 
+### JUnit Jupiter (Java)
+
+```java
+import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.junit.jupiter.api.Test;
+import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
+
+@WithJenkins
+class MyStepTest {
+    @Test
+    void myStepRuns(JenkinsRule rule) throws Exception {
+        WorkflowJob job = rule.createProject(WorkflowJob.class, "test");
+        job.setDefinition(new CpsFlowDefinition("myStep()", true));
+        rule.buildAndAssertSuccess(job);
+    }
+}
+```
+
 ### JUnit 4 (Java)
+
+The built-in `integrationTest` suite defaults to JUnit Jupiter.
+To use JUnit 4, configure the suite to use it and add the necessary dependencies:
+
+```kotlin
+// build.gradle.kts
+testing {
+    suites {
+        named<JvmTestSuite>("integrationTest") {
+            useJUnit()
+            dependencies {
+                implementation(libs.junit)
+            }
+        }
+    }
+}
+```
 
 ```java
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
@@ -144,25 +181,6 @@ public class MyStepTest {
         WorkflowJob job = rule.createProject(WorkflowJob.class, "test");
         job.setDefinition(new CpsFlowDefinition("myStep()", true));
         rule.buildAndAssertSuccess(job);
-    }
-}
-```
-
-### JUnit 4 (Groovy / `GroovyJenkinsRule`)
-
-```groovy
-import org.junit.Rule
-import org.junit.Test
-import org.jvnet.hudson.test.GroovyJenkinsRule
-
-class MyStepTest {
-    @Rule public GroovyJenkinsRule rule = new GroovyJenkinsRule()
-
-    @Test
-    void myStepRuns() {
-        def job = rule.createProject(WorkflowJob, "test")
-        job.setDefinition(new CpsFlowDefinition("myStep()", true))
-        rule.buildAndAssertSuccess(job)
     }
 }
 ```
@@ -200,9 +218,9 @@ This applies the same wiring as the built-in `integrationTest` suite: `jenkins-t
 ```kotlin
 testing {
     suites {
-        register<JvmTestSuite>("integrationTestJunit5") {
+        register<JvmTestSuite>("integrationTestJunit") {
             sharedLibrary.withJenkins(this)
-            sources { java.setSrcDirs(listOf("test/integration-junit5/java")) }
+            sources { java.setSrcDirs(listOf("test/integration-junit/java")) }
             dependencies {
                 implementation(libs.junit.jupiter.api)
                 runtimeOnly(libs.junit.jupiter.engine)
@@ -224,7 +242,6 @@ testing {
             sources { groovy.setSrcDirs(listOf("test/integration-spock/groovy")) }
             dependencies {
                 implementation(libs.spock.core)
-                compileOnly(libs.groovy.core)
             }
         }
     }
@@ -249,7 +266,8 @@ testing {
                 setSrcDirs(listOf("test/integration-kotest/kotlin"))
             }}
             dependencies {
-                implementation(libs.kotest.runner)
+                implementation(libs.kotest.engine)
+                runtimeOnly(libs.kotest.runner)
                 implementation(libs.kotest.assertions)
                 implementation(libs.coroutines.core)
             }
@@ -263,7 +281,7 @@ Wire additional suites into `check` if they should run in CI:
 ```kotlin
 tasks.check {
     dependsOn(
-        tasks.named("integrationTestJunit5"),
+        tasks.named("integrationTestJunit"),
         tasks.named("integrationTestSpock"),
         tasks.named("integrationTestKotest"),
     )
@@ -284,25 +302,40 @@ Jenkins downloads the WAR and plugins on first run; subsequent runs use the Grad
 
 To upgrade the Jenkins LTS line:
 
-1. Update `jenkins-bom` in `gradle/libs.versions.toml` to the new module and version:
-
-   ```toml
-   [libraries]
-   jenkins-bom = { module = "io.jenkins.tools.bom:bom-2.528.x", version.ref = "jenkins-bom" }
-   ```
-
-2. Optionally pin the Jenkins core version in `sharedLibrary {}` to target a specific minor release:
+1. Set `version` and `bomVersion` in `sharedLibrary {}`:
 
    ```kotlin
    sharedLibrary {
        jenkins {
            version = "2.528.3"
+           bomVersion = "3413.v04c6e7e6c81d"
        }
    }
    ```
 
-Renovate keeps the BOM version up to date within the pinned LTS line.
-Changing the LTS module coordinate is a manual step.
+   The plugin derives the BOM module coordinate automatically from `version` (e.g., `2.528.3` → `bom-2.528.x`).
+   Look up the `bomVersion` value on the [Jenkins BOM releases page](https://github.com/jenkinsci/bom/releases).
+
+2. Optionally track the BOM version in `gradle/libs.versions.toml` so Renovate can keep it up to date within the pinned LTS line:
+
+   ```toml
+   [versions]
+   jenkins-bom = "3413.v04c6e7e6c81d"
+
+   [libraries]
+   jenkins-bom = { module = "io.jenkins.tools.bom:bom-2.528.x", version.ref = "jenkins-bom" }
+   ```
+
+   Then reference it in `build.gradle.kts`:
+
+   ```kotlin
+   sharedLibrary {
+       jenkins {
+           version = "2.528.3"
+           bomVersion = libs.versions.jenkins.bom.get()
+       }
+   }
+   ```
 
 ## Migration from 0.10.x
 
