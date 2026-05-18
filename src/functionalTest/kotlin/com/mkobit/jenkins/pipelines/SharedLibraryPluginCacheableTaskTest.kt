@@ -19,6 +19,15 @@ class SharedLibraryPluginCacheableTaskTest :
       }
       """.trimIndent()
 
+    val stubJunitTest =
+      """
+      package com.example;
+      import org.junit.jupiter.api.Test;
+      class StubTest {
+          @Test void passes() {}
+      }
+      """.trimIndent()
+
     // Routes the local build cache into the project directory so all GradleRunner instances
     // within a single test share the same cache (the default cache lives in the TestKit
     // Gradle user home, which is isolated per GradleRunner instance when GRADLE_USER_HOME
@@ -118,6 +127,90 @@ class SharedLibraryPluginCacheableTaskTest :
 
             runner(gradleVersion).withArguments("extractJenkinsCodeNarcConfig", "--build-cache").build()
               .task(":extractJenkinsCodeNarcConfig") shouldNotBeNull { outcome shouldBe TaskOutcome.FROM_CACHE }
+          }
+        }
+      }
+    }
+
+    describe("test") {
+      describe("is UP-TO-DATE on second run when inputs are unchanged") {
+        withData(TestedGradleVersion.filtered) { gradleVersion ->
+          withTestProject {
+            settingsFile.writeText(jenkinsSettings("cache-test"))
+            buildFile.writeText(sharedLibraryPluginBuild)
+            file("test/unit/java/com/example/StubTest.java").writeText(stubJunitTest)
+
+            runner(gradleVersion).withArguments("test").build()
+              .task(":test") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
+
+            runner(gradleVersion).withArguments("test").build()
+              .task(":test") shouldNotBeNull { outcome shouldBe TaskOutcome.UP_TO_DATE }
+          }
+        }
+      }
+
+      describe("is loaded FROM-CACHE when outputs are deleted and cache is populated") {
+        withData(TestedGradleVersion.filtered) { gradleVersion ->
+          withTestProject {
+            settingsFile.writeText(
+              """
+              $buildCacheSettings
+              ${jenkinsSettings("cache-test")}
+              """.trimIndent(),
+            )
+            buildFile.writeText(sharedLibraryPluginBuild)
+            file("test/unit/java/com/example/StubTest.java").writeText(stubJunitTest)
+
+            runner(gradleVersion).withArguments("test", "--build-cache").build()
+              .task(":test") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
+
+            dir.resolve("build/test-results/test").toFile().deleteRecursively()
+            dir.resolve("build/reports/tests/test").toFile().deleteRecursively()
+
+            runner(gradleVersion).withArguments("test", "--build-cache").build()
+              .task(":test") shouldNotBeNull { outcome shouldBe TaskOutcome.FROM_CACHE }
+          }
+        }
+      }
+    }
+
+    describe("integrationTest") {
+      describe("is UP-TO-DATE on second run when inputs are unchanged") {
+        withData(TestedGradleVersion.filtered) { gradleVersion ->
+          withTestProject {
+            settingsFile.writeText(jenkinsSettings("cache-integration-test"))
+            buildFile.writeText(sharedLibraryPluginBuild)
+            file("test/integration/java/com/example/StubTest.java").writeText(stubJunitTest)
+
+            runner(gradleVersion).withArguments("integrationTest").build()
+              .task(":integrationTest") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
+
+            runner(gradleVersion).withArguments("integrationTest").build()
+              .task(":integrationTest") shouldNotBeNull { outcome shouldBe TaskOutcome.UP_TO_DATE }
+          }
+        }
+      }
+
+      describe("is loaded FROM-CACHE when outputs are deleted and cache is populated") {
+        withData(TestedGradleVersion.filtered) { gradleVersion ->
+          withTestProject {
+            settingsFile.writeText(
+              """
+              $buildCacheSettings
+              ${jenkinsSettings("cache-integration-test")}
+              """.trimIndent(),
+            )
+            buildFile.writeText(sharedLibraryPluginBuild)
+            file("test/integration/java/com/example/StubTest.java").writeText(stubJunitTest)
+
+            runner(gradleVersion).withArguments("integrationTest", "--build-cache").build()
+              .task(":integrationTest") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
+
+            dir.resolve("build/test-results/integrationTest").toFile().deleteRecursively()
+            dir.resolve("build/reports/tests/integrationTest").toFile().deleteRecursively()
+
+            runner(gradleVersion).withArguments("integrationTest", "--build-cache").build()
+              .task(":integrationTest") shouldNotBeNull { outcome shouldBe TaskOutcome.FROM_CACHE }
           }
         }
       }
