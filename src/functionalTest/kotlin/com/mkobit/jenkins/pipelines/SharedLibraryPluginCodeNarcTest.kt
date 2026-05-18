@@ -32,10 +32,11 @@ class SharedLibraryPluginCodeNarcTest :
       }
       """.trimIndent()
 
-    fun withBaseProject(block: TestProject.() -> Unit) = withTestProject {
-      settingsFile.writeText(jenkinsSettings("codenarc-test"))
-      block()
-    }
+    fun withBaseProject(block: TestProject.() -> Unit) =
+      withTestProject {
+        settingsFile.writeText(jenkinsSettings("codenarc-test"))
+        block()
+      }
 
     fun TestProject.codenarcReport(): String {
       val report = dir.resolve("build/reports/codenarc/jenkinsMain.txt")

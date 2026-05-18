@@ -49,11 +49,12 @@ class SharedLibraryPluginResolutionTest :
       }
       """.trimIndent()
 
-    fun withJenkinsProject(block: TestProject.() -> Unit) = withTestProject {
-      settingsFile.writeText(jenkinsSettings("resolution-test"))
-      buildFile.writeText(jenkinsProjectBuildFile)
-      block()
-    }
+    fun withJenkinsProject(block: TestProject.() -> Unit) =
+      withTestProject {
+        settingsFile.writeText(jenkinsSettings("resolution-test"))
+        buildFile.writeText(jenkinsProjectBuildFile)
+        block()
+      }
 
     fun groovyAllExclusionSettings(projectName: String) =
       """
@@ -72,8 +73,10 @@ class SharedLibraryPluginResolutionTest :
         withJenkinsProject {
           val result = runner(gradleVersion).withArguments("printResolvedArtifacts").build()
 
-          val testRuntimeFiles = result.output.lines()
-            .filterMatching { it.shouldStartWith("testRuntime:") }
+          val testRuntimeFiles =
+            result.output
+              .lines()
+              .filterMatching { it.shouldStartWith("testRuntime:") }
 
           testRuntimeFiles.shouldNotBeEmpty()
           testRuntimeFiles.forAtLeastOne { it shouldContain "workflow-api" }
@@ -88,8 +91,10 @@ class SharedLibraryPluginResolutionTest :
         withJenkinsProject {
           val result = runner(gradleVersion).withArguments("printResolvedArtifacts").build()
 
-          val hpiFiles = result.output.lines()
-            .filterMatching { it.shouldStartWith("hpis:") }
+          val hpiFiles =
+            result.output
+              .lines()
+              .filterMatching { it.shouldStartWith("hpis:") }
 
           hpiFiles.shouldNotBeEmpty()
           // Jenkins plugin artifacts must appear as .hpi — plain Java lib transitives may appear as .jar via JpiCompatibilityRule.
@@ -173,11 +178,13 @@ class SharedLibraryPluginResolutionTest :
           )
           val result = runner(gradleVersion).withArguments("printJenkinsWar").build()
 
-          val warFiles = result.output.lines()
-            .filterMatching {
-              it.shouldStartWith("war:")
-              it.shouldEndWith(".war")
-            }
+          val warFiles =
+            result.output
+              .lines()
+              .filterMatching {
+                it.shouldStartWith("war:")
+                it.shouldEndWith(".war")
+              }
 
           warFiles.size shouldBe 1
           warFiles.single() shouldContain "jenkins-war"
@@ -245,8 +252,10 @@ class SharedLibraryPluginResolutionTest :
           )
           val result = runner(gradleVersion).withArguments("printGroovyAllRuntime").build()
 
-          val groovyAllFiles = result.output.lines()
-            .filterMatching { it.shouldStartWith("groovyAllRuntime:") }
+          val groovyAllFiles =
+            result.output
+              .lines()
+              .filterMatching { it.shouldStartWith("groovyAllRuntime:") }
 
           groovyAllFiles.size shouldBe 1
           groovyAllFiles.single() shouldContain "groovy-all"

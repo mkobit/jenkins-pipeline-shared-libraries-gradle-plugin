@@ -23,7 +23,7 @@ A Gradle plugin for developing and testing [Jenkins Pipeline Shared Libraries](h
 | Dimension | Supported versions |
 |---|---|
 | Gradle | 9.4.0, 9.4.1, 9.5.0, 9.5.1 |
-| Java | 17, 21 |
+| Java | 17, 21, 25 |
 | Jenkins LTS | 2.479.x, 2.528.x, 2.541.x |
 
 ## Quick start
@@ -142,8 +142,7 @@ public class MyStepTest {
     @Test
     public void myStepRuns() throws Exception {
         WorkflowJob job = rule.createProject(WorkflowJob.class, "test");
-        job.setDefinition(new CpsFlowDefinition(
-            "@Library('my-shared-lib') _\nmyStep()", true));
+        job.setDefinition(new CpsFlowDefinition("myStep()", true));
         rule.buildAndAssertSuccess(job);
     }
 }

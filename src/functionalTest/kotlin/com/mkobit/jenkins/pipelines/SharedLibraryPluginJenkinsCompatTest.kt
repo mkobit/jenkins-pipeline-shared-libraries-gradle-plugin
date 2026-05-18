@@ -77,8 +77,10 @@ class SharedLibraryPluginJenkinsCompatTest :
         withJenkinsCompatProject(e) {
           val result = runner(gradleVersion).withArguments("printClasspaths").build()
 
-          val compileFiles = result.output.lines()
-            .filterMatching { it.shouldStartWith("compile:") }
+          val compileFiles =
+            result.output
+              .lines()
+              .filterMatching { it.shouldStartWith("compile:") }
           compileFiles.shouldNotBeEmpty()
           compileFiles.forAtLeastOne { it shouldContain "jenkins-core-${e.jenkinsVersion}" }
         }
@@ -100,8 +102,10 @@ class SharedLibraryPluginJenkinsCompatTest :
         withJenkinsCompatProject(e) {
           val result = runner(gradleVersion).withArguments("printClasspaths").build()
 
-          val testRuntimeFiles = result.output.lines()
-            .filterMatching { it.shouldStartWith("testRuntime:") }
+          val testRuntimeFiles =
+            result.output
+              .lines()
+              .filterMatching { it.shouldStartWith("testRuntime:") }
           testRuntimeFiles.shouldNotBeEmpty()
           testRuntimeFiles.forNone { it shouldContain "groovy-all" }
         }
@@ -111,8 +115,10 @@ class SharedLibraryPluginJenkinsCompatTest :
         withJenkinsCompatProject(e) {
           val result = runner(gradleVersion).withArguments("printClasspaths").build()
 
-          val warFiles = result.output.lines()
-            .filterMatching { it.shouldStartWith("war:") }
+          val warFiles =
+            result.output
+              .lines()
+              .filterMatching { it.shouldStartWith("war:") }
           warFiles.size shouldBe 1
           warFiles.single() shouldContain "jenkins-war-${e.jenkinsVersion}"
         }
