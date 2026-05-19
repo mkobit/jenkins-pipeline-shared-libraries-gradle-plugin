@@ -23,17 +23,16 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    # workflow_run path: Build passed on main AND commit is a Release Please release commit.
-    # Dispatch path: always runs (gated by repo write access).
+    # Release Please generates "chore(main): release X.Y.Z"; match both scoped and unscoped forms.
     if: >-
       github.event_name == 'workflow_dispatch' || (
       github.event_name == 'workflow_run' &&
       github.event.workflow_run.conclusion == 'success' &&
-      startsWith(github.event.workflow_run.head_commit.message, 'chore: release '))
+      startsWith(github.event.workflow_run.head_commit.message, 'chore') &&
+      contains(github.event.workflow_run.head_commit.message, ': release '))
     permissions:
       contents: write
     steps:
-      # Pin to the exact commit Build ran on; HEAD of default branch on dispatch.
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
