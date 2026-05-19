@@ -12,7 +12,6 @@
       ],
       "bump-minor-pre-major": true,
       "include-v-in-tag": true,
-      "skip-github-release": true,
       "changelog-sections": [
         {"type": "feat", "section": "Features"},
         {"type": "fix", "section": "Bug fixes"},
