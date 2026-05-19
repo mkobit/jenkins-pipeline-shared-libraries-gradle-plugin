@@ -60,14 +60,16 @@ jobs:
           BRANCH: ${{ github.head_ref || github.ref_name }}
         run: |
           if [ -n "$OVERRIDE" ]; then
-            echo "ref=$OVERRIDE" >> "$GITHUB_OUTPUT"
+            REF="$OVERRIDE"
           elif git ls-remote --exit-code \
                https://github.com/mkobit/jenkins-pipeline-shared-library-example.git \
                "refs/heads/$BRANCH" > /dev/null 2>&1; then
-            echo "ref=$BRANCH" >> "$GITHUB_OUTPUT"
+            REF="$BRANCH"
           else
-            echo "ref=main" >> "$GITHUB_OUTPUT"
+            REF="main"
           fi
+          # EOF delimiter is safe against newlines in branch names or dispatch inputs.
+          printf 'ref<<EOF\n%s\nEOF\n' "$REF" >> "$GITHUB_OUTPUT"
 
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:

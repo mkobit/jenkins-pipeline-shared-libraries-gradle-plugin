@@ -23,10 +23,12 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    # workflow_run path: Build passed on main AND commit is a Release Please release commit.
-    # Release Please generates "chore(main): release X.Y.Z" — the scope varies so we match
-    # both "chore: release " and "chore(...): release " via a contains check on ": release ".
-    # Dispatch path: always runs (gated by repo write access).
+    # workflow_run path: fires only when Build passes on main (branches: [main] above) AND the
+    # commit message matches the Release Please pattern.  The commit-message check is a
+    # best-effort filter, not a security boundary — the real gate is main branch protection
+    # (PRs + passing CI required).  Any maintainer with write access can also trigger the
+    # release manually via workflow_dispatch below.
+    # Release Please generates "chore(main): release X.Y.Z"; match both scoped and unscoped forms.
     if: >-
       github.event_name == 'workflow_dispatch' || (
       github.event_name == 'workflow_run' &&
