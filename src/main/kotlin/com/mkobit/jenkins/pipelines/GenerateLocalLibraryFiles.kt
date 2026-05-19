@@ -19,6 +19,9 @@ import kotlin.io.path.writeText
  *
  * - `LocalLibraryRetriever.java` — a `LibraryRetriever` that copies `src/`, `vars/`, and
  *   `resources/` from the path set in the `test.library.location` system property.
+ *   Additional libraries are injected via contiguous `test.library.N.{name,location,implicit}`
+ *   properties. A future iteration may replace the property scheme with a single manifest
+ *   file on the test classpath once external library resolution is implemented.
  * - `SharedLibraryAutoRegistrar.java` — an `@Initializer`-annotated class that auto-registers
  *   the library in `GlobalLibraries` at embedded Jenkins startup (generated unless
  *   `sharedLibrary.autoRegisterLibrary = false`).
@@ -140,10 +143,13 @@ abstract class GenerateLocalLibraryFiles : DefaultTask() {
            * can reference them without any explicit setup code.
            *
            * <p>The primary library is supplied via {@code test.library.name} and
-           * {@code test.library.location}. Additional libraries are supplied as indexed pairs:
-           * {@code test.library.0.name} / {@code test.library.0.location},
-           * {@code test.library.1.name} / {@code test.library.1.location}, and so on.
-           * The scan stops at the first index where either property is absent.
+           * {@code test.library.location}. Additional libraries (resolved from Gradle
+           * dependencies via the {@code sharedLibrarySourceElements} variant) are supplied
+           * as contiguous zero-based indexed pairs: {@code test.library.0.name} /
+           * {@code test.library.0.location}, {@code test.library.1.name} /
+           * {@code test.library.1.location}, and so on. Indices must be contiguous starting
+           * at 0 — the scan stops at the first missing index. The plugin always injects
+           * contiguous indices, so gaps do not arise in practice.
            *
            * <p>Set system property {@code test.library.auto.register=false} at JVM startup to
            * disable auto-registration for a specific test run (e.g. to test manual registration).
@@ -160,6 +166,8 @@ abstract class GenerateLocalLibraryFiles : DefaultTask() {
                   boolean implicit = !"false".equalsIgnoreCase(System.getProperty("test.library.implicit", "true"));
                   libraries.add(makeLibrary(name, location, implicit));
               }
+              // Additional libraries — indices must be contiguous starting at 0.
+              // The plugin guarantees contiguity; do not set these properties manually with gaps.
               int i = 0;
               while (true) {
                   String extraName = System.getProperty("test.library." + i + ".name");
