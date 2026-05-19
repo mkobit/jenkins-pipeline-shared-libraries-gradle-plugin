@@ -223,7 +223,10 @@ internal class SharedLibraryPluginTest :
         val task = project.tasks.getByName("integrationTest") as org.gradle.api.tasks.testing.Test
         val provider = task.jvmArgumentProviders.filterIsInstance<LibraryRootArgumentProvider>().single()
         provider.libraryRoot.get().asFile shouldBe
-          project.layout.buildDirectory.dir("sharedLibrarySource/${project.name}").get().asFile
+          project.layout.buildDirectory
+            .dir("sharedLibrarySource/${project.name}")
+            .get()
+            .asFile
       }
 
       it("integrationTest injects test.library.name system property") {

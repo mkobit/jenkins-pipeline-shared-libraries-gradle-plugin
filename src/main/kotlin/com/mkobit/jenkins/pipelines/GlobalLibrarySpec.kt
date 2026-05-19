@@ -28,7 +28,9 @@ import javax.inject.Inject
  */
 internal abstract class GlobalLibrarySpec
   @Inject
-  constructor(private val libraryName: String) : Named {
+  constructor(
+    private val libraryName: String,
+  ) : Named {
     override fun getName(): String = libraryName
 
     /**
