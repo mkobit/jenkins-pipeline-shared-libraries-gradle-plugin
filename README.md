@@ -2,6 +2,13 @@
 
 [![Plugin Version](https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/com/mkobit/jenkins/pipelines/jenkins-pipeline-shared-libraries-gradle-plugin/maven-metadata.xml.svg?label=Gradle%20Plugin%20Portal)](https://plugins.gradle.org/plugin/com.mkobit.jenkins.pipelines.shared-library)
 [![Build](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/actions/workflows/build.yml)
+[![License](https://img.shields.io/github/license/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin)](LICENSE.txt)
+
+| | Tested versions |
+|---|---|
+| ![Gradle](https://img.shields.io/badge/Gradle--green?logo=gradle) | ![9.4.0](https://img.shields.io/badge/9.4.0--green) ![9.4.1](https://img.shields.io/badge/9.4.1--green) ![9.5.0](https://img.shields.io/badge/9.5.0--green) ![9.5.1](https://img.shields.io/badge/9.5.1--green) |
+| ![Java](https://img.shields.io/badge/Java--orange?logo=openjdk) | ![17](https://img.shields.io/badge/17--orange) ![21](https://img.shields.io/badge/21--orange) ![25](https://img.shields.io/badge/25--orange) |
+| ![Jenkins LTS](https://img.shields.io/badge/Jenkins_LTS--blue?logo=jenkins) | ![2.479.x](https://img.shields.io/badge/2.479.x--blue) ![2.528.x](https://img.shields.io/badge/2.528.x--blue) ![2.541.x](https://img.shields.io/badge/2.541.x--blue) |
 
 > [!NOTE]
 > This documentation tracks the `HEAD` of the repository.
@@ -17,14 +24,6 @@ A Gradle plugin for developing and testing [Jenkins Pipeline Shared Libraries](h
 - Automatic Jenkins BOM injection and dependency alignment.
 - Local library auto-registration for integration tests (no network needed).
 - Configuration cache compliant.
-
-## Compatibility
-
-| | Tested versions |
-|---|---|
-| ![Gradle](https://img.shields.io/badge/Gradle--green?logo=gradle) | ![9.4.0](https://img.shields.io/badge/9.4.0--green) ![9.4.1](https://img.shields.io/badge/9.4.1--green) ![9.5.0](https://img.shields.io/badge/9.5.0--green) ![9.5.1](https://img.shields.io/badge/9.5.1--green) |
-| ![Java](https://img.shields.io/badge/Java--orange?logo=openjdk) | ![17](https://img.shields.io/badge/17--orange) ![21](https://img.shields.io/badge/21--orange) ![25](https://img.shields.io/badge/25--orange) |
-| ![Jenkins LTS](https://img.shields.io/badge/Jenkins_LTS--blue?logo=jenkins) | ![2.479.x](https://img.shields.io/badge/2.479.x--blue) ![2.528.x](https://img.shields.io/badge/2.528.x--blue) ![2.541.x](https://img.shields.io/badge/2.541.x--blue) |
 
 ## Quick start
 
