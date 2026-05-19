@@ -46,6 +46,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - All individual workflow plugin version properties (`workflowCpsPluginVersion`, `workflowJobPluginVersion`, etc.) — these plugins are managed by the Jenkins BOM.
 - Custom configurations (`jenkinsPlugins`, `jenkinsPluginHpisAndJpis`, etc.) — `jenkinsPlugin` is the only user-facing configuration.
 
+### Usage
+
+`gradle/libs.versions.toml`
+
+```toml
+[plugins]
+jenkins-shared-library = { id = "com.mkobit.jenkins.pipelines.shared-library", version = "0.11.0" }
+```
+
+`build.gradle.kts`
+
+```kotlin
+plugins {
+    alias(libs.plugins.jenkins.shared.library)
+}
+
+dependencies {
+    jenkinsPlugin("org.jenkins-ci.plugins:pipeline-model-definition")
+}
+```
+
+No `sharedLibrary {}` block is required for the default configuration (Jenkins 2.479.x LTS, project name as library name).
+See the [jenkins-pipeline-shared-library-example](https://github.com/mkobit/jenkins-pipeline-shared-library-example) repository for a complete working project.
+
 ---
 
 > [!NOTE]
