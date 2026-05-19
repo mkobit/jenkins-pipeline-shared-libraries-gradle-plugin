@@ -29,7 +29,7 @@ updates:
     cooldown:
       default-days: 30
     commit-message:
-      prefix: "deps"
+      prefix: "infra"
       include: "scope"
     groups:
       github-actions-first-party:
