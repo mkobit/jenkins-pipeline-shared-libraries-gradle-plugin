@@ -49,10 +49,6 @@ jobs:
         with:
           path: jenkins-pipeline-shared-libraries-gradle-plugin
 
-      # Resolve which example branch to test against:
-      #   1. workflow_dispatch input (explicit override)
-      #   2. same branch name as the current plugin branch (coordinated cross-repo changes)
-      #   3. main (fallback for plugin-only changes)
       - name: Resolve example ref
         id: example-ref
         env:
@@ -68,7 +64,6 @@ jobs:
           else
             REF="main"
           fi
-          # EOF delimiter is safe against newlines in branch names or dispatch inputs.
           printf 'ref<<EOF\n%s\nEOF\n' "$REF" >> "$GITHUB_OUTPUT"
 
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd

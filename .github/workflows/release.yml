@@ -23,11 +23,6 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    # workflow_run path: fires only when Build passes on main (branches: [main] above) AND the
-    # commit message matches the Release Please pattern.  The commit-message check is a
-    # best-effort filter, not a security boundary — the real gate is main branch protection
-    # (PRs + passing CI required).  Any maintainer with write access can also trigger the
-    # release manually via workflow_dispatch below.
     # Release Please generates "chore(main): release X.Y.Z"; match both scoped and unscoped forms.
     if: >-
       github.event_name == 'workflow_dispatch' || (
@@ -38,7 +33,6 @@ jobs:
     permissions:
       contents: write
     steps:
-      # Pin to the exact commit Build ran on; HEAD of default branch on dispatch.
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}

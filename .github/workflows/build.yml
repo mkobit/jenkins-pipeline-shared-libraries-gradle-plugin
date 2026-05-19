@@ -29,9 +29,6 @@ on:
 
 permissions: {}
 
-# head_ref is set for pull_request events (source branch name); ref_name is set for
-# push events (target branch). Using head_ref || ref_name groups a push to a PR branch
-# and the corresponding pull_request event together so the second cancels the first.
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
@@ -75,6 +72,16 @@ jobs:
           java-version: 17
       - name: Generate matrices
         run: ./gradlew generateGradleCompatMatrix generateJavaCompatMatrix generateJenkinsCompatMatrix --console=plain
+      - name: Validate matrix task suffixes
+        run: |
+          for f in build/ci/gradle-compat-matrix.json \
+                   build/ci/java-compat-matrix.json \
+                   build/ci/jenkins-compat-matrix.json; do
+            if ! jq -e '[.include[]["task-suffix"] // ""] | all(test("^[A-Za-z0-9_-]*$"))' "$f" > /dev/null; then
+              echo "ERROR: unexpected task-suffix value in $f" >&2
+              exit 1
+            fi
+          done
       - id: gen
         run: |
           echo "gradle-matrix=$(cat build/ci/gradle-compat-matrix.json)" >> "$GITHUB_OUTPUT"
@@ -99,8 +106,6 @@ jobs:
       - name: Compile, style, and unit tests
         run: ./gradlew spotlessCheck test
       - name: Functional tests (gate)
-        # Foojay auto-provisions any JDK not already on the runner.
-        # This also runs Resolution tests, warming the Jenkins artifact cache for downstream jobs.
         run: ./gradlew assemble validatePlugins functionalTest
       - name: Publish test results
         if: always()
@@ -127,10 +132,6 @@ jobs:
         with:
           java-version: ${{ needs.build-config.outputs.java-version }}
       - name: Functional tests (Gradle ${{ matrix.gradle }})
-        # Uses the named per-version target which includes smoke + resolution tests (!JenkinsCompat).
-        # task-suffix is injected inline from matrix JSON produced by a Gradle task on the checked-out
-        # source. A malicious fork PR could craft the suffix to inject shell commands, but fork PRs
-        # run without repository secrets so the blast radius is limited to the runner environment.
         run: ./gradlew functionalTest${{ matrix.task-suffix }}
       - name: Publish test results
         if: always()
@@ -193,8 +194,6 @@ jobs:
         with:
           java-version: ${{ needs.build-config.outputs.java-version }}
       - name: Jenkins compat tests (Jenkins ${{ matrix.jenkins-lts }})
-        # Uses the named per-LTS target which injects a single test.jenkins.entries entry.
-        # See gradle-compat note above re: task-suffix injection risk on fork PRs.
         run: ./gradlew functionalTest${{ matrix.task-suffix }}
       - name: Publish test results
         if: always()
@@ -222,9 +221,6 @@ jobs:
           java-version: ${{ needs.build-config.outputs.java-version }}
           cache-read-only: "true"
       - name: Functional tests (Java ${{ matrix.java }})
-        # Uses the named per-Java target; Foojay provisions the test JVM if not cached.
-        # Gate already warmed the Gradle dependency and JDK caches.
-        # See gradle-compat note above re: task-suffix injection risk on fork PRs.
         run: ./gradlew functionalTest${{ matrix.task-suffix }} --continue
       - name: Publish test results
         if: always()
