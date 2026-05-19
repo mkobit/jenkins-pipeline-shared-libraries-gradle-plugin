@@ -48,27 +48,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Usage
 
-`gradle/libs.versions.toml`
+`settings.gradle.kts`
 
-```toml
-[plugins]
-jenkins-shared-library = { id = "com.mkobit.jenkins.pipelines.shared-library", version = "0.11.0" }
+```kotlin
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+    }
+}
 ```
 
 `build.gradle.kts`
 
 ```kotlin
 plugins {
-    alias(libs.plugins.jenkins.shared.library)
+    id("com.mkobit.jenkins.pipelines.shared-library") version "0.11.0"
 }
 
-dependencies {
-    jenkinsPlugin("org.jenkins-ci.plugins:pipeline-model-definition")
+sharedLibrary {
+    jenkins {
+        version = "2.479.1"
+    }
+    plugins {
+        plugin("org.jenkins-ci.plugins:pipeline-model-definition")
+    }
 }
 ```
 
-No `sharedLibrary {}` block is required for the default configuration (Jenkins 2.479.x LTS, project name as library name).
-See the [jenkins-pipeline-shared-library-example](https://github.com/mkobit/jenkins-pipeline-shared-library-example) repository for a complete working project.
+Source layout:
+
+```
+src/com/example/Util.groovy
+vars/myStep.groovy
+resources/com/example/data.json
+test/unit/groovy/com/example/UtilSpec.groovy
+test/integration/groovy/com/example/MyStepTest.groovy
+```
+
+For a complete working project, see the example repository:
+
+- [at `c376906`](https://github.com/mkobit/jenkins-pipeline-shared-library-example/tree/c37690649d10aa7cabdd534062bde5a5560ce852) — pinned to the version tested against 0.11.0
+- [latest `main`](https://github.com/mkobit/jenkins-pipeline-shared-library-example/tree/main)
 
 ---
 
