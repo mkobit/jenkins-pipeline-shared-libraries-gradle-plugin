@@ -228,3 +228,19 @@ jobs:
           report_paths: 'build/test-results/**/*.xml'
           check_name: 'Test results — Java ${{ matrix.java }}'
           fail_on_failure: false
+
+  dependency-submission:
+    name: Submit dependency graph
+    needs: [build-config, gate, gradle-compat, platform-compat, jenkins-compat, java-compat]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
+        with:
+          java-version: ${{ needs.build-config.outputs.java-version }}
+          distribution: temurin
+      - uses: gradle/actions/dependency-submission@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e
