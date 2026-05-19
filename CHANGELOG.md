@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/compare/v0.10.1...v0.11.0) (2026-05-19)
+
+
+### Features
+
+* syncSharedLibrarySource task, sharedLibrarySourceElements variant, and LibraryRootArgumentProvider ([#145](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/145)) ([4a07912](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/4a07912f5f2d18808c5a98b9732f8161363a11f8))
+* the phoenix project — ground-up revamp ([#124](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/124)) ([d055cca](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/d055cca5972590fbca2a7abcd90216f05e13b5bc))
+
+
+### Bug fixes
+
+* move bootstrap-sha to parent of phoenix project merge commit ([#142](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/142)) ([a230935](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/a230935b2380b406a9a98f5f311778afbd1ba518))
+* pre-release cleanup — Release Please bootstrap and README accuracy ([#139](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/139)) ([75384c5](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/75384c5339b836cc94483246859dfdfe78e10d4e))
+
 ## [Unreleased]
 
 > [!IMPORTANT]
