@@ -4,6 +4,7 @@ package com.mkobit.jenkins.pipelines
 
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition
 import org.gradle.api.attributes.Category
+import org.gradle.api.attributes.Usage
 import org.gradle.api.plugins.jvm.JvmTestSuite
 import org.gradle.api.plugins.quality.CodeNarc
 import org.gradle.api.tasks.compile.GroovyCompile
@@ -179,6 +180,7 @@ configurations.register(SHARED_LIBRARY_SOURCE_ELEMENTS_CONFIGURATION) {
   description = "Shared library source files for consumption by dependent projects via variant-aware resolution"
   attributes {
     attribute(Category.CATEGORY_ATTRIBUTE, objects.named<Category>(SHARED_LIBRARY_SOURCE_CATEGORY))
+    attribute(Usage.USAGE_ATTRIBUTE, objects.named<Usage>(SHARED_LIBRARY_SOURCE_USAGE))
   }
   outgoing.artifact(syncSharedLibrarySource.flatMap { it.destinationDir }) {
     type = "directory"

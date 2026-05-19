@@ -30,7 +30,11 @@ class SharedLibraryPluginVariantTest :
                 .build()
 
             result.output shouldContain "sharedLibrarySourceElements"
-            result.output shouldContain "org.gradle.category = shared-library-source"
+            // org.gradle.category is the longest key so Gradle prints it without padding.
+            result.output shouldContain "org.gradle.category = jenkins-shared-library"
+            // org.gradle.usage is shorter so Gradle pads it — check key and value separately.
+            result.output shouldContain "org.gradle.usage"
+            result.output shouldContain "jenkins-shared-library-source"
           }
         }
       }
