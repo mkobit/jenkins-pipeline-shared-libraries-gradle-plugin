@@ -9,7 +9,7 @@ import org.gradle.process.CommandLineArgumentProvider
 abstract class LibraryLocationArgumentProvider : CommandLineArgumentProvider {
   /** Absolute path of the synced shared library source directory (sync task output). */
   @get:InputDirectory
-  @get:PathSensitive(PathSensitivity.ABSOLUTE)
+  @get:PathSensitive(PathSensitivity.RELATIVE)
   abstract val libraryLocation: DirectoryProperty
 
   override fun asArguments() = listOf("-Dtest.library.location=${libraryLocation.get().asFile.absolutePath}")
