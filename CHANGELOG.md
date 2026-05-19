@@ -56,6 +56,16 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
+
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+        maven {
+            name = "jenkins"
+            url = uri("https://repo.jenkins-ci.org/public/")
+        }
+    }
+}
 ```
 
 `build.gradle.kts`
@@ -67,7 +77,7 @@ plugins {
 
 sharedLibrary {
     jenkins {
-        version = "2.479.1"
+        version = "2.541.3"
     }
     plugins {
         plugin("org.jenkins-ci.plugins:pipeline-model-definition")
