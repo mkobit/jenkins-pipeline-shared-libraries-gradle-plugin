@@ -6,6 +6,9 @@ updates:
       interval: "weekly"
     cooldown:
       default-days: 14
+    commit-message:
+      prefix: "deps"
+      include: "scope"
     groups:
       jetbrains:
         patterns:
@@ -25,6 +28,9 @@ updates:
       interval: "weekly"
     cooldown:
       default-days: 30
+    commit-message:
+      prefix: "deps"
+      include: "scope"
     groups:
       github-actions-first-party:
         patterns:
