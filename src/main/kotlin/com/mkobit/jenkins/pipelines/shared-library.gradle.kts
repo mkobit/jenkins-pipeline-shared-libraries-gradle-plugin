@@ -180,9 +180,9 @@ configurations.register(SHARED_LIBRARY_SOURCE_ELEMENTS_CONFIGURATION) {
   attributes {
     attribute(Category.CATEGORY_ATTRIBUTE, objects.named<Category>(SHARED_LIBRARY_SOURCE_CATEGORY))
   }
-  // TaskProvider.flatMap wires builtBy automatically — no explicit builtBy needed.
   outgoing.artifact(syncSharedLibrarySource.flatMap { it.destinationDir }) {
     type = "directory"
+    builtBy(syncSharedLibrarySource)
   }
 }
 

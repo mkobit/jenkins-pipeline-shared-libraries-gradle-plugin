@@ -3,12 +3,14 @@ package com.mkobit.jenkins.pipelines
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.file.FileSystemOperations
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
+import javax.inject.Inject
 
 /**
  * Copies `src/`, `vars/`, and `resources/` into the declared [destinationDir].
@@ -18,6 +20,9 @@ import org.gradle.api.tasks.TaskAction
  */
 @CacheableTask
 abstract class SyncSharedLibrarySource : DefaultTask() {
+  @get:Inject
+  abstract val fileSystemOperations: FileSystemOperations
+
   @get:InputFiles
   @get:PathSensitive(PathSensitivity.RELATIVE)
   abstract val srcFiles: ConfigurableFileCollection
@@ -35,7 +40,7 @@ abstract class SyncSharedLibrarySource : DefaultTask() {
 
   @TaskAction
   fun sync() {
-    project.sync {
+    fileSystemOperations.sync {
       from(srcFiles) { into("src") }
       from(varsFiles) { into("vars") }
       from(resourcesFiles) { into("resources") }
