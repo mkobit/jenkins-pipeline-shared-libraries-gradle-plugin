@@ -94,11 +94,11 @@ class SharedLibraryPluginSmokeTest :
           autoRegistrarSource shouldContain "public static void registerLibrary()"
           autoRegistrarSource shouldContain "test.library.auto.register"
           autoRegistrarSource shouldContain "test.library.name"
-          autoRegistrarSource shouldContain "test.library.root"
+          autoRegistrarSource shouldContain "test.library.location"
           autoRegistrarSource shouldContain "test.library.implicit"
           // Indexed multi-library props: test.library.0.name / test.library.0.root / test.library.0.implicit
           autoRegistrarSource shouldContain "test.library.\" + i + \".name"
-          autoRegistrarSource shouldContain "test.library.\" + i + \".root"
+          autoRegistrarSource shouldContain "test.library.\" + i + \".location"
           autoRegistrarSource shouldContain "test.library.\" + i + \".implicit"
           autoRegistrarSource shouldContain "makeLibrary"
         }
@@ -193,7 +193,7 @@ class SharedLibraryPluginSmokeTest :
       }
     }
 
-    describe("monorepo: test.library.root resolves relative to subproject projectDir, not rootDir") {
+    describe("monorepo: syncSharedLibrarySource output resolves relative to subproject projectDir, not rootDir") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
         withTestProject {
           settingsFile.writeText(

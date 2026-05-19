@@ -18,7 +18,7 @@ import kotlin.io.path.writeText
  * The generated files are wired into the `integrationTest` source set:
  *
  * - `LocalLibraryRetriever.java` — a `LibraryRetriever` that copies `src/`, `vars/`, and
- *   `resources/` from the path set in the `test.library.root` system property.
+ *   `resources/` from the path set in the `test.library.location` system property.
  * - `SharedLibraryAutoRegistrar.java` — an `@Initializer`-annotated class that auto-registers
  *   the library in `GlobalLibraries` at embedded Jenkins startup (generated unless
  *   `sharedLibrary.autoRegisterLibrary = false`).
@@ -140,9 +140,9 @@ abstract class GenerateLocalLibraryFiles : DefaultTask() {
            * can reference them without any explicit setup code.
            *
            * <p>The primary library is supplied via {@code test.library.name} and
-           * {@code test.library.root}. Additional libraries are supplied as indexed pairs:
-           * {@code test.library.0.name} / {@code test.library.0.root},
-           * {@code test.library.1.name} / {@code test.library.1.root}, and so on.
+           * {@code test.library.location}. Additional libraries are supplied as indexed pairs:
+           * {@code test.library.0.name} / {@code test.library.0.location},
+           * {@code test.library.1.name} / {@code test.library.1.location}, and so on.
            * The scan stops at the first index where either property is absent.
            *
            * <p>Set system property {@code test.library.auto.register=false} at JVM startup to
@@ -155,18 +155,18 @@ abstract class GenerateLocalLibraryFiles : DefaultTask() {
               }
               List<LibraryConfiguration> libraries = new ArrayList<>();
               String name = System.getProperty("test.library.name");
-              String root = System.getProperty("test.library.root");
-              if (name != null && root != null) {
+              String location = System.getProperty("test.library.location");
+              if (name != null && location != null) {
                   boolean implicit = !"false".equalsIgnoreCase(System.getProperty("test.library.implicit", "true"));
-                  libraries.add(makeLibrary(name, root, implicit));
+                  libraries.add(makeLibrary(name, location, implicit));
               }
               int i = 0;
               while (true) {
                   String extraName = System.getProperty("test.library." + i + ".name");
-                  String extraRoot = System.getProperty("test.library." + i + ".root");
-                  if (extraName == null || extraRoot == null) break;
+                  String extraLocation = System.getProperty("test.library." + i + ".location");
+                  if (extraName == null || extraLocation == null) break;
                   boolean extraImplicit = !"false".equalsIgnoreCase(System.getProperty("test.library." + i + ".implicit", "true"));
-                  libraries.add(makeLibrary(extraName, extraRoot, extraImplicit));
+                  libraries.add(makeLibrary(extraName, extraLocation, extraImplicit));
                   i++;
               }
               if (!libraries.isEmpty()) {
@@ -174,8 +174,8 @@ abstract class GenerateLocalLibraryFiles : DefaultTask() {
               }
           }
 
-          private static LibraryConfiguration makeLibrary(String name, String root, boolean implicit) {
-              LibraryConfiguration cfg = new LibraryConfiguration(name, new LocalLibraryRetriever(new File(root)));
+          private static LibraryConfiguration makeLibrary(String name, String location, boolean implicit) {
+              LibraryConfiguration cfg = new LibraryConfiguration(name, new LocalLibraryRetriever(new File(location)));
               cfg.setImplicit(implicit);
               cfg.setDefaultVersion("fixed");
               return cfg;
@@ -199,21 +199,21 @@ abstract class GenerateLocalLibraryFiles : DefaultTask() {
       @Generated("com.mkobit.jenkins.pipelines.GenerateLocalLibraryFiles")
       public final class LocalLibraryRetriever extends LibraryRetriever {
 
-          private final File root;
+          private final File location;
 
           public LocalLibraryRetriever() {
               this(new File(Objects.requireNonNull(
-                  System.getProperty("test.library.root"),
-                  "System property test.library.root must be set")));
+                  System.getProperty("test.library.location"),
+                  "System property test.library.location must be set")));
           }
 
-          public LocalLibraryRetriever(File root) {
-              this.root = root;
+          public LocalLibraryRetriever(File location) {
+              this.location = location;
           }
 
           @Override
           public void retrieve(String name, String version, boolean changelog, FilePath target, Run<?, ?> run, TaskListener listener) throws Exception {
-              new FilePath(root).copyRecursiveTo("src/**/*.groovy,vars/*.groovy,vars/*.txt,resources/**", null, target);
+              new FilePath(location).copyRecursiveTo("src/**/*.groovy,vars/*.groovy,vars/*.txt,resources/**", null, target);
           }
 
           @Override

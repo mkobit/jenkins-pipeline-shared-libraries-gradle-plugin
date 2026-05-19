@@ -110,13 +110,13 @@ fun applyJenkinsTestWiring(suite: JvmTestSuite) {
       classpath += files(groovyAllRuntime)
       maxParallelForks = 1
       maxHeapSize = SharedLibraryDefaults.INTEGRATION_TEST_MAX_HEAP_SIZE
-      // Sync task output is declared as a task input so Gradle re-runs the test when source
-      // files change and ensures syncSharedLibrarySource runs before the test task.
+      // Sync task output declared as a named task input: Gradle re-runs the test when library
+      // source files change and ensures syncSharedLibrarySource runs before the test task.
       val syncTask = tasks.named<SyncSharedLibrarySource>("syncSharedLibrarySource")
-      inputs.files(syncTask)
+      inputs.files(syncTask).withPropertyName("sharedLibrarySource")
       jvmArgumentProviders.add(
-        objects.newInstance<LibraryRootArgumentProvider>().apply {
-          libraryRoot = syncTask.flatMap { it.destinationDir }
+        objects.newInstance<LibraryLocationArgumentProvider>().apply {
+          libraryLocation = syncTask.flatMap { it.destinationDir }
         },
       )
       jvmArgumentProviders.add(
