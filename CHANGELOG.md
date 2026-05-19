@@ -7,20 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.11.0](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/compare/v0.10.1...v0.11.0) (2026-05-19)
 
-
-### Features
-
-* syncSharedLibrarySource task, sharedLibrarySourceElements variant, and LibraryRootArgumentProvider ([#145](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/145)) ([4a07912](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/4a07912f5f2d18808c5a98b9732f8161363a11f8))
-* the phoenix project — ground-up revamp ([#124](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/124)) ([d055cca](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/d055cca5972590fbca2a7abcd90216f05e13b5bc))
-
-
-### Bug fixes
-
-* move bootstrap-sha to parent of phoenix project merge commit ([#142](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/142)) ([a230935](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/a230935b2380b406a9a98f5f311778afbd1ba518))
-* pre-release cleanup — Release Please bootstrap and README accuracy ([#139](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/139)) ([75384c5](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/75384c5339b836cc94483246859dfdfe78e10d4e))
-
-## [Unreleased]
-
 > [!IMPORTANT]
 > **This is a complete rewrite** — the first release since 0.10.1 (July 2019), nearly seven years later.
 > The plugin has been rebuilt from the ground up for Gradle 9.x, Java 17/21, and modern Jenkins LTS lines.
@@ -41,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Configuration cache support.
 - Java 17, 21, and 25 toolchain support.
 - Jenkins LTS 2.479.x, 2.528.x, and 2.541.x compatibility with full BOM alignment.
+- `syncSharedLibrarySource` task — syncs `src/`, `vars/`, and `resources/` into `build/sharedLibrarySource/{libraryName}/` as a cacheable, incremental operation.
+- `sharedLibrarySourceElements` outgoing variant — exposes the synced source directory as a Gradle variant with `Category` and `Usage` attributes for cross-project resolution.
 
 ### Changed
 
