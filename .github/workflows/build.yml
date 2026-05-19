@@ -77,8 +77,9 @@ jobs:
           for f in build/ci/gradle-compat-matrix.json \
                    build/ci/java-compat-matrix.json \
                    build/ci/jenkins-compat-matrix.json; do
-            if ! jq -e '[.include[]["task-suffix"] // ""] | all(test("^[A-Za-z0-9_-]*$"))' "$f" > /dev/null; then
-              echo "ERROR: unexpected task-suffix value in $f" >&2
+            bad=$(jq -r '[.include[]["task-suffix"] // ""] | map(select(test("^[A-Za-z0-9_-]*$") | not)) | .[]' "$f")
+            if [ -n "$bad" ]; then
+              printf '\033[31m🚨 ERROR: unexpected task-suffix value(s) in %s:\n%s\033[0m\n' "$f" "$bad" >&2
               exit 1
             fi
           done
