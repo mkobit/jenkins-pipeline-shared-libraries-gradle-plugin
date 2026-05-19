@@ -184,8 +184,8 @@ internal class SharedLibraryPluginTest :
       }
     }
 
-    describe("libraryName is reflected in test.library.name system property") {
-      it("integrationTest injects libraryName as test.library.name") {
+    describe("libraryName is reflected in test.library.0.name system property") {
+      it("integrationTest injects libraryName as test.library.0.name") {
         val ext = project.extensions.getByType(SharedLibraryExtension::class.java)
         val task = project.tasks.getByName("integrationTest") as org.gradle.api.tasks.testing.Test
         val provider = task.jvmArgumentProviders.filterIsInstance<LibraryNameArgumentProvider>().single()
@@ -219,12 +219,17 @@ internal class SharedLibraryPluginTest :
         task.maxHeapSize shouldBe "2g"
       }
 
-      it("integrationTest injects test.library.root system property") {
+      it("integrationTest injects test.library.0.location via LibraryLocationArgumentProvider pointing at syncSharedLibrarySource output") {
         val task = project.tasks.getByName("integrationTest") as org.gradle.api.tasks.testing.Test
-        task.systemProperties["test.library.root"] shouldBe project.projectDir.absolutePath
+        val provider = task.jvmArgumentProviders.filterIsInstance<LibraryLocationArgumentProvider>().single()
+        provider.libraryLocation.get().asFile shouldBe
+          project.layout.buildDirectory
+            .dir("sharedLibrarySource/${project.name}")
+            .get()
+            .asFile
       }
 
-      it("integrationTest injects test.library.name system property") {
+      it("integrationTest injects test.library.0.name system property") {
         val task = project.tasks.getByName("integrationTest") as org.gradle.api.tasks.testing.Test
         val provider = task.jvmArgumentProviders.filterIsInstance<LibraryNameArgumentProvider>().single()
         provider.libraryName shouldHaveValue project.name

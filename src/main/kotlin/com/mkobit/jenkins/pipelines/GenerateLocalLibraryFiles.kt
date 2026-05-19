@@ -18,10 +18,15 @@ import kotlin.io.path.writeText
  * The generated files are wired into the `integrationTest` source set:
  *
  * - `LocalLibraryRetriever.java` — a `LibraryRetriever` that copies `src/`, `vars/`, and
- *   `resources/` from the path set in the `test.library.root` system property.
+ *   `resources/` from the path set in the `test.library.location` system property.
+ *   Additional libraries are injected via contiguous `test.library.N.{name,location,implicit}`
+ *   properties. A future iteration may replace the property scheme with a single manifest
+ *   file on the test classpath once external library resolution is implemented.
  * - `SharedLibraryAutoRegistrar.java` — an `@Initializer`-annotated class that auto-registers
- *   the library in `GlobalLibraries` at embedded Jenkins startup (generated unless
- *   `sharedLibrary.autoRegisterLibrary = false`).
+ *   all libraries in `GlobalLibraries` at embedded Jenkins startup (generated unless
+ *   `sharedLibrary.autoRegisterLibrary = false`). Libraries are scanned via contiguous
+ *   zero-based indices: `test.library.0.*` is always the project's own library; additional
+ *   libraries resolved from Gradle dependencies follow at `test.library.1.*`, `test.library.2.*`, …
  * - `META-INF/services/annotations/hudson.init.Initializer` — the annotation-indexer class list
  *   that Jenkins reads at startup; each listed class is scanned for `@Initializer` methods via
  *   reflection. Generated directly here instead of via the `annotation-indexer` processor.
@@ -122,9 +127,12 @@ abstract class GenerateLocalLibraryFiles : DefaultTask() {
 
       import hudson.init.InitMilestone;
       import hudson.init.Initializer;
+      import java.io.File;
+      import java.util.ArrayList;
       import java.util.List;
       import javax.annotation.processing.Generated;
       import org.jenkinsci.plugins.workflow.libs.GlobalLibraries;
+      import org.jenkinsci.plugins.workflow.libs.LibraryConfiguration;
 
       @Generated("com.mkobit.jenkins.pipelines.GenerateLocalLibraryFiles")
       public final class SharedLibraryAutoRegistrar {
@@ -132,9 +140,15 @@ abstract class GenerateLocalLibraryFiles : DefaultTask() {
           private SharedLibraryAutoRegistrar() {}
 
           /**
-           * Runs after all Jenkins extensions are loaded. Reads {@code test.library.name} (injected
-           * by the shared-library Gradle plugin) and registers the local library in GlobalLibraries
-           * so test pipelines can reference it without any explicit setup code.
+           * Runs after all Jenkins extensions are loaded and registers all shared libraries
+           * injected by the shared-library Gradle plugin in GlobalLibraries so test pipelines
+           * can reference them without any explicit setup code.
+           *
+           * <p>All libraries use contiguous zero-based indices: the project's own library is
+           * always at index 0 ({@code test.library.0.name} / {@code test.library.0.location} /
+           * {@code test.library.0.implicit}); additional libraries resolved from Gradle
+           * dependencies follow at 1, 2, … The scan stops at the first missing name or location.
+           * The plugin always injects contiguous indices, so gaps do not arise in practice.
            *
            * <p>Set system property {@code test.library.auto.register=false} at JVM startup to
            * disable auto-registration for a specific test run (e.g. to test manual registration).
@@ -144,11 +158,26 @@ abstract class GenerateLocalLibraryFiles : DefaultTask() {
               if ("false".equalsIgnoreCase(System.getProperty("test.library.auto.register", "true"))) {
                   return;
               }
-              String name = System.getProperty("test.library.name");
-              if (name == null) {
-                  return;
+              List<LibraryConfiguration> libraries = new ArrayList<>();
+              int i = 0;
+              while (true) {
+                  String name = System.getProperty("test.library." + i + ".name");
+                  String location = System.getProperty("test.library." + i + ".location");
+                  if (name == null || location == null) break;
+                  boolean implicit = !"false".equalsIgnoreCase(System.getProperty("test.library." + i + ".implicit", "true"));
+                  libraries.add(makeLibrary(name, location, implicit));
+                  i++;
               }
-              GlobalLibraries.get().setLibraries(List.of(LocalLibraryRetriever.implicitLibrary(name)));
+              if (!libraries.isEmpty()) {
+                  GlobalLibraries.get().setLibraries(libraries);
+              }
+          }
+
+          private static LibraryConfiguration makeLibrary(String name, String location, boolean implicit) {
+              LibraryConfiguration cfg = new LibraryConfiguration(name, new LocalLibraryRetriever(new File(location)));
+              cfg.setImplicit(implicit);
+              cfg.setDefaultVersion("fixed");
+              return cfg;
           }
       }
       """.trimIndent()
@@ -169,21 +198,21 @@ abstract class GenerateLocalLibraryFiles : DefaultTask() {
       @Generated("com.mkobit.jenkins.pipelines.GenerateLocalLibraryFiles")
       public final class LocalLibraryRetriever extends LibraryRetriever {
 
-          private final File root;
+          private final File location;
 
           public LocalLibraryRetriever() {
               this(new File(Objects.requireNonNull(
-                  System.getProperty("test.library.root"),
-                  "System property test.library.root must be set")));
+                  System.getProperty("test.library.0.location"),
+                  "System property test.library.0.location must be set")));
           }
 
-          public LocalLibraryRetriever(File root) {
-              this.root = root;
+          public LocalLibraryRetriever(File location) {
+              this.location = location;
           }
 
           @Override
           public void retrieve(String name, String version, boolean changelog, FilePath target, Run<?, ?> run, TaskListener listener) throws Exception {
-              new FilePath(root).copyRecursiveTo("src/**/*.groovy,vars/*.groovy,vars/*.txt,resources/**", null, target);
+              new FilePath(location).copyRecursiveTo("src/**/*.groovy,vars/*.groovy,vars/*.txt,resources/**", null, target);
           }
 
           @Override
@@ -193,8 +222,8 @@ abstract class GenerateLocalLibraryFiles : DefaultTask() {
 
           public static LibraryConfiguration implicitLibrary() {
               String name = Objects.requireNonNull(
-                  System.getProperty("test.library.name"),
-                  "System property test.library.name must be set (injected by the shared-library plugin)");
+                  System.getProperty("test.library.0.name"),
+                  "System property test.library.0.name must be set (injected by the shared-library plugin)");
               return implicitLibrary(name);
           }
 

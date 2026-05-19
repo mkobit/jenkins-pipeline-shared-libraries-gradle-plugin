@@ -80,7 +80,8 @@ class SharedLibraryPluginSmokeTest :
           source shouldContain "@Generated(\"com.mkobit.jenkins.pipelines.GenerateLocalLibraryFiles\")"
           source shouldContain "public static LibraryConfiguration implicitLibrary()"
           source shouldContain "public static LibraryConfiguration implicitLibrary(String name)"
-          source shouldContain "test.library.name"
+          source shouldContain "test.library.0.name"
+          source shouldContain "test.library.0.location"
           source shouldContain "resources/**"
           dir
             .resolve("build/generated-src/localLibraryRetriever/resources/META-INF/hudson.remoting.ClassFilter")
@@ -93,7 +94,11 @@ class SharedLibraryPluginSmokeTest :
           autoRegistrarSource shouldContain "@Initializer(after = InitMilestone.EXTENSIONS_AUGMENTED)"
           autoRegistrarSource shouldContain "public static void registerLibrary()"
           autoRegistrarSource shouldContain "test.library.auto.register"
-          autoRegistrarSource shouldContain "test.library.name"
+          // All libraries use contiguous zero-based indices — index 0 is always the project's own library.
+          autoRegistrarSource shouldContain "test.library.\" + i + \".name"
+          autoRegistrarSource shouldContain "test.library.\" + i + \".location"
+          autoRegistrarSource shouldContain "test.library.\" + i + \".implicit"
+          autoRegistrarSource shouldContain "makeLibrary"
         }
       }
     }
@@ -186,7 +191,7 @@ class SharedLibraryPluginSmokeTest :
       }
     }
 
-    describe("monorepo: test.library.root resolves relative to subproject projectDir, not rootDir") {
+    describe("monorepo: syncSharedLibrarySource output resolves relative to subproject projectDir, not rootDir") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
         withTestProject {
           settingsFile.writeText(
@@ -202,10 +207,10 @@ class SharedLibraryPluginSmokeTest :
                 id("com.mkobit.jenkins.pipelines.shared-library")
             }
             tasks.register("printLibraryRoot") {
-                val t = tasks.integrationTest
+                val syncTask = tasks.named<com.mkobit.jenkins.pipelines.SyncSharedLibrarySource>("syncSharedLibrarySource")
+                val rootProvider = syncTask.flatMap { it.destinationDir }
                 doLast {
-                    val testTask = t.get()
-                    println("root=" + testTask.systemProperties["test.library.root"])
+                    println("root=" + rootProvider.get().asFile.absolutePath)
                 }
             }
             """.trimIndent(),
@@ -214,10 +219,11 @@ class SharedLibraryPluginSmokeTest :
             runner(gradleVersion)
               .withArguments(":lib:printLibraryRoot")
               .build()
+          // Library name defaults to project.name ("lib"); Sync output is under that subdirectory.
           val expectedRoot =
             dir
               .toRealPath()
-              .resolve("lib")
+              .resolve("lib/build/sharedLibrarySource/lib")
               .toString()
           result.output shouldContain "root=$expectedRoot"
         }
