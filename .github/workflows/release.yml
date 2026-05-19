@@ -5,11 +5,6 @@ on:
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version override — leave blank to read from gradle.properties'
-        required: false
-        type: string
 
 permissions: {}
 
@@ -27,37 +22,11 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
-      - name: Read and validate version
-        id: version
-        env:
-          INPUT_VERSION: ${{ inputs.version }}
-        run: |
-          FILE_VERSION=$(grep '^version=' gradle.properties | cut -d= -f2)
-          if [ -n "$INPUT_VERSION" ]; then
-            if ! [[ "$INPUT_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-              echo "ERROR: version must be MAJOR.MINOR.PATCH, got: $INPUT_VERSION"
-              exit 1
-            fi
-            if [ "$FILE_VERSION" != "$INPUT_VERSION" ]; then
-              echo "ERROR: gradle.properties has '$FILE_VERSION' but input is '$INPUT_VERSION'"
-              exit 1
-            fi
-            echo "version=$INPUT_VERSION" >> "$GITHUB_OUTPUT"
-          else
-            if ! [[ "$FILE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-              echo "ERROR: version in gradle.properties must be MAJOR.MINOR.PATCH, got: $FILE_VERSION"
-              exit 1
-            fi
-            echo "version=$FILE_VERSION" >> "$GITHUB_OUTPUT"
-          fi
-
       - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
         with:
           java-version: '17'
           distribution: temurin
 
-      # Build cache disabled: prevents PR build outputs from influencing published artifacts.
-      # Distribution and dependency caches are safe (content-addressed); only task outputs are excluded.
       - uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e
 
       - name: Publish to Gradle Plugin Portal
@@ -65,3 +34,9 @@ jobs:
           GRADLE_PUBLISH_KEY: ${{ secrets.GRADLE_PUBLISH_KEY }}
           GRADLE_PUBLISH_SECRET: ${{ secrets.GRADLE_PUBLISH_SECRET }}
         run: ./gradlew publishPlugins --no-build-cache
+
+      - name: Attach artifacts to GitHub release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.ref_name }}" build/libs/*.jar
