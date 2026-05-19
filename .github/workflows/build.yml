@@ -10,7 +10,9 @@ on:
       - '.gitignore'
       - 'release-please-config.json'
       - '.release-please-manifest.json'
+      - '.github/dependabot.yml'
       - '.github/workflows/release-please.yml'
+      - '.github/workflows/release.yml'
       - '.github/workflows/pr-title-check.yml'
   pull_request:
     paths-ignore:
@@ -19,7 +21,9 @@ on:
       - '.gitignore'
       - 'release-please-config.json'
       - '.release-please-manifest.json'
+      - '.github/dependabot.yml'
       - '.github/workflows/release-please.yml'
+      - '.github/workflows/release.yml'
       - '.github/workflows/pr-title-check.yml'
   workflow_dispatch:
 
