@@ -24,12 +24,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     # workflow_run path: Build passed on main AND commit is a Release Please release commit.
+    # Release Please generates "chore(main): release X.Y.Z" — the scope varies so we match
+    # both "chore: release " and "chore(...): release " via a contains check on ": release ".
     # Dispatch path: always runs (gated by repo write access).
     if: >-
       github.event_name == 'workflow_dispatch' || (
       github.event_name == 'workflow_run' &&
       github.event.workflow_run.conclusion == 'success' &&
-      startsWith(github.event.workflow_run.head_commit.message, 'chore: release '))
+      startsWith(github.event.workflow_run.head_commit.message, 'chore') &&
+      contains(github.event.workflow_run.head_commit.message, ': release '))
     permissions:
       contents: write
     steps:
