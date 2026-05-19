@@ -202,10 +202,9 @@ class SharedLibraryPluginSmokeTest :
                 id("com.mkobit.jenkins.pipelines.shared-library")
             }
             tasks.register("printLibraryRoot") {
-                val t = tasks.integrationTest
+                val syncTask = tasks.named<Sync>("syncSharedLibrarySource")
                 doLast {
-                    val testTask = t.get()
-                    println("root=" + testTask.systemProperties["test.library.root"])
+                    println("root=" + syncTask.get().destinationDir.absolutePath)
                 }
             }
             """.trimIndent(),
@@ -214,10 +213,11 @@ class SharedLibraryPluginSmokeTest :
             runner(gradleVersion)
               .withArguments(":lib:printLibraryRoot")
               .build()
+          // Library name defaults to project.name ("lib"); Sync output is under that subdirectory.
           val expectedRoot =
             dir
               .toRealPath()
-              .resolve("lib")
+              .resolve("lib/build/sharedLibrarySource/lib")
               .toString()
           result.output shouldContain "root=$expectedRoot"
         }

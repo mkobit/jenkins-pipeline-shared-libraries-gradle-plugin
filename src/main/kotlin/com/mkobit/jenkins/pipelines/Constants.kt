@@ -9,6 +9,10 @@ internal const val JENKINS_PLUGIN_HPIS_CONFIGURATION = "jenkinsPluginHpis"
 internal const val JENKINS_WAR_CONFIGURATION = "jenkinsWar"
 internal const val GROOVY_ALL_RUNTIME_CONFIGURATION = "integrationTestGroovyAllRuntime"
 internal const val IVY_CONFIGURATION = "sharedLibraryIvy"
+internal const val SHARED_LIBRARY_SOURCE_ELEMENTS_CONFIGURATION = "sharedLibrarySourceElements"
+
+/** Alias to [SharedLibraryAttributes.SHARED_LIBRARY_SOURCE_CATEGORY] for use within the plugin. */
+internal val SHARED_LIBRARY_SOURCE_CATEGORY = SharedLibraryAttributes.SHARED_LIBRARY_SOURCE_CATEGORY
 
 internal const val PIPELINE_GROOVY_LIB_MODULE = "io.jenkins.plugins:pipeline-groovy-lib"
 internal const val WORKFLOW_JOB_MODULE = "org.jenkins-ci.plugins.workflow:workflow-job"

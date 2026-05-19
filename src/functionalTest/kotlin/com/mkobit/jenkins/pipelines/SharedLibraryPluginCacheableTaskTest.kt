@@ -41,6 +41,71 @@ class SharedLibraryPluginCacheableTaskTest :
       }
       """.trimIndent()
 
+    describe("syncSharedLibrarySource") {
+      describe("is UP-TO-DATE on second run when inputs are unchanged") {
+        withData(TestedGradleVersion.filtered) { gradleVersion ->
+          withTestProject {
+            buildFile.writeText(sharedLibraryPluginBuild)
+            file("src/com/example/Lib.groovy").writeText("class Lib {}")
+
+            runner(gradleVersion)
+              .withArguments("syncSharedLibrarySource")
+              .build()
+              .task(":syncSharedLibrarySource") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
+
+            runner(gradleVersion)
+              .withArguments("syncSharedLibrarySource")
+              .build()
+              .task(":syncSharedLibrarySource") shouldNotBeNull { outcome shouldBe TaskOutcome.UP_TO_DATE }
+          }
+        }
+      }
+
+      describe("re-runs when a source file changes") {
+        withData(TestedGradleVersion.filtered) { gradleVersion ->
+          withTestProject {
+            buildFile.writeText(sharedLibraryPluginBuild)
+            val libFile = file("src/com/example/Lib.groovy")
+            libFile.writeText("class Lib {}")
+
+            runner(gradleVersion)
+              .withArguments("syncSharedLibrarySource")
+              .build()
+              .task(":syncSharedLibrarySource") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
+
+            libFile.writeText("class Lib { def changed() {} }")
+
+            runner(gradleVersion)
+              .withArguments("syncSharedLibrarySource")
+              .build()
+              .task(":syncSharedLibrarySource") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
+          }
+        }
+      }
+
+      describe("is loaded FROM-CACHE when outputs are deleted and cache is populated") {
+        withData(TestedGradleVersion.filtered) { gradleVersion ->
+          withTestProject {
+            settingsFile.writeText(buildCacheSettings)
+            buildFile.writeText(sharedLibraryPluginBuild)
+            file("vars/myStep.groovy").writeText("def call() {}")
+
+            runner(gradleVersion)
+              .withArguments("syncSharedLibrarySource", "--build-cache")
+              .build()
+              .task(":syncSharedLibrarySource") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
+
+            dir.resolve("build/sharedLibrarySource").toFile().deleteRecursively()
+
+            runner(gradleVersion)
+              .withArguments("syncSharedLibrarySource", "--build-cache")
+              .build()
+              .task(":syncSharedLibrarySource") shouldNotBeNull { outcome shouldBe TaskOutcome.FROM_CACHE }
+          }
+        }
+      }
+    }
+
     describe("generateLocalLibraryFiles") {
       describe("is UP-TO-DATE on second run when inputs are unchanged") {
         withData(TestedGradleVersion.filtered) { gradleVersion ->

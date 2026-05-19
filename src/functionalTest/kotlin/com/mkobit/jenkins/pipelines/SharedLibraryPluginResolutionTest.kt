@@ -284,4 +284,5 @@ class SharedLibraryPluginResolutionTest :
         }
       }
     }
+
   })

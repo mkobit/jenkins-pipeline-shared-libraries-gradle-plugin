@@ -3,6 +3,7 @@
 package com.mkobit.jenkins.pipelines
 
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition
+import org.gradle.api.attributes.Category
 import org.gradle.api.plugins.jvm.JvmTestSuite
 import org.gradle.api.plugins.quality.CodeNarc
 import org.gradle.api.tasks.compile.GroovyCompile
@@ -109,10 +110,20 @@ fun applyJenkinsTestWiring(suite: JvmTestSuite) {
       classpath += files(groovyAllRuntime)
       maxParallelForks = 1
       maxHeapSize = SharedLibraryDefaults.INTEGRATION_TEST_MAX_HEAP_SIZE
-      systemProperty("test.library.root", layout.projectDirectory.asFile.absolutePath)
-      systemProperty("test.library.src", srcDir.asFile.absolutePath)
-      systemProperty("test.library.vars", varsDir.asFile.absolutePath)
-      systemProperty("test.library.resources", resourcesDir.asFile.absolutePath)
+      // Sync task output is declared as a task input so Gradle re-runs the test when source
+      // files change and ensures syncSharedLibrarySource runs before the test task.
+      val syncTask = tasks.named<SyncSharedLibrarySource>("syncSharedLibrarySource")
+      inputs.files(syncTask)
+      jvmArgumentProviders.add(
+        objects.newInstance<LibraryRootArgumentProvider>().apply {
+          // Resolved lazily from the Sync task's destination so it tracks libraryName overrides.
+          libraryRoot.set(
+            syncTask.map { t ->
+              objects.directoryProperty().also { it.set(t.destinationDir) }.get()
+            },
+          )
+        },
+      )
       jvmArgumentProviders.add(
         objects.newInstance<JenkinsWarJvmArgumentProvider>().apply {
           warFile.fileProvider(jenkinsWarFile)
@@ -144,6 +155,41 @@ val sharedLibrary =
       autoRegisterLibrary.convention(true)
       libraryName.convention(project.name)
     }
+
+// Each library's source is synced under its own named subdirectory so N libraries can
+// coexist without collisions: build/sharedLibrarySource/{libraryName}/{src,vars,resources}.
+// This naming convention is the foundation for eventual multi-library support — external
+// libraries resolved from Gradle dependencies will land in sibling directories.
+val sharedLibrarySourceDir: Provider<Directory> =
+  sharedLibrary.libraryName.flatMap { name ->
+    layout.buildDirectory.dir("sharedLibrarySource/$name")
+  }
+
+val syncSharedLibrarySource =
+  tasks.register<SyncSharedLibrarySource>("syncSharedLibrarySource") {
+    description = "Copies shared library source (src/, vars/, resources/) into build/sharedLibrarySource/{libraryName}/"
+    group = LifecycleBasePlugin.BUILD_GROUP
+    from(srcDir) { into("src") }
+    from(varsDir) { into("vars") }
+    from(resourcesDir) { into("resources") }
+    into(sharedLibrarySourceDir)
+  }
+
+// Outgoing variant: exposes the Sync task output as a resolvable artifact so other Gradle
+// projects can declare this project as a shared library source dependency.
+// Variant attribute Category="shared-library-source" identifies it as library source, not code.
+configurations.register(SHARED_LIBRARY_SOURCE_ELEMENTS_CONFIGURATION) {
+  isCanBeResolved = false
+  isCanBeConsumed = true
+  description = "Shared library source files for consumption by dependent projects via variant-aware resolution"
+  attributes {
+    attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category::class.java, SHARED_LIBRARY_SOURCE_CATEGORY))
+  }
+  outgoing.artifact(sharedLibrarySourceDir) {
+    builtBy(syncSharedLibrarySource)
+    type = "directory"
+  }
+}
 
 val jenkinsBom =
   configurations.register(JENKINS_BOM_CONFIGURATION) {

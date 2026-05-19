@@ -219,9 +219,11 @@ internal class SharedLibraryPluginTest :
         task.maxHeapSize shouldBe "2g"
       }
 
-      it("integrationTest injects test.library.root system property") {
+      it("integrationTest injects test.library.root via LibraryRootArgumentProvider pointing at syncSharedLibrarySource output") {
         val task = project.tasks.getByName("integrationTest") as org.gradle.api.tasks.testing.Test
-        task.systemProperties["test.library.root"] shouldBe project.projectDir.absolutePath
+        val provider = task.jvmArgumentProviders.filterIsInstance<LibraryRootArgumentProvider>().single()
+        provider.libraryRoot.get().asFile shouldBe
+          project.layout.buildDirectory.dir("sharedLibrarySource/${project.name}").get().asFile
       }
 
       it("integrationTest injects test.library.name system property") {
