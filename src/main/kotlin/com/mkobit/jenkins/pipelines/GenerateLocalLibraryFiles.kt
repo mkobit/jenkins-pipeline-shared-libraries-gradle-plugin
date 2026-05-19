@@ -80,7 +80,12 @@ abstract class GenerateLocalLibraryFiles : DefaultTask() {
     testingPkg.resolve("LocalLibraryRetriever.java").writeText(retrieverSource.get())
 
     val autoRegistrar = testingPkg.resolve("SharedLibraryAutoRegistrar.java")
-    val annotationsDir = resourcesOutputDir.get().asFile.toPath().resolve("META-INF/annotations")
+    val annotationsDir =
+      resourcesOutputDir
+        .get()
+        .asFile
+        .toPath()
+        .resolve("META-INF/annotations")
     val initializerIndex = annotationsDir.resolve("hudson.init.Initializer")
     if (generateAutoRegistrar.get()) {
       autoRegistrar.writeText(autoRegistrarSource.get())
