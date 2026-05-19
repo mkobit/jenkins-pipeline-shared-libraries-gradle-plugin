@@ -22,6 +22,8 @@ import kotlin.io.path.writeText
  * - `SharedLibraryAutoRegistrar.java` — an `@Initializer`-annotated class that auto-registers
  *   the library in `GlobalLibraries` at embedded Jenkins startup (generated unless
  *   `sharedLibrary.autoRegisterLibrary = false`).
+ * - `META-INF/annotations/hudson.init.Initializer` — the SezPoz index that tells Jenkins which
+ *   method carries `@Initializer`; generated directly here instead of via `annotation-indexer`.
  * - `META-INF/hudson.remoting.ClassFilter` — registers `LocalLibraryRetriever` so XStream
  *   can deserialise `LibraryConfiguration` during test setup.
  *
@@ -78,10 +80,15 @@ abstract class GenerateLocalLibraryFiles : DefaultTask() {
     testingPkg.resolve("LocalLibraryRetriever.java").writeText(retrieverSource.get())
 
     val autoRegistrar = testingPkg.resolve("SharedLibraryAutoRegistrar.java")
+    val annotationsDir = resourcesOutputDir.get().asFile.toPath().resolve("META-INF/annotations")
+    val initializerIndex = annotationsDir.resolve("hudson.init.Initializer")
     if (generateAutoRegistrar.get()) {
       autoRegistrar.writeText(autoRegistrarSource.get())
+      annotationsDir.createDirectories()
+      initializerIndex.writeText("$INITIALIZER_INDEX_ENTRY\n")
     } else {
       autoRegistrar.deleteIfExists()
+      initializerIndex.deleteIfExists()
     }
 
     val classFilter =
@@ -96,6 +103,11 @@ abstract class GenerateLocalLibraryFiles : DefaultTask() {
 
   companion object {
     private const val CLASS_NAME = "com.mkobit.jenkins.pipelines.testing.LocalLibraryRetriever"
+
+    // SezPoz format: ClassName#methodName — Jenkins reads @Initializer attributes from the class
+    // file at runtime; the index only needs to name the annotated method.
+    private const val INITIALIZER_INDEX_ENTRY =
+      "com.mkobit.jenkins.pipelines.testing.SharedLibraryAutoRegistrar#registerLibrary"
 
     private val AUTO_REGISTRAR_SOURCE =
       """
