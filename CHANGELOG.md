@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > [!IMPORTANT]
 > **This is a complete rewrite** — the first release since 0.10.1 (July 2019), nearly seven years later.
-> The plugin has been rebuilt from the ground up for Gradle 9.x, Java 17/21, and modern Jenkins LTS lines.
+> The plugin has been rebuilt from the ground up for Gradle 9.4+, Java 17/21, and modern Jenkins LTS lines.
 > All 0.10.x APIs have been removed.
 > See the [migration guide in the README](README.md#migration-from-010x) or run the bundled OpenRewrite recipe.
 
@@ -32,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Minimum Gradle version is now 9.x (previously 4.x–8.x).
+- Minimum Gradle version is now 9.4 (previously 4.x–8.x).
 - Minimum Java version is now 17 (previously 8).
 - Minimum Jenkins LTS is now 2.479.x.
 - `sharedLibrary { coreVersion }` replaced by `sharedLibrary { jenkins { version = "..." } }`.
