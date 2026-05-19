@@ -23,8 +23,10 @@ import kotlin.io.path.writeText
  *   properties. A future iteration may replace the property scheme with a single manifest
  *   file on the test classpath once external library resolution is implemented.
  * - `SharedLibraryAutoRegistrar.java` — an `@Initializer`-annotated class that auto-registers
- *   the library in `GlobalLibraries` at embedded Jenkins startup (generated unless
- *   `sharedLibrary.autoRegisterLibrary = false`).
+ *   all libraries in `GlobalLibraries` at embedded Jenkins startup (generated unless
+ *   `sharedLibrary.autoRegisterLibrary = false`). Libraries are scanned via contiguous
+ *   zero-based indices: `test.library.0.*` is always the project's own library; additional
+ *   libraries resolved from Gradle dependencies follow at `test.library.1.*`, `test.library.2.*`, …
  * - `META-INF/services/annotations/hudson.init.Initializer` — the annotation-indexer class list
  *   that Jenkins reads at startup; each listed class is scanned for `@Initializer` methods via
  *   reflection. Generated directly here instead of via the `annotation-indexer` processor.
@@ -142,14 +144,11 @@ abstract class GenerateLocalLibraryFiles : DefaultTask() {
            * injected by the shared-library Gradle plugin in GlobalLibraries so test pipelines
            * can reference them without any explicit setup code.
            *
-           * <p>The primary library is supplied via {@code test.library.name} and
-           * {@code test.library.location}. Additional libraries (resolved from Gradle
-           * dependencies via the {@code sharedLibrarySourceElements} variant) are supplied
-           * as contiguous zero-based indexed pairs: {@code test.library.0.name} /
-           * {@code test.library.0.location}, {@code test.library.1.name} /
-           * {@code test.library.1.location}, and so on. Indices must be contiguous starting
-           * at 0 — the scan stops at the first missing index. The plugin always injects
-           * contiguous indices, so gaps do not arise in practice.
+           * <p>All libraries use contiguous zero-based indices: the project's own library is
+           * always at index 0 ({@code test.library.0.name} / {@code test.library.0.location} /
+           * {@code test.library.0.implicit}); additional libraries resolved from Gradle
+           * dependencies follow at 1, 2, … The scan stops at the first missing name or location.
+           * The plugin always injects contiguous indices, so gaps do not arise in practice.
            *
            * <p>Set system property {@code test.library.auto.register=false} at JVM startup to
            * disable auto-registration for a specific test run (e.g. to test manual registration).
@@ -160,21 +159,13 @@ abstract class GenerateLocalLibraryFiles : DefaultTask() {
                   return;
               }
               List<LibraryConfiguration> libraries = new ArrayList<>();
-              String name = System.getProperty("test.library.name");
-              String location = System.getProperty("test.library.location");
-              if (name != null && location != null) {
-                  boolean implicit = !"false".equalsIgnoreCase(System.getProperty("test.library.implicit", "true"));
-                  libraries.add(makeLibrary(name, location, implicit));
-              }
-              // Additional libraries — indices must be contiguous starting at 0.
-              // The plugin guarantees contiguity; do not set these properties manually with gaps.
               int i = 0;
               while (true) {
-                  String extraName = System.getProperty("test.library." + i + ".name");
-                  String extraLocation = System.getProperty("test.library." + i + ".location");
-                  if (extraName == null || extraLocation == null) break;
-                  boolean extraImplicit = !"false".equalsIgnoreCase(System.getProperty("test.library." + i + ".implicit", "true"));
-                  libraries.add(makeLibrary(extraName, extraLocation, extraImplicit));
+                  String name = System.getProperty("test.library." + i + ".name");
+                  String location = System.getProperty("test.library." + i + ".location");
+                  if (name == null || location == null) break;
+                  boolean implicit = !"false".equalsIgnoreCase(System.getProperty("test.library." + i + ".implicit", "true"));
+                  libraries.add(makeLibrary(name, location, implicit));
                   i++;
               }
               if (!libraries.isEmpty()) {
@@ -211,8 +202,8 @@ abstract class GenerateLocalLibraryFiles : DefaultTask() {
 
           public LocalLibraryRetriever() {
               this(new File(Objects.requireNonNull(
-                  System.getProperty("test.library.location"),
-                  "System property test.library.location must be set")));
+                  System.getProperty("test.library.0.location"),
+                  "System property test.library.0.location must be set")));
           }
 
           public LocalLibraryRetriever(File location) {
@@ -231,8 +222,8 @@ abstract class GenerateLocalLibraryFiles : DefaultTask() {
 
           public static LibraryConfiguration implicitLibrary() {
               String name = Objects.requireNonNull(
-                  System.getProperty("test.library.name"),
-                  "System property test.library.name must be set (injected by the shared-library plugin)");
+                  System.getProperty("test.library.0.name"),
+                  "System property test.library.0.name must be set (injected by the shared-library plugin)");
               return implicitLibrary(name);
           }
 

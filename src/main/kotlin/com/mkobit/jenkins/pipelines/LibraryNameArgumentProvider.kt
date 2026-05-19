@@ -8,5 +8,5 @@ abstract class LibraryNameArgumentProvider : CommandLineArgumentProvider {
   @get:Internal
   abstract val libraryName: Property<String>
 
-  override fun asArguments() = listOf("-Dtest.library.name=${libraryName.get()}")
+  override fun asArguments() = listOf("-Dtest.library.0.name=${libraryName.get()}")
 }

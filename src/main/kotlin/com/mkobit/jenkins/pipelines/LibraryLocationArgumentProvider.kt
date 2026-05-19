@@ -12,5 +12,5 @@ abstract class LibraryLocationArgumentProvider : CommandLineArgumentProvider {
   @get:PathSensitive(PathSensitivity.RELATIVE)
   abstract val libraryLocation: DirectoryProperty
 
-  override fun asArguments() = listOf("-Dtest.library.location=${libraryLocation.get().asFile.absolutePath}")
+  override fun asArguments() = listOf("-Dtest.library.0.location=${libraryLocation.get().asFile.absolutePath}")
 }

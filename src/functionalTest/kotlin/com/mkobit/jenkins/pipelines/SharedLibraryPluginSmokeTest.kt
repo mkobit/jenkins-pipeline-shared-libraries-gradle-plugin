@@ -80,7 +80,8 @@ class SharedLibraryPluginSmokeTest :
           source shouldContain "@Generated(\"com.mkobit.jenkins.pipelines.GenerateLocalLibraryFiles\")"
           source shouldContain "public static LibraryConfiguration implicitLibrary()"
           source shouldContain "public static LibraryConfiguration implicitLibrary(String name)"
-          source shouldContain "test.library.name"
+          source shouldContain "test.library.0.name"
+          source shouldContain "test.library.0.location"
           source shouldContain "resources/**"
           dir
             .resolve("build/generated-src/localLibraryRetriever/resources/META-INF/hudson.remoting.ClassFilter")
@@ -93,10 +94,7 @@ class SharedLibraryPluginSmokeTest :
           autoRegistrarSource shouldContain "@Initializer(after = InitMilestone.EXTENSIONS_AUGMENTED)"
           autoRegistrarSource shouldContain "public static void registerLibrary()"
           autoRegistrarSource shouldContain "test.library.auto.register"
-          autoRegistrarSource shouldContain "test.library.name"
-          autoRegistrarSource shouldContain "test.library.location"
-          autoRegistrarSource shouldContain "test.library.implicit"
-          // Indexed multi-library props: test.library.0.name / test.library.0.root / test.library.0.implicit
+          // All libraries use contiguous zero-based indices — index 0 is always the project's own library.
           autoRegistrarSource shouldContain "test.library.\" + i + \".name"
           autoRegistrarSource shouldContain "test.library.\" + i + \".location"
           autoRegistrarSource shouldContain "test.library.\" + i + \".implicit"
