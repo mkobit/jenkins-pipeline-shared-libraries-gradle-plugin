@@ -7,7 +7,7 @@ import org.gradle.api.tasks.PathSensitivity
 import org.gradle.process.CommandLineArgumentProvider
 
 abstract class LibraryLocationArgumentProvider : CommandLineArgumentProvider {
-  // Sync task output; absolute path injected at execution time as -Dtest.library.location.
+  /** Root directory of the shared library source tree (`src/`, `vars/`, `resources/`); injected as `-Dtest.library.location` at test execution time. */
   @get:InputDirectory
   @get:PathSensitive(PathSensitivity.RELATIVE)
   abstract val libraryLocation: DirectoryProperty
