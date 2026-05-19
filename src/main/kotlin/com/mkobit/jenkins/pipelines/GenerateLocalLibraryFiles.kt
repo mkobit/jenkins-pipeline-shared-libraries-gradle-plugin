@@ -22,6 +22,9 @@ import kotlin.io.path.writeText
  * - `SharedLibraryAutoRegistrar.java` — an `@Initializer`-annotated class that auto-registers
  *   the library in `GlobalLibraries` at embedded Jenkins startup (generated unless
  *   `sharedLibrary.autoRegisterLibrary = false`).
+ * - `META-INF/services/annotations/hudson.init.Initializer` — the annotation-indexer class list
+ *   that Jenkins reads at startup; each listed class is scanned for `@Initializer` methods via
+ *   reflection. Generated directly here instead of via the `annotation-indexer` processor.
  * - `META-INF/hudson.remoting.ClassFilter` — registers `LocalLibraryRetriever` so XStream
  *   can deserialise `LibraryConfiguration` during test setup.
  *
@@ -78,10 +81,20 @@ abstract class GenerateLocalLibraryFiles : DefaultTask() {
     testingPkg.resolve("LocalLibraryRetriever.java").writeText(retrieverSource.get())
 
     val autoRegistrar = testingPkg.resolve("SharedLibraryAutoRegistrar.java")
+    val annotationsDir =
+      resourcesOutputDir
+        .get()
+        .asFile
+        .toPath()
+        .resolve("META-INF/services/annotations")
+    val initializerIndex = annotationsDir.resolve("hudson.init.Initializer")
     if (generateAutoRegistrar.get()) {
       autoRegistrar.writeText(autoRegistrarSource.get())
+      annotationsDir.createDirectories()
+      initializerIndex.writeText("$INITIALIZER_INDEX_ENTRY\n")
     } else {
       autoRegistrar.deleteIfExists()
+      initializerIndex.deleteIfExists()
     }
 
     val classFilter =
@@ -96,6 +109,12 @@ abstract class GenerateLocalLibraryFiles : DefaultTask() {
 
   companion object {
     private const val CLASS_NAME = "com.mkobit.jenkins.pipelines.testing.LocalLibraryRetriever"
+
+    // Jenkins reads META-INF/services/annotations/hudson.init.Initializer at startup, loads each
+    // listed class, then scans its methods for @Initializer via reflection (@Retention RUNTIME).
+    // Only the class name is needed — no ClassName#method format.
+    private const val INITIALIZER_INDEX_ENTRY =
+      "com.mkobit.jenkins.pipelines.testing.SharedLibraryAutoRegistrar"
 
     private val AUTO_REGISTRAR_SOURCE =
       """

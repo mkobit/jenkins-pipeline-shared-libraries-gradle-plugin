@@ -251,14 +251,6 @@ localLibraryRetrieverSourceSet.resources.setSrcDirs(listOf(generateLocalLibraryF
 configurations.named(localLibraryRetrieverSourceSet.compileOnlyConfigurationName) {
   extendsFrom(jenkinsPlugin)
 }
-// annotation-indexer processor generates the META-INF index for SharedLibraryAutoRegistrar.
-val localLibraryRetrieverAnnotationProcessor =
-  configurations.named(localLibraryRetrieverSourceSet.annotationProcessorConfigurationName) {
-    extendsFrom(jenkinsBom)
-  }
-dependencies {
-  localLibraryRetrieverAnnotationProcessor(SharedLibraryDefaults.ANNOTATION_INDEXER)
-}
 
 testing {
   suites {

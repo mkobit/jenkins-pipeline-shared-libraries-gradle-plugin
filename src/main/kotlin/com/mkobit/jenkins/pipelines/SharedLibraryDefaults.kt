@@ -27,7 +27,6 @@ object SharedLibraryDefaults {
    */
   internal const val GROOVY_ALL_COORDINATES = "org.codehaus.groovy:groovy-all:2.4.21"
   internal const val IVY_COORDINATES = "org.apache.ivy:ivy:2.4.0"
-  internal const val ANNOTATION_INDEXER = "org.jenkins-ci:annotation-indexer:1.17"
   internal const val INTEGRATION_TEST_MAX_HEAP_SIZE = "2g"
 
   /**
