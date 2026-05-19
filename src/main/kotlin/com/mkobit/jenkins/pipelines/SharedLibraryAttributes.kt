@@ -27,6 +27,9 @@ import org.gradle.api.attributes.Category
  *
  * Java / Groovy:
  * ```groovy
+ * import com.mkobit.jenkins.pipelines.SharedLibraryAttributes
+ * import org.gradle.api.attributes.Category
+ *
  * configurations.create("sharedLibrarySourceConsumer") {
  *     canBeResolved = true
  *     canBeConsumed = false
