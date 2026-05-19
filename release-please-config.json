@@ -17,7 +17,7 @@
         {"type": "fix", "section": "Bug fixes"},
         {"type": "perf", "section": "Performance improvements"},
         {"type": "deps", "section": "Dependencies"},
-        {"type": "chore", "section": "Miscellaneous", "hidden": false}
+        {"type": "infra", "section": "Infrastructure", "hidden": true}
       ]
     }
   }
