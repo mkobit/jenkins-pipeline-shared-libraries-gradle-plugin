@@ -122,9 +122,12 @@ abstract class GenerateLocalLibraryFiles : DefaultTask() {
 
       import hudson.init.InitMilestone;
       import hudson.init.Initializer;
+      import java.io.File;
+      import java.util.ArrayList;
       import java.util.List;
       import javax.annotation.processing.Generated;
       import org.jenkinsci.plugins.workflow.libs.GlobalLibraries;
+      import org.jenkinsci.plugins.workflow.libs.LibraryConfiguration;
 
       @Generated("com.mkobit.jenkins.pipelines.GenerateLocalLibraryFiles")
       public final class SharedLibraryAutoRegistrar {
@@ -132,9 +135,15 @@ abstract class GenerateLocalLibraryFiles : DefaultTask() {
           private SharedLibraryAutoRegistrar() {}
 
           /**
-           * Runs after all Jenkins extensions are loaded. Reads {@code test.library.name} (injected
-           * by the shared-library Gradle plugin) and registers the local library in GlobalLibraries
-           * so test pipelines can reference it without any explicit setup code.
+           * Runs after all Jenkins extensions are loaded and registers all shared libraries
+           * injected by the shared-library Gradle plugin in GlobalLibraries so test pipelines
+           * can reference them without any explicit setup code.
+           *
+           * <p>The primary library is supplied via {@code test.library.name} and
+           * {@code test.library.root}. Additional libraries are supplied as indexed pairs:
+           * {@code test.library.0.name} / {@code test.library.0.root},
+           * {@code test.library.1.name} / {@code test.library.1.root}, and so on.
+           * The scan stops at the first index where either property is absent.
            *
            * <p>Set system property {@code test.library.auto.register=false} at JVM startup to
            * disable auto-registration for a specific test run (e.g. to test manual registration).
@@ -144,11 +153,32 @@ abstract class GenerateLocalLibraryFiles : DefaultTask() {
               if ("false".equalsIgnoreCase(System.getProperty("test.library.auto.register", "true"))) {
                   return;
               }
+              List<LibraryConfiguration> libraries = new ArrayList<>();
               String name = System.getProperty("test.library.name");
-              if (name == null) {
-                  return;
+              String root = System.getProperty("test.library.root");
+              if (name != null && root != null) {
+                  boolean implicit = !"false".equalsIgnoreCase(System.getProperty("test.library.implicit", "true"));
+                  libraries.add(makeLibrary(name, root, implicit));
               }
-              GlobalLibraries.get().setLibraries(List.of(LocalLibraryRetriever.implicitLibrary(name)));
+              int i = 0;
+              while (true) {
+                  String extraName = System.getProperty("test.library." + i + ".name");
+                  String extraRoot = System.getProperty("test.library." + i + ".root");
+                  if (extraName == null || extraRoot == null) break;
+                  boolean extraImplicit = !"false".equalsIgnoreCase(System.getProperty("test.library." + i + ".implicit", "true"));
+                  libraries.add(makeLibrary(extraName, extraRoot, extraImplicit));
+                  i++;
+              }
+              if (!libraries.isEmpty()) {
+                  GlobalLibraries.get().setLibraries(libraries);
+              }
+          }
+
+          private static LibraryConfiguration makeLibrary(String name, String root, boolean implicit) {
+              LibraryConfiguration cfg = new LibraryConfiguration(name, new LocalLibraryRetriever(new File(root)));
+              cfg.setImplicit(implicit);
+              cfg.setDefaultVersion("fixed");
+              return cfg;
           }
       }
       """.trimIndent()

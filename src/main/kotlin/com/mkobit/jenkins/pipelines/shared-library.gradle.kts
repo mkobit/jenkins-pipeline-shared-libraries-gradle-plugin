@@ -116,12 +116,7 @@ fun applyJenkinsTestWiring(suite: JvmTestSuite) {
       inputs.files(syncTask)
       jvmArgumentProviders.add(
         objects.newInstance<LibraryRootArgumentProvider>().apply {
-          // Resolved lazily from the Sync task's destination so it tracks libraryName overrides.
-          libraryRoot.set(
-            syncTask.map { t ->
-              objects.directoryProperty().also { it.set(t.destinationDir) }.get()
-            },
-          )
+          libraryRoot = syncTask.flatMap { it.destinationDir }
         },
       )
       jvmArgumentProviders.add(
@@ -169,10 +164,10 @@ val syncSharedLibrarySource =
   tasks.register<SyncSharedLibrarySource>("syncSharedLibrarySource") {
     description = "Copies shared library source (src/, vars/, resources/) into build/sharedLibrarySource/{libraryName}/"
     group = LifecycleBasePlugin.BUILD_GROUP
-    from(srcDir) { into("src") }
-    from(varsDir) { into("vars") }
-    from(resourcesDir) { into("resources") }
-    into(sharedLibrarySourceDir)
+    srcFiles.from(srcDir)
+    varsFiles.from(varsDir)
+    resourcesFiles.from(resourcesDir)
+    destinationDir = sharedLibrarySourceDir
   }
 
 // Outgoing variant: exposes the Sync task output as a resolvable artifact so other Gradle
@@ -183,10 +178,10 @@ configurations.register(SHARED_LIBRARY_SOURCE_ELEMENTS_CONFIGURATION) {
   isCanBeConsumed = true
   description = "Shared library source files for consumption by dependent projects via variant-aware resolution"
   attributes {
-    attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category::class.java, SHARED_LIBRARY_SOURCE_CATEGORY))
+    attribute(Category.CATEGORY_ATTRIBUTE, objects.named<Category>(SHARED_LIBRARY_SOURCE_CATEGORY))
   }
-  outgoing.artifact(sharedLibrarySourceDir) {
-    builtBy(syncSharedLibrarySource)
+  // TaskProvider.flatMap wires builtBy automatically — no explicit builtBy needed.
+  outgoing.artifact(syncSharedLibrarySource.flatMap { it.destinationDir }) {
     type = "directory"
   }
 }

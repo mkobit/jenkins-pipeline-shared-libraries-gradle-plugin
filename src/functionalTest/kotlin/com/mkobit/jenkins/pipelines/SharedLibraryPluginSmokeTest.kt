@@ -94,6 +94,13 @@ class SharedLibraryPluginSmokeTest :
           autoRegistrarSource shouldContain "public static void registerLibrary()"
           autoRegistrarSource shouldContain "test.library.auto.register"
           autoRegistrarSource shouldContain "test.library.name"
+          autoRegistrarSource shouldContain "test.library.root"
+          autoRegistrarSource shouldContain "test.library.implicit"
+          // Indexed multi-library props: test.library.0.name / test.library.0.root / test.library.0.implicit
+          autoRegistrarSource shouldContain "test.library.\" + i + \".name"
+          autoRegistrarSource shouldContain "test.library.\" + i + \".root"
+          autoRegistrarSource shouldContain "test.library.\" + i + \".implicit"
+          autoRegistrarSource shouldContain "makeLibrary"
         }
       }
     }
@@ -202,9 +209,10 @@ class SharedLibraryPluginSmokeTest :
                 id("com.mkobit.jenkins.pipelines.shared-library")
             }
             tasks.register("printLibraryRoot") {
-                val syncTask = tasks.named<Sync>("syncSharedLibrarySource")
+                val syncTask = tasks.named<com.mkobit.jenkins.pipelines.SyncSharedLibrarySource>("syncSharedLibrarySource")
+                val rootProvider = syncTask.flatMap { it.destinationDir }
                 doLast {
-                    println("root=" + syncTask.get().destinationDir.absolutePath)
+                    println("root=" + rootProvider.get().asFile.absolutePath)
                 }
             }
             """.trimIndent(),
