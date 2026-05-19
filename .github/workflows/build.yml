@@ -4,7 +4,15 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE.txt'
+      - '.gitignore'
   pull_request:
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE.txt'
+      - '.gitignore'
   workflow_dispatch:
 
 permissions: {}

@@ -18,8 +18,12 @@ Merging the release PR triggers the Release workflow, which publishes to the Gra
 |---|---|
 | `feat:` | minor |
 | `fix:`, `perf:` | patch |
-| `BREAKING CHANGE` in commit footer | major |
+| `BREAKING CHANGE` in commit footer | major (minor while pre-1.0 — see note) |
 | `deps:`, `chore:`, `ci:` | patch |
+
+> [!NOTE]
+> `release-please-config.json` sets `bump-minor-pre-major: true`, so while the released version is `0.x.y`, breaking changes bump the minor segment (e.g., `0.10.1` → `0.11.0`) rather than the major.
+> Once the project releases `1.0.0`, breaking changes bump major.
 
 ## Manual re-trigger
 
