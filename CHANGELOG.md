@@ -5,11 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.11.0](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/compare/v0.10.1...v0.11.0) (2026-05-19)
 
 > [!IMPORTANT]
 > **This is a complete rewrite** — the first release since 0.10.1 (July 2019), nearly seven years later.
-> The plugin has been rebuilt from the ground up for Gradle 9.x, Java 17/21, and modern Jenkins LTS lines.
+> The plugin has been rebuilt from the ground up for Gradle 9.4+, Java 17/21, and modern Jenkins LTS lines.
 > All 0.10.x APIs have been removed.
 > See the [migration guide in the README](README.md#migration-from-010x) or run the bundled OpenRewrite recipe.
 
@@ -22,15 +22,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `autoRegisterLibrary` property (default: `true`) — generates `SharedLibraryAutoRegistrar` and registers the library in embedded Jenkins at startup; no `GlobalLibraries.get().setLibraries(...)` call needed in tests.
 - `libraryName` property (default: `project.name`) — controls the Jenkins library identifier used in `@Library("...")` pipeline scripts and `LocalLibraryRetriever.implicitLibrary()`.
 - Generated `LocalLibraryRetriever` class — loads the local shared library in integration tests without network access.
-- Built-in Jenkins CodeNarc rules (`codenarcJenkinsMain` task) — validates CPS-safety and `@Serializable` annotations on shared library sources.
+- Built-in Jenkins CodeNarc rules (`codenarcJenkinsMain` task) — validates CPS-safety and Serializable type compliance on shared library sources.
 - OpenRewrite migration recipe `com.mkobit.jenkins.pipelines.MigrateSharedLibraryPlugin010To011` for automated 0.10.x → 0.11.x migration.
 - Configuration cache support.
 - Java 17, 21, and 25 toolchain support.
 - Jenkins LTS 2.479.x, 2.528.x, and 2.541.x compatibility with full BOM alignment.
+- `syncSharedLibrarySource` task — syncs `src/`, `vars/`, and `resources/` into `build/sharedLibrarySource/{libraryName}/` as a cacheable, incremental operation.
+- `sharedLibrarySourceElements` outgoing variant — exposes the synced source directory as a Gradle variant with `Category` and `Usage` attributes for cross-project resolution.
 
 ### Changed
 
-- Minimum Gradle version is now 9.x (previously 4.x–8.x).
+- Minimum Gradle version is now 9.4 (previously 4.x–8.x).
 - Minimum Java version is now 17 (previously 8).
 - Minimum Jenkins LTS is now 2.479.x.
 - `sharedLibrary { coreVersion }` replaced by `sharedLibrary { jenkins { version = "..." } }`.
@@ -43,6 +45,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Named `*Version` properties on `PluginDependencySpec` — declare versions in `gradle/libs.versions.toml` and use the BOM for Jenkins plugins.
 - All individual workflow plugin version properties (`workflowCpsPluginVersion`, `workflowJobPluginVersion`, etc.) — these plugins are managed by the Jenkins BOM.
 - Custom configurations (`jenkinsPlugins`, `jenkinsPluginHpisAndJpis`, etc.) — `jenkinsPlugin` is the only user-facing configuration.
+
+### Usage
+
+`settings.gradle.kts`
+
+```kotlin
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+        maven {
+            name = "jenkins"
+            url = uri("https://repo.jenkins-ci.org/public/")
+        }
+    }
+}
+```
+
+`build.gradle.kts`
+
+```kotlin
+plugins {
+    id("com.mkobit.jenkins.pipelines.shared-library") version "0.11.0"
+}
+
+sharedLibrary {
+    jenkins {
+        version = "2.541.3"
+    }
+    plugins {
+        plugin("org.jenkins-ci.plugins:pipeline-model-definition")
+    }
+}
+```
+
+Source layout:
+
+```
+src/com/example/Util.groovy
+vars/myStep.groovy
+resources/com/example/data.json
+test/unit/groovy/com/example/UtilSpec.groovy
+test/integration/groovy/com/example/MyStepTest.groovy
+```
+
+For a complete working project, see the example repository:
+
+- [at `c376906`](https://github.com/mkobit/jenkins-pipeline-shared-library-example/tree/c37690649d10aa7cabdd534062bde5a5560ce852) — pinned to the version tested against 0.11.0
+- [latest `main`](https://github.com/mkobit/jenkins-pipeline-shared-library-example/tree/main)
 
 ---
 
