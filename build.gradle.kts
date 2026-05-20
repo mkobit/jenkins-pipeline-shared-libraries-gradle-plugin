@@ -15,7 +15,7 @@ plugins {
 }
 
 group = "com.mkobit.jenkins.pipelines"
-version = version.toString().substringBefore('#').trim()
+apply(from = "gradle/version.gradle.kts")
 description = "Gradle plugins for Jenkins Pipeline shared library development and testing"
 
 java {
