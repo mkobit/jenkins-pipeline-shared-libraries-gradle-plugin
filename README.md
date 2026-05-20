@@ -10,10 +10,6 @@
 | ![Java](https://img.shields.io/badge/Java--orange?logo=openjdk) | ![17](https://img.shields.io/badge/17--orange) ![21](https://img.shields.io/badge/21--orange) ![25](https://img.shields.io/badge/25--orange) |
 | ![Jenkins LTS](https://img.shields.io/badge/Jenkins_LTS--blue?logo=jenkins) | ![2.479.x](https://img.shields.io/badge/2.479.x--blue) ![2.528.x](https://img.shields.io/badge/2.528.x--blue) ![2.541.x](https://img.shields.io/badge/2.541.x--blue) |
 
-> [!NOTE]
-> This documentation tracks the `HEAD` of the repository.
-> For a specific released version see the [GitHub Releases page](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/releases).
-
 A Gradle plugin for developing and testing [Jenkins Pipeline Shared Libraries](https://jenkins.io/doc/book/pipeline/shared-libraries/).
 
 ## Features
