@@ -5,6 +5,7 @@ package com.mkobit.jenkins.pipelines
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition
 import org.gradle.api.attributes.Category
 import org.gradle.api.attributes.Usage
+import org.gradle.api.component.AdhocComponentWithVariants
 import org.gradle.api.plugins.jvm.JvmTestSuite
 import org.gradle.api.plugins.quality.CodeNarc
 import org.gradle.api.tasks.compile.GroovyCompile
@@ -187,6 +188,15 @@ configurations.register(SHARED_LIBRARY_SOURCE_ELEMENTS_CONFIGURATION) {
     builtBy(syncSharedLibrarySource)
   }
 }
+
+// Attach the source variant to the `java` SoftwareComponent so peer-library consumers can discover
+// it via project metadata (`project(":lib")`) and via published Gradle Module Metadata.
+// Without this, the variant is only resolvable by direct configuration-name targeting.
+// Maven POM scope mapping is omitted — the variant carries a directory artefact with no Maven
+// equivalent; only GMM-aware Gradle consumers can resolve it.
+(components["java"] as AdhocComponentWithVariants).addVariantsFromConfiguration(
+  configurations.getByName(SHARED_LIBRARY_SOURCE_ELEMENTS_CONFIGURATION),
+) { }
 
 val jenkinsBom =
   configurations.register(JENKINS_BOM_CONFIGURATION) {
