@@ -224,6 +224,20 @@ val jenkinsPlugin =
     extendsFrom(jenkinsBom)
     fromDependencyCollector(sharedLibrary.plugins.pluginCollector)
   }
+
+// Peer shared library dependencies — declared via `sharedLibrary { dependencies { sharedLibrary(...) } }`.
+// Acts as a bucket fed by the DSL's `DependencyCollector`. Flows into:
+//   - `compileOnly` on main: peer JAR classes available for Groovy/IDE symbol resolution
+//   - test suites' `implementation`: peer JAR classes on unit-test and integration-test runtime
+//   - `peerLibrarySource` resolvable config: source-directory variants for Jenkins runtime loading
+// Mirrors the `jenkinsPlugin` collector-bucket pattern (line above).
+val sharedLibraryDependencies =
+  configurations.register(SHARED_LIBRARY_DEPENDENCIES_CONFIGURATION) {
+    isCanBeResolved = false
+    isCanBeConsumed = false
+    description = "Peer Jenkins shared library dependencies"
+    fromDependencyCollector(sharedLibrary.dependencies.sharedLibraryCollector)
+  }
 dependencies {
   jenkinsPlugin(sharedLibrary.jenkins.version.map { v -> "org.jenkins-ci.main:jenkins-core:$v" })
   jenkinsPlugin(PIPELINE_GROOVY_LIB_MODULE)
@@ -257,8 +271,11 @@ sourceSets.main.configure {
   resources.setSrcDirs(listOf("resources"))
 }
 // Jenkins APIs are compile-only for the shared library; the library runs inside Jenkins at runtime.
+// Peer shared libraries follow the same pattern — at runtime Jenkins loads the peer's source via
+// our LocalLibraryRetriever, so the consumer's compiled JAR doesn't need peer classes on runtime.
 configurations.compileOnly {
   extendsFrom(jenkinsPlugin)
+  extendsFrom(sharedLibraryDependencies)
 }
 
 // Integration tests need groovy-all at *runtime only* so SandboxInterceptor
@@ -341,6 +358,9 @@ testing.suites.withType<JvmTestSuite>().configureEach {
   val implConfigName = sources.implementationConfigurationName
   project.configurations.named(implConfigName) {
     extendsFrom(jenkinsPlugin)
+    // Peer shared library classes need to be on test runtime classpaths (pipeline-unit and
+    // integrationTest) so consumer test code can reference symbols defined in peer libraries.
+    extendsFrom(sharedLibraryDependencies)
     exclude(mapOf("group" to "org.codehaus.groovy", "module" to "groovy-all"))
   }
 }
