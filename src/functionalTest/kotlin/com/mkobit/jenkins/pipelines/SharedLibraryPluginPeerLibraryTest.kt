@@ -196,6 +196,61 @@ class SharedLibraryPluginPeerLibraryTest :
       }
     }
 
+    describe("cycle: A ↔ B both declaring each other resolves safely (no stack overflow, deduped)") {
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withTestProject {
+          settingsFile.writeText(
+            """
+            $baseSettings
+            rootProject.name = "peer-cycle-root"
+            include("A", "B")
+            """.trimIndent(),
+          )
+          buildFile.writeText(
+            """
+            plugins { id("com.mkobit.jenkins.pipelines.shared-library") }
+            sharedLibrary {
+                dependencies {
+                    sharedLibrary(project(":A"))
+                }
+            }
+            $printResolvedTask
+            """.trimIndent(),
+          )
+          file("A/build.gradle.kts").writeText(
+            """
+            plugins { id("com.mkobit.jenkins.pipelines.shared-library") }
+            sharedLibrary {
+                dependencies {
+                    sharedLibrary(project(":B"))
+                }
+            }
+            """.trimIndent(),
+          )
+          file("A/vars/aStep.groovy").writeText("def call() {}")
+          file("B/build.gradle.kts").writeText(
+            """
+            plugins { id("com.mkobit.jenkins.pipelines.shared-library") }
+            sharedLibrary {
+                dependencies {
+                    sharedLibrary(project(":A"))
+                }
+            }
+            """.trimIndent(),
+          )
+          file("B/vars/bStep.groovy").writeText("def call() {}")
+
+          val result = runner(gradleVersion).withArguments("printResolved").build()
+
+          // Gradle's dependency graph deduplicates: A and B appear once each, no infinite expansion.
+          val sourceLines = result.output.lines().filterMatching { it.shouldStartWith("peer-source:") }
+          sourceLines shouldHaveSize 2
+          sourceLines.shouldContainProject(":A")
+          sourceLines.shouldContainProject(":B")
+        }
+      }
+    }
+
     describe("DSL overrides: libraryName and implicit captured on the PeerLibrarySpec") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
         withTestProject {
