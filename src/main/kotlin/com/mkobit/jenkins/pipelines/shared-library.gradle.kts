@@ -200,13 +200,14 @@ configurations.register(SHARED_LIBRARY_SOURCE_ELEMENTS_CONFIGURATION) {
 }
 
 // Attach the source variant to the `java` SoftwareComponent so peer-library consumers can discover
-// it via project metadata (`project(":lib")`) and via published Gradle Module Metadata.
-// Without this, the variant is only resolvable by direct configuration-name targeting.
-// Maven POM scope mapping is omitted — the variant carries a directory artefact with no Maven
-// equivalent; only GMM-aware Gradle consumers can resolve it.
+// it via project dependency metadata (`project(":lib")`) and via composite-build substitution.
+// `skip()` excludes the variant from any maven-publish / ivy-publish output: the artefact is a
+// directory, which the publication-side checksum/upload pipeline cannot consume. Cross-project
+// resolution uses Gradle's in-memory component model, so skip() does not affect project deps or
+// includeBuild substitution. Binary-GAV consumers require a future sources-JAR fallback variant.
 (components["java"] as AdhocComponentWithVariants).addVariantsFromConfiguration(
   configurations.getByName(SHARED_LIBRARY_SOURCE_ELEMENTS_CONFIGURATION),
-) { }
+) { skip() }
 
 val jenkinsBom =
   configurations.register(JENKINS_BOM_CONFIGURATION) {
