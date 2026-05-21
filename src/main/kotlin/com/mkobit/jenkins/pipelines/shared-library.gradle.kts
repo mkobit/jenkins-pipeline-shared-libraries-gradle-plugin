@@ -182,33 +182,6 @@ val syncSharedLibrarySource =
     destinationDir = sharedLibrarySourceDir
   }
 
-// Outgoing variant: exposes the Sync task output as a resolvable artifact so other Gradle
-// projects can declare this project as a shared library source dependency.
-// Variant attribute Category="shared-library-source" identifies it as library source, not code.
-configurations.register(SHARED_LIBRARY_SOURCE_ELEMENTS_CONFIGURATION) {
-  isCanBeResolved = false
-  isCanBeConsumed = true
-  description = "Shared library source files for consumption by dependent projects via variant-aware resolution"
-  attributes {
-    attribute(Category.CATEGORY_ATTRIBUTE, objects.named<Category>(SHARED_LIBRARY_SOURCE_CATEGORY))
-    attribute(Usage.USAGE_ATTRIBUTE, objects.named<Usage>(SHARED_LIBRARY_SOURCE_USAGE))
-  }
-  outgoing.artifact(syncSharedLibrarySource.flatMap { it.destinationDir }) {
-    type = "directory"
-    builtBy(syncSharedLibrarySource)
-  }
-}
-
-// Attach the source variant to the `java` SoftwareComponent so peer-library consumers can discover
-// it via project dependency metadata (`project(":lib")`) and via composite-build substitution.
-// `skip()` excludes the variant from any maven-publish / ivy-publish output: the artefact is a
-// directory, which the publication-side checksum/upload pipeline cannot consume. Cross-project
-// resolution uses Gradle's in-memory component model, so skip() does not affect project deps or
-// includeBuild substitution. Binary-GAV consumers require a future sources-JAR fallback variant.
-(components["java"] as AdhocComponentWithVariants).addVariantsFromConfiguration(
-  configurations.getByName(SHARED_LIBRARY_SOURCE_ELEMENTS_CONFIGURATION),
-) { skip() }
-
 val jenkinsBom =
   configurations.register(JENKINS_BOM_CONFIGURATION) {
     isCanBeResolved = false
@@ -249,6 +222,42 @@ val sharedLibraryDependencies =
     description = "Peer Jenkins shared library dependencies"
     fromDependencyCollector(sharedLibrary.dependencies.sharedLibraryCollector)
   }
+
+// Outgoing variant: exposes the Sync task output as a resolvable artifact so other Gradle
+// projects can declare this project as a shared library source dependency.
+// Registered AFTER `sharedLibraryDependencies` so the `extendsFrom` reference resolves at the
+// point the variant is realized (variant attachment below triggers realization eagerly).
+configurations.register(SHARED_LIBRARY_SOURCE_ELEMENTS_CONFIGURATION) {
+  isCanBeResolved = false
+  isCanBeConsumed = true
+  description = "Shared library source files for consumption by dependent projects via variant-aware resolution"
+  // Source-variant transitivity: a consumer resolving this project's source variant also receives
+  // the source directories of every peer library *this* project declared via
+  // `sharedLibrary { dependencies { sharedLibrary(...) } }`. Without this, a consumer C that
+  // depends on A would see A's source only — never B's, even when A declared peer B itself.
+  // The compile-classpath side stays compileOnly (non-transitive) by design so Jenkins' runtime
+  // classloader doesn't see duplicate compiled copies; this only affects what Jenkins-runtime
+  // source directories get loaded into GlobalLibraries during integrationTest.
+  extendsFrom(sharedLibraryDependencies)
+  attributes {
+    attribute(Category.CATEGORY_ATTRIBUTE, objects.named<Category>(SHARED_LIBRARY_SOURCE_CATEGORY))
+    attribute(Usage.USAGE_ATTRIBUTE, objects.named<Usage>(SHARED_LIBRARY_SOURCE_USAGE))
+  }
+  outgoing.artifact(syncSharedLibrarySource.flatMap { it.destinationDir }) {
+    type = "directory"
+    builtBy(syncSharedLibrarySource)
+  }
+}
+
+// Attach the source variant to the `java` SoftwareComponent so peer-library consumers can discover
+// it via project dependency metadata (`project(":lib")`) and via composite-build substitution.
+// `skip()` excludes the variant from any maven-publish / ivy-publish output: the artefact is a
+// directory, which the publication-side checksum/upload pipeline cannot consume. Cross-project
+// resolution uses Gradle's in-memory component model, so skip() does not affect project deps or
+// includeBuild substitution. Binary-GAV consumers require a future sources-JAR fallback variant.
+(components["java"] as AdhocComponentWithVariants).addVariantsFromConfiguration(
+  configurations.getByName(SHARED_LIBRARY_SOURCE_ELEMENTS_CONFIGURATION),
+) { skip() }
 
 // Resolvable view of peer shared libraries that selects the `sharedLibrarySourceElements` variant
 // (Category=jenkins-shared-library, Usage=jenkins-shared-library-source). Each resolved artefact

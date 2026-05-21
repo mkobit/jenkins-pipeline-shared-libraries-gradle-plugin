@@ -5,8 +5,11 @@ import io.kotest.datatest.withData
 import io.kotest.inspectors.filterMatching
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldStartWith
+import org.gradle.testkit.runner.TaskOutcome
 import testsupport.gradle.TestedGradleVersion
 import testsupport.gradle.withTestProject
 import kotlin.io.path.writeText
@@ -144,6 +147,193 @@ class SharedLibraryPluginPeerLibraryTest :
       }
     }
 
+    describe("transitive: root → A → B propagates B into root's peerLibrarySource") {
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withTestProject {
+          settingsFile.writeText(
+            """
+            $baseSettings
+            rootProject.name = "peer-transitive-root"
+            include("A", "B")
+            """.trimIndent(),
+          )
+          buildFile.writeText(
+            """
+            plugins { id("com.mkobit.jenkins.pipelines.shared-library") }
+            sharedLibrary {
+                dependencies {
+                    sharedLibrary(project(":A"))
+                }
+            }
+            $printResolvedTask
+            """.trimIndent(),
+          )
+          file("A/build.gradle.kts").writeText(
+            """
+            plugins { id("com.mkobit.jenkins.pipelines.shared-library") }
+            sharedLibrary {
+                dependencies {
+                    sharedLibrary(project(":B"))
+                }
+            }
+            """.trimIndent(),
+          )
+          file("A/vars/aStep.groovy").writeText("def call() {}")
+          file("B/build.gradle.kts").writeText(
+            """
+            plugins { id("com.mkobit.jenkins.pipelines.shared-library") }
+            """.trimIndent(),
+          )
+          file("B/vars/bStep.groovy").writeText("def call() {}")
+
+          val result = runner(gradleVersion).withArguments("printResolved").build()
+
+          val sourceLines = result.output.lines().filterMatching { it.shouldStartWith("peer-source:") }
+          sourceLines shouldHaveSize 2
+          sourceLines.shouldContainProject(":A")
+          sourceLines.shouldContainProject(":B")
+        }
+      }
+    }
+
+    describe("DSL overrides: libraryName and implicit captured on the PeerLibrarySpec") {
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withTestProject {
+          settingsFile.writeText(
+            """
+            $baseSettings
+            rootProject.name = "peer-overrides-root"
+            include("peer-lib")
+            """.trimIndent(),
+          )
+          buildFile.writeText(
+            """
+            plugins { id("com.mkobit.jenkins.pipelines.shared-library") }
+            sharedLibrary {
+                dependencies {
+                    sharedLibrary(project(":peer-lib")) {
+                        libraryName.set("renamed-in-tests")
+                        implicit.set(false)
+                    }
+                }
+            }
+            tasks.register("printSpecs") {
+                doLast {
+                    sharedLibrary.dependencies.specs.get().forEach {
+                        println("spec:" + it.identifier.get() + "|" + it.libraryName.get() + "|" + it.implicit.get())
+                    }
+                }
+            }
+            """.trimIndent(),
+          )
+          file("peer-lib/build.gradle.kts").writeText(
+            """
+            plugins { id("com.mkobit.jenkins.pipelines.shared-library") }
+            """.trimIndent(),
+          )
+          file("peer-lib/vars/peerStep.groovy").writeText("def call() {}")
+
+          val result = runner(gradleVersion).withArguments("printSpecs").build()
+
+          val specLines = result.output.lines().filterMatching { it.shouldStartWith("spec:") }
+          specLines shouldHaveSize 1
+          specLines.single() shouldContain ":peer-lib|renamed-in-tests|false"
+        }
+      }
+    }
+
+    describe("consumer src compiles against peer src symbols on compileOnly") {
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withTestProject {
+          settingsFile.writeText(
+            """
+            $baseSettings
+            rootProject.name = "peer-compile-root"
+            include("peer-lib")
+            """.trimIndent(),
+          )
+          buildFile.writeText(
+            """
+            plugins { id("com.mkobit.jenkins.pipelines.shared-library") }
+            sharedLibrary {
+                dependencies {
+                    sharedLibrary(project(":peer-lib"))
+                }
+            }
+            """.trimIndent(),
+          )
+          file("src/com/example/consumer/Consumer.groovy").writeText(
+            """
+            package com.example.consumer
+            import com.example.peer.PeerType
+            class Consumer {
+                String relay() { new PeerType().value() }
+            }
+            """.trimIndent(),
+          )
+          file("peer-lib/build.gradle.kts").writeText(
+            """
+            plugins { id("com.mkobit.jenkins.pipelines.shared-library") }
+            """.trimIndent(),
+          )
+          file("peer-lib/src/com/example/peer/PeerType.groovy").writeText(
+            """
+            package com.example.peer
+            class PeerType {
+                String value() { "peer-value" }
+            }
+            """.trimIndent(),
+          )
+
+          val result = runner(gradleVersion).withArguments("compileGroovy").build()
+
+          result.task(":compileGroovy") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
+        }
+      }
+    }
+
+    describe("missing peer plugin: clear error when project(\":lib\") does not apply the shared-library plugin") {
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withTestProject {
+          settingsFile.writeText(
+            """
+            $baseSettings
+            rootProject.name = "peer-missing-plugin-root"
+            include("peer-lib")
+            """.trimIndent(),
+          )
+          buildFile.writeText(
+            """
+            plugins { id("com.mkobit.jenkins.pipelines.shared-library") }
+            sharedLibrary {
+                dependencies {
+                    sharedLibrary(project(":peer-lib"))
+                }
+            }
+            $printResolvedTask
+            """.trimIndent(),
+          )
+          // peer-lib applies the bare java-library plugin instead of shared-library — it has no
+          // sharedLibrarySourceElements variant. Consumer resolution must fail loudly, not
+          // silently produce zero peer sources.
+          file("peer-lib/build.gradle.kts").writeText(
+            """
+            plugins { `java-library` }
+            """.trimIndent(),
+          )
+          file("peer-lib/src/main/java/com/example/Placeholder.java").writeText(
+            "package com.example; public class Placeholder {}",
+          )
+
+          val result = runner(gradleVersion).withArguments("printResolved").buildAndFail()
+
+          // Gradle's variant-selection failure message names both the missing attribute and the
+          // configurations that were considered — that's the surface we care about for diagnosis.
+          result.output shouldContain "jenkins-shared-library"
+        }
+      }
+    }
+
     xdescribe("binary GAV: sharedLibrary(\"group:artifact:version\") from a local Maven repo (deferred)") {
       // Blocked: the sharedLibrarySourceElements variant carries a directory artefact, which
       // Gradle's maven-publish pipeline cannot checksum / upload. Two paths forward, neither
@@ -235,5 +425,11 @@ private fun List<String>.forAtLeastOnePeer() {
   shouldNotBeEmpty()
   if (none { it.contains("peer-lib") }) {
     throw AssertionError("expected at least one compile: line to reference peer-lib, got:\n${joinToString("\n")}")
+  }
+}
+
+private fun List<String>.shouldContainProject(projectPath: String) {
+  if (none { it.contains("project $projectPath") }) {
+    throw AssertionError("expected at least one line to reference project $projectPath, got:\n${joinToString("\n")}")
   }
 }
