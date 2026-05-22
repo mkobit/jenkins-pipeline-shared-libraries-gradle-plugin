@@ -28,6 +28,7 @@ jobs:
             fix
             perf
             deps
+            infra
             docs
             ci
             chore
