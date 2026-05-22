@@ -78,6 +78,26 @@ abstract class SharedLibraryExtension
      */
     fun plugins(action: Action<in JenkinsPlugins>) = action.execute(plugins)
 
+    /** Peer shared library dependencies declared via [dependencies]. */
+    val dependencies: SharedLibraryDependencies = objects.newInstance<SharedLibraryDependencies>()
+
+    /**
+     * Declares peer shared library dependencies.
+     *
+     * Each peer library is resolved as both a compiled JAR (for source-set compile / IDE) and a
+     * source directory (loaded into Jenkins at integration-test runtime via `test.library.N.location`).
+     *
+     * ```kotlin
+     * sharedLibrary {
+     *     dependencies {
+     *         sharedLibrary("com.example:config-lib:1.0.0")
+     *         sharedLibrary(project(":config-lib"))
+     *     }
+     * }
+     * ```
+     */
+    fun dependencies(action: Action<in SharedLibraryDependencies>) = action.execute(dependencies)
+
     /** `com.lesfurets:jenkins-pipeline-unit` version used in the `test` suite. */
     abstract val pipelineUnitVersion: Property<String>
 
