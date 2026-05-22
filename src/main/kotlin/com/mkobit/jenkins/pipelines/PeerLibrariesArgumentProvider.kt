@@ -23,7 +23,7 @@ import org.gradle.process.CommandLineArgumentProvider
  *    path-sensitive up-to-date checking; the location paths inside [entries] are what
  *    actually feed `asArguments`.
  */
-abstract class PeerLibrariesArgumentProvider : CommandLineArgumentProvider {
+internal abstract class PeerLibrariesArgumentProvider : CommandLineArgumentProvider {
   @get:Input
   abstract val entries: ListProperty<PeerLibraryEntry>
 

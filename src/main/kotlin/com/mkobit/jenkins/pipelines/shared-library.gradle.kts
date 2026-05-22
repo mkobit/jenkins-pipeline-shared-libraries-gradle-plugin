@@ -93,6 +93,27 @@ fun applyJenkinsTestWiring(suite: JvmTestSuite) {
   // Each suite gets its own subdirectory so multiple suites can run in parallel without
   // conflicting on WarExploder output or Gradle's task output tracking.
   val suiteJenkinsDir = layout.buildDirectory.dir("jenkins-for-test/$suiteName")
+  val peerLibraryEntries =
+    peerLibrarySource.flatMap { cfg ->
+      cfg.incoming.artifacts.resolvedArtifacts.zip(sharedLibrary.dependencies.specs) { artifacts, specs ->
+        val specByIdentifier: Map<String, PeerLibrarySpec> = specs.associateBy { it.identifier.get() }
+        artifacts.map { artifact ->
+          val ownerId: String =
+            when (val owner = artifact.id.componentIdentifier) {
+              is ProjectComponentIdentifier -> owner.projectPath
+              is ModuleComponentIdentifier -> "${owner.group}:${owner.module}"
+              else -> owner.displayName
+            }
+          val spec = specByIdentifier[ownerId]
+          val defaultName = ownerId.substringAfterLast(":").ifEmpty { ownerId }
+          PeerLibraryEntry(
+            libraryName = spec?.libraryName?.getOrElse(defaultName) ?: defaultName,
+            locationPath = artifact.file.absolutePath,
+            implicit = spec?.implicit?.getOrElse(true) ?: true,
+          )
+        }
+      }
+    }
   suite.targets.configureEach {
     testTask.configure {
       mustRunAfter(tasks.test)
@@ -275,38 +296,7 @@ val peerLibrarySource =
     }
   }
 
-// Zips resolved peer-source artefacts with the consumer's declared specs to produce a
-// per-task list of `PeerLibraryEntry` records. Specs are correlated to artefacts by a stable
-// identifier (":projectPath" for project deps, "group:artifact" for GAV deps); transitive
-// peers that lack a spec fall back to artifact-derived defaults (name = last identifier
-// segment, implicit = true). The provider is realized lazily at task execution.
-val peerLibraryEntries: Provider<List<PeerLibraryEntry>> =
-  peerLibrarySource.flatMap { cfg ->
-    cfg.incoming.artifacts.resolvedArtifacts.zip(sharedLibrary.dependencies.specs) { artifacts, specs ->
-      val specByIdentifier: Map<String, PeerLibrarySpec> = specs.associateBy { it.identifier.get() }
-      artifacts.map { artifact ->
-        val ownerId: String =
-          when (val owner = artifact.id.componentIdentifier) {
-            is ProjectComponentIdentifier -> owner.projectPath
-            is ModuleComponentIdentifier -> "${owner.group}:${owner.module}"
-            else -> owner.displayName
-          }
-        val spec = specByIdentifier[ownerId]
-        val defaultName = ownerId.substringAfterLast(":").ifEmpty { ownerId }
-        PeerLibraryEntry(
-          libraryName = spec?.libraryName?.getOrElse(defaultName) ?: defaultName,
-          locationPath = artifact.file.absolutePath,
-          implicit = spec?.implicit?.getOrElse(true) ?: true,
-        )
-      }
-    }
-  }
-
-// File-collection view of the peer source directories for Gradle's path-sensitive up-to-date
-// checking on the integration test task. Mirrors the structured `peerLibraryEntries` above —
-// both reference the same resolution, but this side carries the file inputs while the entries
-// carry name/implicit metadata.
-val peerLibrarySourceFiles: Provider<FileCollection> =
+val peerLibrarySourceFiles =
   peerLibrarySource.map { it.incoming.artifacts.artifactFiles }
 dependencies {
   jenkinsPlugin(sharedLibrary.jenkins.version.map { v -> "org.jenkins-ci.main:jenkins-core:$v" })
