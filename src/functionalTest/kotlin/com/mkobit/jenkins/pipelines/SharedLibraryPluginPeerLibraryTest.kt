@@ -404,11 +404,9 @@ private fun GradleRunner.buildAndFail(vararg args: String): BuildResult = withAr
 
 // ── Output extractors / assertions ───────────────────────────────────────────
 
-private fun BuildResult.peerSourceLines(): List<String> =
-  output.lines().filterMatching { it.shouldStartWith("peer-source:") }
+private fun BuildResult.peerSourceLines(): List<String> = output.lines().filterMatching { it.shouldStartWith("peer-source:") }
 
-private fun BuildResult.compileLines(): List<String> =
-  output.lines().filterMatching { it.shouldStartWith("compile:") }
+private fun BuildResult.compileLines(): List<String> = output.lines().filterMatching { it.shouldStartWith("compile:") }
 
 private fun List<String>.forAtLeastOnePeer() {
   shouldNotBeEmpty()

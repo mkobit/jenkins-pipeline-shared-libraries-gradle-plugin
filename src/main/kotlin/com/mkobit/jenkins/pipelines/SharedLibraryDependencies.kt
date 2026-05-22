@@ -54,7 +54,10 @@ abstract class SharedLibraryDependencies
     fun sharedLibrary(notation: CharSequence): Unit = addModuleSpec(notation) { }
 
     /** Declares a peer shared library by GAV notation and applies per-library overrides. */
-    fun sharedLibrary(notation: CharSequence, action: Action<in PeerLibrarySpec>): Unit = addModuleSpec(notation, action)
+    fun sharedLibrary(
+      notation: CharSequence,
+      action: Action<in PeerLibrarySpec>,
+    ): Unit = addModuleSpec(notation, action)
 
     /** Declares a peer shared library from a version catalog entry. */
     fun sharedLibrary(dependency: Provider<out MinimalExternalModuleDependency>): Unit = addProviderSpec(dependency) { }
@@ -69,9 +72,15 @@ abstract class SharedLibraryDependencies
     fun sharedLibrary(project: ProjectDependency): Unit = addProjectSpec(project) { }
 
     /** Declares a peer shared library from another project and applies per-library overrides. */
-    fun sharedLibrary(project: ProjectDependency, action: Action<in PeerLibrarySpec>): Unit = addProjectSpec(project, action)
+    fun sharedLibrary(
+      project: ProjectDependency,
+      action: Action<in PeerLibrarySpec>,
+    ): Unit = addProjectSpec(project, action)
 
-    private fun addModuleSpec(notation: CharSequence, action: Action<in PeerLibrarySpec>) {
+    private fun addModuleSpec(
+      notation: CharSequence,
+      action: Action<in PeerLibrarySpec>,
+    ) {
       val coords = notation.toString()
       sharedLibraryCollector.add(coords)
       val parts = coords.split(':')
@@ -98,7 +107,10 @@ abstract class SharedLibraryDependencies
       specs.add(spec)
     }
 
-    private fun addProjectSpec(project: ProjectDependency, action: Action<in PeerLibrarySpec>) {
+    private fun addProjectSpec(
+      project: ProjectDependency,
+      action: Action<in PeerLibrarySpec>,
+    ) {
       sharedLibraryCollector.add(project)
       val spec = objects.newInstance<PeerLibrarySpec>()
       spec.identifier.set(project.path)
