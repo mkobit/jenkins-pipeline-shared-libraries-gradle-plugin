@@ -30,7 +30,6 @@ jobs:
             deps
             infra
             docs
-            ci
             chore
             test
             refactor
