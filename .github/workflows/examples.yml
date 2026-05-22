@@ -8,15 +8,11 @@ on:
       - 'examples/**'
       - 'src/**'
       - '.github/workflows/examples.yml'
-    paths-ignore:
-      - '**.md'
   pull_request:
     paths:
       - 'examples/**'
       - 'src/**'
       - '.github/workflows/examples.yml'
-    paths-ignore:
-      - '**.md'
   workflow_dispatch:
 
 permissions: {}
