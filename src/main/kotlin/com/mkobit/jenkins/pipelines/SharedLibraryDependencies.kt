@@ -23,12 +23,20 @@ import javax.inject.Inject
  *    runtime via `test.library.N.location` so the peer library's `src/`, `vars/`, and `resources/`
  *    are available to pipelines without manual `GlobalLibraries` wiring.
  *
+ * **`project(":path")`** works for subprojects in the same Gradle build.
+ *
+ * **GAV notation (`"g:a:v"`)** works when Gradle substitutes the coordinate with a local project —
+ * i.e. the peer is declared via `includeBuild(...)` in `settings.gradle.kts`. GAV does **not** work
+ * against a Maven repository: the `sharedLibrarySourceElements` variant ships a directory artifact
+ * that Maven's publishing pipeline cannot upload. Remote binary resolution requires a sources-JAR
+ * variant and a consumer-side `ArtifactTransform`; see issue #165.
+ *
  * ```kotlin
  * sharedLibrary {
  *   dependencies {
- *     sharedLibrary("com.example:config-lib:1.0.0")
- *     sharedLibrary(project(":config-lib"))
- *     sharedLibrary("com.example:config-lib:1.0.0") {
+ *     sharedLibrary(project(":config-lib"))                    // subproject
+ *     sharedLibrary("com.example:config-lib:1.0.0")           // composite build (includeBuild)
+ *     sharedLibrary(project(":config-lib")) {
  *       libraryName.set("config")     // override the Jenkins library name
  *       implicit.set(false)            // require @Library('config') _ in pipelines
  *     }

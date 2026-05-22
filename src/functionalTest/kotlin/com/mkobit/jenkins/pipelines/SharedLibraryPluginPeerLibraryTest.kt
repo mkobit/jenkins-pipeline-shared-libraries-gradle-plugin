@@ -9,6 +9,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldStartWith
 import org.gradle.testkit.runner.BuildResult
+import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import testsupport.gradle.build
 import testsupport.gradle.buildAndFail
@@ -245,6 +246,71 @@ class SharedLibraryPluginPeerLibraryTest :
             val sourceLines = result.peerSourceLines()
             sourceLines shouldHaveSize 1
             sourceLines.single() shouldContain "peer-lib"
+            result.compileLines().forAtLeastOnePeer()
+          }
+        }
+      }
+    }
+
+    // Tracked in https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/165
+    // sharedLibrarySourceElements ships a directory artifact that Maven's publishing pipeline cannot
+    // checksum or upload, so the variant metadata never lands in a repo. Unblocking this requires a
+    // publish-side sources-JAR variant and a consumer-side ArtifactTransform to unzip it back to a
+    // directory — a non-trivial design given that JSL source is not compiled before publishing.
+    xdescribe("binary GAV (blocked on sources-JAR + ArtifactTransform — see issue #165)") {
+      xdescribe("sharedLibrary(\"group:artifact:version\") from a local Maven repo") {
+        forGradleVersions { gradleVersion ->
+          withTestProject {
+            val mavenRepoPath = dir.resolve("local-maven-repo").toUri().toString()
+
+            file("producer/settings.gradle.kts").writeText(jenkinsSettings("peer-lib"))
+            file("producer/build.gradle.kts").writeText(
+              """
+              plugins {
+                  id("com.mkobit.jenkins.pipelines.shared-library")
+                  `maven-publish`
+              }
+              group = "com.example.shared"
+              version = "1.2.3"
+              publishing {
+                  publications {
+                      create<MavenPublication>("mavenJava") { from(components["java"]) }
+                  }
+                  repositories { maven { url = uri("$mavenRepoPath") } }
+              }
+              """.trimIndent(),
+            )
+            file("producer/vars/peerStep.groovy").writeText("def call() {}")
+
+            GradleRunner
+              .create()
+              .withProjectDir(dir.resolve("producer").toFile())
+              .withGradleVersion(gradleVersion.version)
+              .withPluginClasspath()
+              .build("publish")
+
+            settingsFile.writeText(
+              jenkinsSettings("peer-binary-consumer") + "\n" +
+                """
+                dependencyResolutionManagement.repositories.maven { url = uri("$mavenRepoPath") }
+                """.trimIndent(),
+            )
+            buildFile.writeText(
+              rootBuildFile(
+                """
+                sharedLibrary {
+                    dependencies {
+                        sharedLibrary("com.example.shared:peer-lib:1.2.3")
+                    }
+                }
+                """,
+              ),
+            )
+
+            val result = runner(gradleVersion).build("printResolved")
+            val sourceLines = result.peerSourceLines()
+            sourceLines shouldHaveSize 1
+            sourceLines.single() shouldContain "com.example.shared:peer-lib"
             result.compileLines().forAtLeastOnePeer()
           }
         }
