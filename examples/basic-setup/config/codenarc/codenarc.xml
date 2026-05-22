@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<ruleset xmlns="http://codenarc.org/ruleset/1.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://codenarc.org/ruleset/1.0 http://codenarc.org/ruleset-schema.xsd"
+         xsi:noNamespaceSchemaLocation="http://codenarc.org/ruleset-schema.xsd">
+
+  <description>CodeNarc rules for the basic-setup example</description>
+
+  <ruleset-ref path="rulesets/basic.xml"/>
+  <ruleset-ref path="rulesets/braces.xml"/>
+  <ruleset-ref path="rulesets/convention.xml">
+    <!-- vars/ scripts use implicit call methods — not traditional class structure -->
+    <exclude name="MethodReturnTypeRequired"/>
+    <exclude name="VariableTypeRequired"/>
+    <exclude name="ParameterTypeRequired"/>
+    <exclude name="NoDef"/>
+    <!-- conflicts with UnnecessaryReturnKeyword from unnecessary.xml -->
+    <exclude name="ImplicitReturnStatement"/>
+    <!-- false positive: Jenkins pipeline scripts passed as string literals intentionally contain ${} expressions -->
+    <exclude name="GStringExpressionWithinString"/>
+    <!-- Jenkins shared library src classes cannot be @CompileStatic: they use CPS-transformed
+         dynamic dispatch and interact with the pipeline context via dynamic Groovy -->
+    <exclude name="CompileStatic"/>
+  </ruleset-ref>
+  <ruleset-ref path="rulesets/exceptions.xml"/>
+  <ruleset-ref path="rulesets/groovyism.xml"/>
+  <ruleset-ref path="rulesets/imports.xml"/>
+  <ruleset-ref path="rulesets/unnecessary.xml"/>
+  <ruleset-ref path="rulesets/unused.xml"/>
+
+</ruleset>

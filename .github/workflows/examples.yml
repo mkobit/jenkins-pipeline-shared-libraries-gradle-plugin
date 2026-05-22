@@ -1,0 +1,62 @@
+name: Examples
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'examples/**'
+      - 'src/**'
+      - '.github/workflows/examples.yml'
+    paths-ignore:
+      - '**.md'
+  pull_request:
+    paths:
+      - 'examples/**'
+      - 'src/**'
+      - '.github/workflows/examples.yml'
+    paths-ignore:
+      - '**.md'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  discover:
+    name: Discover examples
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      matrix: ${{ steps.list.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - id: list
+        run: |
+          matrix=$(find examples -mindepth 1 -maxdepth 1 -type d | sort | \
+                   jq -R . | jq -sc 'map({example: .}) | {include: .}')
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+
+  run:
+    name: ${{ matrix.example }}
+    needs: [discover]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.discover.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: ./.github/actions/setup-env
+        with:
+          java-version: 17
+      - name: Run ${{ matrix.example }}
+        working-directory: ${{ matrix.example }}
+        run: ../../gradlew check --console=plain
