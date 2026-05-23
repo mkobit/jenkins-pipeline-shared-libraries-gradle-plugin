@@ -1,17 +1,15 @@
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
-public class SayHelloStepTest {
-
-    @Rule
-    public JenkinsRule jenkins = new JenkinsRule();
+@WithJenkins
+class SayHelloStepTest {
 
     @Test
-    public void defaultGreeting() throws Exception {
+    void defaultGreeting(JenkinsRule jenkins) throws Exception {
         WorkflowJob job = jenkins.createProject(WorkflowJob.class);
         job.setDefinition(new CpsFlowDefinition("sayHello()", true));
         WorkflowRun run = jenkins.buildAndAssertSuccess(job);
@@ -19,7 +17,7 @@ public class SayHelloStepTest {
     }
 
     @Test
-    public void namedGreeting() throws Exception {
+    void namedGreeting(JenkinsRule jenkins) throws Exception {
         WorkflowJob job = jenkins.createProject(WorkflowJob.class);
         job.setDefinition(new CpsFlowDefinition("sayHello('Jenkins')", true));
         WorkflowRun run = jenkins.buildAndAssertSuccess(job);
