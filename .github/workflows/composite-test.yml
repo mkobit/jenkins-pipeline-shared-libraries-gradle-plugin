@@ -1,43 +1,28 @@
 name: Composite build test
 
 on:
-  # TODO: remove push trigger once branch protection requires PRs for all changes,
-  #       so CI only runs once per commit (via pull_request), not twice.
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - '**.md'
-      - 'LICENSE.txt'
-      - '.gitignore'
-      - 'release-please-config.json'
-      - '.release-please-manifest.json'
-      - '.github/workflows/release-please.yml'
-      - '.github/workflows/pr-title-check.yml'
-  pull_request:
-    paths-ignore:
-      - '**.md'
-      - 'LICENSE.txt'
-      - '.gitignore'
-      - 'release-please-config.json'
-      - '.release-please-manifest.json'
-      - '.github/workflows/release-please.yml'
-      - '.github/workflows/pr-title-check.yml'
+  workflow_run:
+    workflows: ["Build"]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
     inputs:
       example-ref:
-        description: "jenkins-pipeline-shared-library-example branch/SHA to test against (default: same branch name, then main)"
+        description: "jenkins-pipeline-shared-library-example branch/SHA to test against (default: main)"
         default: ""
 
 permissions: {}
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  group: ${{ github.workflow }}-${{ github.ref_name }}
   cancel-in-progress: true
 
 jobs:
   build:
     name: Composite build
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -53,17 +38,8 @@ jobs:
         id: example-ref
         env:
           OVERRIDE: ${{ inputs.example-ref }}
-          BRANCH: ${{ github.head_ref || github.ref_name }}
         run: |
-          if [ -n "$OVERRIDE" ]; then
-            REF="$OVERRIDE"
-          elif git ls-remote --exit-code \
-               https://github.com/mkobit/jenkins-pipeline-shared-library-example.git \
-               "refs/heads/$BRANCH" > /dev/null 2>&1; then
-            REF="$BRANCH"
-          else
-            REF="main"
-          fi
+          REF="${OVERRIDE:-main}"
           printf 'ref<<EOF\n%s\nEOF\n' "$REF" >> "$GITHUB_OUTPUT"
 
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
