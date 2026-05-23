@@ -1,10 +1,6 @@
 name: Composite build test
 
 on:
-  workflow_run:
-    workflows: ["Build"]
-    types: [completed]
-    branches: [main]
   workflow_dispatch:
     inputs:
       example-ref:
@@ -20,9 +16,6 @@ concurrency:
 jobs:
   build:
     name: Composite build
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
