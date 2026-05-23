@@ -29,7 +29,9 @@ jobs:
             perf
             deps
             infra
+            infrastructure
             docs
+            examples
             chore
             test
             refactor

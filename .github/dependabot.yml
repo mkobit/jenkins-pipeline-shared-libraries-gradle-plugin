@@ -29,7 +29,7 @@ updates:
     schedule:
       interval: "weekly"
     labels:
-      - "infra"
+      - "infrastructure"
     cooldown:
       default-days: 30
     commit-message:

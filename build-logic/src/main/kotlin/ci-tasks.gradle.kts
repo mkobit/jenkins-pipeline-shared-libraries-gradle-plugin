@@ -36,6 +36,20 @@ tasks {
     outputFile = ciDir.map { it.file("jenkins-compat-matrix.json") }
   }
 
+  register<GenerateJsonMatrix>("generateExamplesMatrix") {
+    group = "CI"
+    description = "Writes the examples CI matrix JSON to <build>/ci/examples-matrix.json"
+    matrixEntries.set(
+      project
+        .file("examples")
+        .listFiles { f -> f.isDirectory }
+        ?.sortedBy { it.name }
+        ?.map { MatrixEntry(mapOf("example" to it.name)) }
+        .orEmpty(),
+    )
+    outputFile = ciDir.map { it.file("examples-matrix.json") }
+  }
+
   register<GenerateBuildConfig>("generateBuildConfig") {
     group = "CI"
     description = "Writes the wrapper Gradle version and Java toolchain spec to <build>/ci/build-config.json"
