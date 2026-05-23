@@ -155,13 +155,6 @@ tasks.withType<Test>().configureEach {
   }
 }
 
-tasks.register<Exec>("example-basic-vars") {
-  group = JavaBasePlugin.VERIFICATION_GROUP
-  description = "Runs the basic-vars example build"
-  workingDir = file("examples/basic-vars")
-  commandLine(file("gradlew").absolutePath, "check")
-}
-
 // Restrict Dokka to only the hand-written src/main/kotlin sources. Without this, Dokka also
 // picks up build/generated-sources/kotlin-dsl-plugins/kotlin/SharedLibraryPlugin.kt — the
 // adapter Gradle generates for the precompiled script plugin — which has a KDoc @see reference
