@@ -16,8 +16,16 @@
         {"type": "feat", "section": "Features"},
         {"type": "fix", "section": "Bug fixes"},
         {"type": "perf", "section": "Performance improvements"},
-        {"type": "deps", "section": "Dependencies"},
-        {"type": "infra", "section": "Infrastructure", "hidden": true}
+        {"type": "deps", "section": "Dependency updates"},
+        {"type": "docs", "section": "Documentation"},
+        {"type": "examples", "section": "Documentation"},
+        {"type": "infra", "section": "Infrastructure", "hidden": true},
+        {"type": "infrastructure", "section": "Infrastructure", "hidden": true},
+        {"type": "build", "section": "Infrastructure", "hidden": true},
+        {"type": "chore", "section": "Miscellaneous", "hidden": true},
+        {"type": "test", "section": "Tests", "hidden": true},
+        {"type": "refactor", "section": "Refactoring", "hidden": true},
+        {"type": "revert", "section": "Reverts", "hidden": true}
       ]
     }
   }
