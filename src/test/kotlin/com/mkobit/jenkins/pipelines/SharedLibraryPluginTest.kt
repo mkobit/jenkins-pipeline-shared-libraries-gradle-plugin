@@ -178,6 +178,11 @@ internal class SharedLibraryPluginTest :
         ext.autoRegisterLibrary.shouldBePresent().shouldBeTrue()
       }
 
+      it("implicit defaults to true") {
+        val ext = project.extensions.getByType(SharedLibraryExtension::class.java)
+        ext.implicit.shouldBePresent().shouldBeTrue()
+      }
+
       it("libraryName defaults to project name") {
         val ext = project.extensions.getByType(SharedLibraryExtension::class.java)
         ext.libraryName shouldHaveValue project.name
@@ -190,6 +195,20 @@ internal class SharedLibraryPluginTest :
         val task = project.tasks.getByName("integrationTest") as org.gradle.api.tasks.testing.Test
         val provider = task.jvmArgumentProviders.filterIsInstance<LibraryNameArgumentProvider>().single()
         provider.libraryName shouldHaveValue ext.libraryName.shouldBePresent()
+      }
+    }
+
+    describe("implicit is reflected in test.library.0.implicit system property") {
+      it("integrationTest injects implicit=true by default") {
+        val task = project.tasks.getByName("integrationTest") as org.gradle.api.tasks.testing.Test
+        val provider = task.jvmArgumentProviders.filterIsInstance<LibraryImplicitArgumentProvider>().single()
+        provider.implicit shouldHaveValue true
+      }
+
+      it("integrationTest argument produces -Dtest.library.0.implicit=true by default") {
+        val task = project.tasks.getByName("integrationTest") as org.gradle.api.tasks.testing.Test
+        val provider = task.jvmArgumentProviders.filterIsInstance<LibraryImplicitArgumentProvider>().single()
+        provider.asArguments() shouldBe listOf("-Dtest.library.0.implicit=true")
       }
     }
 

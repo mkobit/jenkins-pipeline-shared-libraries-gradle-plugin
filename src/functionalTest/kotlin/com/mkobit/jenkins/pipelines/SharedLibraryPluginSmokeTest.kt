@@ -257,4 +257,61 @@ class SharedLibraryPluginSmokeTest :
         }
       }
     }
+
+    describe("implicit defaults to true — integrationTest injects -Dtest.library.0.implicit=true") {
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withTestProject {
+          buildFile.writeText(
+            """
+            plugins {
+                id("com.mkobit.jenkins.pipelines.shared-library")
+            }
+            tasks.register("printImplicitArg") {
+                val t = tasks.integrationTest
+                doLast {
+                    val arg = t.get().jvmArgumentProviders
+                        .filterIsInstance<com.mkobit.jenkins.pipelines.LibraryImplicitArgumentProvider>()
+                        .firstOrNull()
+                        ?.asArguments()
+                        ?.firstOrNull()
+                    println("implicitArg=${'$'}arg")
+                }
+            }
+            """.trimIndent(),
+          )
+          val result = runner(gradleVersion).withArguments("printImplicitArg").build()
+          result.output shouldContain "implicitArg=-Dtest.library.0.implicit=true"
+        }
+      }
+    }
+
+    describe("implicit = false — integrationTest injects -Dtest.library.0.implicit=false") {
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withTestProject {
+          buildFile.writeText(
+            """
+            plugins {
+                id("com.mkobit.jenkins.pipelines.shared-library")
+            }
+            sharedLibrary {
+                implicit = false
+            }
+            tasks.register("printImplicitArg") {
+                val t = tasks.integrationTest
+                doLast {
+                    val arg = t.get().jvmArgumentProviders
+                        .filterIsInstance<com.mkobit.jenkins.pipelines.LibraryImplicitArgumentProvider>()
+                        .firstOrNull()
+                        ?.asArguments()
+                        ?.firstOrNull()
+                    println("implicitArg=${'$'}arg")
+                }
+            }
+            """.trimIndent(),
+          )
+          val result = runner(gradleVersion).withArguments("printImplicitArg").build()
+          result.output shouldContain "implicitArg=-Dtest.library.0.implicit=false"
+        }
+      }
+    }
   })
