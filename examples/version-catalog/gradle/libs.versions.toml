@@ -1,0 +1,7 @@
+[versions]
+jenkins = "2.479.1"
+jenkinsBom = "5054.v620b_5d2b_d5e6"
+pipelineUnit = "1.29"
+
+[libraries]
+groovy = { module = "org.codehaus.groovy:groovy", version = "2.4.21" }
