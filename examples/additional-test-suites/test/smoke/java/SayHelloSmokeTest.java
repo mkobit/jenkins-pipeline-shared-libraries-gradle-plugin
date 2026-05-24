@@ -9,10 +9,14 @@ import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 class SayHelloSmokeTest {
 
     @Test
-    void stepIsCallable(JenkinsRule jenkins) throws Exception {
+    void multipleCallsInOnePipeline(JenkinsRule jenkins) throws Exception {
         WorkflowJob job = jenkins.createProject(WorkflowJob.class);
-        job.setDefinition(new CpsFlowDefinition("sayHello()", true));
+        job.setDefinition(new CpsFlowDefinition(
+            "sayHello(); sayHello('Jenkins')",
+            true
+        ));
         WorkflowRun run = jenkins.buildAndAssertSuccess(job);
         jenkins.assertLogContains("Hello, world!", run);
+        jenkins.assertLogContains("Hello, Jenkins!", run);
     }
 }
