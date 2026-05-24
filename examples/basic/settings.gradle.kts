@@ -17,4 +17,4 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "codenarc"
+rootProject.name = "basic"
