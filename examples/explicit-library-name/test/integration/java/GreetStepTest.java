@@ -11,7 +11,7 @@ class GreetStepTest {
     @Test
     void defaultName(JenkinsRule jenkins) throws Exception {
         WorkflowJob job = jenkins.createProject(WorkflowJob.class);
-        job.setDefinition(new CpsFlowDefinition("greet()", true));
+        job.setDefinition(new CpsFlowDefinition("@Library('my-pipeline-lib') _\ngreet()", true));
         WorkflowRun run = jenkins.buildAndAssertSuccess(job);
         jenkins.assertLogContains("Hello, World!", run);
     }
@@ -19,7 +19,7 @@ class GreetStepTest {
     @Test
     void customName(JenkinsRule jenkins) throws Exception {
         WorkflowJob job = jenkins.createProject(WorkflowJob.class);
-        job.setDefinition(new CpsFlowDefinition("greet('Jenkins')", true));
+        job.setDefinition(new CpsFlowDefinition("@Library('my-pipeline-lib') _\ngreet('Jenkins')", true));
         WorkflowRun run = jenkins.buildAndAssertSuccess(job);
         jenkins.assertLogContains("Hello, Jenkins!", run);
     }

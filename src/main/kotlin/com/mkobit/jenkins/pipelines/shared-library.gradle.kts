@@ -149,6 +149,7 @@ val sharedLibrary =
       jenkins.bomVersion.convention(SharedLibraryDefaults.BOM_VERSION)
       pipelineUnitVersion.convention(SharedLibraryDefaults.PIPELINE_UNIT_VERSION)
       autoRegisterLibrary.convention(true)
+      implicit.convention(true)
       libraryName.convention(project.name)
     }
 

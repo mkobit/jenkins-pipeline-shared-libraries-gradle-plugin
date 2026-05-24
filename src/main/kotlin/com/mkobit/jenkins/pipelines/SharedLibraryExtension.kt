@@ -114,18 +114,37 @@ abstract class SharedLibraryExtension
     abstract val autoRegisterLibrary: Property<Boolean>
 
     /**
+     * Whether the shared library is registered as implicit in embedded Jenkins.
+     * Defaults to `true` — pipeline scripts can call vars directly without a `@Library` annotation.
+     *
+     * Set to `false` to require an explicit `@Library` declaration in every pipeline:
+     * ```kotlin
+     * sharedLibrary {
+     *     libraryName = "my-pipeline-lib"
+     *     implicit = false  // pipelines must use @Library('my-pipeline-lib')
+     * }
+     * ```
+     */
+    abstract val implicit: Property<Boolean>
+
+    /**
      * Applies full Jenkins test-harness wiring to [suite] — identical to the built-in
      * `integrationTest` suite: `jenkins-test-harness`, HPI classpath, WAR path,
      * system properties, JVM opens, and `mustRunAfter("test")` ordering.
      */
     fun withJenkins(suite: JvmTestSuite) {
       jenkinsWirer.wire(suite)
-      // The library name is extension state — added here after the main wirer runs.
+      // libraryName and implicit are extension state — added here after the main wirer runs.
       suite.targets.configureEach {
         testTask.configure {
           jvmArgumentProviders.add(
             objects.newInstance<LibraryNameArgumentProvider>().apply {
               libraryName.set(this@SharedLibraryExtension.libraryName)
+            },
+          )
+          jvmArgumentProviders.add(
+            objects.newInstance<LibraryImplicitArgumentProvider>().apply {
+              implicit.set(this@SharedLibraryExtension.implicit)
             },
           )
         }

@@ -8,6 +8,7 @@ codenarc {
 
 sharedLibrary {
     libraryName = "my-pipeline-lib"
+    implicit = false
 }
 
 testing {
