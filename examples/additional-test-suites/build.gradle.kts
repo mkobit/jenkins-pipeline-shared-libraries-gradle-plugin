@@ -15,19 +15,18 @@ testing {
                 implementation("org.codehaus.groovy:groovy:2.4.21")
             }
         }
-        named<JvmTestSuite>("integrationTest") {
-        }
-        // Consumer-defined third suite. The plugin wires `test` and `integrationTest`
-        // automatically; any additional Jenkins test suite opts in via withJenkins().
-        register<JvmTestSuite>("smokeTest") {
-            sources {
-                java.setSrcDirs(listOf("test/smoke/java"))
-            }
-            sharedLibrary.withJenkins(this)
-        }
     }
 }
 
+// Consumer-defined third suite. The plugin wires `test` and `integrationTest`
+// automatically; any additional Jenkins test suite opts in via withJenkins().
+val smokeTest = testing.suites.register<JvmTestSuite>("smokeTest") {
+    sources {
+        java.setSrcDirs(listOf("test/smoke/java"))
+    }
+    sharedLibrary.withJenkins(this)
+}
+
 tasks.check {
-    dependsOn(testing.suites.named("smokeTest"))
+    dependsOn(smokeTest)
 }
