@@ -2,10 +2,9 @@ plugins {
     id("com.mkobit.jenkins.pipelines.shared-library")
 }
 
-// TODO(#173): remove once codenarcMain is opt-in or ships a default config
-// https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/173
-tasks.named("codenarcMain") { enabled = false }
-tasks.named("codenarcTest") { enabled = false }
+codenarc {
+    configFile = file("config/codenarc/codenarc.xml")
+}
 
 testing {
     suites {

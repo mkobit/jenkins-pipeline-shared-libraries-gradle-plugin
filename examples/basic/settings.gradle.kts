@@ -17,4 +17,4 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "basic-vars"
+rootProject.name = "basic"
