@@ -7,10 +7,10 @@ codenarc {
 }
 
 sharedLibrary {
-    pipelineUnitVersion.set(libs.versions.pipeline.unit)
+    pipelineUnitVersion = libs.versions.pipeline.unit
     jenkins {
-        version.set(libs.versions.jenkins.core)
-        bomVersion.set(libs.versions.jenkins.bom)
+        version = libs.versions.jenkins.core
+        bomVersion = libs.versions.jenkins.bom
     }
     plugins {
         plugin(libs.lockable.resources)
