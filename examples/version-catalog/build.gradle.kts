@@ -13,9 +13,9 @@ sharedLibrary {
         bomVersion = libs.versions.jenkins.bom
     }
     plugins {
-        plugin(libs.lockable.resources)
-        plugin(libs.milestone)
-        plugin(libs.stage)
+        plugin(libs.jenkins.plugins.lock)
+        plugin(libs.jenkins.plugins.milestone)
+        plugin(libs.jenkins.plugins.stage)
     }
 }
 
