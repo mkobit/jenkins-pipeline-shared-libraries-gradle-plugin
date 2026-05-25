@@ -7,10 +7,15 @@ codenarc {
 }
 
 sharedLibrary {
-    pipelineUnitVersion.set(libs.versions.pipelineUnit)
+    pipelineUnitVersion.set(libs.versions.pipeline.unit)
     jenkins {
-        version.set(libs.versions.jenkins)
-        bomVersion.set(libs.versions.jenkinsBom)
+        version.set(libs.versions.jenkins.core)
+        bomVersion.set(libs.versions.jenkins.bom)
+    }
+    plugins {
+        plugin(libs.lockable.resources)
+        plugin(libs.milestone)
+        plugin(libs.stage)
     }
 }
 
@@ -22,8 +27,6 @@ testing {
                 // https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/161
                 implementation(libs.groovy)
             }
-        }
-        named<JvmTestSuite>("integrationTest") {
         }
     }
 }
