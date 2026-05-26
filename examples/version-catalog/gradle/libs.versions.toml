@@ -1,0 +1,11 @@
+[versions]
+jenkins-core = "2.479.1"
+jenkins-bom = "5054.v620b_5d2b_d5e6"
+pipeline-unit = "1.29"
+
+[libraries]
+groovy = { module = "org.codehaus.groovy:groovy", version = "2.4.21" }
+jenkins-plugins-input = { module = "org.jenkins-ci.plugins:pipeline-input-step", version = "551.vdff487c5998c" }
+jenkins-plugins-lock = { module = "org.6wind.jenkins:lockable-resources", version = "1515.v380548282a_59" }
+jenkins-plugins-milestone = { module = "org.jenkins-ci.plugins:pipeline-milestone-step", version = "152.v6e22b_8cfc66c" }
+jenkins-plugins-stage = { module = "org.jenkins-ci.plugins:pipeline-stage-step", version = "345.va_96187909426" }
