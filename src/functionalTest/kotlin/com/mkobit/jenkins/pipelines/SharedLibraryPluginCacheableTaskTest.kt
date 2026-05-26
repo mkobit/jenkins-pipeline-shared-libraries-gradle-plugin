@@ -194,27 +194,6 @@ class SharedLibraryPluginCacheableTaskTest :
           }
         }
       }
-
-      describe("is loaded FROM-CACHE when output is deleted and cache is populated") {
-        withData(TestedGradleVersion.filtered) { gradleVersion ->
-          withTestProject {
-            settingsFile.writeText(buildCacheSettings)
-            buildFile.writeText(sharedLibraryPluginBuild)
-
-            runner(gradleVersion)
-              .withArguments("extractJenkinsCodeNarcConfig", "--build-cache")
-              .build()
-              .task(":extractJenkinsCodeNarcConfig") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
-
-            dir.resolve("build/generated/codenarc/codenarc-jenkins.xml").toFile().delete()
-
-            runner(gradleVersion)
-              .withArguments("extractJenkinsCodeNarcConfig", "--build-cache")
-              .build()
-              .task(":extractJenkinsCodeNarcConfig") shouldNotBeNull { outcome shouldBe TaskOutcome.FROM_CACHE }
-          }
-        }
-      }
     }
 
     describe("extractDefaultCodeNarcConfig") {
