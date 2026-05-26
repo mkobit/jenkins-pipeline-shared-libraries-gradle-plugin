@@ -15,9 +15,6 @@ testing {
                 kotlin.setSrcDirs(listOf("test/unit/kotlin"))
             }
             dependencies {
-                // TODO(#161): remove once the plugin auto-adds groovy alongside jenkins-pipeline-unit
-                // https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/161
-                implementation("org.codehaus.groovy:groovy:2.4.21")
                 implementation(platform("io.kotest:kotest-bom:6.1.11"))
                 implementation("io.kotest:kotest-framework-engine")
                 implementation("io.kotest:kotest-assertions-core")

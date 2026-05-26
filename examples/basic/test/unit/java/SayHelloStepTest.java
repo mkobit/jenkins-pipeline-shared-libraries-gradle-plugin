@@ -9,7 +9,6 @@ public class SayHelloStepTest extends BasePipelineTest {
 
     @BeforeEach
     void setup() throws Exception {
-        setScriptRoots(new String[]{"."});
         setUp();
     }
 

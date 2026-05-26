@@ -12,7 +12,6 @@ class SayHelloStepTest : FunSpec({
     beforeEach {
         base =
             object : BasePipelineTest() {}.also { t ->
-                t.setScriptRoots(".")
                 t.setUp()
             }
     }

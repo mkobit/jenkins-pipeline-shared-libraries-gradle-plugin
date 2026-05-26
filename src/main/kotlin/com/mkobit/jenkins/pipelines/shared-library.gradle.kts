@@ -325,14 +325,24 @@ val integrationTestSuite =
 
 // Wire jenkinsPlugin into each suite's implementation config so variant resolution applies
 // rather than raw FileCollection additions that bypass Gradle's dependency management.
-// Exclude groovy-all (Groovy 2.4 bundled by jenkins-core): having it on the compile
-// classpath alongside groovy:3.x (from Spock 2.x) causes the Groovy compiler to pick up
-// the 2.4 runtime, breaking Spock compilation entirely.
+// Replace groovy-all (monolithic Groovy 2.4 jar bundled by jenkins-core) with groovy
+// (core-only module) on all test suite compile classpaths. The monolithic jar conflicts
+// with Groovy 3.x module jars from Spock 2.x; the core module does not. Conflict
+// resolution then picks the highest version: 3.x for Spock suites, or 2.4 (from
+// jenkins-core / jenkins-pipeline-unit) for JUnit/Kotest suites. Using eachDependency
+// preserves the version from the dependency graph — no hardcoding needed.
+// groovyAllRuntime is a separate configuration added directly to test task classpaths,
+// so it is unaffected and continues to provide groovy-all:2.4 at runtime as required by
+// CpsFlowDefinition and the Jenkins sandbox.
 testing.suites.withType<JvmTestSuite>().configureEach {
   val implConfigName = sources.implementationConfigurationName
   project.configurations.named(implConfigName) {
     extendsFrom(jenkinsPlugin)
-    exclude(mapOf("group" to "org.codehaus.groovy", "module" to "groovy-all"))
+    resolutionStrategy.eachDependency {
+      if (requested.group == "org.codehaus.groovy" && requested.name == "groovy-all") {
+        useTarget("${requested.group}:groovy:${requested.version}")
+      }
+    }
   }
 }
 
