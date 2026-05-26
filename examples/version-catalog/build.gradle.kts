@@ -13,6 +13,7 @@ sharedLibrary {
         bomVersion = libs.versions.jenkins.bom
     }
     plugins {
+        plugin(libs.jenkins.plugins.input)
         plugin(libs.jenkins.plugins.lock)
         plugin(libs.jenkins.plugins.milestone)
         plugin(libs.jenkins.plugins.stage)

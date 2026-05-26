@@ -17,13 +17,15 @@ public class DeployStepTest extends BasePipelineTest {
         setScriptRoots(new String[]{"."});
         setUp();
         getHelper().registerAllowedMethod("milestone", new ArrayList<>(), (Closure<?>) null);
+        getHelper().registerAllowedMethod("input", Arrays.asList(LinkedHashMap.class), (Closure<?>) null);
         getHelper().registerAllowedMethod("lock", Arrays.asList(LinkedHashMap.class, Closure.class), (Closure<?>) null);
     }
 
     @Test
-    void deploysToEnvironment() throws Exception {
+    void stepsAreInvokedForEnvironment() throws Exception {
         Script script = loadScript("vars/deploy.groovy");
         script.invokeMethod("call", new Object[]{"production"});
-        assertTrue(getHelper().getCallStack().stream().anyMatch(c -> c.toString().contains("Deploy production")));
+        assertTrue(getHelper().getCallStack().stream().anyMatch(c -> c.toString().contains("milestone")));
+        assertTrue(getHelper().getCallStack().stream().anyMatch(c -> c.toString().contains("approve")));
     }
 }

@@ -1,7 +1,8 @@
 def call(String environment) {
     milestone()
-    stage("Deploy ${environment}") {
-        lock(resource: "env-${environment}") {
+    input id: 'approve', message: "Deploy to ${environment}?", ok: "Deploy"
+    lock(resource: "env-${environment}") {
+        stage("Deploy ${environment}") {
             echo "Deploying to ${environment}"
         }
     }
