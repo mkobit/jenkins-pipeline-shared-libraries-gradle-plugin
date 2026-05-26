@@ -217,6 +217,26 @@ class SharedLibraryPluginCacheableTaskTest :
       }
     }
 
+    describe("extractDefaultCodeNarcConfig") {
+      describe("is UP-TO-DATE on second run") {
+        withData(TestedGradleVersion.filtered) { gradleVersion ->
+          withTestProject {
+            buildFile.writeText(sharedLibraryPluginBuild)
+
+            runner(gradleVersion)
+              .withArguments("extractDefaultCodeNarcConfig")
+              .build()
+              .task(":extractDefaultCodeNarcConfig") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
+
+            runner(gradleVersion)
+              .withArguments("extractDefaultCodeNarcConfig")
+              .build()
+              .task(":extractDefaultCodeNarcConfig") shouldNotBeNull { outcome shouldBe TaskOutcome.UP_TO_DATE }
+          }
+        }
+      }
+    }
+
     describe("test") {
       describe("is UP-TO-DATE on second run when inputs are unchanged") {
         withData(TestedGradleVersion.filtered) { gradleVersion ->
