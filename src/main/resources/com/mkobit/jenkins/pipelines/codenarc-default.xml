@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<ruleset xmlns="http://codenarc.org/ruleset/1.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://codenarc.org/ruleset/1.0 http://codenarc.org/ruleset-schema.xsd">
+
+  <description>Default CodeNarc ruleset bundled by the shared-library plugin.
+    Applied with ignoreFailures=true (warn mode) when no consumer-supplied
+    config/codenarc/codenarc.xml is present.
+    To change rules: place your own config/codenarc/codenarc.xml in the project directory.
+    To fail on violations: tasks.named("codenarcMain") { ignoreFailures = false }</description>
+
+  <ruleset-ref path="rulesets/basic.xml"/>
+  <ruleset-ref path="rulesets/exceptions.xml"/>
+
+</ruleset>

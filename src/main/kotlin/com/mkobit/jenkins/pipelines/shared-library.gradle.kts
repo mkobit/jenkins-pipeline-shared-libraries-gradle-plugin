@@ -383,8 +383,8 @@ tasks.withType<CodeNarc>().configureEach {
     )
 }
 
-// Extract the bundled XML to a build-dir file with a .xml extension so CodeNarc
-// parses it as XML rather than as a Groovy DSL script. getResourceAsStream works
+// Extract bundled XML configs to build-dir files with .xml extensions so CodeNarc
+// parses them as XML rather than as Groovy DSL scripts. getResourceAsStream works
 // in both JAR and IDE classpath-directory layouts; fromArchiveEntry would require
 // a concrete archive file and fails when resources are unpacked during development.
 val jenkinsConfigFile = layout.buildDirectory.file("generated/codenarc/codenarc-jenkins.xml")
@@ -401,7 +401,41 @@ val codenarcJenkinsMain =
     dependsOn(extractJenkinsCodeNarcConfig)
     config = resources.text.fromFile(jenkinsConfigFile)
     codenarcClasspath = files(configurations.codenarc)
+    // Explicitly break convention mapping: codenarcJenkinsMain always fails on violations
+    // regardless of codenarc.isIgnoreFailures set below.
+    ignoreFailures = false
   }
+
+val defaultCodeNarcConfigFile = layout.buildDirectory.file("generated/codenarc/codenarc-default.xml")
+val extractDefaultCodeNarcConfig =
+  tasks.register<ExtractDefaultCodeNarcConfig>("extractDefaultCodeNarcConfig") {
+    group = "build setup"
+    description = "Extracts the bundled default CodeNarc XML ruleset into the build directory."
+    outputFile = defaultCodeNarcConfigFile
+  }
+
+// Warn mode for auto-created source-set tasks (codenarcMain, codenarcTest, etc.).
+// Set at extension level so convention mapping propagates it and consumers can override
+// with codenarc { isIgnoreFailures = false } or tasks.named<CodeNarc>("codenarcMain") { ignoreFailures = false }.
+// codenarcJenkinsMain explicitly sets ignoreFailures = false above, so it is unaffected.
+codenarc.isIgnoreFailures = true
+
+// Wire the bundled-default config onto every auto-created CodeNarc task except codenarcJenkinsMain.
+// The consumer's codenarc.configFile is checked at task configuration time (inside configureEach,
+// which runs lazily after all build scripts have been evaluated). If it exists on disk it is used
+// directly; otherwise the bundled default is substituted.
+tasks.withType<CodeNarc>().configureEach {
+  if (name != "codenarcJenkinsMain") {
+    dependsOn(extractDefaultCodeNarcConfig)
+    val consumerFile = codenarc.configFile
+    config =
+      if (consumerFile.exists()) {
+        resources.text.fromFile(consumerFile)
+      } else {
+        resources.text.fromFile(defaultCodeNarcConfigFile)
+      }
+  }
+}
 
 tasks.check {
   dependsOn(codenarcJenkinsMain)

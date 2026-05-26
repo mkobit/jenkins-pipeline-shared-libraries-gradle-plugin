@@ -217,6 +217,47 @@ class SharedLibraryPluginCacheableTaskTest :
       }
     }
 
+    describe("extractDefaultCodeNarcConfig") {
+      describe("is UP-TO-DATE on second run") {
+        withData(TestedGradleVersion.filtered) { gradleVersion ->
+          withTestProject {
+            buildFile.writeText(sharedLibraryPluginBuild)
+
+            runner(gradleVersion)
+              .withArguments("extractDefaultCodeNarcConfig")
+              .build()
+              .task(":extractDefaultCodeNarcConfig") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
+
+            runner(gradleVersion)
+              .withArguments("extractDefaultCodeNarcConfig")
+              .build()
+              .task(":extractDefaultCodeNarcConfig") shouldNotBeNull { outcome shouldBe TaskOutcome.UP_TO_DATE }
+          }
+        }
+      }
+
+      describe("is loaded FROM-CACHE when output is deleted and cache is populated") {
+        withData(TestedGradleVersion.filtered) { gradleVersion ->
+          withTestProject {
+            settingsFile.writeText(buildCacheSettings)
+            buildFile.writeText(sharedLibraryPluginBuild)
+
+            runner(gradleVersion)
+              .withArguments("extractDefaultCodeNarcConfig", "--build-cache")
+              .build()
+              .task(":extractDefaultCodeNarcConfig") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
+
+            dir.resolve("build/generated/codenarc/codenarc-default.xml").toFile().delete()
+
+            runner(gradleVersion)
+              .withArguments("extractDefaultCodeNarcConfig", "--build-cache")
+              .build()
+              .task(":extractDefaultCodeNarcConfig") shouldNotBeNull { outcome shouldBe TaskOutcome.FROM_CACHE }
+          }
+        }
+      }
+    }
+
     describe("test") {
       describe("is UP-TO-DATE on second run when inputs are unchanged") {
         withData(TestedGradleVersion.filtered) { gradleVersion ->
