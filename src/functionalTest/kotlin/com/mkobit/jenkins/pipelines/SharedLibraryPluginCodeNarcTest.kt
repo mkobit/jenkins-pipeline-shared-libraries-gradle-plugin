@@ -216,7 +216,7 @@ class SharedLibraryPluginCodeNarcTest :
             }
             """.trimIndent(),
           )
-          // No config/codenarc/codenarc.xml — bundled default kicks in with ignoreFailures=true
+          // No config/codenarc/codenarc.xml — bundled default kicks in (basic + exceptions rulesets)
           file("src/com/example/Greeter.groovy").writeText(
             """
             package com.example

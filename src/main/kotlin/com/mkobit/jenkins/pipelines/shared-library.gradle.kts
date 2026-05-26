@@ -401,24 +401,15 @@ val codenarcJenkinsMain =
     dependsOn(extractJenkinsCodeNarcConfig)
     config = resources.text.fromFile(jenkinsConfigFile)
     codenarcClasspath = files(configurations.codenarc)
-    // Explicitly break convention mapping: codenarcJenkinsMain always fails on violations
-    // regardless of codenarc.isIgnoreFailures set below.
-    ignoreFailures = false
   }
 
-val defaultCodeNarcConfigFile = layout.buildDirectory.file("generated/codenarc/codenarc-default.xml")
+val defaultCodeNarcConfigFile = layout.buildDirectory.file("generated/codenarc/shared-library-default.xml")
 val extractDefaultCodeNarcConfig =
   tasks.register<ExtractDefaultCodeNarcConfig>("extractDefaultCodeNarcConfig") {
     group = "build setup"
     description = "Extracts the bundled default CodeNarc XML ruleset into the build directory."
     outputFile = defaultCodeNarcConfigFile
   }
-
-// Warn mode for auto-created source-set tasks (codenarcMain, codenarcTest, etc.).
-// Set at extension level so convention mapping propagates it and consumers can override
-// with codenarc { isIgnoreFailures = false } or tasks.named<CodeNarc>("codenarcMain") { ignoreFailures = false }.
-// codenarcJenkinsMain explicitly sets ignoreFailures = false above, so it is unaffected.
-codenarc.isIgnoreFailures = true
 
 // Wire the bundled-default config onto every auto-created CodeNarc task except codenarcJenkinsMain.
 // The consumer's codenarc.configFile is checked at task configuration time (inside configureEach,
