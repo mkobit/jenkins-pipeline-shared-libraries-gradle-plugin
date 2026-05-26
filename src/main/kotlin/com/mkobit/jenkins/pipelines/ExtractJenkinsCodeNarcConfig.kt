@@ -2,12 +2,12 @@ package com.mkobit.jenkins.pipelines
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.RegularFileProperty
-import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
+import org.gradle.work.DisableCachingByDefault
 import kotlin.io.path.outputStream
 
-@CacheableTask
+@DisableCachingByDefault(because = "Trivial classpath extraction — UP-TO-DATE checking via @OutputFile is sufficient")
 abstract class ExtractJenkinsCodeNarcConfig : DefaultTask() {
   @get:OutputFile
   abstract val outputFile: RegularFileProperty
