@@ -7,22 +7,29 @@ import org.gradle.api.plugins.JavaBasePlugin
 //
 // With org.gradle.parallel=true in the root build, multiple example-* tasks can run
 // concurrently, stacking N×(daemon + 2g test JVM) simultaneously. This is fine for CI
-// (separate runners per matrix job) but becomes a problem if an aggregate task is ever added
-// for local use. At that point, consider a BuildService with maxParallelUsages=1 to serialize
-// example execution.
+// (separate runners per matrix job) but may be memory-intensive locally.
 //
 // To investigate memory across all JVMs for a single run, temporarily append "--scan" to
 // commandLine(...) below and inspect the build scan timeline.
+plugins {
+    base
+}
+
 val gradlew = rootProject.file("gradlew")
 
-projectDir
-    .listFiles { f -> f.isDirectory && f.name != "build" }
-    ?.sortedBy { it.name }
-    ?.forEach { exampleDir ->
-        tasks.register<Exec>("example-${exampleDir.name}") {
-            group = JavaBasePlugin.VERIFICATION_GROUP
-            description = "Runs check for the ${exampleDir.name} example"
-            workingDir = exampleDir
-            commandLine(gradlew.absolutePath, "check")
-        }
-    }
+val exampleTasks =
+    projectDir
+        .listFiles { f -> f.isDirectory && f.resolve("settings.gradle.kts").exists() }
+        ?.sortedBy { it.name }
+        ?.map { exampleDir ->
+            tasks.register<Exec>("example-${exampleDir.name}") {
+                group = JavaBasePlugin.VERIFICATION_GROUP
+                description = "Runs check for the ${exampleDir.name} example"
+                workingDir = exampleDir
+                commandLine(gradlew.absolutePath, "check")
+            }
+        } ?: emptyList()
+
+tasks.named("check") {
+    dependsOn(exampleTasks)
+}
