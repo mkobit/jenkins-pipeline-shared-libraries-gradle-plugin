@@ -104,9 +104,8 @@ fun applyJenkinsTestWiring(suite: JvmTestSuite) {
       // they require attribute-based resolution (artifactType=hpi) set up at the project level,
       // which isn't available through the suite's own dependency configurations.
       classpath += files(hpiFiles)
-      // groovy-all:2.4 is required by CpsFlowDefinition at runtime. The plugin substitutes
-      // groovy-all with groovy (core) on suite compile classpaths so the monolithic jar
-      // does not conflict with Groovy 3.x module jars from Spock 2.x during compilation.
+      // groovy-all:2.4 is required by CpsFlowDefinition at runtime. The plugin excludes
+      // groovy-all from suite classpaths (prevents Groovy 2.4/3.x module conflict with Spock).
       // classpath += bypasses version-conflict resolution intentionally: without it, Gradle
       // would prefer groovy:3.x (from Spock 2.x) and suppress groovy-all:2.4.
       classpath += files(groovyAllRuntime)
@@ -326,24 +325,20 @@ val integrationTestSuite =
 
 // Wire jenkinsPlugin into each suite's implementation config so variant resolution applies
 // rather than raw FileCollection additions that bypass Gradle's dependency management.
-// Replace groovy-all (monolithic Groovy 2.4 jar bundled by jenkins-core) with groovy
-// (core-only module) on all test suite compile classpaths. The monolithic jar conflicts
-// with Groovy 3.x module jars from Spock 2.x; the core module does not. Conflict
-// resolution then picks the highest version: 3.x for Spock suites, or 2.4 (from
-// jenkins-core / jenkins-pipeline-unit) for JUnit/Kotest suites. Using eachDependency
-// preserves the version from the dependency graph — no hardcoding needed.
-// groovyAllRuntime is a separate configuration added directly to test task classpaths,
-// so it is unaffected and continues to provide groovy-all:2.4 at runtime as required by
-// CpsFlowDefinition and the Jenkins sandbox.
+// Exclude groovy-all (monolithic Groovy 2.4 jar bundled by jenkins-core) from all suite
+// compile and runtime classpaths — it conflicts with Groovy 3.x module jars from Spock 2.x.
+// Add groovy (core module, same 2.4.x version) explicitly so the Groovy compiler always has
+// a Groovy jar to infer its groovyClasspath from. For Spock suites, conflict resolution picks
+// groovy:3.x (highest wins). groovyAllRuntime is a separate configuration added to test task
+// classpaths directly, providing the full groovy-all:2.4 jar Jenkins requires at runtime.
 testing.suites.withType<JvmTestSuite>().configureEach {
   val implConfigName = sources.implementationConfigurationName
   project.configurations.named(implConfigName) {
     extendsFrom(jenkinsPlugin)
-    resolutionStrategy.eachDependency {
-      if (requested.group == "org.codehaus.groovy" && requested.name == "groovy-all") {
-        useTarget("${requested.group}:groovy:${requested.version}")
-      }
-    }
+    exclude(mapOf("group" to "org.codehaus.groovy", "module" to "groovy-all"))
+  }
+  dependencies {
+    implementation(SharedLibraryDefaults.GROOVY_COORDINATES)
   }
 }
 
