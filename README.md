@@ -93,157 +93,27 @@ The Jenkins BOM for the configured LTS line is injected automatically into `jenk
 The BOM module coordinate is derived from `jenkins.version` (e.g., `2.479.1` → `bom-2.479.x`).
 The `plugins {}` block is equivalent to `dependencies { jenkinsPlugin("...") }` — use whichever reads more naturally in your build.
 
-## Writing unit tests
+## Examples
 
-Unit tests live in `test/unit/` and run with [Jenkins Pipeline Unit](https://github.com/lesfurets/JenkinsPipelineUnit).
-They are fast, classpath-only tests with no embedded Jenkins runtime.
+The [`examples/`](examples/) directory contains standalone Gradle composite builds demonstrating common usage patterns.
 
-```groovy
-// test/unit/groovy/com/example/DoStuffSpec.groovy
-import com.lesfurets.jenkins.unit.BasePipelineTest
+| Example | Demonstrates |
+|---|---|
+| [`basic`](examples/basic) | Minimal plugin apply; JenkinsPipelineUnit unit tests and `JenkinsRule` integration tests |
+| [`additional-test-suites`](examples/additional-test-suites) | Custom third test suite wired via `sharedLibrary.withJenkins()` |
+| [`explicit-library-name`](examples/explicit-library-name) | `libraryName` override and `implicit = false` |
+| [`junit-groovy`](examples/junit-groovy) | Unit tests written in Groovy using JenkinsPipelineUnit |
+| [`kotest`](examples/kotest) | Kotlin source with Kotest unit and integration test suites |
+| [`library-resource`](examples/library-resource) | Steps that read files via `libraryResource()` |
+| [`version-catalog`](examples/version-catalog) | Version catalog wiring for plugin versions and Jenkins plugin coordinates |
 
-class DoStuffSpec extends BasePipelineTest {
-    def 'doStuff calls echo'() {
-        given:
-        helper.registerAllowedMethod('echo', [String]) {}
-        def script = loadScript('vars/doStuff.groovy')
+Run all examples from the repo root:
 
-        when:
-        script.call('hello')
-
-        then:
-        helper.callStack.any { it.methodName == 'echo' }
-    }
-}
+```shell
+./gradlew :examples:check
 ```
 
-## Writing integration tests
-
-Integration tests live in `test/integration/` and run against an embedded Jenkins instance.
-The plugin generates `LocalLibraryRetriever.java` into the `integrationTest` source set and auto-registers the local library via `SharedLibraryAutoRegistrar` — no manual `GlobalLibraries` setup is required.
-
-### JUnit Jupiter (Java)
-
-```java
-import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
-import org.jenkinsci.plugins.workflow.job.WorkflowJob;
-import org.junit.jupiter.api.Test;
-import org.jvnet.hudson.test.JenkinsRule;
-import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
-
-@WithJenkins
-class MyStepTest {
-    @Test
-    void myStepRuns(JenkinsRule rule) throws Exception {
-        WorkflowJob job = rule.createProject(WorkflowJob.class, "test");
-        job.setDefinition(new CpsFlowDefinition("myStep()", true));
-        rule.buildAndAssertSuccess(job);
-    }
-}
-```
-
-> [!NOTE]
-> The `@Library` annotation in the pipeline script is not required when `autoRegisterLibrary = true` (the default) and you use the library name returned by `LocalLibraryRetriever.implicitLibrary()`.
-> The library is registered at embedded Jenkins startup under the name configured in `sharedLibrary.libraryName`.
-
-### Opting out of auto-registration
-
-```kotlin
-sharedLibrary {
-    autoRegisterLibrary = false
-}
-```
-
-With auto-registration disabled, register the library manually in each test:
-
-```java
-import com.mkobit.jenkins.pipelines.LocalLibraryRetriever;
-import org.jenkinsci.plugins.workflow.libs.GlobalLibraries;
-import org.jenkinsci.plugins.workflow.libs.LibraryConfiguration;
-
-LibraryConfiguration lib = LocalLibraryRetriever.implicitLibrary();
-GlobalLibraries.get().setLibraries(List.of(lib));
-```
-
-## Additional test suites
-
-Register extra suites and opt them into full Jenkins wiring with `withJenkins()`.
-This applies the same wiring as the built-in `integrationTest` suite: `jenkins-test-harness`, HPI classpath, WAR path, system properties, JVM `--add-opens` flags, `maxParallelForks = 1`, and heap defaults.
-
-### JUnit Jupiter
-
-```kotlin
-testing {
-    suites {
-        register<JvmTestSuite>("integrationTestJunit") {
-            sharedLibrary.withJenkins(this)
-            sources { java.setSrcDirs(listOf("test/integration-junit/java")) }
-            dependencies {
-                implementation(libs.junit.jupiter.api)
-                runtimeOnly(libs.junit.jupiter.engine)
-                runtimeOnly(libs.junit.platform.launcher)
-            }
-            targets.all { testTask.configure { useJUnitPlatform() } }
-        }
-    }
-}
-```
-
-### Spock 2.x
-
-```kotlin
-testing {
-    suites {
-        register<JvmTestSuite>("integrationTestSpock") {
-            sharedLibrary.withJenkins(this)
-            sources { groovy.setSrcDirs(listOf("test/integration-spock/groovy")) }
-            dependencies {
-                implementation(libs.spock.core)
-            }
-        }
-    }
-}
-```
-
-> [!NOTE]
-> Spock 2.x brings Groovy 3.x onto the runtime classpath.
-> On Jenkins 2.479.x LTS this conflicts with the bundled `groovy-all:2.4.21` when `sandbox=true`.
-> Use `sandbox=false` in `CpsFlowDefinition` for Spock suites on 2.479.x.
-> This restriction is expected to lift on Jenkins 2.492.x+ once its internal Groovy 3 migration completes.
-
-### Kotest
-
-```kotlin
-testing {
-    suites {
-        register<JvmTestSuite>("integrationTestKotest") {
-            sharedLibrary.withJenkins(this)
-            useJUnitJupiter()
-            sources { extensions.configure<SourceDirectorySet>("kotlin") {
-                setSrcDirs(listOf("test/integration-kotest/kotlin"))
-            }}
-            dependencies {
-                implementation(libs.kotest.engine)
-                runtimeOnly(libs.kotest.runner)
-                implementation(libs.kotest.assertions)
-                implementation(libs.coroutines.core)
-            }
-        }
-    }
-}
-```
-
-Wire additional suites into `check` if they should run in CI:
-
-```kotlin
-tasks.check {
-    dependsOn(
-        tasks.named("integrationTestJunit"),
-        tasks.named("integrationTestSpock"),
-        tasks.named("integrationTestKotest"),
-    )
-}
-```
+See also the [example repository](https://github.com/mkobit/jenkins-pipeline-shared-library-example) for a complete project using JUnit Jupiter, Spock 2.x, and Kotest against a real Jenkins instance.
 
 ## Running tests
 
@@ -271,13 +141,35 @@ The plugin derives the BOM module coordinate automatically from `version` (e.g.,
 Renovate keeps the BOM version up to date within the configured LTS line.
 To override the BOM version explicitly, set `bomVersion` as well.
 
+## Additional test suites
+
+Register extra suites and opt them into full Jenkins wiring with `withJenkins()`.
+This applies the same wiring as the built-in `integrationTest` suite: `jenkins-test-harness`, HPI classpath, WAR path, system properties, JVM `--add-opens` flags, `maxParallelForks = 1`, and heap defaults.
+
+See the [`additional-test-suites`](examples/additional-test-suites) example for a full build configuration, and [`kotest`](examples/kotest) for a Kotlin-based suite.
+
+Wire additional suites into `check` if they should run in CI:
+
+```kotlin
+tasks.check {
+    dependsOn(
+        tasks.named("smokeTest"),
+    )
+}
+```
+
+> [!NOTE]
+> Spock 2.x brings Groovy 3.x onto the runtime classpath.
+> On Jenkins 2.479.x LTS this conflicts with the bundled `groovy-all:2.4.21` when `sandbox=true`.
+> Use `sandbox=false` in `CpsFlowDefinition` for Spock suites on 2.479.x.
+> This restriction is expected to lift on Jenkins 2.492.x+ once its internal Groovy 3 migration completes.
+
 ## JUnit 4
 
 The built-in `integrationTest` suite defaults to JUnit Jupiter.
 If you have an existing JUnit 4 test suite, configure it explicitly:
 
 ```kotlin
-// build.gradle.kts
 testing {
     suites {
         named<JvmTestSuite>("integrationTest") {
@@ -286,25 +178,6 @@ testing {
                 implementation(libs.junit)
             }
         }
-    }
-}
-```
-
-```java
-import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
-import org.jenkinsci.plugins.workflow.job.WorkflowJob;
-import org.junit.Rule;
-import org.junit.Test;
-import org.jvnet.hudson.test.JenkinsRule;
-
-public class MyStepTest {
-    @Rule public JenkinsRule rule = new JenkinsRule();
-
-    @Test
-    public void myStepRuns() throws Exception {
-        WorkflowJob job = rule.createProject(WorkflowJob.class, "test");
-        job.setDefinition(new CpsFlowDefinition("myStep()", true));
-        rule.buildAndAssertSuccess(job);
     }
 }
 ```
@@ -338,10 +211,6 @@ rewrite {
 
 The recipe automates: plugin version bump, `jenkinsPlugins` → `jenkinsPlugin` rename, and two other configuration renames.
 Extension restructuring and BOM setup require manual steps documented in `MigrateSharedLibraryPlugin010To011Full`.
-
-## Example consumer
-
-See the [example repository](https://github.com/mkobit/jenkins-pipeline-shared-library-example) for a complete project using all supported test frameworks (JUnit Jupiter, Spock 2.x, Kotest) against a real Jenkins instance.
 
 ## Troubleshooting
 
