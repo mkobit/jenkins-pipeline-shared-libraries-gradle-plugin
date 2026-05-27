@@ -30,6 +30,6 @@ val exampleTasks =
             }
         } ?: emptyList()
 
-tasks.named("check") {
+tasks.check {
     dependsOn(exampleTasks)
 }
