@@ -1,7 +1,15 @@
 version: 2
 updates:
   - package-ecosystem: "gradle"
-    directory: "/"
+    directories:
+      - "/"
+      - "/examples/additional-test-suites"
+      - "/examples/basic"
+      - "/examples/explicit-library-name"
+      - "/examples/junit-groovy"
+      - "/examples/kotest"
+      - "/examples/library-resource"
+      - "/examples/version-catalog"
     schedule:
       interval: "weekly"
     labels:
