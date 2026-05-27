@@ -184,33 +184,7 @@ testing {
 
 ## Migration from 0.10.x
 
-Version 0.11.0 is a clean break from the 0.10.x series.
-The following table maps old API to its replacement.
-
-| 0.10.x | 0.11.0 |
-|---|---|
-| `sharedLibrary { pluginDependencies { dependency("git") { ... } } }` | `dependencies { jenkinsPlugin("org.jenkins-ci.plugins:git") }` |
-| `sharedLibrary { coreVersion.set("2.222.4") }` | `sharedLibrary { jenkins { version = "2.528.3" } }` or let the BOM default apply |
-| `sharedLibrary { pipelineTestUnitVersion.set("...") }` | `sharedLibrary { pipelineUnitVersion = "..." }` |
-| `sharedLibrary { testHarnessVersion.set("...") }` | Removed — managed by the Jenkins BOM; to override, add `implementation("org.jenkins-ci.main:jenkins-test-harness:VERSION")` in the suite's `dependencies` block |
-| Named `*Version` properties on `PluginDependencySpec` | Removed — declare versions in `gradle/libs.versions.toml`; use BOM for Jenkins plugins |
-| `workflowCpsPluginVersion`, `workflowJobPluginVersion`, … | Removed — these plugins are managed by the BOM |
-| Custom configurations (`jenkinsPlugins`, `jenkinsPluginHpisAndJpis`, …) | `jenkinsPlugin` is the single user-facing configuration |
-
-An OpenRewrite migration recipe is bundled in the plugin JAR:
-
-```kotlin
-// build.gradle.kts (migration only)
-plugins {
-    id("org.openrewrite.rewrite") version "6.x"
-}
-rewrite {
-    activeRecipe("com.mkobit.jenkins.pipelines.MigrateSharedLibraryPlugin010To011")
-}
-```
-
-The recipe automates: plugin version bump, `jenkinsPlugins` → `jenkinsPlugin` rename, and two other configuration renames.
-Extension restructuring and BOM setup require manual steps documented in `MigrateSharedLibraryPlugin010To011Full`.
+See the [0.11.0 entry in CHANGELOG.md](CHANGELOG.md) for the full API diff and the bundled OpenRewrite migration recipe.
 
 ## Troubleshooting
 
