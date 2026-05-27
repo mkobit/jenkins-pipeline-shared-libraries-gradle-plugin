@@ -104,8 +104,9 @@ fun applyJenkinsTestWiring(suite: JvmTestSuite) {
       // they require attribute-based resolution (artifactType=hpi) set up at the project level,
       // which isn't available through the suite's own dependency configurations.
       classpath += files(hpiFiles)
-      // groovy-all:2.4 is required by CpsFlowDefinition at runtime. The plugin excludes it
-      // from suite compile classpaths to prevent groovy 2.4/3.x compiler conflicts.
+      // groovy-all:2.4 is required by CpsFlowDefinition at runtime. The plugin substitutes
+      // groovy-all with groovy (core) on suite compile classpaths so the monolithic jar
+      // does not conflict with Groovy 3.x module jars from Spock 2.x during compilation.
       // classpath += bypasses version-conflict resolution intentionally: without it, Gradle
       // would prefer groovy:3.x (from Spock 2.x) and suppress groovy-all:2.4.
       classpath += files(groovyAllRuntime)
