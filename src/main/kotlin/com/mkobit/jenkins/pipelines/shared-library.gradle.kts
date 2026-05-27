@@ -104,8 +104,8 @@ fun applyJenkinsTestWiring(suite: JvmTestSuite) {
       // they require attribute-based resolution (artifactType=hpi) set up at the project level,
       // which isn't available through the suite's own dependency configurations.
       classpath += files(hpiFiles)
-      // groovy-all:2.4 is required by CpsFlowDefinition at runtime. The plugin excludes it
-      // from suite compile classpaths to prevent groovy 2.4/3.x compiler conflicts.
+      // groovy-all:2.4 is required by CpsFlowDefinition at runtime. The plugin excludes
+      // groovy-all from suite classpaths (prevents Groovy 2.4/3.x module conflict with Spock).
       // classpath += bypasses version-conflict resolution intentionally: without it, Gradle
       // would prefer groovy:3.x (from Spock 2.x) and suppress groovy-all:2.4.
       classpath += files(groovyAllRuntime)
@@ -325,14 +325,20 @@ val integrationTestSuite =
 
 // Wire jenkinsPlugin into each suite's implementation config so variant resolution applies
 // rather than raw FileCollection additions that bypass Gradle's dependency management.
-// Exclude groovy-all (Groovy 2.4 bundled by jenkins-core): having it on the compile
-// classpath alongside groovy:3.x (from Spock 2.x) causes the Groovy compiler to pick up
-// the 2.4 runtime, breaking Spock compilation entirely.
+// Exclude groovy-all (monolithic Groovy 2.4 jar bundled by jenkins-core) from all suite
+// compile and runtime classpaths — it conflicts with Groovy 3.x module jars from Spock 2.x.
+// Add groovy (core module, same 2.4.x version) explicitly so the Groovy compiler always has
+// a Groovy jar to infer its groovyClasspath from. For Spock suites, conflict resolution picks
+// groovy:3.x (highest wins). groovyAllRuntime is a separate configuration added to test task
+// classpaths directly, providing the full groovy-all:2.4 jar Jenkins requires at runtime.
 testing.suites.withType<JvmTestSuite>().configureEach {
   val implConfigName = sources.implementationConfigurationName
   project.configurations.named(implConfigName) {
     extendsFrom(jenkinsPlugin)
     exclude(mapOf("group" to "org.codehaus.groovy", "module" to "groovy-all"))
+  }
+  dependencies {
+    implementation(SharedLibraryDefaults.GROOVY_COORDINATES)
   }
 }
 

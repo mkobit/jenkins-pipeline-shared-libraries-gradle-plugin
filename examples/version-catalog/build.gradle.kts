@@ -15,15 +15,3 @@ sharedLibrary {
         plugin(libs.jenkins.plugins.stage)
     }
 }
-
-testing {
-    suites {
-        named<JvmTestSuite>("test") {
-            dependencies {
-                // TODO(#161): remove once the plugin auto-adds groovy alongside jenkins-pipeline-unit
-                // https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/161
-                implementation(libs.groovy)
-            }
-        }
-    }
-}

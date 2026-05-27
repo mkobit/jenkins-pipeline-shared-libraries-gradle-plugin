@@ -14,7 +14,6 @@ public class DeployStepTest extends BasePipelineTest {
 
     @BeforeEach
     void setup() throws Exception {
-        setScriptRoots(new String[]{"."});
         setUp();
         getHelper().registerAllowedMethod("milestone", new ArrayList<>(), (Closure<?>) null);
         getHelper().registerAllowedMethod("input", Arrays.asList(LinkedHashMap.class), (Closure<?>) null);
