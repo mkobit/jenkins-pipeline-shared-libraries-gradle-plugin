@@ -15,10 +15,3 @@ sharedLibrary {
         plugin(libs.jenkins.plugins.stage)
     }
 }
-
-testing {
-    suites {
-        named<JvmTestSuite>("test") {
-        }
-    }
-}

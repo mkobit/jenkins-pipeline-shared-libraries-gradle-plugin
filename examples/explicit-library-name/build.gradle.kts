@@ -6,10 +6,3 @@ sharedLibrary {
     libraryName = "my-pipeline-lib"
     implicit = false
 }
-
-testing {
-    suites {
-        named<JvmTestSuite>("integrationTest") {
-        }
-    }
-}
