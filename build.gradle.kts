@@ -1,9 +1,12 @@
 import org.gradle.api.plugins.JavaBasePlugin
+import org.gradle.api.services.BuildService
+import org.gradle.api.services.BuildServiceParameters
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestStackTraceFilter
 import org.gradle.kotlin.dsl.testMatrix
 import org.gradle.plugin.compatibility.compatibility
 import org.jetbrains.dokka.gradle.tasks.DokkaGeneratePublicationTask
+import java.io.File
 
 plugins {
   `kotlin-dsl`
@@ -51,6 +54,33 @@ dependencies {
   api(gradleApi())
 }
 
+abstract class FunctionalTestBuildService : BuildService<BuildServiceParameters.None>
+
+// Reads MemAvailable from /proc/meminfo (Linux/WSL); returns 0 on other platforms.
+fun availableMemGiB(): Int =
+  runCatching {
+    File("/proc/meminfo")
+      .readLines()
+      .firstOrNull { it.startsWith("MemAvailable:") }
+      ?.split("\\s+".toRegex())
+      ?.getOrNull(1)
+      ?.toLong()
+      ?.div(1024L * 1024L)
+      ?.toInt()
+  }.getOrNull() ?: 0
+
+// Shares the "heavyTest" slot with examples in examples-tasks.gradle.kts — all
+// memory-intensive Jenkins child processes compete for the same concurrency limit.
+// Default derives from MemAvailable ÷ 4 GiB per task; override with -PmemBound.maxParallel=N.
+val functionalTestBuildService =
+  gradle.sharedServices.registerIfAbsent("heavyTest", FunctionalTestBuildService::class.java) {
+    maxParallelUsages =
+      providers
+        .gradleProperty("memBound.maxParallel")
+        .map { it.toInt() }
+        .orElse(maxOf(1, availableMemGiB() / 4))
+  }
+
 testing {
   suites {
     val testSuite =
@@ -84,12 +114,13 @@ testing {
       targets.configureEach {
         testTask.configure {
           mustRunAfter(testSuite)
+          usesService(functionalTestBuildService)
         }
       }
 
       val kotestParallelism =
         (findProperty("kotest.parallelism") as? String)?.toInt()
-          ?: Runtime.getRuntime().availableProcessors()
+          ?: maxOf(1, availableMemGiB() / 3)
 
       // Gate: default suite target — toolchain Java × current Gradle × all Jenkins LTS × no tag filter.
       val gate = targets.named("functionalTest")
@@ -130,14 +161,15 @@ testing {
             }
         }
 
-      tasks.register("functionalTestAll") {
-        group = JavaBasePlugin.VERIFICATION_GROUP
-        description = "Runs the gate and all CI fan-out matrix variants"
-        dependsOn(gate, variants)
-      }
+      val functionalTestAll =
+        tasks.register("functionalTestAll") {
+          group = JavaBasePlugin.VERIFICATION_GROUP
+          description = "Runs the gate and all CI fan-out matrix variants"
+          dependsOn(gate, variants)
+        }
 
       tasks.check {
-        dependsOn(gate)
+        dependsOn(functionalTestAll)
       }
     }
   }

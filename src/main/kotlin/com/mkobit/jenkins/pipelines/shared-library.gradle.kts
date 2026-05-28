@@ -7,6 +7,8 @@ import org.gradle.api.attributes.Category
 import org.gradle.api.attributes.Usage
 import org.gradle.api.plugins.jvm.JvmTestSuite
 import org.gradle.api.plugins.quality.CodeNarc
+import org.gradle.api.services.BuildService
+import org.gradle.api.services.BuildServiceParameters
 import org.gradle.api.tasks.compile.GroovyCompile
 import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.*
@@ -73,6 +75,8 @@ val localLibraryRetrieverSourceSet =
   sourceSets.create(LOCAL_LIBRARY_RETRIEVER_SOURCE_SET)
 localLibraryRetrieverSourceSet.groovy.setSrcDirs(emptyList<Any>())
 
+abstract class JenkinsTestSuiteService : BuildService<BuildServiceParameters.None>
+
 // Applies full Jenkins integration-test wiring to a JvmTestSuite.
 // Defined before extension creation so it can be injected as an immutable constructor arg.
 // Captures script-level state (hpiFiles, groovyAllRuntime, localLibraryRetrieverSourceSet,
@@ -93,6 +97,7 @@ fun applyJenkinsTestWiring(suite: JvmTestSuite) {
   suite.targets.configureEach {
     testTask.configure {
       mustRunAfter(tasks.test)
+      usesService(jenkinsTestSuiteService)
       // WarExploder reads buildDirectory (defaults to "target") as parent of its explode dir.
       jvmArgumentProviders.add(
         objects.newInstance<BuildDirJvmArgumentProvider>().apply {
@@ -151,7 +156,13 @@ val sharedLibrary =
       autoRegisterLibrary.convention(true)
       implicit.convention(true)
       libraryName.convention(project.name)
+      maxParallelJenkinsTests.convention(1)
     }
+
+val jenkinsTestSuiteService =
+  gradle.sharedServices.registerIfAbsent("jenkinsTestSuite", JenkinsTestSuiteService::class.java) {
+    maxParallelUsages = sharedLibrary.maxParallelJenkinsTests
+  }
 
 // Each library's source is synced under its own named subdirectory so N libraries can
 // coexist without collisions: build/sharedLibrarySource/{libraryName}/{src,vars,resources}.

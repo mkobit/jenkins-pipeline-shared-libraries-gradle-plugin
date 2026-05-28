@@ -128,6 +128,20 @@ abstract class SharedLibraryExtension
     abstract val implicit: Property<Boolean>
 
     /**
+     * Maximum number of Jenkins test suites that may execute concurrently within this project.
+     * Controls the `JenkinsTestSuiteService` build-service slot shared by all suites wired
+     * via [withJenkins]. Defaults to `1` (safe on any machine); increase on hosts with more
+     * RAM — allow roughly 4 GiB per additional parallel slot.
+     *
+     * ```kotlin
+     * sharedLibrary {
+     *     maxParallelJenkinsTests = 2
+     * }
+     * ```
+     */
+    abstract val maxParallelJenkinsTests: Property<Int>
+
+    /**
      * Applies full Jenkins test-harness wiring to [suite] — identical to the built-in
      * `integrationTest` suite: `jenkins-test-harness`, HPI classpath, WAR path,
      * system properties, JVM opens, and `mustRunAfter("test")` ordering.

@@ -187,6 +187,11 @@ internal class SharedLibraryPluginTest :
         val ext = project.extensions.getByType(SharedLibraryExtension::class.java)
         ext.libraryName shouldHaveValue project.name
       }
+
+      it("maxParallelJenkinsTests defaults to 1") {
+        val ext = project.extensions.getByType(SharedLibraryExtension::class.java)
+        ext.maxParallelJenkinsTests shouldHaveValue 1
+      }
     }
 
     describe("libraryName is reflected in test.library.0.name system property") {
@@ -275,6 +280,14 @@ internal class SharedLibraryPluginTest :
         val task = project.tasks.getByName("sourcesJar")
         task.shouldBeInstanceOf<Jar>()
         task.description.shouldNotBeBlank()
+      }
+
+      it("registers jenkinsTestSuite build service with maxParallelUsages = 1") {
+        val reg =
+          project.gradle.sharedServices.registrations
+            .findByName("jenkinsTestSuite")
+        reg.shouldNotBeNull()
+        reg.maxParallelUsages shouldHaveValue 1
       }
     }
 
