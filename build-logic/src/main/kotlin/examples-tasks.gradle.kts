@@ -22,9 +22,7 @@ val gradlew = rootProject.file("gradlew")
 
 val examplesBuildService =
     gradle.sharedServices.registerIfAbsent("examples", ExamplesBuildService::class.java) {
-        maxParallelUsages.set(
-            providers.gradleProperty("examples.maxParallel").map { it.toInt() }.orElse(1)
-        )
+        maxParallelUsages = providers.gradleProperty("examples.maxParallel").map { it.toInt() }.orElse(1)
     }
 
 val exampleTasks =
