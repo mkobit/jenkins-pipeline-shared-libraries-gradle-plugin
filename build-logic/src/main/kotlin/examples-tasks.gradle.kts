@@ -1,13 +1,14 @@
 import org.gradle.api.plugins.JavaBasePlugin
+import org.gradle.api.services.BuildService
+import org.gradle.api.services.BuildServiceParameters
 
 // Each example task spawns an independent Gradle process. Within that process the plugin
 // sequences test → integrationTest (mustRunAfter) and caps the integration test JVM at 2g
 // (SharedLibraryDefaults.INTEGRATION_TEST_MAX_HEAP_SIZE). The Gradle daemon for each child
 // build adds another JVM on top of that.
 //
-// With org.gradle.parallel=true in the root build, multiple example-* tasks can run
-// concurrently, stacking N×(daemon + 2g test JVM) simultaneously. This is fine for CI
-// (separate runners per matrix job) but may be memory-intensive locally.
+// ExamplesBuildService caps how many example processes run at once. Default is 1 (safe on
+// any machine); override with -Pexamples.maxParallel=N for machines with more RAM.
 //
 // To investigate memory across all JVMs for a single run, temporarily append "--scan" to
 // commandLine(...) below and inspect the build scan timeline.
@@ -15,7 +16,14 @@ plugins {
     base
 }
 
+abstract class ExamplesBuildService : BuildService<BuildServiceParameters.None>
+
 val gradlew = rootProject.file("gradlew")
+
+val examplesBuildService =
+    gradle.sharedServices.registerIfAbsent("examples", ExamplesBuildService::class.java) {
+        maxParallelUsages = providers.gradleProperty("examples.maxParallel").map { it.toInt() }.orElse(1)
+    }
 
 val exampleTasks =
     projectDir
@@ -27,6 +35,7 @@ val exampleTasks =
                 description = "Runs check for the ${exampleDir.name} example"
                 workingDir = exampleDir
                 commandLine(gradlew.absolutePath, "check")
+                usesService(examplesBuildService)
             }
         } ?: emptyList()
 
