@@ -113,7 +113,7 @@ Run all examples from the repo root:
 ./gradlew :examples:check
 ```
 
-See also the [example repository](https://github.com/mkobit/jenkins-pipeline-shared-library-example) for a complete project using JUnit Jupiter, Spock 2.x, and Kotest against a real Jenkins instance.
+For a complete standalone example see the [example repository](https://github.com/mkobit/jenkins-pipeline-shared-library-example).
 
 ## Running tests
 
