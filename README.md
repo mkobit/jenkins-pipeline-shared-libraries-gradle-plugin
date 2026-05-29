@@ -103,7 +103,7 @@ The [`examples/`](examples/) directory contains standalone Gradle composite buil
 | [`additional-test-suites`](examples/additional-test-suites) | Custom third test suite wired via `sharedLibrary.withJenkins()` |
 | [`explicit-library-name`](examples/explicit-library-name) | `libraryName` override and `implicit = false` |
 | [`junit-groovy`](examples/junit-groovy) | Unit tests written in Groovy using JenkinsPipelineUnit |
-| [`kotest`](examples/kotest) | Kotlin source with unit and integration test suites |
+| [`kotest`](examples/kotest) | Kotlin source with Kotest unit and integration test suites |
 | [`library-resource`](examples/library-resource) | Steps that read files via `libraryResource()` |
 | [`version-catalog`](examples/version-catalog) | Version catalog wiring for plugin versions and Jenkins plugin coordinates |
 
