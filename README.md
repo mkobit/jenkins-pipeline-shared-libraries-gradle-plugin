@@ -86,6 +86,7 @@ sharedLibrary {
     pipelineUnitVersion = "1.29"                    // JenkinsPipelineUnit version (test suite)
     libraryName = "my-shared-lib"                   // Jenkins library name (default: project.name)
     autoRegisterLibrary = true                      // generate SharedLibraryAutoRegistrar (default: true)
+    implicit = true                                 // register library as implicit (default: true)
 }
 ```
 
