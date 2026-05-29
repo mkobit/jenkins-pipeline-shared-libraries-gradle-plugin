@@ -37,12 +37,12 @@ fun interface JenkinsTestSuiteWirer {
  * ```
  *
  * The built-in `integrationTest` suite is wired automatically. Additional suites
- * (JUnit Jupiter, Spock, Kotest, etc.) opt in by calling [withJenkins] inside their
+ * of tests opt in by calling [withJenkins] inside their
  * `register<JvmTestSuite>` block:
  * ```kotlin
  * testing {
  *     suites {
- *         register<JvmTestSuite>("integrationTestKotest") {
+ *         register<JvmTestSuite>("integrationTestExtra") {
  *             sharedLibrary.withJenkins(this)
  *         }
  *     }
