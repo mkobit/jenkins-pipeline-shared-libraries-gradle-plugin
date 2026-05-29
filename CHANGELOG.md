@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/compare/v0.11.0...v0.12.0) (2026-05-29)
+
+
+### Features
+
+* add implicit DSL property to control @Library requirement ([#196](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/196)) ([b090e11](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/b090e113b71a85d973a8062c48e5d5ef81bcd77b))
+
+
+### Bug fixes
+
+* replace @CacheableTask with @DisableCachingByDefault on ExtractJenkinsCodeNarcConfig ([#200](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/200)) ([7a1ce84](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/7a1ce844b612cd84390944fd3811f871fcca9a62))
+* replace groovy-all exclude with eachDependency substitution in test suite classpaths ([#161](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/161)) ([#201](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/201)) ([966c540](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/966c540392a7656bf070c2434a7650733545922d))
+* ship bundled default codenarc config for main and test source sets ([#199](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/199)) ([c793e1f](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/c793e1f66ae4c7f28c006d135cd82fde97959d50))
+
+
+### Dependency updates
+
+* **deps:** bump org.jetbrains.kotlinx:kotlinx-coroutines-core from 1.10.1 to 1.11.0 in /examples/kotest in the jetbrains group across 1 directory ([#204](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/204)) ([717c9a3](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/717c9a3ffe0c0f834eeb42f0850331e189988f10))
+* **deps:** bump org.openrewrite.rewrite from 7.32.1 to 7.32.2 ([#169](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/169)) ([76da5df](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/76da5dfcb97329ba0bb0c9385bc94a64c6a769cd))
+
+
+### Documentation
+
+* add additional test suites example ([#190](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/190)) ([45d3437](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/45d3437a41c5001c98876abbf6274d1ba0a915b7))
+* add basic-vars example with JPU and integration tests ([#172](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/172)) ([edcfc51](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/edcfc511b101aa33bd3c7c0ce96955716327b19c))
+* add codenarc example ([#188](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/188)) ([4e5ccba](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/4e5ccbadf958f054df27c2160ad6209b6f88a4a6))
+* add explicit library naming example ([#193](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/193)) ([4a72030](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/4a72030ec92f35f4c0cf5e9458aaa5c72eb90320))
+* add Jenkins Test Harness Kotest matchers to examples ([#191](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/191)) ([0183acc](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/0183accfb11c720fad340f3a4c87af58459c8271))
+* add kotest testing example ([#185](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/185)) ([97fb276](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/97fb2769ab903299bd8dbf6837d6d59283e8832c))
+* add libraryResource example ([#192](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/192)) ([49a7c2e](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/49a7c2efee98b905f92a3187b2d7a54dc8829be9))
+* add version catalog example ([#197](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/197)) ([b43a6ae](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/b43a6ae4379ce786a386eef10107149077bf7535))
+* clarify autoRegisterLibrary and implicit in README and extension docs ([#218](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/218)) ([db8da8c](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/db8da8c2de55dda46de6f5e350875c689bac3862))
+* remove stale HEAD-tracking note from README ([#156](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/156)) ([c29a08c](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/c29a08ce5d2f00becd802b1766ac83822b69eaf5))
+* update README to point to examples, reduce inline code noise ([#202](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/202)) ([7cc11ca](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/7cc11cadc6669841dd895d0df147d7eb0573d3cd))
+
 ## [0.11.0](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/compare/v0.10.1...v0.11.0) (2026-05-19)
 
 > [!IMPORTANT]
