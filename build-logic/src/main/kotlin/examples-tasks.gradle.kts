@@ -1,4 +1,3 @@
-import java.io.File
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.services.BuildService
 import org.gradle.api.services.BuildServiceParameters
@@ -10,8 +9,8 @@ import org.gradle.api.services.BuildServiceParameters
 //
 // ExamplesBuildService shares the build-wide "heavyTest" slot with functional tests in
 // build.gradle.kts so all memory-intensive Jenkins child processes compete for the same
-// concurrency limit. The default derives from MemAvailable at configuration time (÷ 4 GiB
-// per task); override with -PmemBound.maxParallel=N.
+// concurrency limit. Default is 1 (safe on any machine/container); override with
+// -PmemBound.maxParallel=N.
 //
 // To investigate memory across all JVMs for a single run, temporarily append "--scan" to
 // commandLine(...) below and inspect the build scan timeline.
@@ -23,24 +22,12 @@ abstract class ExamplesBuildService : BuildService<BuildServiceParameters.None>
 
 val gradlew = rootProject.file("gradlew")
 
-fun availableMemGiB(): Int =
-    runCatching {
-        File("/proc/meminfo")
-            .readLines()
-            .firstOrNull { it.startsWith("MemAvailable:") }
-            ?.split("\\s+".toRegex())
-            ?.getOrNull(1)
-            ?.toLong()
-            ?.div(1024L * 1024L)
-            ?.toInt()
-    }.getOrNull() ?: 0
-
 val examplesBuildService =
     gradle.sharedServices.registerIfAbsent("heavyTest", ExamplesBuildService::class.java) {
         maxParallelUsages =
             providers.gradleProperty("memBound.maxParallel")
                 .map { it.toInt() }
-                .orElse(maxOf(1, availableMemGiB() / 4))
+                .orElse(1)
     }
 
 val exampleTasks =

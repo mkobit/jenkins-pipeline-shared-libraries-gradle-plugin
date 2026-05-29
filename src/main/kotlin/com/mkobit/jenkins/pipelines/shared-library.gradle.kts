@@ -130,6 +130,14 @@ fun applyJenkinsTestWiring(suite: JvmTestSuite) {
           warFile.fileProvider(jenkinsWarFile)
         },
       )
+      // Fail fast on OOM rather than limping with corrupted state or dying with exit 137.
+      // G1GC is the JVM default from Java 9+ but stated explicitly so the choice is visible
+      // and auditable; it handles the mixed young/old allocation pattern of Jenkins + XStream
+      // better than ParallelGC would for a long-lived 2g heap.
+      jvmArgs(
+        "-XX:+ExitOnOutOfMemoryError",
+        "-XX:+UseG1GC",
+      )
       // Jenkins uses XStream, Guice, and other reflection-heavy libraries that
       // require access to JDK internals sealed by Java 9+ strong encapsulation.
       jvmArgs(

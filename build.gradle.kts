@@ -6,7 +6,6 @@ import org.gradle.api.tasks.testing.logging.TestStackTraceFilter
 import org.gradle.kotlin.dsl.testMatrix
 import org.gradle.plugin.compatibility.compatibility
 import org.jetbrains.dokka.gradle.tasks.DokkaGeneratePublicationTask
-import java.io.File
 
 plugins {
   `kotlin-dsl`
@@ -56,29 +55,16 @@ dependencies {
 
 abstract class FunctionalTestBuildService : BuildService<BuildServiceParameters.None>
 
-// Reads MemAvailable from /proc/meminfo (Linux/WSL); returns 0 on other platforms.
-fun availableMemGiB(): Int =
-  runCatching {
-    File("/proc/meminfo")
-      .readLines()
-      .firstOrNull { it.startsWith("MemAvailable:") }
-      ?.split("\\s+".toRegex())
-      ?.getOrNull(1)
-      ?.toLong()
-      ?.div(1024L * 1024L)
-      ?.toInt()
-  }.getOrNull() ?: 0
-
 // Shares the "heavyTest" slot with examples in examples-tasks.gradle.kts — all
 // memory-intensive Jenkins child processes compete for the same concurrency limit.
-// Default derives from MemAvailable ÷ 4 GiB per task; override with -PmemBound.maxParallel=N.
+// Default is 1 (safe on any machine/container); override with -PmemBound.maxParallel=N.
 val functionalTestBuildService =
   gradle.sharedServices.registerIfAbsent("heavyTest", FunctionalTestBuildService::class.java) {
     maxParallelUsages =
       providers
         .gradleProperty("memBound.maxParallel")
         .map { it.toInt() }
-        .orElse(maxOf(1, availableMemGiB() / 4))
+        .orElse(1)
   }
 
 testing {
@@ -120,7 +106,7 @@ testing {
 
       val kotestParallelism =
         (findProperty("kotest.parallelism") as? String)?.toInt()
-          ?: maxOf(1, availableMemGiB() / 3)
+          ?: Runtime.getRuntime().availableProcessors()
 
       // Gate: default suite target — toolchain Java × current Gradle × all Jenkins LTS × no tag filter.
       val gate = targets.named("functionalTest")
