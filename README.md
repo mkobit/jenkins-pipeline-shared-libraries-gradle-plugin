@@ -147,7 +147,7 @@ To override the BOM version explicitly, set `bomVersion` as well.
 Register extra suites and opt them into full Jenkins wiring with `withJenkins()`.
 This applies the same wiring as the built-in `integrationTest` suite: `jenkins-test-harness`, HPI classpath, WAR path, system properties, JVM `--add-opens` flags, `maxParallelForks = 1`, and heap defaults.
 
-See the [`additional-test-suites`](examples/additional-test-suites) example for a full build configuration, and [`kotest`](examples/kotest) for a Kotlin-based suite.
+See the [`additional-test-suites`](examples/additional-test-suites) example.
 
 Wire additional suites into `check` if they should run in CI:
 
@@ -162,7 +162,7 @@ tasks.check {
 > [!NOTE]
 > Spock 2.x brings Groovy 3.x onto the runtime classpath.
 > On Jenkins 2.479.x LTS this conflicts with the bundled `groovy-all:2.4.21` when `sandbox=true`.
-> Use `sandbox=false` in `CpsFlowDefinition` for Spock suites on 2.479.x.
+> Use `sandbox=false` in `CpsFlowDefinition` for test suites on 2.479.x.
 > This restriction is expected to lift on Jenkins 2.492.x+ once its internal Groovy 3 migration completes.
 
 ## JUnit 4
