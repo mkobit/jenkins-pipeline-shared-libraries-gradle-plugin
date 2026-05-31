@@ -41,7 +41,7 @@ class SharedLibraryExtensionTest :
     }
 
     describe("jenkins.version default is the plugin built-in core version") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withBaseProject {
           val result = runner(gradleVersion).withArguments("printDeclaredDeps").build()
           result.output shouldContain "plugin:org.jenkins-ci.main:jenkins-core:2.479.1"
@@ -50,7 +50,7 @@ class SharedLibraryExtensionTest :
     }
 
     describe("jenkins.version override changes jenkins-core coordinate") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withBaseProject(
           """
           sharedLibrary {
@@ -68,7 +68,7 @@ class SharedLibraryExtensionTest :
     }
 
     describe("jenkins-test-harness is wired with the plugin's internal minimum version") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withBaseProject {
           val result = runner(gradleVersion).withArguments("printDeclaredDeps").build()
           result.output shouldContain
@@ -78,7 +78,7 @@ class SharedLibraryExtensionTest :
     }
 
     describe("pipelineUnitVersion default is the plugin built-in JPU version") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withBaseProject {
           val result = runner(gradleVersion).withArguments("printDeclaredDeps").build()
           result.output shouldContain "test:com.lesfurets:jenkins-pipeline-unit:1.29"
@@ -87,7 +87,7 @@ class SharedLibraryExtensionTest :
     }
 
     describe("pipelineUnitVersion override changes JPU coordinate") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withBaseProject(
           """
           sharedLibrary {
@@ -103,7 +103,7 @@ class SharedLibraryExtensionTest :
     }
 
     describe("sharedLibrary.plugins.plugin registers a dependency on jenkinsPlugin configuration") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withBaseProject(
           """
           sharedLibrary {
