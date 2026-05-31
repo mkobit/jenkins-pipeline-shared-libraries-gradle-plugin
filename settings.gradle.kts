@@ -29,3 +29,7 @@ dependencyResolutionManagement {
 rootProject.name = "jenkins-pipeline-shared-libraries-gradle-plugin"
 
 include("examples")
+
+file("examples")
+  .listFiles { f -> f.isDirectory && f.resolve("settings.gradle.kts").exists() }
+  ?.forEach { includeBuild("examples/${it.name}") }

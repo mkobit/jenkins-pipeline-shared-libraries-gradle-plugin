@@ -59,7 +59,7 @@ abstract class FunctionalTestBuildService : BuildService<BuildServiceParameters.
 // memory-intensive Jenkins child processes compete for the same concurrency limit.
 // Default is 1 (safe on any machine/container); override with -PmemBound.maxParallel=N.
 val functionalTestBuildService =
-  gradle.sharedServices.registerIfAbsent("heavyTest", FunctionalTestBuildService::class.java) {
+  gradle.sharedServices.registerIfAbsent("heavyTest", FunctionalTestBuildService::class) {
     maxParallelUsages =
       providers
         .gradleProperty("memBound.maxParallel")
