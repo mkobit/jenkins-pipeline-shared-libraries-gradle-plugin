@@ -4,6 +4,7 @@ import io.kotest.core.TestConfiguration
 import io.kotest.engine.spec.tempdir
 import org.gradle.testkit.runner.GradleRunner
 import java.nio.file.Path
+import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.writeText
 
@@ -32,7 +33,7 @@ class TestProject(
   fun runner(gradleVersion: TestedGradleVersion): GradleRunner {
     if (!gradlePropertiesFlushed) {
       dir.resolve("gradle.properties").writeText(
-        gradleProperties.entries.joinToString("\n") { (k, v) -> "$k=$v" } + "\n",
+        gradleProperties.entries.joinToString(separator = "\n", postfix = "\n") { (k, v) -> "$k=$v" },
       )
       gradlePropertiesFlushed = true
     }
@@ -42,7 +43,7 @@ class TestProject(
       .withGradleVersion(gradleVersion.version)
       .withPluginClasspath()
       .apply {
-        System.getProperty("test.gradle.user.home")?.let { withTestKitDir(Path.of(it).toFile()) }
+        System.getProperty("test.gradle.user.home")?.let { withTestKitDir(Path(it).toFile()) }
       }
   }
 }
