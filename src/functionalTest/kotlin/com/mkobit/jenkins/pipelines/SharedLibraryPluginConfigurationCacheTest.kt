@@ -13,7 +13,7 @@ import kotlin.io.path.writeText
 class SharedLibraryPluginConfigurationCacheTest :
   DescribeSpec({
     describe("configuration cache: second run reuses stored entry") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withTestProject {
           buildFile.writeText(
             """

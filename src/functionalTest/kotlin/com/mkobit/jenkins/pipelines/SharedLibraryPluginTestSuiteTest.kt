@@ -21,7 +21,7 @@ class SharedLibraryPluginTestSuiteTest :
       }
 
     describe("Java-only test suite: Jenkins API types compile without Groovy dependency") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withBaseProject {
           buildFile.writeText(
             """
@@ -59,7 +59,7 @@ class SharedLibraryPluginTestSuiteTest :
     }
 
     describe("Groovy test suite: Spock test compiles and groovy-all is excluded") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withBaseProject {
           buildFile.writeText(
             """
@@ -96,7 +96,7 @@ class SharedLibraryPluginTestSuiteTest :
     }
 
     describe("Kotlin test suite: Kotest test compiles with Jenkins API on classpath") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withBaseProject {
           buildFile.writeText(
             """
@@ -130,7 +130,7 @@ class SharedLibraryPluginTestSuiteTest :
     }
 
     describe("consumer-registered JUnit Jupiter integrationTest suite compiles") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withBaseProject {
           buildFile.writeText(
             """
@@ -167,7 +167,7 @@ class SharedLibraryPluginTestSuiteTest :
     }
 
     describe("withJenkins opt-in wires jenkins-test-harness onto the suite") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withBaseProject {
           buildFile.writeText(
             """

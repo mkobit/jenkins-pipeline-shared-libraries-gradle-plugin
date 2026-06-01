@@ -31,7 +31,7 @@ class SharedLibraryPluginSourceTest :
     }
 
     describe("main Groovy source in src/ compiles") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withSharedLibraryProject(configure = {
           file("src/com/example/Lib.groovy").writeText(
             """
@@ -49,7 +49,7 @@ class SharedLibraryPluginSourceTest :
     }
 
     describe("invalid Groovy in src/ fails compilation") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withSharedLibraryProject(configure = {
           file("src/com/example/Bad.groovy").writeText("class { not valid groovy }")
         }) {
@@ -60,7 +60,7 @@ class SharedLibraryPluginSourceTest :
     }
 
     describe("invalid Groovy in vars/ fails compilation") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withSharedLibraryProject(configure = {
           file("vars/badStep.groovy").writeText("def call( { unclosed paren and brace")
         }) {
@@ -71,7 +71,7 @@ class SharedLibraryPluginSourceTest :
     }
 
     describe("sourcesJar assembles a JAR of the main source") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withSharedLibraryProject(configure = {
           file("src/com/example/Lib.groovy").writeText("package com.example; class Lib {}")
         }) {
@@ -82,7 +82,7 @@ class SharedLibraryPluginSourceTest :
     }
 
     describe("groovydocJar assembles a Groovydoc JAR") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withSharedLibraryProject(configure = {
           file("src/com/example/Lib.groovy").writeText(
             "package com.example; /** Documented. */ class Lib {}",
@@ -95,7 +95,7 @@ class SharedLibraryPluginSourceTest :
     }
 
     describe("Jenkins API types usable in main library source") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withSharedLibraryProject(configure = {
           file("src/com/example/JenkinsLib.groovy").writeText(
             """
@@ -114,7 +114,7 @@ class SharedLibraryPluginSourceTest :
     }
 
     describe("unit test suite runs JenkinsPipelineUnit tests") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withSharedLibraryProject(configure = {
           // Spock brings Groovy 3 onto the compile classpath; groovy-all exclusion is
           // applied by the plugin so Jenkins' bundled Groovy 2.4 does not conflict.
@@ -151,7 +151,7 @@ class SharedLibraryPluginSourceTest :
     }
 
     describe("running test does not trigger integrationTest") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withSharedLibraryProject {
           val result = runner(gradleVersion).withArguments("test", "--dry-run").build()
           result.output shouldNotContain ":integrationTest"
@@ -165,7 +165,7 @@ class SharedLibraryPluginSourceTest :
       // Remove xdescribe when Jenkins upgrades embedded Groovy beyond 2.4.
       // Tracked: https://github.com/jenkinsci/jenkins/issues/19976
       //          https://issues.jenkins.io/browse/JENKINS-51823
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withSharedLibraryProject(configure = {
           buildFile.writeText(
             """
