@@ -38,6 +38,7 @@ updates:
       - "/examples/kotest"
       - "/examples/library-resource"
       - "/examples/version-catalog"
+      - "/examples/jacoco"
     schedule:
       interval: "weekly"
     labels:
