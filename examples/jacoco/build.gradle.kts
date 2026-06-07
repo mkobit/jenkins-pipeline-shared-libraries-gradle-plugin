@@ -20,8 +20,3 @@ tasks.jacocoTestReport {
 tasks.test {
     finalizedBy(tasks.jacocoTestReport)
 }
-
-tasks.integrationTest {
-    // Testing jenkins-test-harness not in scope for this example so skip Integration tests
-    enabled = false
-}
