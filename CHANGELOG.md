@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > **This is a complete rewrite** — the first release since 0.10.1 (July 2019), nearly seven years later.
 > The plugin has been rebuilt from the ground up for Gradle 9.4+, Java 17/21, and modern Jenkins LTS lines.
 > All 0.10.x APIs have been removed.
-> See the [migration guide in the README](README.md#migration-from-010x).
+> See the [migration guide in the README](README.md#migration-from-010x). The recommended path is to manually migrate your code (an OpenRewrite recipe was included initially but later removed as it was untested).
 
 ### Added
 
@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `libraryName` property (default: `project.name`) — controls the Jenkins library identifier used in `@Library("...")` pipeline scripts and `LocalLibraryRetriever.implicitLibrary()`.
 - Generated `LocalLibraryRetriever` class — loads the local shared library in integration tests without network access.
 - Built-in Jenkins CodeNarc rules (`codenarcJenkinsMain` task) — validates CPS-safety and Serializable type compliance on shared library sources.
+- ~~OpenRewrite migration recipe `com.mkobit.jenkins.pipelines.MigrateSharedLibraryPlugin010To011` for automated 0.10.x → 0.11.x migration.~~ (Removed as it was untested)
 - Configuration cache support.
 - Java 17, 21, and 25 toolchain support.
 - Jenkins LTS 2.479.x, 2.528.x, and 2.541.x compatibility with full BOM alignment.
