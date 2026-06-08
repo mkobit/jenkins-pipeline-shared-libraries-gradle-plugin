@@ -258,7 +258,7 @@ testing {
 
 val integrationTestSuite =
   testing.suites.register<JvmTestSuite>(INTEGRATION_TEST_SUITE) {
-    useJUnitJupiter("6.0.1")
+    useJUnitJupiter()
     sources {
       java.setSrcDirs(listOf("test/integration/java"))
       groovy.setSrcDirs(listOf("test/integration/groovy"))
