@@ -17,6 +17,7 @@ import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.jvm.JvmTestSuite
 import org.gradle.api.tasks.GroovySourceDirectorySet
 import org.gradle.api.tasks.SourceSetContainer
+import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.tasks.Jar
 import org.gradle.testfixtures.ProjectBuilder
 import testsupport.kotest.shouldBePresent
@@ -198,7 +199,7 @@ internal class SharedLibraryPluginTest :
     describe("libraryName is reflected in test.library.0.name system property") {
       it("integrationTest injects libraryName as test.library.0.name") {
         val ext = project.extensions.getByType(SharedLibraryExtension::class.java)
-        val task = project.tasks.getByName("integrationTest") as org.gradle.api.tasks.testing.Test
+        val task = project.tasks.getByName("integrationTest").shouldBeInstanceOf<Test>()
         val provider = task.jvmArgumentProviders.filterIsInstance<LibraryNameArgumentProvider>().single()
         provider.libraryName shouldHaveValue ext.libraryName.shouldBePresent()
       }
@@ -206,13 +207,13 @@ internal class SharedLibraryPluginTest :
 
     describe("implicit is reflected in test.library.0.implicit system property") {
       it("integrationTest injects implicit=true by default") {
-        val task = project.tasks.getByName("integrationTest") as org.gradle.api.tasks.testing.Test
+        val task = project.tasks.getByName("integrationTest").shouldBeInstanceOf<Test>()
         val provider = task.jvmArgumentProviders.filterIsInstance<LibraryImplicitArgumentProvider>().single()
         provider.implicit shouldHaveValue true
       }
 
       it("integrationTest argument produces -Dtest.library.0.implicit=true by default") {
-        val task = project.tasks.getByName("integrationTest") as org.gradle.api.tasks.testing.Test
+        val task = project.tasks.getByName("integrationTest").shouldBeInstanceOf<Test>()
         val provider = task.jvmArgumentProviders.filterIsInstance<LibraryImplicitArgumentProvider>().single()
         provider.asArguments() shouldBe listOf("-Dtest.library.0.implicit=true")
       }
@@ -229,23 +230,23 @@ internal class SharedLibraryPluginTest :
     describe("tasks") {
       it("integrationTest is in the verification group") {
         val task = project.tasks.getByName("integrationTest")
-        task.shouldBeInstanceOf<org.gradle.api.tasks.testing.Test>()
+        task.shouldBeInstanceOf<Test>()
         task.group shouldBe JavaBasePlugin.VERIFICATION_GROUP
         task.description.shouldNotBeBlank()
       }
 
       it("integrationTest has maxParallelForks = 1") {
-        val task = project.tasks.getByName("integrationTest") as org.gradle.api.tasks.testing.Test
+        val task = project.tasks.getByName("integrationTest").shouldBeInstanceOf<Test>()
         task.maxParallelForks shouldBe 1
       }
 
       it("integrationTest has maxHeapSize = 2g") {
-        val task = project.tasks.getByName("integrationTest") as org.gradle.api.tasks.testing.Test
+        val task = project.tasks.getByName("integrationTest").shouldBeInstanceOf<Test>()
         task.maxHeapSize shouldBe "2g"
       }
 
       it("integrationTest injects test.library.0.location via LibraryLocationArgumentProvider pointing at syncSharedLibrarySource output") {
-        val task = project.tasks.getByName("integrationTest") as org.gradle.api.tasks.testing.Test
+        val task = project.tasks.getByName("integrationTest").shouldBeInstanceOf<Test>()
         val provider = task.jvmArgumentProviders.filterIsInstance<LibraryLocationArgumentProvider>().single()
         provider.libraryLocation.get().asFile shouldBe
           project.layout.buildDirectory
@@ -255,7 +256,7 @@ internal class SharedLibraryPluginTest :
       }
 
       it("integrationTest injects test.library.0.name system property") {
-        val task = project.tasks.getByName("integrationTest") as org.gradle.api.tasks.testing.Test
+        val task = project.tasks.getByName("integrationTest").shouldBeInstanceOf<Test>()
         val provider = task.jvmArgumentProviders.filterIsInstance<LibraryNameArgumentProvider>().single()
         provider.libraryName shouldHaveValue project.name
       }
@@ -267,7 +268,7 @@ internal class SharedLibraryPluginTest :
       }
 
       it("generateLocalLibraryFiles generateAutoRegistrar defaults to true") {
-        val task = project.tasks.getByName("generateLocalLibraryFiles") as GenerateLocalLibraryFiles
+        val task = project.tasks.getByName("generateLocalLibraryFiles").shouldBeInstanceOf<GenerateLocalLibraryFiles>()
         task.generateAutoRegistrar shouldHaveValue true
       }
 
@@ -297,7 +298,8 @@ internal class SharedLibraryPluginTest :
         project.extensions
           .getByType(org.gradle.testing.base.TestingExtension::class.java)
           .suites
-          .getByName(name) as JvmTestSuite
+          .getByName(name)
+          .shouldBeInstanceOf()
 
       it("test suite has JenkinsTestSuiteExtension disabled by default") {
         suiteNamed("test").jenkins.enabled shouldHaveValue false
@@ -322,8 +324,9 @@ internal class SharedLibraryPluginTest :
         val suite = suiteNamed("integrationTest")
         @Suppress("DEPRECATION")
         sharedLibrary.withJenkins(suite)
-        val task = project.tasks.getByName("integrationTest") as org.gradle.api.tasks.testing.Test
-        task.jvmArgumentProviders.filterIsInstance<LibraryNameArgumentProvider>() shouldHaveSize 1
+        project.tasks.getByName("integrationTest").shouldBeInstanceOf<Test> {
+          it.jvmArgumentProviders.filterIsInstance<LibraryNameArgumentProvider>() shouldHaveSize 1
+        }
       }
     }
 

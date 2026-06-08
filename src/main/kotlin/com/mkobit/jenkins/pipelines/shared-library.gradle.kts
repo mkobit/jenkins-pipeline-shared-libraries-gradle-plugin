@@ -241,6 +241,7 @@ configurations.named(localLibraryRetrieverSourceSet.compileOnlyConfigurationName
 
 testing {
   suites {
+    // TODO: figure out why there isn't an accessor generated for this
     named<JvmTestSuite>("test") {
       useJUnitJupiter()
       sources {
@@ -271,23 +272,18 @@ testing.suites.withType<JvmTestSuite>().configureEach {
       .extensions
       .create<JenkinsTestSuiteExtension>("jenkins")
       .also { it.enabled.convention(false) }
-  val implConfigName = sources.implementationConfigurationName
-
-  project.configurations.named(implConfigName) {
+  configurations.named(sources.implementationConfigurationName) {
     extendsFrom(jenkinsPlugin)
     exclude(mapOf("group" to "org.codehaus.groovy", "module" to "groovy-all"))
-  }
-  dependencies {
-    implementation(SharedLibraryDefaults.GROOVY_COORDINATES)
-  }
-
-  project.configurations.named(implConfigName) {
     withDependencies {
       if (!jenkinsExt.enabled.getOrElse(false)) return@withDependencies
       add(project.dependencies.create("org.jenkins-ci.main:jenkins-test-harness:${SharedLibraryDefaults.TEST_HARNESS_VERSION}"))
       add(project.dependencies.create(localLibraryRetrieverSourceSet.output))
       add(project.dependencies.create(SharedLibraryDefaults.IVY_COORDINATES))
     }
+  }
+  dependencies {
+    implementation(SharedLibraryDefaults.GROOVY_COORDINATES)
   }
 
   targets.configureEach {
