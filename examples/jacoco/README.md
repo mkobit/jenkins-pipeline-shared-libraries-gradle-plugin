@@ -6,7 +6,7 @@ Demonstrates how to use the JaCoCo plugin with Jenkins Pipeline Shared Libraries
 
 Using `id("jacoco")` works easily with normal unit tests in Gradle. However, when working with Jenkins Pipeline code, the pipeline scripts are compiled dynamically at runtime, or class formats are altered, causing JaCoCo to report mismatch errors or missing execution data.
 
-To resolve this, we configure the `jacocoTestReport` task to exclude dynamically interpreted pipeline code (like `sayHello*`) from its `classDirectories`, allowing standard library code coverage to be accurately calculated.
+To resolve this, we configure the `jacocoTestReport` task to exclude dynamically interpreted pipeline code (like `analyzeStatus*`) from its `classDirectories`, allowing standard library code coverage to be accurately calculated.
 
 ## Relevant Issues
 
