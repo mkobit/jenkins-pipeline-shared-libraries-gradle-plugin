@@ -3,8 +3,7 @@ package com.mkobit.jenkins.pipelines
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.plugins.jvm.JvmTestSuite
 import org.gradle.api.provider.Property
-import org.gradle.kotlin.dsl.create
-import org.gradle.kotlin.dsl.findByType
+import org.gradle.kotlin.dsl.getByType
 
 /**
  * Extension added to every [JvmTestSuite] by the `shared-library` plugin.
@@ -35,11 +34,10 @@ abstract class JenkinsTestSuiteExtension {
 }
 
 /**
- * Opts this suite into Jenkins test-harness wiring and returns its [JenkinsTestSuiteExtension].
+ * Returns this suite's [JenkinsTestSuiteExtension].
  *
- * On first access the extension is created with [JenkinsTestSuiteExtension.enabled] defaulting
- * to `false`; subsequent accesses return the same instance. Call `jenkins.enabled.set(true)` (or
- * set `enabled = true`) inside your `register<JvmTestSuite>` block to activate the harness:
+ * The extension is registered eagerly by the `shared-library` plugin for every [JvmTestSuite],
+ * so this accessor is always available after the plugin is applied:
  * ```kotlin
  * register<JvmTestSuite>("integrationTestKotest") {
  *     jenkins.enabled = true
@@ -48,8 +46,4 @@ abstract class JenkinsTestSuiteExtension {
  */
 @Suppress("UnstableApiUsage")
 val JvmTestSuite.jenkins: JenkinsTestSuiteExtension
-  get() {
-    val ext = (this as ExtensionAware).extensions
-    return ext.findByType<JenkinsTestSuiteExtension>()
-      ?: ext.create<JenkinsTestSuiteExtension>("jenkins").also { it.enabled.convention(false) }
-  }
+  get() = (this as ExtensionAware).extensions.getByType<JenkinsTestSuiteExtension>()

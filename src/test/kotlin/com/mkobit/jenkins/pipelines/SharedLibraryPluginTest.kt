@@ -299,14 +299,7 @@ internal class SharedLibraryPluginTest :
           .suites
           .getByName(name) as JvmTestSuite
 
-      it("test suite does not have JenkinsTestSuiteExtension by default") {
-        val suite = suiteNamed("test")
-        (suite as org.gradle.api.plugins.ExtensionAware)
-          .extensions
-          .findByType(JenkinsTestSuiteExtension::class.java) shouldBe null
-      }
-
-      it("accessing jenkins on a suite creates extension with enabled = false") {
+      it("test suite has JenkinsTestSuiteExtension disabled by default") {
         suiteNamed("test").jenkins.enabled shouldHaveValue false
       }
 

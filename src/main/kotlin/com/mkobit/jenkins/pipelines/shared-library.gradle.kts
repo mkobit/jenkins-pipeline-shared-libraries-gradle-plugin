@@ -256,33 +256,21 @@ testing {
   }
 }
 
-val integrationTestSuite =
-  testing.suites.register<JvmTestSuite>(INTEGRATION_TEST_SUITE) {
-    sources {
-      java.setSrcDirs(listOf("test/integration/java"))
-      groovy.setSrcDirs(listOf("test/integration/groovy"))
-      resources.setSrcDirs(listOf("test/integration/resources"))
-    }
-    jenkins.enabled.set(true)
-  }
-// The integrationTest suite's configurations are created at registration time (not realization
-// time), so deps can be added directly here and will appear as declared in
-// integrationTestImplementation.dependencies without requiring suite realization.
-dependencies {
-  add("${INTEGRATION_TEST_SUITE}Implementation", "org.jenkins-ci.main:jenkins-test-harness:${SharedLibraryDefaults.TEST_HARNESS_VERSION}")
-  add("${INTEGRATION_TEST_SUITE}Implementation", localLibraryRetrieverSourceSet.output)
-  add("${INTEGRATION_TEST_SUITE}RuntimeOnly", SharedLibraryDefaults.IVY_COORDINATES)
-}
-
 // JvmTestSuite and Project both extend ExtensionAware. Inside this lambda Kotlin resolves
-// bare `extensions` to Project.extensions (outer scope). All suite extension-container accesses
-// use an explicit (this as ExtensionAware) cast to reach the suite's own container.
+// bare `extensions` to Project.extensions (outer scope). The explicit cast reaches the suite's
+// own container. The extension is registered eagerly — before integrationTest and any
+// user-registered suites — so Gradle's KotlinDSL accessor generator produces a
+// `val JvmTestSuite.jenkins` accessor for consumer build scripts.
 //
 // The enabled check is deferred to withDependencies (resolution time) and targets.configureEach
-// (task realization time) so that user-registered suite creation actions — which call
-// withJenkins() or set jenkins.enabled = true — have already run by the time these hooks fire.
+// (task realization time) so that user-registered suite creation actions — which set
+// jenkins.enabled = true — have already run by the time these hooks fire.
 testing.suites.withType<JvmTestSuite>().configureEach {
-  val suiteExtensions = (this as ExtensionAware).extensions
+  val jenkinsExt =
+    (this as ExtensionAware)
+      .extensions
+      .create<JenkinsTestSuiteExtension>("jenkins")
+      .also { it.enabled.convention(false) }
   val implConfigName = sources.implementationConfigurationName
 
   project.configurations.named(implConfigName) {
@@ -295,8 +283,7 @@ testing.suites.withType<JvmTestSuite>().configureEach {
 
   project.configurations.named(implConfigName) {
     withDependencies {
-      val ext = suiteExtensions.findByType(JenkinsTestSuiteExtension::class.java) ?: return@withDependencies
-      if (!ext.enabled.getOrElse(false)) return@withDependencies
+      if (!jenkinsExt.enabled.getOrElse(false)) return@withDependencies
       add(project.dependencies.create("org.jenkins-ci.main:jenkins-test-harness:${SharedLibraryDefaults.TEST_HARNESS_VERSION}"))
       add(project.dependencies.create(localLibraryRetrieverSourceSet.output))
       add(project.dependencies.create(SharedLibraryDefaults.IVY_COORDINATES))
@@ -305,8 +292,7 @@ testing.suites.withType<JvmTestSuite>().configureEach {
 
   targets.configureEach {
     testTask.configure {
-      val ext = suiteExtensions.findByType(JenkinsTestSuiteExtension::class.java) ?: return@configure
-      if (!ext.enabled.getOrElse(false)) return@configure
+      if (!jenkinsExt.enabled.getOrElse(false)) return@configure
 
       val suiteJenkinsDir = layout.buildDirectory.dir("jenkins-for-test/$name")
       mustRunAfter(tasks.test)
@@ -363,6 +349,24 @@ testing.suites.withType<JvmTestSuite>().configureEach {
       )
     }
   }
+}
+
+val integrationTestSuite =
+  testing.suites.register<JvmTestSuite>(INTEGRATION_TEST_SUITE) {
+    sources {
+      java.setSrcDirs(listOf("test/integration/java"))
+      groovy.setSrcDirs(listOf("test/integration/groovy"))
+      resources.setSrcDirs(listOf("test/integration/resources"))
+    }
+    jenkins.enabled.set(true)
+  }
+// The integrationTest suite's configurations are created at registration time (not realization
+// time), so deps can be added directly here and will appear as declared in
+// integrationTestImplementation.dependencies without requiring suite realization.
+dependencies {
+  add("${INTEGRATION_TEST_SUITE}Implementation", "org.jenkins-ci.main:jenkins-test-harness:${SharedLibraryDefaults.TEST_HARNESS_VERSION}")
+  add("${INTEGRATION_TEST_SUITE}Implementation", localLibraryRetrieverSourceSet.output)
+  add("${INTEGRATION_TEST_SUITE}RuntimeOnly", SharedLibraryDefaults.IVY_COORDINATES)
 }
 
 tasks.check {
