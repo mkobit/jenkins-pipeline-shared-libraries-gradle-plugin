@@ -37,6 +37,7 @@ updates:
       - "/examples/junit-groovy"
       - "/examples/kotest"
       - "/examples/library-resource"
+      - "/examples/peer-libraries"
       - "/examples/version-catalog"
     schedule:
       interval: "weekly"

@@ -185,6 +185,43 @@ class SharedLibraryPluginPeerLibraryTest :
         }
       }
 
+      describe("peer library JVM args injected into integrationTest task") {
+        forGradleVersions { gradleVersion ->
+          withTestProject {
+            settingsFile.writeText(jenkinsSettings("peer-jvm-args", includes = listOf("peer-lib")))
+            buildFile.writeText(
+              """
+              plugins { id("com.mkobit.jenkins.pipelines.shared-library") }
+              sharedLibrary {
+                  dependencies {
+                      sharedLibrary(project(":peer-lib"))
+                  }
+              }
+              tasks.register("printPeerJvmArgs") {
+                  dependsOn(":peer-lib:syncSharedLibrarySource")
+                  doLast {
+                      tasks.named<Test>("integrationTest").get()
+                          .jvmArgumentProviders
+                          .flatMap { it.asArguments() }
+                          .filter { it.startsWith("-Dtest.library.") }
+                          .forEach { println("peer-arg:" + it) }
+                  }
+              }
+              """.trimIndent(),
+            )
+            file("peer-lib/build.gradle.kts").writeText(barePeerSubproject())
+            file("peer-lib/vars/peerStep.groovy").writeText("def call() {}")
+
+            val output = runner(gradleVersion).build("printPeerJvmArgs").output
+            val peerArgLines = output.lines().filter { it.startsWith("peer-arg:") }
+            peerArgLines shouldNotBeEmpty()
+            peerArgLines.any { "test.library.1.name" in it } shouldBe true
+            peerArgLines.any { "test.library.1.location" in it && "peer-lib" in it } shouldBe true
+            peerArgLines.any { "test.library.1.implicit" in it } shouldBe true
+          }
+        }
+      }
+
       describe("missing peer plugin: clear variant-selection error when project(\":lib\") does not apply the plugin") {
         forGradleVersions { gradleVersion ->
           withTestProject {
