@@ -2,7 +2,6 @@ package com.mkobit.jenkins.pipelines
 
 import org.gradle.api.Action
 import org.gradle.api.model.ObjectFactory
-import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.plugins.jvm.JvmTestSuite
 import org.gradle.api.provider.Property
 import org.gradle.kotlin.dsl.newInstance
@@ -44,7 +43,7 @@ abstract class SharedLibraryExtension
   constructor(
     private val objects: ObjectFactory,
   ) {
-    val jenkins: JenkinsVersions = objects.newInstance(JenkinsVersions::class)
+    val jenkins: JenkinsVersions = objects.newInstance<JenkinsVersions>()
 
     /** Configures the Jenkins core and test-harness versions. */
     fun jenkins(action: Action<in JenkinsVersions>) = action.execute(jenkins)
@@ -144,10 +143,9 @@ abstract class SharedLibraryExtension
     @Deprecated(
       message = "Set jenkins.enabled = true on the suite directly. Will be removed in 0.13.0.",
       level = DeprecationLevel.WARNING,
-      replaceWith = ReplaceWith(expression = "jenkins.enabled = true"), // todo: double check this actually works
+      replaceWith = ReplaceWith(expression = "jenkins.enabled = true"),
     )
     fun withJenkins(suite: JvmTestSuite) {
-      // todo: use gradle warnings api, add test to remove in 0.13.0 release
       suite.jenkins.enabled.set(true)
     }
   }

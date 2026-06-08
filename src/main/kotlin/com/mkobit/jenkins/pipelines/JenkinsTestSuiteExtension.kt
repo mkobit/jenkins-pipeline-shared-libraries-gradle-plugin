@@ -3,6 +3,8 @@ package com.mkobit.jenkins.pipelines
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.plugins.jvm.JvmTestSuite
 import org.gradle.api.provider.Property
+import org.gradle.kotlin.dsl.create
+import org.gradle.kotlin.dsl.findByType
 
 /**
  * Extension added to every [JvmTestSuite] by the `shared-library` plugin.
@@ -48,6 +50,6 @@ abstract class JenkinsTestSuiteExtension {
 val JvmTestSuite.jenkins: JenkinsTestSuiteExtension
   get() {
     val ext = (this as ExtensionAware).extensions
-    return ext.findByType(JenkinsTestSuiteExtension::class.java)
-      ?: ext.create("jenkins", JenkinsTestSuiteExtension::class.java).also { it.enabled.convention(false) }
+    return ext.findByType<JenkinsTestSuiteExtension>()
+      ?: ext.create<JenkinsTestSuiteExtension>("jenkins").also { it.enabled.convention(false) }
   }
