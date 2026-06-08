@@ -7,8 +7,10 @@ import org.gradle.api.services.BuildServiceParameters
 // (SharedLibraryDefaults.INTEGRATION_TEST_MAX_HEAP_SIZE). The Gradle daemon for each child
 // build adds another JVM on top of that.
 //
-// ExamplesBuildService caps how many example processes run at once. Default is 1 (safe on
-// any machine); override with -Pexamples.maxParallel=N for machines with more RAM.
+// ExamplesBuildService shares the build-wide "heavyTest" slot with functional tests in
+// build.gradle.kts so all memory-intensive Jenkins child processes compete for the same
+// concurrency limit. Default is 1 (safe on any machine/container); override with
+// -PmemBound.maxParallel=N.
 //
 // To investigate memory across all JVMs for a single run, temporarily append "--scan" to
 // commandLine(...) below and inspect the build scan timeline.
@@ -21,8 +23,11 @@ abstract class ExamplesBuildService : BuildService<BuildServiceParameters.None>
 val gradlew = rootProject.file("gradlew")
 
 val examplesBuildService =
-    gradle.sharedServices.registerIfAbsent("examples", ExamplesBuildService::class.java) {
-        maxParallelUsages = providers.gradleProperty("examples.maxParallel").map { it.toInt() }.orElse(1)
+    gradle.sharedServices.registerIfAbsent("heavyTest", ExamplesBuildService::class.java) {
+        maxParallelUsages =
+            providers.gradleProperty("memBound.maxParallel")
+                .map { it.toInt() }
+                .orElse(1)
     }
 
 val exampleTasks =
