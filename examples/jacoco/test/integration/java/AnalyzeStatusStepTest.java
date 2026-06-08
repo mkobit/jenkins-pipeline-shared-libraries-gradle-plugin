@@ -6,21 +6,21 @@ import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 @WithJenkins
-class SayHelloStepTest {
+class AnalyzeStatusStepTest {
 
     @Test
-    void defaultGreeting(JenkinsRule jenkins) throws Exception {
+    void successStatus(JenkinsRule jenkins) throws Exception {
         WorkflowJob job = jenkins.createProject(WorkflowJob.class);
-        job.setDefinition(new CpsFlowDefinition("sayHello()", true));
+        job.setDefinition(new CpsFlowDefinition("analyzeStatus('SUCCESS')", true));
         WorkflowRun run = jenkins.buildAndAssertSuccess(job);
-        jenkins.assertLogContains("Hello, world!", run);
+        jenkins.assertLogContains("The build completed successfully. Great job!", run);
     }
 
     @Test
-    void namedGreeting(JenkinsRule jenkins) throws Exception {
+    void failureStatus(JenkinsRule jenkins) throws Exception {
         WorkflowJob job = jenkins.createProject(WorkflowJob.class);
-        job.setDefinition(new CpsFlowDefinition("sayHello('Jenkins')", true));
+        job.setDefinition(new CpsFlowDefinition("analyzeStatus('FAILURE')", true));
         WorkflowRun run = jenkins.buildAndAssertSuccess(job);
-        jenkins.assertLogContains("Hello, Jenkins!", run);
+        jenkins.assertLogContains("The build failed. Please check the logs for errors.", run);
     }
 }

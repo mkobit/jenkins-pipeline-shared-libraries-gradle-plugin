@@ -10,7 +10,7 @@ tasks.jacocoTestReport {
         classDirectories.files.map {
             fileTree(it).matching {
                 // Filter out the global vars as they are interpreted
-                exclude("sayHello*")
+                exclude("analyzeStatus*")
             }
         }
     )
