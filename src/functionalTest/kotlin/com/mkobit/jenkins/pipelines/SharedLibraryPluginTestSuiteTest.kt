@@ -218,15 +218,11 @@ class SharedLibraryPluginTestSuiteTest :
                 id("com.mkobit.jenkins.pipelines.shared-library")
                 java
             }
-            testing {
-                suites {
-                    register<JvmTestSuite>("integrationTestJunit6") {
-                        sharedLibrary.withJenkins(this)
-                        useJUnitJupiter()
-                        sources {
-                            java.setSrcDirs(listOf("test/integration-junit6/java"))
-                        }
-                    }
+            val additionalIntegrationTest = suites.register<JvmTestSuite>("integrationTestJunit6") {
+                sharedLibrary.withJenkins(this)
+                useJUnitJupiter()
+                sources {
+                    java.setSrcDirs(listOf("test/integration-junit6/java"))
                 }
             }
             tasks.check { dependsOn("integrationTestJunit6") }
