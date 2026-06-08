@@ -355,15 +355,12 @@ val integrationTestSuite =
       resources.setSrcDirs(listOf("test/integration/resources"))
     }
     jenkins.enabled.set(true)
+    dependencies {
+      implementation("org.jenkins-ci.main:jenkins-test-harness:${SharedLibraryDefaults.TEST_HARNESS_VERSION}")
+      implementation(localLibraryRetrieverSourceSet.output)
+      runtimeOnly(SharedLibraryDefaults.IVY_COORDINATES)
+    }
   }
-// The integrationTest suite's configurations are created at registration time (not realization
-// time), so deps can be added directly here and will appear as declared in
-// integrationTestImplementation.dependencies without requiring suite realization.
-dependencies {
-  add("${INTEGRATION_TEST_SUITE}Implementation", "org.jenkins-ci.main:jenkins-test-harness:${SharedLibraryDefaults.TEST_HARNESS_VERSION}")
-  add("${INTEGRATION_TEST_SUITE}Implementation", localLibraryRetrieverSourceSet.output)
-  add("${INTEGRATION_TEST_SUITE}RuntimeOnly", SharedLibraryDefaults.IVY_COORDINATES)
-}
 
 tasks.check {
   dependsOn(integrationTestSuite)
