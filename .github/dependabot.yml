@@ -49,6 +49,7 @@ updates:
       include: "scope"
     ignore:
       - dependency-name: "gradle"
+      - dependency-name: "gradle-wrapper"
     groups:
       jetbrains:
         patterns:
