@@ -10,9 +10,13 @@ class SayHelloChainSmokeTest {
 
     @Test
     void chainedGreetingsAllSucceed(JenkinsRule jenkins) throws Exception {
-        WorkflowJob job = jenkins.createProject(WorkflowJob.class);
+        var job = jenkins.createProject(WorkflowJob.class);
         job.setDefinition(new CpsFlowDefinition(
-            "sayHello(); sayHello('Alice'); sayHello('Bob')",
+            """
+            sayHello()
+            sayHello('Alice')
+            sayHello('Bob')
+            """,
             true
         ));
         WorkflowRun run = jenkins.buildAndAssertSuccess(job);

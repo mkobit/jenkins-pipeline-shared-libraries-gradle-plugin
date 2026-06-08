@@ -14,13 +14,15 @@ class CpsClassUsageTest {
 
     @Test
     void sharedLibraryClassSurvivesCpsStepBoundary(JenkinsRule jenkins) throws Exception {
-        WorkflowJob job = jenkins.createProject(WorkflowJob.class);
+        var job = jenkins.createProject(WorkflowJob.class);
         // Greeter is captured in a local variable and used across multiple CPS steps.
         // Each `echo` is a CPS suspension point; the Greeter instance must be serializable.
         job.setDefinition(new CpsFlowDefinition(
-            "def g = new com.example.Greeter()\n"
-            + "echo g.greet('First')\n"
-            + "echo g.greet('Second')",
+            """
+            def g = new com.example.Greeter()
+            echo g.greet('First')
+            echo g.greet('Second')
+            """,
             true
         ));
         WorkflowRun run = jenkins.buildAndAssertSuccess(job);

@@ -4,8 +4,6 @@ plugins {
     id("com.mkobit.jenkins.pipelines.shared-library")
 }
 
-// `integrationTest` is wired automatically by the plugin.
-// Split tests across two targets so each boots an isolated embedded Jenkins.
 testing {
     suites {
         named<JvmTestSuite>("integrationTest") {
@@ -23,7 +21,7 @@ testing {
             sources {
                 java.setSrcDirs(listOf("test/smoke/java"))
             }
-            jenkins.enabled = true
+            jenkins.useTestHarness = true
             targets {
                 named("smokeTest") {
                     testTask.configure { include("**/SayHelloSmokeTest.class") }

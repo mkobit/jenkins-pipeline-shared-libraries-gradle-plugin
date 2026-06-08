@@ -78,18 +78,7 @@ localLibraryRetrieverSourceSet.groovy.setSrcDirs(emptyList<Any>())
 
 abstract class JenkinsTestSuiteService : BuildService<BuildServiceParameters.None>
 
-val sharedLibrary =
-  extensions
-    .create<SharedLibraryExtension>("sharedLibrary")
-    .apply {
-      jenkins.version.convention(SharedLibraryDefaults.CORE_VERSION)
-      jenkins.bomVersion.convention(SharedLibraryDefaults.BOM_VERSION)
-      pipelineUnitVersion.convention(SharedLibraryDefaults.PIPELINE_UNIT_VERSION)
-      autoRegisterLibrary.convention(true)
-      implicit.convention(true)
-      libraryName.convention(project.name)
-      maxParallelJenkinsTests.convention(1)
-    }
+val sharedLibrary = extensions.create<SharedLibraryExtension>("sharedLibrary")
 
 val jenkinsTestSuiteService =
   gradle.sharedServices.registerIfAbsent("jenkinsTestSuite", JenkinsTestSuiteService::class.java) {
@@ -241,7 +230,9 @@ configurations.named(localLibraryRetrieverSourceSet.compileOnlyConfigurationName
 
 testing {
   suites {
-    // TODO: figure out why there isn't an accessor generated for this
+    // TODO(gradle/gradle#28162): Gradle does not generate a KotlinDSL accessor for extensions
+    // registered on JvmTestSuite instances via configureEach — suites must be accessed by name.
+    // https://github.com/gradle/gradle/issues/28162
     named<JvmTestSuite>("test") {
       useJUnitJupiter()
       sources {
@@ -265,18 +256,18 @@ testing {
 //
 // The enabled check is deferred to withDependencies (resolution time) and targets.configureEach
 // (task realization time) so that user-registered suite creation actions — which set
-// jenkins.enabled = true — have already run by the time these hooks fire.
+// jenkins.useTestHarness = true — have already run by the time these hooks fire.
 testing.suites.withType<JvmTestSuite>().configureEach {
   val jenkinsExt =
     (this as ExtensionAware)
       .extensions
       .create<JenkinsTestSuiteExtension>("jenkins")
-      .also { it.enabled.convention(false) }
+      .also { it.useTestHarness.convention(false) }
   configurations.named(sources.implementationConfigurationName) {
     extendsFrom(jenkinsPlugin)
     exclude(mapOf("group" to "org.codehaus.groovy", "module" to "groovy-all"))
     withDependencies {
-      if (!jenkinsExt.enabled.getOrElse(false)) return@withDependencies
+      if (!jenkinsExt.useTestHarness.getOrElse(false)) return@withDependencies
       add(project.dependencies.create("org.jenkins-ci.main:jenkins-test-harness:${SharedLibraryDefaults.TEST_HARNESS_VERSION}"))
       add(project.dependencies.create(localLibraryRetrieverSourceSet.output))
       add(project.dependencies.create(SharedLibraryDefaults.IVY_COORDINATES))
@@ -288,7 +279,7 @@ testing.suites.withType<JvmTestSuite>().configureEach {
 
   targets.configureEach {
     testTask.configure {
-      if (!jenkinsExt.enabled.getOrElse(false)) return@configure
+      if (!jenkinsExt.useTestHarness.getOrElse(false)) return@configure
 
       val suiteJenkinsDir = layout.buildDirectory.dir("jenkins-for-test/$name")
       mustRunAfter(tasks.test)
@@ -354,12 +345,7 @@ val integrationTestSuite =
       groovy.setSrcDirs(listOf("test/integration/groovy"))
       resources.setSrcDirs(listOf("test/integration/resources"))
     }
-    jenkins.enabled.set(true)
-    dependencies {
-      implementation("org.jenkins-ci.main:jenkins-test-harness:${SharedLibraryDefaults.TEST_HARNESS_VERSION}")
-      implementation(localLibraryRetrieverSourceSet.output)
-      runtimeOnly(SharedLibraryDefaults.IVY_COORDINATES)
-    }
+    jenkins.useTestHarness.set(true)
   }
 
 tasks.check {

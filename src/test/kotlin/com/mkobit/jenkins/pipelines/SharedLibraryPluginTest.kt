@@ -302,11 +302,11 @@ internal class SharedLibraryPluginTest :
           .shouldBeInstanceOf()
 
       it("test suite has JenkinsTestSuiteExtension disabled by default") {
-        suiteNamed("test").jenkins.enabled shouldHaveValue false
+        suiteNamed("test").jenkins.useTestHarness shouldHaveValue false
       }
 
       it("integrationTest suite has extension with enabled = true") {
-        suiteNamed("integrationTest").jenkins.enabled shouldHaveValue true
+        suiteNamed("integrationTest").jenkins.useTestHarness shouldHaveValue true
       }
 
       it("withJenkins is idempotent — calling twice leaves enabled = true") {
@@ -316,7 +316,7 @@ internal class SharedLibraryPluginTest :
         sharedLibrary.withJenkins(suite)
         @Suppress("DEPRECATION")
         sharedLibrary.withJenkins(suite)
-        suite.jenkins.enabled shouldHaveValue true
+        suite.jenkins.useTestHarness shouldHaveValue true
       }
 
       it("integrationTest task has exactly one LibraryNameArgumentProvider after double withJenkins call") {

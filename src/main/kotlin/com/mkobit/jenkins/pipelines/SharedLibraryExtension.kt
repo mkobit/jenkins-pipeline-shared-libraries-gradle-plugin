@@ -1,10 +1,12 @@
 package com.mkobit.jenkins.pipelines
 
 import org.gradle.api.Action
+import org.gradle.api.Project
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.plugins.jvm.JvmTestSuite
 import org.gradle.api.provider.Property
 import org.gradle.kotlin.dsl.newInstance
+import org.gradle.kotlin.dsl.property
 import javax.inject.Inject
 
 /**
@@ -28,12 +30,12 @@ import javax.inject.Inject
  * ```
  *
  * The built-in `integrationTest` suite is wired automatically. Additional suites opt in by
- * setting [JenkinsTestSuiteExtension.enabled] to `true` on the suite's extension:
+ * setting [JenkinsTestSuiteExtension.useTestHarness] to `true` on the suite's extension:
  * ```kotlin
  * testing {
  *     suites {
  *         register<JvmTestSuite>("integrationTestKotest") {
- *             jenkins.enabled = true
+ *             jenkins.useTestHarness = true
  *         }
  *     }
  * }
@@ -43,9 +45,14 @@ import javax.inject.Inject
 abstract class SharedLibraryExtension
   @Inject
   constructor(
-    private val objects: ObjectFactory,
+    objects: ObjectFactory,
+    project: Project,
   ) {
-    val jenkins: JenkinsVersions = objects.newInstance<JenkinsVersions>()
+    val jenkins: JenkinsVersions =
+      objects.newInstance<JenkinsVersions>().also {
+        it.version.convention(SharedLibraryDefaults.CORE_VERSION)
+        it.bomVersion.convention(SharedLibraryDefaults.BOM_VERSION)
+      }
 
     /** Configures the Jenkins core and test-harness versions. */
     fun jenkins(action: Action<in JenkinsVersions>) = action.execute(jenkins)
@@ -68,7 +75,8 @@ abstract class SharedLibraryExtension
     fun plugins(action: Action<in JenkinsPlugins>) = action.execute(plugins)
 
     /** `com.lesfurets:jenkins-pipeline-unit` version used in the `test` suite. */
-    abstract val pipelineUnitVersion: Property<String>
+    val pipelineUnitVersion: Property<String> =
+      objects.property<String>().convention(SharedLibraryDefaults.PIPELINE_UNIT_VERSION)
 
     /**
      * Name of the shared library injected into the embedded Jenkins test instance.
@@ -86,7 +94,8 @@ abstract class SharedLibraryExtension
      * }
      * ```
      */
-    abstract val libraryName: Property<String>
+    val libraryName: Property<String> =
+      objects.property<String>().convention(project.name)
 
     /**
      * When `true` (default), generates `SharedLibraryAutoRegistrar.java` and registers the SezPoz
@@ -100,27 +109,30 @@ abstract class SharedLibraryExtension
      * }
      * ```
      */
-    abstract val autoRegisterLibrary: Property<Boolean>
+    val autoRegisterLibrary: Property<Boolean> =
+      objects.property<Boolean>().convention(true)
 
     /**
-     * Whether the shared library is registered as implicit in embedded Jenkins.
-     * Defaults to `true` — pipeline scripts can call vars directly without a `@Library` annotation.
+     * Controls the
+     * [implicit][org.jenkinsci.plugins.workflow.libs.LibraryConfiguration.implicit]
+     * flag on the shared library registered in the embedded Jenkins test instance.
+     * When `true` (default), pipeline scripts can call vars without an explicit `@Library`
+     * declaration.
      *
-     * Set to `false` to require an explicit `@Library` declaration in every pipeline:
      * ```kotlin
      * sharedLibrary {
-     *     libraryName = "my-pipeline-lib"
-     *     implicit = false  // pipelines must use @Library('my-pipeline-lib')
+     *     implicit = true  // default
      * }
      * ```
      */
-    abstract val implicit: Property<Boolean>
+    val implicit: Property<Boolean> =
+      objects.property<Boolean>().convention(true)
 
     /**
      * Maximum number of Jenkins test suites that may execute concurrently within this project.
      * Controls the `JenkinsTestSuiteService` build-service slot shared by all suites wired
-     * via [withJenkins]. Defaults to `1` (safe on any machine); increase on hosts with more
-     * RAM — allow roughly 4 GiB per additional parallel slot.
+     * via [JenkinsTestSuiteExtension.useTestHarness]. Defaults to `1` (safe on any machine);
+     * increase on hosts with more RAM — allow roughly 4 GiB per additional parallel slot.
      *
      * ```kotlin
      * sharedLibrary {
@@ -128,26 +140,27 @@ abstract class SharedLibraryExtension
      * }
      * ```
      */
-    abstract val maxParallelJenkinsTests: Property<Int>
+    val maxParallelJenkinsTests: Property<Int> =
+      objects.property<Int>().convention(1)
 
     /**
      * Opts [suite] into full Jenkins test-harness wiring.
      *
-     * Prefer setting `jenkins.enabled = true` directly on the suite inside its
+     * Prefer setting `jenkins.useTestHarness = true` directly on the suite inside its
      * `register<JvmTestSuite>` block — it is idempotent and does not require a reference to
      * `sharedLibrary`:
      * ```kotlin
      * register<JvmTestSuite>("integrationTestKotest") {
-     *     jenkins.enabled = true
+     *     jenkins.useTestHarness = true
      * }
      * ```
      */
     @Deprecated(
-      message = "Set jenkins.enabled = true on the suite directly. Will be removed in 0.13.0.",
+      message = "Set jenkins.useTestHarness = true on the suite directly. Will be removed in 0.13.0.",
       level = DeprecationLevel.WARNING,
-      replaceWith = ReplaceWith(expression = "jenkins.enabled = true"),
+      replaceWith = ReplaceWith(expression = "jenkins.useTestHarness = true"),
     )
     fun withJenkins(suite: JvmTestSuite) {
-      suite.jenkins.enabled.set(true)
+      suite.jenkins.useTestHarness.set(true)
     }
   }
