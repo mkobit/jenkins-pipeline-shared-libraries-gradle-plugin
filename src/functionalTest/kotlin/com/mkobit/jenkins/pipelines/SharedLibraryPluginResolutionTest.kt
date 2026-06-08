@@ -69,7 +69,7 @@ class SharedLibraryPluginResolutionTest :
       """.trimIndent()
 
     describe("testRuntimeClasspath") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withJenkinsProject {
           val result = runner(gradleVersion).withArguments("printResolvedArtifacts").build()
 
@@ -87,7 +87,7 @@ class SharedLibraryPluginResolutionTest :
     }
 
     describe("jenkinsPluginHpis") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withJenkinsProject {
           val result = runner(gradleVersion).withArguments("printResolvedArtifacts").build()
 
@@ -107,7 +107,7 @@ class SharedLibraryPluginResolutionTest :
     }
 
     describe("jenkins-core on compile classpath but not main runtime") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withJenkinsProject {
           val result = runner(gradleVersion).withArguments("printResolvedArtifacts").build()
 
@@ -122,7 +122,7 @@ class SharedLibraryPluginResolutionTest :
     }
 
     describe("groovy-all absent from testRuntimeClasspath and integrationTestRuntimeClasspath") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withTestProject {
           settingsFile.writeText(groovyAllExclusionSettings("groovy-all-exclusion-test"))
           buildFile.writeText(
@@ -162,7 +162,7 @@ class SharedLibraryPluginResolutionTest :
     }
 
     describe("jenkinsWar resolves exactly one WAR artifact") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withJenkinsProject {
           buildFile.appendText(
             """
@@ -193,7 +193,7 @@ class SharedLibraryPluginResolutionTest :
     }
 
     describe("groovy-all absent from integrationTestCompileClasspath") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withTestProject {
           settingsFile.writeText(groovyAllExclusionSettings("groovy-all-compile-exclusion-test"))
           buildFile.writeText(
@@ -236,7 +236,7 @@ class SharedLibraryPluginResolutionTest :
     }
 
     describe("integrationTestGroovyAllRuntime contains groovy-all:2.4.x") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withJenkinsProject {
           buildFile.appendText(
             """
@@ -265,7 +265,7 @@ class SharedLibraryPluginResolutionTest :
     }
 
     describe("BOM version constraint propagates through jenkinsPlugin") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         // workflow-api is declared without a version — the BOM must supply it.
         // If BOM wiring is broken Gradle throws an unresolvable dependency error,
         // which causes the runner to throw UnexpectedBuildFailure (test fails).

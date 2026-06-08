@@ -10,7 +10,7 @@ import kotlin.io.path.writeText
 class SharedLibraryPluginDeprecationTest :
   DescribeSpec({
     describe("no deprecation warnings emitted on plugin application") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withTestProject {
           buildFile.writeText(
             """

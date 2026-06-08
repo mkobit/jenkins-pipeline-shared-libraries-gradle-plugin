@@ -13,7 +13,7 @@ class SharedLibraryPluginVariantTest :
   DescribeSpec({
     describe("sharedLibrarySourceElements") {
       describe("outgoingVariants task reports the variant with Category=shared-library-source") {
-        withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withData(TestedGradleVersion.all) { gradleVersion ->
           withTestProject {
             settingsFile.writeText(jenkinsSettings("variant-test"))
             buildFile.writeText(
@@ -40,7 +40,7 @@ class SharedLibraryPluginVariantTest :
       }
 
       describe("artifact path is build/sharedLibrarySource/{libraryName}/ after sync") {
-        withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withData(TestedGradleVersion.all) { gradleVersion ->
           withTestProject {
             settingsFile.writeText(jenkinsSettings("variant-test"))
             buildFile.writeText(

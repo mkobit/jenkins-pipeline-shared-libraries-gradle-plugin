@@ -28,8 +28,10 @@ jobs:
             fix
             perf
             deps
+            infra
+            infrastructure
             docs
-            ci
+            examples
             chore
             test
             refactor

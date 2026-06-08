@@ -5,7 +5,7 @@ junit-jupiter = "6.0.3"
 kotest = "6.1.11"
 mockk = "1.14.9"
 okhttp = "5.3.2"
-openrewrite = "7.32.1"
+openrewrite = "7.33.0"
 plugin-publish = "2.1.1"
 spotless = "8.5.1"
 

@@ -65,13 +65,14 @@ jobs:
       gradle-matrix: ${{ steps.gen.outputs.gradle-matrix }}
       java-matrix: ${{ steps.gen.outputs.java-matrix }}
       jenkins-matrix: ${{ steps.gen.outputs.jenkins-matrix }}
+      examples-matrix: ${{ steps.gen.outputs.examples-matrix }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
       - uses: ./.github/actions/setup-env
         with:
           java-version: 17
       - name: Generate matrices
-        run: ./gradlew generateGradleCompatMatrix generateJavaCompatMatrix generateJenkinsCompatMatrix --console=plain
+        run: ./gradlew generateGradleCompatMatrix generateJavaCompatMatrix generateJenkinsCompatMatrix generateExamplesMatrix --console=plain
       - name: Validate matrix task suffixes
         run: |
           for f in build/ci/gradle-compat-matrix.json \
@@ -88,6 +89,7 @@ jobs:
           echo "gradle-matrix=$(cat build/ci/gradle-compat-matrix.json)" >> "$GITHUB_OUTPUT"
           echo "java-matrix=$(cat build/ci/java-compat-matrix.json)" >> "$GITHUB_OUTPUT"
           echo "jenkins-matrix=$(cat build/ci/jenkins-compat-matrix.json)" >> "$GITHUB_OUTPUT"
+          echo "examples-matrix=$(cat build/ci/examples-matrix.json)" >> "$GITHUB_OUTPUT"
 
   gate:
     name: Gate (Gradle ${{ needs.build-config.outputs.gradle-version }} / Java ${{ needs.build-config.outputs.java-version }})
@@ -231,9 +233,35 @@ jobs:
           check_name: 'Test results — Java ${{ matrix.java }}'
           fail_on_failure: false
 
+  examples:
+    name: Example — ${{ matrix.example }}
+    needs: [gate, matrix-gen, build-config]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      checks: write
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.matrix-gen.outputs.examples-matrix) }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: ./.github/actions/setup-env
+        with:
+          java-version: ${{ needs.build-config.outputs.java-version }}
+      - name: Check (${{ matrix.example }})
+        run: ./gradlew :examples:example-${{ matrix.example }} --console=plain
+      - name: Publish test results
+        if: always()
+        uses: mikepenz/action-junit-report@bccf2e31636835cf0874589931c4116687171386
+        with:
+          report_paths: 'examples/${{ matrix.example }}/build/test-results/**/*.xml'
+          check_name: 'Test results — example/${{ matrix.example }}'
+          fail_on_failure: false
+
   dependency-submission:
     name: Submit dependency graph
-    needs: [build-config, gate, gradle-compat, platform-compat, jenkins-compat, java-compat]
+    needs: [build-config, gate, gradle-compat, platform-compat, jenkins-compat, java-compat, examples]
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -246,3 +274,24 @@ jobs:
           java-version: ${{ needs.build-config.outputs.java-version }}
           distribution: temurin
       - uses: gradle/actions/dependency-submission@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e
+
+  dependency-submission-examples:
+    name: Submit dependency graph — example/${{ matrix.example }}
+    needs: [build-config, matrix-gen, gate, examples]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.matrix-gen.outputs.examples-matrix) }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
+        with:
+          java-version: ${{ needs.build-config.outputs.java-version }}
+          distribution: temurin
+      - uses: gradle/actions/dependency-submission@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e
+        with:
+          build-root-directory: examples/${{ matrix.example }}

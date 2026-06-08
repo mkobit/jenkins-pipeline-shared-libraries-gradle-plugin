@@ -40,7 +40,7 @@ class SharedLibraryPluginSmokeTest :
       }
 
     describe("plugin application") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withSharedLibraryProject {
           val result = runner(gradleVersion).withArguments("help").build()
           result.task(":help") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
@@ -49,7 +49,7 @@ class SharedLibraryPluginSmokeTest :
     }
 
     describe("expected tasks are registered") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withSharedLibraryProject {
           val result = runner(gradleVersion).withArguments("tasks", "--all").build()
           result.output shouldContain "integrationTest"
@@ -63,7 +63,7 @@ class SharedLibraryPluginSmokeTest :
     }
 
     describe("generateLocalLibraryFiles produces LocalLibraryRetriever.java and ClassFilter resource") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withSharedLibraryProject {
           val result =
             runner(gradleVersion)
@@ -104,7 +104,7 @@ class SharedLibraryPluginSmokeTest :
     }
 
     describe("generateLocalLibraryFiles skips SharedLibraryAutoRegistrar when autoRegisterLibrary = false") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withTestProject {
           buildFile.writeText(
             """
@@ -130,7 +130,7 @@ class SharedLibraryPluginSmokeTest :
     }
 
     describe("compileIntegrationTestJava depends on generateLocalLibraryFiles") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withSharedLibraryProject {
           val result =
             runner(gradleVersion)
@@ -143,7 +143,7 @@ class SharedLibraryPluginSmokeTest :
     }
 
     describe("check lifecycle includes integrationTest") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withSharedLibraryProject {
           val result = runner(gradleVersion).withArguments("check", "--dry-run").build()
           result.output shouldContain ":integrationTest"
@@ -153,7 +153,7 @@ class SharedLibraryPluginSmokeTest :
     }
 
     describe("sharedLibrary.plugins.plugin registers a dependency on the jenkinsPlugin configuration") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withTestProject {
           buildFile.writeText(
             """
@@ -174,7 +174,7 @@ class SharedLibraryPluginSmokeTest :
     }
 
     describe("integrationTest sets buildDirectory system property to build dir for WarExploder") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withSharedLibraryProject {
           val result =
             runner(gradleVersion)
@@ -192,7 +192,7 @@ class SharedLibraryPluginSmokeTest :
     }
 
     describe("monorepo: syncSharedLibrarySource output resolves relative to subproject projectDir, not rootDir") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withTestProject {
           settingsFile.writeText(
             """
@@ -231,7 +231,7 @@ class SharedLibraryPluginSmokeTest :
     }
 
     describe("integrationTest jvmArgumentProviders include JenkinsWarJvmArgumentProvider") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withTestProject {
           buildFile.writeText(
             """
@@ -254,6 +254,63 @@ class SharedLibraryPluginSmokeTest :
               .withArguments("printWarArgumentProvider")
               .build()
           result.output shouldContain "hasWarProvider=true"
+        }
+      }
+    }
+
+    describe("implicit defaults to true — integrationTest injects -Dtest.library.0.implicit=true") {
+      withData(TestedGradleVersion.all) { gradleVersion ->
+        withTestProject {
+          buildFile.writeText(
+            """
+            plugins {
+                id("com.mkobit.jenkins.pipelines.shared-library")
+            }
+            tasks.register("printImplicitArg") {
+                val t = tasks.integrationTest
+                doLast {
+                    val arg = t.get().jvmArgumentProviders
+                        .filterIsInstance<com.mkobit.jenkins.pipelines.LibraryImplicitArgumentProvider>()
+                        .firstOrNull()
+                        ?.asArguments()
+                        ?.firstOrNull()
+                    println("implicitArg=${'$'}arg")
+                }
+            }
+            """.trimIndent(),
+          )
+          val result = runner(gradleVersion).withArguments("printImplicitArg").build()
+          result.output shouldContain "implicitArg=-Dtest.library.0.implicit=true"
+        }
+      }
+    }
+
+    describe("implicit = false — integrationTest injects -Dtest.library.0.implicit=false") {
+      withData(TestedGradleVersion.all) { gradleVersion ->
+        withTestProject {
+          buildFile.writeText(
+            """
+            plugins {
+                id("com.mkobit.jenkins.pipelines.shared-library")
+            }
+            sharedLibrary {
+                implicit = false
+            }
+            tasks.register("printImplicitArg") {
+                val t = tasks.integrationTest
+                doLast {
+                    val arg = t.get().jvmArgumentProviders
+                        .filterIsInstance<com.mkobit.jenkins.pipelines.LibraryImplicitArgumentProvider>()
+                        .firstOrNull()
+                        ?.asArguments()
+                        ?.firstOrNull()
+                    println("implicitArg=${'$'}arg")
+                }
+            }
+            """.trimIndent(),
+          )
+          val result = runner(gradleVersion).withArguments("printImplicitArg").build()
+          result.output shouldContain "implicitArg=-Dtest.library.0.implicit=false"
         }
       }
     }

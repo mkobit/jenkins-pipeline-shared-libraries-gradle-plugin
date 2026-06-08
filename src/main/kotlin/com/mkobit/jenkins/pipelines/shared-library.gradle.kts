@@ -1,4 +1,4 @@
-@file:Suppress("ktlint:standard:no-wildcard-imports", "DEPRECATION", "UnstableApiUsage")
+@file:Suppress("ktlint:standard:no-wildcard-imports", "UnstableApiUsage")
 
 package com.mkobit.jenkins.pipelines
 
@@ -10,7 +10,10 @@ import org.gradle.api.attributes.Usage
 import org.gradle.api.component.AdhocComponentWithVariants
 import org.gradle.api.plugins.jvm.JvmTestSuite
 import org.gradle.api.plugins.quality.CodeNarc
+import org.gradle.api.services.BuildService
+import org.gradle.api.services.BuildServiceParameters
 import org.gradle.api.tasks.compile.GroovyCompile
+import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.*
 import org.gradle.language.base.plugins.LifecycleBasePlugin
@@ -37,10 +40,10 @@ dependencies {
   }
 
   attributesSchema.attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE) {
-    compatibilityRules.add(JpiCompatibilityRule::class.java)
+    compatibilityRules.add(JpiCompatibilityRule::class)
   }
   attributesSchema.attribute(JenkinsPluginRule.JENKINS_ARTIFACT_ATTRIBUTE) {
-    disambiguationRules.add(JenkinsArtifactDisambiguationRule::class.java)
+    disambiguationRules.add(JenkinsArtifactDisambiguationRule::class)
   }
 }
 
@@ -70,119 +73,20 @@ val hpiFiles: Provider<FileCollection> =
 val jenkinsWarFile: Provider<File> =
   jenkinsWar.map { cfg -> cfg.files.single { it.extension == "war" } }
 
-// Create the source set before the extension so its output can be captured by the wirer below.
-// Src dirs are wired later once generateLocalLibraryFiles is registered.
+// Create the source set early so its output is available when the Jenkins wiring configureEach
+// block fires. Src dirs are wired later once generateLocalLibraryFiles is registered.
 val localLibraryRetrieverSourceSet =
   sourceSets.create(LOCAL_LIBRARY_RETRIEVER_SOURCE_SET)
 localLibraryRetrieverSourceSet.groovy.setSrcDirs(emptyList<Any>())
 
-// Applies full Jenkins integration-test wiring to a JvmTestSuite.
-// Defined before extension creation so it can be injected as an immutable constructor arg.
-// Captures script-level state (hpiFiles, groovyAllRuntime, localLibraryRetrieverSourceSet,
-// etc.) as closure values; all are initialized before any test task resolves them.
-// suite.dependencies { } works here because we are in the .gradle.kts script context.
-fun applyJenkinsTestWiring(suite: JvmTestSuite) {
-  val suiteName = suite.name
-  suite.dependencies {
-    implementation("org.jenkins-ci.main:jenkins-test-harness:${SharedLibraryDefaults.TEST_HARNESS_VERSION}")
-    // Provide compiled LocalLibraryRetriever + SharedLibraryAutoRegistrar + annotation index.
-    implementation(localLibraryRetrieverSourceSet.output)
-    // ivy provides @Grab / Grape support inside the embedded Jenkins runtime.
-    runtimeOnly(SharedLibraryDefaults.IVY_COORDINATES)
-  }
-  // Each suite gets its own subdirectory so multiple suites can run in parallel without
-  // conflicting on WarExploder output or Gradle's task output tracking.
-  val suiteJenkinsDir = layout.buildDirectory.dir("jenkins-for-test/$suiteName")
-  val peerLibraryEntries =
-    peerLibrarySource.flatMap { cfg ->
-      cfg.incoming.artifacts.resolvedArtifacts.zip(sharedLibrary.dependencies.specs) { artifacts, specs ->
-        val specByIdentifier: Map<String, PeerLibrarySpec> = specs.associateBy { it.identifier.get() }
-        artifacts.map { artifact ->
-          val ownerId: String =
-            when (val owner = artifact.id.componentIdentifier) {
-              is ProjectComponentIdentifier -> owner.projectPath
-              is ModuleComponentIdentifier -> "${owner.group}:${owner.module}"
-              else -> owner.displayName
-            }
-          val spec = specByIdentifier[ownerId]
-          val defaultName = ownerId.substringAfterLast(":").ifEmpty { ownerId }
-          PeerLibraryEntry(
-            libraryName = spec?.libraryName?.getOrElse(defaultName) ?: defaultName,
-            locationPath = artifact.file.absolutePath,
-            implicit = spec?.implicit?.getOrElse(true) ?: true,
-          )
-        }
-      }
-    }
-  suite.targets.configureEach {
-    testTask.configure {
-      mustRunAfter(tasks.test)
-      // WarExploder reads buildDirectory (defaults to "target") as parent of its explode dir.
-      jvmArgumentProviders.add(
-        objects.newInstance<BuildDirJvmArgumentProvider>().apply {
-          dir = suiteJenkinsDir
-        },
-      )
-      outputs.dir(suiteJenkinsDir)
-      // HPI archives must be added via classpath += rather than suite.dependencies because
-      // they require attribute-based resolution (artifactType=hpi) set up at the project level,
-      // which isn't available through the suite's own dependency configurations.
-      classpath += files(hpiFiles)
-      // groovy-all:2.4 is required by CpsFlowDefinition at runtime. The plugin excludes it
-      // from suite compile classpaths to prevent groovy 2.4/3.x compiler conflicts.
-      // classpath += bypasses version-conflict resolution intentionally: without it, Gradle
-      // would prefer groovy:3.x (from Spock 2.x) and suppress groovy-all:2.4.
-      classpath += files(groovyAllRuntime)
-      maxParallelForks = 1
-      maxHeapSize = SharedLibraryDefaults.INTEGRATION_TEST_MAX_HEAP_SIZE
-      // Sync task output declared as a named task input: Gradle re-runs the test when library
-      // source files change and ensures syncSharedLibrarySource runs before the test task.
-      val syncTask = tasks.named<SyncSharedLibrarySource>("syncSharedLibrarySource")
-      inputs.files(syncTask).withPropertyName("sharedLibrarySource")
-      jvmArgumentProviders.add(
-        objects.newInstance<LibraryLocationArgumentProvider>().apply {
-          libraryLocation = syncTask.flatMap { it.destinationDir }
-        },
-      )
-      // Peer shared library source directories — injects test.library.N.{name,location,implicit}
-      // for each declared peer library. Indices start at 1 (the project's own library is at 0).
-      jvmArgumentProviders.add(
-        objects.newInstance<PeerLibrariesArgumentProvider>().apply {
-          entries.set(peerLibraryEntries)
-          sourceDirectories.from(peerLibrarySourceFiles)
-        },
-      )
-      jvmArgumentProviders.add(
-        objects.newInstance<JenkinsWarJvmArgumentProvider>().apply {
-          warFile.fileProvider(jenkinsWarFile)
-        },
-      )
-      // Jenkins uses XStream, Guice, and other reflection-heavy libraries that
-      // require access to JDK internals sealed by Java 9+ strong encapsulation.
-      jvmArgs(
-        "--add-opens=java.base/java.util=ALL-UNNAMED",
-        "--add-opens=java.base/java.lang=ALL-UNNAMED",
-        "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
-        "--add-opens=java.base/java.text=ALL-UNNAMED",
-        "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
-        "--add-opens=java.desktop/java.awt=ALL-UNNAMED",
-      )
-    }
-  }
-}
+abstract class JenkinsTestSuiteService : BuildService<BuildServiceParameters.None>
 
-val sharedLibrary =
-  extensions
-    .create<SharedLibraryExtension>(
-      "sharedLibrary",
-      JenkinsTestSuiteWirer(::applyJenkinsTestWiring),
-    ).apply {
-      jenkins.version.convention(SharedLibraryDefaults.CORE_VERSION)
-      jenkins.bomVersion.convention(SharedLibraryDefaults.BOM_VERSION)
-      pipelineUnitVersion.convention(SharedLibraryDefaults.PIPELINE_UNIT_VERSION)
-      autoRegisterLibrary.convention(true)
-      libraryName.convention(project.name)
-    }
+val sharedLibrary = extensions.create<SharedLibraryExtension>("sharedLibrary")
+
+val jenkinsTestSuiteService =
+  gradle.sharedServices.registerIfAbsent("jenkinsTestSuite", JenkinsTestSuiteService::class.java) {
+    maxParallelUsages = sharedLibrary.maxParallelJenkinsTests
+  }
 
 // Each library's source is synced under its own named subdirectory so N libraries can
 // coexist without collisions: build/sharedLibrarySource/{libraryName}/{src,vars,resources}.
@@ -372,8 +276,8 @@ val generateLocalLibraryFiles =
 
 // Dedicated source set for generated helper classes (LocalLibraryRetriever,
 // SharedLibraryAutoRegistrar). Kept separate from integrationTest so the generated
-// artifacts are compiled once and shared across all Jenkins test suites via
-// withJenkins, rather than re-compiled per suite.
+// artifacts are compiled once and shared across all Jenkins test suites,
+// rather than re-compiled per suite.
 localLibraryRetrieverSourceSet.java.setSrcDirs(listOf(generateLocalLibraryFiles.flatMap { it.javaOutputDir }))
 localLibraryRetrieverSourceSet.resources.setSrcDirs(listOf(generateLocalLibraryFiles.flatMap { it.resourcesOutputDir }))
 
@@ -384,6 +288,9 @@ configurations.named(localLibraryRetrieverSourceSet.compileOnlyConfigurationName
 
 testing {
   suites {
+    // TODO(gradle/gradle#28162): Gradle does not generate a KotlinDSL accessor for extensions
+    // registered on JvmTestSuite instances via configureEach — suites must be accessed by name.
+    // https://github.com/gradle/gradle/issues/28162
     named<JvmTestSuite>("test") {
       useJUnitJupiter()
       sources {
@@ -399,6 +306,139 @@ testing {
   }
 }
 
+// JvmTestSuite and Project both extend ExtensionAware. Inside this lambda Kotlin resolves
+// bare `extensions` to Project.extensions (outer scope). The explicit cast reaches the suite's
+// own container. The extension is registered eagerly — before integrationTest and any
+// user-registered suites — so Gradle's KotlinDSL accessor generator produces a
+// `val JvmTestSuite.jenkins` accessor for consumer build scripts.
+//
+// The harness deps are lazy providers that resolve to absent when useTestHarness = false —
+// the same deferred-evaluation guarantee as withDependencies, without leaving the suite model.
+testing.suites.withType<JvmTestSuite>().configureEach {
+  val jenkinsExt =
+    (this as ExtensionAware)
+      .extensions
+      .create<JenkinsTestSuiteExtension>("jenkins")
+      .also { it.useTestHarness.convention(false) }
+  configurations.named(sources.implementationConfigurationName) {
+    extendsFrom(jenkinsPlugin)
+    // Peer shared library classes need to be on test runtime classpaths so consumer test
+    // code can reference symbols defined in peer libraries.
+    extendsFrom(sharedLibraryDependencies)
+    exclude(mapOf("group" to "org.codehaus.groovy", "module" to "groovy-all"))
+  }
+  dependencies {
+    implementation(SharedLibraryDefaults.GROOVY_COORDINATES)
+    implementation(
+      jenkinsExt.useTestHarness
+        .filter { it }
+        .map { dependencyFactory.create("org.jenkins-ci.main:jenkins-test-harness:${SharedLibraryDefaults.TEST_HARNESS_VERSION}") },
+    )
+    implementation(
+      jenkinsExt.useTestHarness
+        .filter { it }
+        .map { dependencyFactory.create(localLibraryRetrieverSourceSet.output) },
+    )
+    implementation(
+      jenkinsExt.useTestHarness
+        .filter { it }
+        .map { dependencyFactory.create(SharedLibraryDefaults.IVY_COORDINATES) },
+    )
+  }
+
+  // Resolved peer library metadata — maps each artifact back to its DSL spec to derive
+  // libraryName and implicit. Computed once per suite; injected into every target task.
+  val peerLibraryEntries =
+    peerLibrarySource.flatMap { cfg ->
+      cfg.incoming.artifacts.resolvedArtifacts.zip(sharedLibrary.dependencies.specs) { artifacts, specs ->
+        val specByIdentifier: Map<String, PeerLibrarySpec> = specs.associateBy { it.identifier.get() }
+        artifacts.map { artifact ->
+          val ownerId: String =
+            when (val owner = artifact.id.componentIdentifier) {
+              is ProjectComponentIdentifier -> owner.projectPath
+              is ModuleComponentIdentifier -> "${owner.group}:${owner.module}"
+              else -> owner.displayName
+            }
+          val spec = specByIdentifier[ownerId]
+          val defaultName = ownerId.substringAfterLast(":").ifEmpty { ownerId }
+          PeerLibraryEntry(
+            libraryName = spec?.libraryName?.getOrElse(defaultName) ?: defaultName,
+            locationPath = artifact.file.absolutePath,
+            implicit = spec?.implicit?.getOrElse(true) ?: true,
+          )
+        }
+      }
+    }
+
+  targets.configureEach {
+    testTask.configure {
+      if (!jenkinsExt.useTestHarness.getOrElse(false)) return@configure
+
+      val suiteJenkinsDir = layout.buildDirectory.dir("jenkins-for-test/$name")
+      mustRunAfter(tasks.test)
+      usesService(jenkinsTestSuiteService)
+      jvmArgumentProviders.add(
+        objects.newInstance<BuildDirJvmArgumentProvider>().apply {
+          dir = suiteJenkinsDir
+        },
+      )
+      outputs.dir(suiteJenkinsDir)
+      // HPI archives require attribute-based resolution (artifactType=hpi) set up at the
+      // project level — must be added via classpath += rather than suite.dependencies.
+      classpath += files(hpiFiles)
+      // groovy-all:2.4 is required by CpsFlowDefinition at runtime. classpath += bypasses
+      // version-conflict resolution intentionally: without it, Gradle would prefer groovy:3.x.
+      classpath += files(groovyAllRuntime)
+      maxParallelForks = 1
+      maxHeapSize = SharedLibraryDefaults.INTEGRATION_TEST_MAX_HEAP_SIZE
+      val syncTask = tasks.named<SyncSharedLibrarySource>("syncSharedLibrarySource")
+      inputs.files(syncTask).withPropertyName("sharedLibrarySource")
+      jvmArgumentProviders.add(
+        objects.newInstance<LibraryLocationArgumentProvider>().apply {
+          libraryLocation = syncTask.flatMap { it.destinationDir }
+        },
+      )
+      // Peer shared library source directories — injects test.library.N.{name,location,implicit}
+      // for each declared peer library. Indices start at 1 (the project's own library is at 0).
+      jvmArgumentProviders.add(
+        objects.newInstance<PeerLibrariesArgumentProvider>().apply {
+          entries.set(peerLibraryEntries)
+          sourceDirectories.from(peerLibrarySourceFiles)
+        },
+      )
+      jvmArgumentProviders.add(
+        objects.newInstance<JenkinsWarJvmArgumentProvider>().apply {
+          warFile.fileProvider(jenkinsWarFile)
+        },
+      )
+      jvmArgumentProviders.add(
+        objects.newInstance<LibraryNameArgumentProvider>().apply {
+          libraryName.set(sharedLibrary.libraryName)
+        },
+      )
+      jvmArgumentProviders.add(
+        objects.newInstance<LibraryImplicitArgumentProvider>().apply {
+          implicit.set(sharedLibrary.implicit)
+        },
+      )
+      jvmArgs(
+        "-XX:+ExitOnOutOfMemoryError",
+        "-XX:+UseG1GC",
+      )
+      // Jenkins uses XStream, Guice, and other reflection-heavy libraries that
+      // require access to JDK internals sealed by Java 9+ strong encapsulation.
+      jvmArgs(
+        "--add-opens=java.base/java.util=ALL-UNNAMED",
+        "--add-opens=java.base/java.lang=ALL-UNNAMED",
+        "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+        "--add-opens=java.base/java.text=ALL-UNNAMED",
+        "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
+        "--add-opens=java.desktop/java.awt=ALL-UNNAMED",
+      )
+    }
+  }
+}
+
 val integrationTestSuite =
   testing.suites.register<JvmTestSuite>(INTEGRATION_TEST_SUITE) {
     sources {
@@ -406,24 +446,8 @@ val integrationTestSuite =
       groovy.setSrcDirs(listOf("test/integration/groovy"))
       resources.setSrcDirs(listOf("test/integration/resources"))
     }
-    sharedLibrary.withJenkins(this)
+    jenkins.useTestHarness.set(true)
   }
-
-// Wire jenkinsPlugin into each suite's implementation config so variant resolution applies
-// rather than raw FileCollection additions that bypass Gradle's dependency management.
-// Exclude groovy-all (Groovy 2.4 bundled by jenkins-core): having it on the compile
-// classpath alongside groovy:3.x (from Spock 2.x) causes the Groovy compiler to pick up
-// the 2.4 runtime, breaking Spock compilation entirely.
-testing.suites.withType<JvmTestSuite>().configureEach {
-  val implConfigName = sources.implementationConfigurationName
-  project.configurations.named(implConfigName) {
-    extendsFrom(jenkinsPlugin)
-    // Peer shared library classes need to be on test runtime classpaths (pipeline-unit and
-    // integrationTest) so consumer test code can reference symbols defined in peer libraries.
-    extendsFrom(sharedLibraryDependencies)
-    exclude(mapOf("group" to "org.codehaus.groovy", "module" to "groovy-all"))
-  }
-}
 
 tasks.check {
   dependsOn(integrationTestSuite)
@@ -448,8 +472,6 @@ val ivy =
     description = "Ivy for @Grab support in shared library Groovy sources"
   }
 dependencies {
-  // ivy on the test suite classpath: integration test suites get it via withJenkins
-  // (added to runtimeOnly). The unit test suite gets it via testing.suites.named("test").
   ivy(SharedLibraryDefaults.IVY_COORDINATES)
 }
 tasks.withType<GroovyCompile>().configureEach {
@@ -472,8 +494,8 @@ tasks.withType<CodeNarc>().configureEach {
     )
 }
 
-// Extract the bundled XML to a build-dir file with a .xml extension so CodeNarc
-// parses it as XML rather than as a Groovy DSL script. getResourceAsStream works
+// Extract bundled XML configs to build-dir files with .xml extensions so CodeNarc
+// parses them as XML rather than as Groovy DSL scripts. getResourceAsStream works
 // in both JAR and IDE classpath-directory layouts; fromArchiveEntry would require
 // a concrete archive file and fails when resources are unpacked during development.
 val jenkinsConfigFile = layout.buildDirectory.file("generated/codenarc/codenarc-jenkins.xml")
@@ -491,6 +513,31 @@ val codenarcJenkinsMain =
     config = resources.text.fromFile(jenkinsConfigFile)
     codenarcClasspath = files(configurations.codenarc)
   }
+
+val defaultCodeNarcConfigFile = layout.buildDirectory.file("generated/codenarc/shared-library-default.xml")
+val extractDefaultCodeNarcConfig =
+  tasks.register<ExtractDefaultCodeNarcConfig>("extractDefaultCodeNarcConfig") {
+    group = "build setup"
+    description = "Extracts the bundled default CodeNarc XML ruleset into the build directory."
+    outputFile = defaultCodeNarcConfigFile
+  }
+
+// Wire the bundled-default config onto every auto-created CodeNarc task except codenarcJenkinsMain.
+// The consumer's codenarc.configFile is checked at task configuration time (inside configureEach,
+// which runs lazily after all build scripts have been evaluated). If it exists on disk it is used
+// directly; otherwise the bundled default is substituted.
+tasks.withType<CodeNarc>().configureEach {
+  if (name != "codenarcJenkinsMain") {
+    dependsOn(extractDefaultCodeNarcConfig)
+    val consumerFile = codenarc.configFile
+    config =
+      if (consumerFile.exists()) {
+        resources.text.fromFile(consumerFile)
+      } else {
+        resources.text.fromFile(defaultCodeNarcConfigFile)
+      }
+  }
+}
 
 tasks.check {
   dependsOn(codenarcJenkinsMain)

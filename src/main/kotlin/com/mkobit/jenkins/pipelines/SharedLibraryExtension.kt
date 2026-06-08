@@ -1,22 +1,17 @@
 package com.mkobit.jenkins.pipelines
 
 import org.gradle.api.Action
+import org.gradle.api.Project
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.plugins.jvm.JvmTestSuite
+import org.gradle.api.problems.ProblemGroup
+import org.gradle.api.problems.ProblemId
+import org.gradle.api.problems.Problems
+import org.gradle.api.problems.Severity
 import org.gradle.api.provider.Property
 import org.gradle.kotlin.dsl.newInstance
+import org.gradle.kotlin.dsl.property
 import javax.inject.Inject
-
-/**
- * Wires Jenkins test-harness infrastructure onto a [JvmTestSuite].
- *
- * Named functional interface rather than a raw Kotlin function type so Gradle's object
- * instantiator matches it by class when injecting constructor parameters. Consumers use
- * [SharedLibraryExtension.withJenkins] and do not implement this interface directly.
- */
-fun interface JenkinsTestSuiteWirer {
-  fun wire(suite: JvmTestSuite)
-}
 
 /**
  * Extension for the `com.mkobit.jenkins.pipelines.shared-library` plugin.
@@ -30,20 +25,21 @@ fun interface JenkinsTestSuiteWirer {
  *         bomVersion = "3463.v23b_7bb_b_b_66d5"
  *     }
  *     pipelineUnitVersion = "1.29"
+ *     autoRegisterLibrary = true
+ *     implicit = true
  *     plugins {
  *         plugin("org.jenkins-ci.plugins.workflow:workflow-multibranch")
  *     }
  * }
  * ```
  *
- * The built-in `integrationTest` suite is wired automatically. Additional suites
- * (JUnit Jupiter, Spock, Kotest, etc.) opt in by calling [withJenkins] inside their
- * `register<JvmTestSuite>` block:
+ * The built-in `integrationTest` suite is wired automatically. Additional suites opt in by
+ * setting [JenkinsTestSuiteExtension.useTestHarness] to `true` on the suite's extension:
  * ```kotlin
  * testing {
  *     suites {
  *         register<JvmTestSuite>("integrationTestKotest") {
- *             sharedLibrary.withJenkins(this)
+ *             jenkins.useTestHarness = true
  *         }
  *     }
  * }
@@ -53,10 +49,15 @@ fun interface JenkinsTestSuiteWirer {
 abstract class SharedLibraryExtension
   @Inject
   constructor(
-    private val objects: ObjectFactory,
-    private val jenkinsWirer: JenkinsTestSuiteWirer,
+    objects: ObjectFactory,
+    project: Project,
+    private val problems: Problems,
   ) {
-    val jenkins: JenkinsVersions = objects.newInstance(JenkinsVersions::class)
+    val jenkins: JenkinsVersions =
+      objects.newInstance<JenkinsVersions>().also {
+        it.version.convention(SharedLibraryDefaults.CORE_VERSION)
+        it.bomVersion.convention(SharedLibraryDefaults.BOM_VERSION)
+      }
 
     /** Configures the Jenkins core and test-harness versions. */
     fun jenkins(action: Action<in JenkinsVersions>) = action.execute(jenkins)
@@ -99,7 +100,8 @@ abstract class SharedLibraryExtension
     fun dependencies(action: Action<in SharedLibraryDependencies>) = action.execute(dependencies)
 
     /** `com.lesfurets:jenkins-pipeline-unit` version used in the `test` suite. */
-    abstract val pipelineUnitVersion: Property<String>
+    val pipelineUnitVersion: Property<String> =
+      objects.property<String>().convention(SharedLibraryDefaults.PIPELINE_UNIT_VERSION)
 
     /**
      * Name of the shared library injected into the embedded Jenkins test instance.
@@ -117,7 +119,8 @@ abstract class SharedLibraryExtension
      * }
      * ```
      */
-    abstract val libraryName: Property<String>
+    val libraryName: Property<String> =
+      objects.property<String>().convention(project.name)
 
     /**
      * When `true` (default), generates `SharedLibraryAutoRegistrar.java` and registers the SezPoz
@@ -131,24 +134,74 @@ abstract class SharedLibraryExtension
      * }
      * ```
      */
-    abstract val autoRegisterLibrary: Property<Boolean>
+    val autoRegisterLibrary: Property<Boolean> =
+      objects.property<Boolean>().convention(true)
 
     /**
-     * Applies full Jenkins test-harness wiring to [suite] — identical to the built-in
-     * `integrationTest` suite: `jenkins-test-harness`, HPI classpath, WAR path,
-     * system properties, JVM opens, and `mustRunAfter("test")` ordering.
+     * Controls the
+     * [implicit][org.jenkinsci.plugins.workflow.libs.LibraryConfiguration.implicit]
+     * flag on the shared library registered in the embedded Jenkins test instance.
+     * When `true` (default), pipeline scripts can call vars without an explicit `@Library`
+     * declaration.
+     *
+     * ```kotlin
+     * sharedLibrary {
+     *     implicit = true  // default
+     * }
+     * ```
      */
+    val implicit: Property<Boolean> =
+      objects.property<Boolean>().convention(true)
+
+    /**
+     * Maximum number of Jenkins test suites that may execute concurrently within this project.
+     * Controls the `JenkinsTestSuiteService` build-service slot shared by all suites wired
+     * via [JenkinsTestSuiteExtension.useTestHarness]. Defaults to `1` (safe on any machine);
+     * increase on hosts with more RAM — allow roughly 4 GiB per additional parallel slot.
+     *
+     * ```kotlin
+     * sharedLibrary {
+     *     maxParallelJenkinsTests = 2
+     * }
+     * ```
+     */
+    val maxParallelJenkinsTests: Property<Int> =
+      objects.property<Int>().convention(1)
+
+    /**
+     * Opts [suite] into full Jenkins test-harness wiring.
+     *
+     * Prefer setting `jenkins.useTestHarness = true` directly on the suite inside its
+     * `register<JvmTestSuite>` block — it is idempotent and does not require a reference to
+     * `sharedLibrary`:
+     * ```kotlin
+     * register<JvmTestSuite>("integrationTestKotest") {
+     *     jenkins.useTestHarness = true
+     * }
+     * ```
+     */
+    @Deprecated(
+      message = "Set jenkins.useTestHarness = true on the suite directly. Will be removed in 0.13.0.",
+      level = DeprecationLevel.WARNING,
+      replaceWith =
+        ReplaceWith(
+          expression = "jenkins.useTestHarness = true",
+          imports = arrayOf("com.mkobit.jenkins.pipelines.jenkins"),
+        ),
+    )
     fun withJenkins(suite: JvmTestSuite) {
-      jenkinsWirer.wire(suite)
-      // The library name is extension state — added here after the main wirer runs.
-      suite.targets.configureEach {
-        testTask.configure {
-          jvmArgumentProviders.add(
-            objects.newInstance<LibraryNameArgumentProvider>().apply {
-              libraryName.set(this@SharedLibraryExtension.libraryName)
-            },
-          )
-        }
+      problems.reporter.report(WITH_JENKINS_DEPRECATED_ID) {
+        severity(Severity.WARNING)
+        details("sharedLibrary.withJenkins(suite) is deprecated and will be removed in 0.13.0.")
+        solution("Set jenkins.useTestHarness = true directly on the suite inside its register block.")
       }
+      suite.jenkins.useTestHarness.set(true)
+    }
+
+    companion object {
+      private val GROUP =
+        ProblemGroup.create("com.mkobit.jenkins.pipelines", "Jenkins Pipeline Shared Libraries")
+      private val WITH_JENKINS_DEPRECATED_ID =
+        ProblemId.create("with-jenkins-deprecated", "sharedLibrary.withJenkins() is deprecated", GROUP)
     }
   }

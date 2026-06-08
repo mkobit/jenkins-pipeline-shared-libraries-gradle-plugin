@@ -43,7 +43,7 @@ class SharedLibraryPluginCacheableTaskTest :
 
     describe("syncSharedLibrarySource") {
       describe("is UP-TO-DATE on second run when inputs are unchanged") {
-        withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withData(TestedGradleVersion.all) { gradleVersion ->
           withTestProject {
             buildFile.writeText(sharedLibraryPluginBuild)
             file("src/com/example/Lib.groovy").writeText("class Lib {}")
@@ -62,7 +62,7 @@ class SharedLibraryPluginCacheableTaskTest :
       }
 
       describe("re-runs when a source file changes") {
-        withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withData(TestedGradleVersion.all) { gradleVersion ->
           withTestProject {
             buildFile.writeText(sharedLibraryPluginBuild)
             val libFile = file("src/com/example/Lib.groovy")
@@ -84,7 +84,7 @@ class SharedLibraryPluginCacheableTaskTest :
       }
 
       describe("is loaded FROM-CACHE when outputs are deleted and cache is populated") {
-        withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withData(TestedGradleVersion.all) { gradleVersion ->
           withTestProject {
             settingsFile.writeText(buildCacheSettings)
             buildFile.writeText(sharedLibraryPluginBuild)
@@ -108,7 +108,7 @@ class SharedLibraryPluginCacheableTaskTest :
 
     describe("generateLocalLibraryFiles") {
       describe("is UP-TO-DATE on second run when inputs are unchanged") {
-        withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withData(TestedGradleVersion.all) { gradleVersion ->
           withTestProject {
             buildFile.writeText(sharedLibraryPluginBuild)
 
@@ -126,7 +126,7 @@ class SharedLibraryPluginCacheableTaskTest :
       }
 
       describe("re-runs when autoRegisterLibrary input changes") {
-        withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withData(TestedGradleVersion.all) { gradleVersion ->
           withTestProject {
             buildFile.writeText(sharedLibraryPluginBuild)
 
@@ -155,7 +155,7 @@ class SharedLibraryPluginCacheableTaskTest :
       }
 
       describe("is loaded FROM-CACHE when outputs are deleted and cache is populated") {
-        withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withData(TestedGradleVersion.all) { gradleVersion ->
           withTestProject {
             settingsFile.writeText(buildCacheSettings)
             buildFile.writeText(sharedLibraryPluginBuild)
@@ -178,7 +178,7 @@ class SharedLibraryPluginCacheableTaskTest :
 
     describe("extractJenkinsCodeNarcConfig") {
       describe("is UP-TO-DATE on second run") {
-        withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withData(TestedGradleVersion.all) { gradleVersion ->
           withTestProject {
             buildFile.writeText(sharedLibraryPluginBuild)
 
@@ -194,24 +194,23 @@ class SharedLibraryPluginCacheableTaskTest :
           }
         }
       }
+    }
 
-      describe("is loaded FROM-CACHE when output is deleted and cache is populated") {
-        withData(TestedGradleVersion.filtered) { gradleVersion ->
+    describe("extractDefaultCodeNarcConfig") {
+      describe("is UP-TO-DATE on second run") {
+        withData(TestedGradleVersion.all) { gradleVersion ->
           withTestProject {
-            settingsFile.writeText(buildCacheSettings)
             buildFile.writeText(sharedLibraryPluginBuild)
 
             runner(gradleVersion)
-              .withArguments("extractJenkinsCodeNarcConfig", "--build-cache")
+              .withArguments("extractDefaultCodeNarcConfig")
               .build()
-              .task(":extractJenkinsCodeNarcConfig") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
-
-            dir.resolve("build/generated/codenarc/codenarc-jenkins.xml").toFile().delete()
+              .task(":extractDefaultCodeNarcConfig") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
 
             runner(gradleVersion)
-              .withArguments("extractJenkinsCodeNarcConfig", "--build-cache")
+              .withArguments("extractDefaultCodeNarcConfig")
               .build()
-              .task(":extractJenkinsCodeNarcConfig") shouldNotBeNull { outcome shouldBe TaskOutcome.FROM_CACHE }
+              .task(":extractDefaultCodeNarcConfig") shouldNotBeNull { outcome shouldBe TaskOutcome.UP_TO_DATE }
           }
         }
       }
@@ -219,7 +218,7 @@ class SharedLibraryPluginCacheableTaskTest :
 
     describe("test") {
       describe("is UP-TO-DATE on second run when inputs are unchanged") {
-        withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withData(TestedGradleVersion.all) { gradleVersion ->
           withTestProject {
             settingsFile.writeText(jenkinsSettings("cache-test"))
             buildFile.writeText(sharedLibraryPluginBuild)
@@ -239,7 +238,7 @@ class SharedLibraryPluginCacheableTaskTest :
       }
 
       describe("is loaded FROM-CACHE when outputs are deleted and cache is populated") {
-        withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withData(TestedGradleVersion.all) { gradleVersion ->
           withTestProject {
             settingsFile.writeText(
               """
@@ -269,7 +268,7 @@ class SharedLibraryPluginCacheableTaskTest :
 
     describe("integrationTest") {
       describe("is UP-TO-DATE on second run when inputs are unchanged") {
-        withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withData(TestedGradleVersion.all) { gradleVersion ->
           withTestProject {
             settingsFile.writeText(jenkinsSettings("cache-integration-test"))
             buildFile.writeText(sharedLibraryPluginBuild)
@@ -289,7 +288,7 @@ class SharedLibraryPluginCacheableTaskTest :
       }
 
       describe("is loaded FROM-CACHE when outputs are deleted and cache is populated") {
-        withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withData(TestedGradleVersion.all) { gradleVersion ->
           withTestProject {
             settingsFile.writeText(
               """
@@ -319,7 +318,7 @@ class SharedLibraryPluginCacheableTaskTest :
 
     describe("compileLocalLibraryRetrieverJava") {
       describe("is UP-TO-DATE on second run when inputs are unchanged") {
-        withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withData(TestedGradleVersion.all) { gradleVersion ->
           withTestProject {
             settingsFile.writeText(jenkinsSettings("compile-cache-test"))
             buildFile.writeText(sharedLibraryPluginBuild)
@@ -338,7 +337,7 @@ class SharedLibraryPluginCacheableTaskTest :
       }
 
       describe("is loaded FROM-CACHE when outputs are deleted and cache is populated") {
-        withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withData(TestedGradleVersion.all) { gradleVersion ->
           withTestProject {
             settingsFile.writeText(
               """

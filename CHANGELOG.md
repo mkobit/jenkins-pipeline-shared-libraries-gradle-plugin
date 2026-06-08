@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Single `jenkinsPlugin` configuration for all plugin dependencies — replaces the old multi-configuration model.
 - Jenkins BOM auto-injection — no explicit `jenkinsPlugin(platform(...))` call is needed; the BOM coordinate is derived from `jenkins.version` (e.g., `2.479.1` → `bom-2.479.x`).
 - `sharedLibrary.plugins { plugin("group:artifact") }` DSL block for declaring Jenkins plugin dependencies inline inside the extension; equivalent to `dependencies { jenkinsPlugin("...") }`.
-- `sharedLibrary.withJenkins(suite)` for opt-in Jenkins test-harness wiring on additional `JvmTestSuite` registrations (JUnit Jupiter, Spock 2.x, Kotest, or any framework).
+- `sharedLibrary.withJenkins(suite)` for opt-in Jenkins test-harness wiring on additional `JvmTestSuite` registrations.
 - `autoRegisterLibrary` property (default: `true`) — generates `SharedLibraryAutoRegistrar` and registers the library in embedded Jenkins at startup; no `GlobalLibraries.get().setLibraries(...)` call needed in tests.
 - `libraryName` property (default: `project.name`) — controls the Jenkins library identifier used in `@Library("...")` pipeline scripts and `LocalLibraryRetriever.implicitLibrary()`.
 - Generated `LocalLibraryRetriever` class — loads the local shared library in integration tests without network access.
