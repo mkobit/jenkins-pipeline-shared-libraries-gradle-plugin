@@ -218,17 +218,17 @@ class SharedLibraryPluginTestSuiteTest :
                 id("com.mkobit.jenkins.pipelines.shared-library")
                 java
             }
-            val additionalIntegrationTest = suites.register<JvmTestSuite>("integrationTestJunit6") {
+            val additionalIntegrationTest = suites.register<JvmTestSuite>("additionalIntegrationTest") {
                 sharedLibrary.withJenkins(this)
                 useJUnitJupiter()
                 sources {
-                    java.setSrcDirs(listOf("test/integration-junit6/java"))
+                    java.setSrcDirs(listOf("test/more-tests/java"))
                 }
             }
-            tasks.check { dependsOn("integrationTestJunit6") }
+            tasks.check { dependsOn(additionalIntegrationTest) }
             """.trimIndent(),
           )
-          file("test/integration-junit6/java/com/example/ExtraJUnit6Test.java").writeText(
+          file("test/more-tests/java/com/example/ExtraJUnit6Test.java").writeText(
             """
             package com.example;
             import org.jvnet.hudson.test.JenkinsRule;
@@ -241,8 +241,8 @@ class SharedLibraryPluginTestSuiteTest :
             }
             """.trimIndent(),
           )
-          val result = runner(gradleVersion).withArguments("compileIntegrationTestJunit6Java").build()
-          result.task(":compileIntegrationTestJunit6Java") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
+          val result = runner(gradleVersion).withArguments("compileAdditionalIntegrationTestJava").build()
+          result.task(":compileAdditionalIntegrationTestJava") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
         }
       }
     }
