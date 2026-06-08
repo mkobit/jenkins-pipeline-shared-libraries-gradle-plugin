@@ -4,6 +4,10 @@ import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.plugins.jvm.JvmTestSuite
+import org.gradle.api.problems.ProblemGroup
+import org.gradle.api.problems.ProblemId
+import org.gradle.api.problems.Problems
+import org.gradle.api.problems.Severity
 import org.gradle.api.provider.Property
 import org.gradle.kotlin.dsl.newInstance
 import org.gradle.kotlin.dsl.property
@@ -47,6 +51,7 @@ abstract class SharedLibraryExtension
   constructor(
     objects: ObjectFactory,
     project: Project,
+    private val problems: Problems,
   ) {
     val jenkins: JenkinsVersions =
       objects.newInstance<JenkinsVersions>().also {
@@ -157,10 +162,26 @@ abstract class SharedLibraryExtension
      */
     @Deprecated(
       message = "Set jenkins.useTestHarness = true on the suite directly. Will be removed in 0.13.0.",
-      level = DeprecationLevel.WARNING,
-      replaceWith = ReplaceWith(expression = "jenkins.useTestHarness = true"),
+      level = DeprecationLevel.ERROR,
+      replaceWith =
+        ReplaceWith(
+          expression = "jenkins.useTestHarness = true",
+          imports = arrayOf("com.mkobit.jenkins.pipelines.jenkins"),
+        ),
     )
     fun withJenkins(suite: JvmTestSuite) {
+      problems.reporter.report(WITH_JENKINS_DEPRECATED_ID) {
+        severity(Severity.WARNING)
+        details("sharedLibrary.withJenkins(suite) is deprecated and will be removed in 0.13.0.")
+        solution("Set jenkins.useTestHarness = true directly on the suite inside its register block.")
+      }
       suite.jenkins.useTestHarness.set(true)
+    }
+
+    companion object {
+      private val GROUP =
+        ProblemGroup.create("com.mkobit.jenkins.pipelines", "Jenkins Pipeline Shared Libraries")
+      private val WITH_JENKINS_DEPRECATED_ID =
+        ProblemId.create("with-jenkins-deprecated", "sharedLibrary.withJenkins() is deprecated", GROUP)
     }
   }
