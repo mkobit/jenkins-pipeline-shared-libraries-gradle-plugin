@@ -1,16 +1,37 @@
+import com.mkobit.jenkins.pipelines.jenkins
+
 plugins {
     id("com.mkobit.jenkins.pipelines.shared-library")
 }
 
-// Consumer-defined third suite. The plugin wires `test` and `integrationTest`
-// automatically; any additional Jenkins test suite opts in via withJenkins().
-val smokeTest = testing.suites.register<JvmTestSuite>("smokeTest") {
-    sources {
-        java.setSrcDirs(listOf("test/smoke/java"))
+testing {
+    suites {
+        named<JvmTestSuite>("integrationTest") {
+            targets {
+                named("integrationTest") {
+                    testTask.configure { include("**/SayHelloStepTest.class") }
+                }
+                register("integrationTestGreeter") {
+                    testTask.configure { include("**/CpsClassUsageTest.class") }
+                    tasks.check { dependsOn(testTask) }
+                }
+            }
+        }
+        register<JvmTestSuite>("smokeTest") {
+            sources {
+                java.setSrcDirs(listOf("test/smoke/java"))
+            }
+            jenkins.useTestHarness = true
+            targets {
+                named("smokeTest") {
+                    testTask.configure { include("**/SayHelloSmokeTest.class") }
+                    tasks.check { dependsOn(testTask) }
+                }
+                register("smokeTestChain") {
+                    testTask.configure { include("**/SayHelloChainSmokeTest.class") }
+                    tasks.check { dependsOn(testTask) }
+                }
+            }
+        }
     }
-    sharedLibrary.withJenkins(this)
-}
-
-tasks.check {
-    dependsOn(smokeTest)
 }

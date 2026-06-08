@@ -1,4 +1,6 @@
 import org.gradle.api.plugins.JavaBasePlugin
+import org.gradle.api.services.BuildService
+import org.gradle.api.services.BuildServiceParameters
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestStackTraceFilter
 import org.gradle.kotlin.dsl.testMatrix
@@ -51,6 +53,20 @@ dependencies {
   api(gradleApi())
 }
 
+abstract class FunctionalTestBuildService : BuildService<BuildServiceParameters.None>
+
+// Shares the "heavyTest" slot with examples in examples-tasks.gradle.kts — all
+// memory-intensive Jenkins child processes compete for the same concurrency limit.
+// Default is 1 (safe on any machine/container); override with -PmemBound.maxParallel=N.
+val functionalTestBuildService =
+  gradle.sharedServices.registerIfAbsent("heavyTest", FunctionalTestBuildService::class) {
+    maxParallelUsages =
+      providers
+        .gradleProperty("memBound.maxParallel")
+        .map { it.toInt() }
+        .orElse(1)
+  }
+
 testing {
   suites {
     val testSuite =
@@ -84,6 +100,7 @@ testing {
       targets.configureEach {
         testTask.configure {
           mustRunAfter(testSuite)
+          usesService(functionalTestBuildService)
         }
       }
 
@@ -130,14 +147,15 @@ testing {
             }
         }
 
-      tasks.register("functionalTestAll") {
-        group = JavaBasePlugin.VERIFICATION_GROUP
-        description = "Runs the gate and all CI fan-out matrix variants"
-        dependsOn(gate, variants)
-      }
+      val functionalTestAll =
+        tasks.register("functionalTestAll") {
+          group = JavaBasePlugin.VERIFICATION_GROUP
+          description = "Runs the gate and all CI fan-out matrix variants"
+          dependsOn(gate, variants)
+        }
 
       tasks.check {
-        dependsOn(gate)
+        dependsOn(functionalTestAll)
       }
     }
   }
