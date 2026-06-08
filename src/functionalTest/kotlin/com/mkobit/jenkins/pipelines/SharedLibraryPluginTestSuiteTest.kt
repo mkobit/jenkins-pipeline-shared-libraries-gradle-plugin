@@ -190,12 +190,12 @@ class SharedLibraryPluginTestSuiteTest :
             tasks.check { dependsOn("integrationTestJunit6") }
             """.trimIndent(),
           )
-          file("test/integration-junit6/java/com/example/ExtraJUnit6Test.java").writeText(
+          file("test/integration-junit6/java/com/example/JenkinsHarnessTest.java").writeText(
             """
             package com.example;
             import org.jvnet.hudson.test.JenkinsRule;
             import org.junit.jupiter.api.Test;
-            class ExtraJUnit6Test {
+            class JenkinsHarnessTest {
                 @Test
                 void jenkinsTestHarnessTypesAvailable() {
                     Class<?> c = JenkinsRule.class;
@@ -229,12 +229,12 @@ class SharedLibraryPluginTestSuiteTest :
             tasks.check { dependsOn(additionalIntegrationTest) }
             """.trimIndent(),
           )
-          file("test/more-tests/java/com/example/ExtraJUnit6Test.java").writeText(
+          file("test/more-tests/java/com/example/JenkinsHarnessTest.java").writeText(
             """
             package com.example;
             import org.jvnet.hudson.test.JenkinsRule;
             import org.junit.jupiter.api.Test;
-            class ExtraJUnit6Test {
+            class JenkinsHarnessTest {
                 @Test
                 void jenkinsTestHarnessTypesAvailable() {
                     Class<?> c = JenkinsRule.class;
