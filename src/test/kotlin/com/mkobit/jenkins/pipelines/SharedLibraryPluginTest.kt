@@ -312,9 +312,9 @@ internal class SharedLibraryPluginTest :
       it("withJenkins is idempotent — calling twice leaves enabled = true") {
         val suite = suiteNamed("integrationTest")
         val sharedLibrary = project.extensions.getByType(SharedLibraryExtension::class.java)
-        @Suppress("DEPRECATION_ERROR")
+        @Suppress("DEPRECATION")
         sharedLibrary.withJenkins(suite)
-        @Suppress("DEPRECATION_ERROR")
+        @Suppress("DEPRECATION")
         sharedLibrary.withJenkins(suite)
         suite.jenkins.useTestHarness shouldHaveValue true
       }
@@ -322,7 +322,7 @@ internal class SharedLibraryPluginTest :
       it("integrationTest task has exactly one LibraryNameArgumentProvider after double withJenkins call") {
         val sharedLibrary = project.extensions.getByType(SharedLibraryExtension::class.java)
         val suite = suiteNamed("integrationTest")
-        @Suppress("DEPRECATION_ERROR")
+        @Suppress("DEPRECATION")
         sharedLibrary.withJenkins(suite)
         project.tasks.getByName("integrationTest").shouldBeInstanceOf<Test> {
           it.jvmArgumentProviders.filterIsInstance<LibraryNameArgumentProvider>() shouldHaveSize 1

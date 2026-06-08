@@ -162,7 +162,7 @@ abstract class SharedLibraryExtension
      */
     @Deprecated(
       message = "Set jenkins.useTestHarness = true on the suite directly. Will be removed in 0.13.0.",
-      level = DeprecationLevel.ERROR,
+      level = DeprecationLevel.WARNING,
       replaceWith =
         ReplaceWith(
           expression = "jenkins.useTestHarness = true",

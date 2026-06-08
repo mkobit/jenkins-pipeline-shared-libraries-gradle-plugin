@@ -214,7 +214,7 @@ class SharedLibraryPluginTestSuiteTest :
         withBaseProject {
           buildFile.writeText(
             """
-            @file:Suppress("DEPRECATION_ERROR")
+            @file:Suppress("DEPRECATION")
             plugins {
                 id("com.mkobit.jenkins.pipelines.shared-library")
                 java
