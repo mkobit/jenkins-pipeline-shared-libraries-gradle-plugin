@@ -14,6 +14,7 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition
 import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.api.plugins.JavaBasePlugin
+import org.gradle.api.plugins.jvm.JvmTestSuite
 import org.gradle.api.tasks.GroovySourceDirectorySet
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.jvm.tasks.Jar
@@ -288,6 +289,48 @@ internal class SharedLibraryPluginTest :
             .findByName("jenkinsTestSuite")
         reg.shouldNotBeNull()
         reg.maxParallelUsages shouldHaveValue 1
+      }
+    }
+
+    describe("JenkinsTestSuiteExtension") {
+      fun suiteNamed(name: String): JvmTestSuite =
+        project.extensions
+          .getByType(org.gradle.testing.base.TestingExtension::class.java)
+          .suites
+          .getByName(name) as JvmTestSuite
+
+      it("test suite does not have JenkinsTestSuiteExtension by default") {
+        val suite = suiteNamed("test")
+        (suite as org.gradle.api.plugins.ExtensionAware)
+          .extensions
+          .findByType(JenkinsTestSuiteExtension::class.java) shouldBe null
+      }
+
+      it("accessing jenkins on a suite creates extension with enabled = false") {
+        suiteNamed("test").jenkins.enabled shouldHaveValue false
+      }
+
+      it("integrationTest suite has extension with enabled = true") {
+        suiteNamed("integrationTest").jenkins.enabled shouldHaveValue true
+      }
+
+      it("withJenkins is idempotent — calling twice leaves enabled = true") {
+        val suite = suiteNamed("integrationTest")
+        val sharedLibrary = project.extensions.getByType(SharedLibraryExtension::class.java)
+        @Suppress("DEPRECATION")
+        sharedLibrary.withJenkins(suite)
+        @Suppress("DEPRECATION")
+        sharedLibrary.withJenkins(suite)
+        suite.jenkins.enabled shouldHaveValue true
+      }
+
+      it("integrationTest task has exactly one LibraryNameArgumentProvider after double withJenkins call") {
+        val sharedLibrary = project.extensions.getByType(SharedLibraryExtension::class.java)
+        val suite = suiteNamed("integrationTest")
+        @Suppress("DEPRECATION")
+        sharedLibrary.withJenkins(suite)
+        val task = project.tasks.getByName("integrationTest") as org.gradle.api.tasks.testing.Test
+        task.jvmArgumentProviders.filterIsInstance<LibraryNameArgumentProvider>() shouldHaveSize 1
       }
     }
 

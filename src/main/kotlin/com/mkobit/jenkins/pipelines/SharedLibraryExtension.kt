@@ -2,21 +2,11 @@ package com.mkobit.jenkins.pipelines
 
 import org.gradle.api.Action
 import org.gradle.api.model.ObjectFactory
+import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.plugins.jvm.JvmTestSuite
 import org.gradle.api.provider.Property
 import org.gradle.kotlin.dsl.newInstance
 import javax.inject.Inject
-
-/**
- * Wires Jenkins test-harness infrastructure onto a [JvmTestSuite].
- *
- * Named functional interface rather than a raw Kotlin function type so Gradle's object
- * instantiator matches it by class when injecting constructor parameters. Consumers use
- * [SharedLibraryExtension.withJenkins] and do not implement this interface directly.
- */
-fun interface JenkinsTestSuiteWirer {
-  fun wire(suite: JvmTestSuite)
-}
 
 /**
  * Extension for the `com.mkobit.jenkins.pipelines.shared-library` plugin.
@@ -36,14 +26,13 @@ fun interface JenkinsTestSuiteWirer {
  * }
  * ```
  *
- * The built-in `integrationTest` suite is wired automatically. Additional suites
- * (JUnit Jupiter, Spock, Kotest, etc.) opt in by calling [withJenkins] inside their
- * `register<JvmTestSuite>` block:
+ * The built-in `integrationTest` suite is wired automatically. Additional suites opt in by
+ * setting [JenkinsTestSuiteExtension.enabled] to `true` on the suite's extension:
  * ```kotlin
  * testing {
  *     suites {
  *         register<JvmTestSuite>("integrationTestKotest") {
- *             sharedLibrary.withJenkins(this)
+ *             jenkins.enabled = true
  *         }
  *     }
  * }
@@ -54,7 +43,6 @@ abstract class SharedLibraryExtension
   @Inject
   constructor(
     private val objects: ObjectFactory,
-    private val jenkinsWirer: JenkinsTestSuiteWirer,
   ) {
     val jenkins: JenkinsVersions = objects.newInstance(JenkinsVersions::class)
 
@@ -142,26 +130,24 @@ abstract class SharedLibraryExtension
     abstract val maxParallelJenkinsTests: Property<Int>
 
     /**
-     * Applies full Jenkins test-harness wiring to [suite] — identical to the built-in
-     * `integrationTest` suite: `jenkins-test-harness`, HPI classpath, WAR path,
-     * system properties, JVM opens, and `mustRunAfter("test")` ordering.
+     * Opts [suite] into full Jenkins test-harness wiring.
+     *
+     * Prefer setting `jenkins.enabled = true` directly on the suite inside its
+     * `register<JvmTestSuite>` block — it is idempotent and does not require a reference to
+     * `sharedLibrary`:
+     * ```kotlin
+     * register<JvmTestSuite>("integrationTestKotest") {
+     *     jenkins.enabled = true
+     * }
+     * ```
      */
+    @Deprecated(
+      message = "Set jenkins.enabled = true on the suite directly. Will be removed in 0.13.0.",
+      level = DeprecationLevel.WARNING,
+      replaceWith = ReplaceWith(expression = "jenkins.enabled = true"), // todo: double check this actually works
+    )
     fun withJenkins(suite: JvmTestSuite) {
-      jenkinsWirer.wire(suite)
-      // libraryName and implicit are extension state — added here after the main wirer runs.
-      suite.targets.configureEach {
-        testTask.configure {
-          jvmArgumentProviders.add(
-            objects.newInstance<LibraryNameArgumentProvider>().apply {
-              libraryName.set(this@SharedLibraryExtension.libraryName)
-            },
-          )
-          jvmArgumentProviders.add(
-            objects.newInstance<LibraryImplicitArgumentProvider>().apply {
-              implicit.set(this@SharedLibraryExtension.implicit)
-            },
-          )
-        }
-      }
+      // todo: use gradle warnings api, add test to remove in 0.13.0 release
+      suite.jenkins.enabled.set(true)
     }
   }
