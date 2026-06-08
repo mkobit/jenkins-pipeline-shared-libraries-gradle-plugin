@@ -254,9 +254,8 @@ testing {
 // user-registered suites — so Gradle's KotlinDSL accessor generator produces a
 // `val JvmTestSuite.jenkins` accessor for consumer build scripts.
 //
-// The enabled check is deferred to withDependencies (resolution time) and targets.configureEach
-// (task realization time) so that user-registered suite creation actions — which set
-// jenkins.useTestHarness = true — have already run by the time these hooks fire.
+// The harness deps are lazy providers that resolve to absent when useTestHarness = false —
+// the same deferred-evaluation guarantee as withDependencies, without leaving the suite model.
 testing.suites.withType<JvmTestSuite>().configureEach {
   val jenkinsExt =
     (this as ExtensionAware)
@@ -266,15 +265,24 @@ testing.suites.withType<JvmTestSuite>().configureEach {
   configurations.named(sources.implementationConfigurationName) {
     extendsFrom(jenkinsPlugin)
     exclude(mapOf("group" to "org.codehaus.groovy", "module" to "groovy-all"))
-    withDependencies {
-      if (!jenkinsExt.useTestHarness.getOrElse(false)) return@withDependencies
-      add(project.dependencies.create("org.jenkins-ci.main:jenkins-test-harness:${SharedLibraryDefaults.TEST_HARNESS_VERSION}"))
-      add(project.dependencies.create(localLibraryRetrieverSourceSet.output))
-      add(project.dependencies.create(SharedLibraryDefaults.IVY_COORDINATES))
-    }
   }
   dependencies {
     implementation(SharedLibraryDefaults.GROOVY_COORDINATES)
+    implementation(
+      jenkinsExt.useTestHarness
+        .filter { it }
+        .map { dependencyFactory.create("org.jenkins-ci.main:jenkins-test-harness:${SharedLibraryDefaults.TEST_HARNESS_VERSION}") },
+    )
+    implementation(
+      jenkinsExt.useTestHarness
+        .filter { it }
+        .map { dependencyFactory.create(localLibraryRetrieverSourceSet.output) },
+    )
+    implementation(
+      jenkinsExt.useTestHarness
+        .filter { it }
+        .map { dependencyFactory.create(SharedLibraryDefaults.IVY_COORDINATES) },
+    )
   }
 
   targets.configureEach {
