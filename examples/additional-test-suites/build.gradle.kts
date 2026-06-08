@@ -1,14 +1,16 @@
+import com.mkobit.jenkins.pipelines.jenkins
+
 plugins {
     id("com.mkobit.jenkins.pipelines.shared-library")
 }
 
-// Consumer-defined third suite. The plugin wires `test` and `integrationTest`
-// automatically; any additional Jenkins test suite opts in via withJenkins().
+// `integrationTest` is wired automatically by the plugin.
+// Any additional Jenkins suite opts in with `jenkins.enabled = true`.
 val smokeTest = testing.suites.register<JvmTestSuite>("smokeTest") {
     sources {
         java.setSrcDirs(listOf("test/smoke/java"))
     }
-    sharedLibrary.withJenkins(this)
+    jenkins.enabled = true
 }
 
 tasks.check {

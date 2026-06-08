@@ -166,6 +166,49 @@ class SharedLibraryPluginTestSuiteTest :
       }
     }
 
+    describe("jenkins.enabled opt-in wires jenkins-test-harness onto the suite") {
+      withData(TestedGradleVersion.filtered) { gradleVersion ->
+        withBaseProject {
+          buildFile.writeText(
+            """
+            import com.mkobit.jenkins.pipelines.jenkins
+
+            plugins {
+                id("com.mkobit.jenkins.pipelines.shared-library")
+                java
+            }
+            testing {
+                suites {
+                    register<JvmTestSuite>("integrationTestJunit6") {
+                        jenkins.enabled = true
+                        sources {
+                            java.setSrcDirs(listOf("test/integration-junit6/java"))
+                        }
+                    }
+                }
+            }
+            tasks.check { dependsOn("integrationTestJunit6") }
+            """.trimIndent(),
+          )
+          file("test/integration-junit6/java/com/example/ExtraJUnit6Test.java").writeText(
+            """
+            package com.example;
+            import org.jvnet.hudson.test.JenkinsRule;
+            import org.junit.jupiter.api.Test;
+            class ExtraJUnit6Test {
+                @Test
+                void jenkinsTestHarnessTypesAvailable() {
+                    Class<?> c = JenkinsRule.class;
+                }
+            }
+            """.trimIndent(),
+          )
+          val result = runner(gradleVersion).withArguments("compileIntegrationTestJunit6Java").build()
+          result.task(":compileIntegrationTestJunit6Java") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
+        }
+      }
+    }
+
     describe("withJenkins opt-in wires jenkins-test-harness onto the suite") {
       withData(TestedGradleVersion.filtered) { gradleVersion ->
         withBaseProject {
