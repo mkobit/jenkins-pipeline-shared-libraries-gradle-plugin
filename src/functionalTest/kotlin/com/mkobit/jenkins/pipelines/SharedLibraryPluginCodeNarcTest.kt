@@ -45,7 +45,7 @@ class SharedLibraryPluginCodeNarcTest :
     }
 
     describe("ClassNotSerializable: class without Serializable is flagged") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withBaseProject {
           buildFile.writeText(buildFileContent)
           file("src/com/example/SomeClass.groovy").writeText(
@@ -61,7 +61,7 @@ class SharedLibraryPluginCodeNarcTest :
     }
 
     describe("ClosureInGString: closure inside a GString is flagged") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withBaseProject {
           buildFile.writeText(buildFileContent)
           file("vars/greeting.groovy").writeText(
@@ -74,7 +74,7 @@ class SharedLibraryPluginCodeNarcTest :
     }
 
     describe("CpsCallFromNonCpsMethod: CPS method called from @NonCPS method is flagged") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withBaseProject {
           buildFile.writeText(buildFileContent)
           // CpsCallFromNonCpsMethod only fires for default-package classes (no package
@@ -97,7 +97,7 @@ class SharedLibraryPluginCodeNarcTest :
     }
 
     describe("ExpressionInCpsMethodNotSerializable: non-Serializable local variable is flagged") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withBaseProject {
           buildFile.writeText(buildFileContent)
           file("src/com/example/Worker.groovy").writeText(
@@ -119,7 +119,7 @@ class SharedLibraryPluginCodeNarcTest :
     }
 
     describe("ForbiddenCallInCpsMethod: sort with closure in CPS method is flagged") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withBaseProject {
           buildFile.writeText(buildFileContent)
           file("src/com/example/Sorter.groovy").writeText(
@@ -141,7 +141,7 @@ class SharedLibraryPluginCodeNarcTest :
     }
 
     describe("ObjectOverrideOnlyNonCpsMethods: toString override without @NonCPS is flagged") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withBaseProject {
           buildFile.writeText(buildFileContent)
           file("src/com/example/Step.groovy").writeText(
@@ -161,7 +161,7 @@ class SharedLibraryPluginCodeNarcTest :
     }
 
     describe("ParameterOrReturnTypeNotSerializable: non-Serializable return type is flagged") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withBaseProject {
           buildFile.writeText(buildFileContent)
           file("src/com/example/Factory.groovy").writeText(
@@ -181,7 +181,7 @@ class SharedLibraryPluginCodeNarcTest :
     }
 
     describe("no violations: Serializable class with @NonCPS toString passes") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withBaseProject {
           buildFile.writeText(buildFileContent)
           file("src/com/example/Step.groovy").writeText(
@@ -203,7 +203,7 @@ class SharedLibraryPluginCodeNarcTest :
     }
 
     describe("codenarcMain: succeeds without consumer config/codenarc/codenarc.xml using bundled default") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withBaseProject {
           buildFile.writeText(
             """
@@ -232,7 +232,7 @@ class SharedLibraryPluginCodeNarcTest :
     }
 
     describe("codenarcMain: consumer config/codenarc/codenarc.xml takes precedence over bundled default") {
-      withData(TestedGradleVersion.filtered) { gradleVersion ->
+      withData(TestedGradleVersion.all) { gradleVersion ->
         withBaseProject {
           buildFile.writeText(
             """

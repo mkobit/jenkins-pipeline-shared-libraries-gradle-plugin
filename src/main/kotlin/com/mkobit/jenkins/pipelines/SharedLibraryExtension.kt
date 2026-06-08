@@ -19,6 +19,8 @@ import javax.inject.Inject
  *         bomVersion = "3463.v23b_7bb_b_b_66d5"
  *     }
  *     pipelineUnitVersion = "1.29"
+ *     autoRegisterLibrary = true
+ *     implicit = true
  *     plugins {
  *         plugin("org.jenkins-ci.plugins.workflow:workflow-multibranch")
  *     }

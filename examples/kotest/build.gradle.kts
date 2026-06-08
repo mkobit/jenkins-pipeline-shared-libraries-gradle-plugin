@@ -1,6 +1,6 @@
 plugins {
     id("com.mkobit.jenkins.pipelines.shared-library")
-    kotlin("jvm") version "2.1.21"
+    kotlin("jvm") version "2.3.21"
 }
 
 // TODO(#173): remove once codenarcMain is opt-in or ships a default config
@@ -33,7 +33,7 @@ testing {
                 implementation("io.kotest:kotest-assertions-core")
                 implementation("io.kotest:kotest-extensions-decoroutinator")
                 runtimeOnly("io.kotest:kotest-runner-junit5")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
             }
         }
     }
