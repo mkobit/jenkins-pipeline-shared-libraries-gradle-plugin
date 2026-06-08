@@ -4,19 +4,17 @@ plugins {
 }
 
 tasks.jacocoTestReport {
-    // JenkinsPipeline shared library dynamically generates classes, leading to class mismatch warnings
-    // or missing execution data, so we filter those out.
+    // Vars compile to the default package and are recompiled at runtime by JenkinsPipelineUnit,
+    // causing class ID mismatches. Excluding default-package classes drops vars from the report.
     classDirectories.setFrom(
         classDirectories.files.map {
             fileTree(it).matching {
-                // Filter out the global vars as they are interpreted
-                exclude("analyzeStatus*")
+                exclude("*.class")
             }
         }
     )
 }
 
-// Ensure the JaCoCo report is generated after tests run
 tasks.test {
     finalizedBy(tasks.jacocoTestReport)
 }
