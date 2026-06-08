@@ -219,7 +219,7 @@ class SharedLibraryPluginTestSuiteTest :
                 id("com.mkobit.jenkins.pipelines.shared-library")
                 java
             }
-            val additionalIntegrationTest = suites.register<JvmTestSuite>("additionalIntegrationTest") {
+            val additionalIntegrationTest = testing.suites.register<JvmTestSuite>("additionalIntegrationTest") {
                 sharedLibrary.withJenkins(this)
                 useJUnitJupiter()
                 sources {
