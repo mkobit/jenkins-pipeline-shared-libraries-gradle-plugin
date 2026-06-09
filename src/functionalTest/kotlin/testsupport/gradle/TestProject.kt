@@ -6,6 +6,7 @@ import org.gradle.testkit.runner.GradleRunner
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
+import kotlin.io.path.outputStream
 import kotlin.io.path.writeText
 
 class TestProject(
@@ -35,9 +36,12 @@ fun withTestProject(
 ) {
   val dir = config.tempdir("shared-library-functional-test").toPath()
   if (gradleProperties.isNotEmpty()) {
-    dir.resolve("gradle.properties").writeText(
-      gradleProperties.entries.joinToString(separator = "\n", postfix = "\n") { (k, v) -> "$k=$v" },
-    )
+    dir.resolve("gradle.properties").outputStream().use { os ->
+      java.util
+        .Properties()
+        .apply { putAll(gradleProperties) }
+        .store(os, null)
+    }
   }
   TestProject(dir).block()
 }
