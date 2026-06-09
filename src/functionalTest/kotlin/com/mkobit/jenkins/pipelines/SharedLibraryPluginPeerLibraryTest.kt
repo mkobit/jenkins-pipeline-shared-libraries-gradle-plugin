@@ -2,6 +2,7 @@ package com.mkobit.jenkins.pipelines
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.inspectors.filterMatching
+import io.kotest.inspectors.forOne
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -213,11 +214,18 @@ class SharedLibraryPluginPeerLibraryTest :
             file("peer-lib/vars/peerStep.groovy").writeText("def call() {}")
 
             val output = runner(gradleVersion).build("printPeerJvmArgs").output
-            val peerArgLines = output.lines().filter { it.startsWith("peer-arg:") }
-            peerArgLines shouldNotBeEmpty()
-            peerArgLines.any { "test.library.1.name" in it } shouldBe true
-            peerArgLines.any { "test.library.1.location" in it && "peer-lib" in it } shouldBe true
-            peerArgLines.any { "test.library.1.implicit" in it } shouldBe true
+            val argLines = output.lines().filter { it.startsWith("peer-arg:") }
+            // index 0 = self-library, index 1 = declared peer — 3 properties each
+            argLines shouldHaveSize 6
+            argLines.forOne { it shouldContain "-Dtest.library.0.name=peer-jvm-args" }
+            argLines.forOne { it shouldContain "-Dtest.library.0.location=" }
+            argLines.forOne { it shouldContain "-Dtest.library.0.implicit=true" }
+            argLines.forOne { it shouldContain "-Dtest.library.1.name=peer-lib" }
+            argLines.forOne { it shouldContain "-Dtest.library.1.implicit=true" }
+            argLines.forOne {
+              it shouldContain "-Dtest.library.1.location="
+              it shouldContain "peer-lib"
+            }
           }
         }
       }

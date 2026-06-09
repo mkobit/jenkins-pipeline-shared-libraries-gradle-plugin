@@ -14,6 +14,7 @@ import org.gradle.api.services.BuildService
 import org.gradle.api.services.BuildServiceParameters
 import org.gradle.api.tasks.compile.GroovyCompile
 import org.gradle.api.tasks.testing.Test
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.*
 import org.gradle.language.base.plugins.LifecycleBasePlugin
@@ -352,12 +353,32 @@ testing.suites.withType<JvmTestSuite>().configureEach {
     peerLibrarySource.flatMap { cfg ->
       cfg.incoming.artifacts.resolvedArtifacts.zip(sharedLibrary.dependencies.specs) { artifacts, specs ->
         val specByIdentifier: Map<String, PeerLibrarySpec> = specs.associateBy { it.identifier.get() }
+        // Composite build substitution: a GAV dependency resolved via includeBuild() produces a
+        // ProjectComponentIdentifier whose projectPath is ":" (the root of the included build),
+        // losing the original group:artifact identity. Retain it by consulting resolutionResult,
+        // which preserves the declared module version even after substitution.
+        val moduleVersionByComponent =
+          cfg.incoming.resolutionResult.allComponents
+            .mapNotNull { c -> c.moduleVersion?.let { mv -> c.id to "${mv.group}:${mv.name}" } }
+            .toMap()
         artifacts.map { artifact ->
+          val owner = artifact.id.componentIdentifier
           val ownerId: String =
-            when (val owner = artifact.id.componentIdentifier) {
-              is ProjectComponentIdentifier -> owner.projectPath
-              is ModuleComponentIdentifier -> "${owner.group}:${owner.module}"
-              else -> owner.displayName
+            when (owner) {
+              is ModuleComponentIdentifier -> {
+                "${owner.group}:${owner.module}"
+              }
+
+              is ProjectComponentIdentifier -> {
+                // Prefer the retained module GAV when the project path is ":" (composite root),
+                // otherwise the project path identifies the subproject within the same build.
+                moduleVersionByComponent[owner]?.takeIf { owner.projectPath == ":" }
+                  ?: owner.projectPath
+              }
+
+              else -> {
+                owner.displayName
+              }
             }
           val spec = specByIdentifier[ownerId]
           val defaultName = ownerId.substringAfterLast(":").ifEmpty { ownerId }
@@ -474,6 +495,13 @@ val ivy =
 dependencies {
   ivy(SharedLibraryDefaults.IVY_COORDINATES)
 }
+tasks.withType<Test>().configureEach {
+  testLogging {
+    events("failed")
+    exceptionFormat = TestExceptionFormat.SHORT
+  }
+}
+
 tasks.withType<GroovyCompile>().configureEach {
   groovyClasspath += files(ivy)
 }
