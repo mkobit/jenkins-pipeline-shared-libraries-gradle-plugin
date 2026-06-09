@@ -5,7 +5,7 @@ plugins {
 sharedLibrary {
     dependencies {
         sharedLibrary(project(":peer-lib")) {
-            libraryName.set("deploy-config")
+            libraryName = "deploy-config"
         }
     }
 }

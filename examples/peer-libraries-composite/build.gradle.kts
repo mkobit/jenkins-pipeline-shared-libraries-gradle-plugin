@@ -5,10 +5,10 @@ plugins {
 sharedLibrary {
     dependencies {
         sharedLibrary("com.example.pipeline:deployer:1.0") {
-            libraryName.set("pipeline-deployer")
+            libraryName = "pipeline-deployer"
         }
         sharedLibrary("com.example.pipeline:notifier:1.0") {
-            libraryName.set("pipeline-notifier")
+            libraryName = "pipeline-notifier"
         }
     }
 }
