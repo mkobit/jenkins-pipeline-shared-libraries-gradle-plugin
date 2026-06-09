@@ -13,6 +13,12 @@ Demonstrates all peer library dependency variants in a single build: subproject 
 
 `shell-lib` is only declared as a peer of `deploy-lib`; the root picks it up transitively through the `sharedLibrarySourceElements` variant chain.
 
+## `src/` class usage
+
+`deploy-lib` and `shell-lib` each ship a class under `src/` (e.g. `DeployTarget`, `ShellStep`).
+A library's own `vars/` scripts can import those classes freely because they share a classloader.
+Cross-library class imports from a peer's `src/` do **not** work in the test harness — the correct pattern is to wrap the class in a `vars/` step and call that step from the root pipeline.
+
 ## Tests
 
 Each library has unit tests (pipeline-unit) exercising its own vars in isolation.

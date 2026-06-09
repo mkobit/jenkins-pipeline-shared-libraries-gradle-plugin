@@ -12,7 +12,7 @@ class RunShellTest extends BasePipelineTest {
     }
 
     @Test
-    void prefixesCommandWithShellLabel() {
+    void delegatesToShellStep() {
         def script = loadScript('vars/runShell.groovy')
         assertEquals('shell: ls -la', script.call('ls -la').toString())
     }

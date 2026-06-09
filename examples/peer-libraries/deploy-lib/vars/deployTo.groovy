@@ -1,3 +1,6 @@
+import com.example.DeployTarget
+
 def call(String env, String service) {
-    return "Deploying ${service} to ${env}"
+    def target = new DeployTarget(env: env, service: service)
+    return "Deploying ${target.format()}"
 }

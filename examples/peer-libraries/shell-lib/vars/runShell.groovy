@@ -1,3 +1,5 @@
+import com.example.ShellStep
+
 def call(String cmd) {
-    return "shell: ${cmd}"
+    return new ShellStep().run(cmd)
 }

@@ -12,8 +12,11 @@ class DeployToTest extends BasePipelineTest {
     }
 
     @Test
-    void formatsDeploymentMessage() {
+    void formatsDeploymentWithTarget() {
         def script = loadScript('vars/deployTo.groovy')
-        assertEquals('Deploying api-service to production', script.call('production', 'api-service').toString())
+        assertEquals(
+            'Deploying api-service → production',
+            script.call('production', 'api-service').toString()
+        )
     }
 }

@@ -15,7 +15,7 @@ class RunDeployTest {
         WorkflowRun run = jenkins.buildAndAssertSuccess(job);
         jenkins.assertLogContains("Pre-checks passed for api-service", run);
         jenkins.assertLogContains("shell: deploy api-service", run);
-        jenkins.assertLogContains("Deploying api-service to production", run);
+        jenkins.assertLogContains("Deploying api-service → production", run);
         jenkins.assertLogContains("[slack] api-service deployed to production", run);
     }
 }

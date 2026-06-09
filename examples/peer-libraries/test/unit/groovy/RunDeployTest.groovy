@@ -11,7 +11,9 @@ class RunDeployTest extends BasePipelineTest {
         setUp()
         helper.registerAllowedMethod('preCheck', [String]) { service -> "Pre-checks passed for ${service}" }
         helper.registerAllowedMethod('runShell', [String]) { cmd -> "shell: ${cmd}" }
-        helper.registerAllowedMethod('deployTo', [String, String]) { env, service -> "Deploying ${service} to ${env}" }
+        helper.registerAllowedMethod('deployTo', [String, String]) { env, service ->
+            "Deploying ${service} → ${env}"
+        }
         helper.registerAllowedMethod('notifySlack', [String]) { msg -> "[slack] ${msg}" }
     }
 
