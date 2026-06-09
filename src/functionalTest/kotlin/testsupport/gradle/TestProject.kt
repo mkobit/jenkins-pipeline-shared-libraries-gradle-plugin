@@ -14,30 +14,10 @@ class TestProject(
   val settingsFile: Path = dir.resolve("settings.gradle.kts")
   val buildFile: Path = dir.resolve("build.gradle.kts")
 
-  // Without an explicit -Xmx the daemon JVM uses ergonomic defaults (25% of system RAM).
-  private val gradleProperties: MutableMap<String, String> =
-    mutableMapOf("org.gradle.jvmargs" to "-Xmx512m -XX:MaxMetaspaceSize=384m")
-  private var gradlePropertiesFlushed = false
-
   fun file(path: String): Path = dir.resolve(path).also { it.parent.createDirectories() }
 
-  fun gradleProperty(
-    key: String,
-    value: String,
-  ): TestProject {
-    check(!gradlePropertiesFlushed) { "gradleProperty() called after runner() — properties already written to disk" }
-    gradleProperties[key] = value
-    return this
-  }
-
-  fun runner(gradleVersion: TestedGradleVersion): GradleRunner {
-    if (!gradlePropertiesFlushed) {
-      dir.resolve("gradle.properties").writeText(
-        gradleProperties.entries.joinToString(separator = "\n", postfix = "\n") { (k, v) -> "$k=$v" },
-      )
-      gradlePropertiesFlushed = true
-    }
-    return GradleRunner
+  fun runner(gradleVersion: TestedGradleVersion): GradleRunner =
+    GradleRunner
       .create()
       .withProjectDir(dir.toFile())
       .withGradleVersion(gradleVersion.version)
@@ -45,10 +25,19 @@ class TestProject(
       .apply {
         System.getProperty("test.gradle.user.home")?.let { withTestKitDir(Path(it).toFile()) }
       }
-  }
 }
 
 context(config: TestConfiguration)
-fun withTestProject(block: TestProject.() -> Unit) {
-  TestProject(config.tempdir("shared-library-functional-test").toPath()).block()
+fun withTestProject(
+  // Without an explicit -Xmx the daemon JVM uses ergonomic defaults (25% of system RAM).
+  gradleProperties: Map<String, String> = mapOf("org.gradle.jvmargs" to "-Xmx512m -XX:MaxMetaspaceSize=384m"),
+  block: TestProject.() -> Unit,
+) {
+  val dir = config.tempdir("shared-library-functional-test").toPath()
+  if (gradleProperties.isNotEmpty()) {
+    dir.resolve("gradle.properties").writeText(
+      gradleProperties.entries.joinToString(separator = "\n", postfix = "\n") { (k, v) -> "$k=$v" },
+    )
+  }
+  TestProject(dir).block()
 }
