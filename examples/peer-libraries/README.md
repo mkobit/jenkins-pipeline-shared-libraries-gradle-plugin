@@ -13,11 +13,15 @@ Demonstrates all peer library dependency variants in a single build: subproject 
 
 `shell-lib` is only declared as a peer of `deploy-lib`; the root picks it up transitively through the `sharedLibrarySourceElements` variant chain.
 
-## `src/` class usage
+## `src/` class usage and classloader isolation
 
-`deploy-lib` and `shell-lib` each ship a class under `src/` (e.g. `DeployTarget`, `ShellStep`).
-A library's own `vars/` scripts can import those classes freely because they share a classloader.
-Cross-library class imports from a peer's `src/` do **not** work in the test harness — the correct pattern is to wrap the class in a `vars/` step and call that step from the root pipeline.
+`deploy-lib` and `shell-lib` each ship a class under `src/` (`DeployTarget`, `ShellStep`).
+A library's own `vars/` scripts can import those classes freely — they share the same `GroovyClassLoader`.
+
+Cross-library class imports — e.g. `deploy-lib/vars/deployTo.groovy` importing `com.example.ShellStep` from `shell-lib/src/` — do **not** work, even with embedded Jenkins.
+Jenkins gives each loaded library its own `GroovyClassLoader` (siblings under the Jenkins system classloader), so one library's compiled classes are invisible to another library's scripts.
+This is intentional: `vars/` steps are the only supported coupling point between libraries.
+The Gradle plugin wires peer `src/` onto `compileClasspath` so cross-library compilation succeeds; it is a runtime classloader boundary that prevents the import.
 
 ## Tests
 
