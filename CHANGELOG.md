@@ -11,7 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > **This is a complete rewrite** — the first release since 0.10.1 (July 2019), nearly seven years later.
 > The plugin has been rebuilt from the ground up for Gradle 9.4+, Java 17/21, and modern Jenkins LTS lines.
 > All 0.10.x APIs have been removed.
-> See the [migration guide in the README](README.md#migration-from-010x). The recommended path is to manually migrate your code (an OpenRewrite recipe was included initially but later removed as it was untested).
+> See the [migration guide in the README](README.md#migration-from-010x).
+>
+> > [!WARNING]
+> > The recommended path is to manually migrate your code (an OpenRewrite recipe was included initially but later removed as it was untested).
 
 ### Added
 
