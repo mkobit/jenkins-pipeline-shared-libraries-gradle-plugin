@@ -15,7 +15,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "deployer"
 
-// included-lib-3 is a peer dependency of library-a; including it here makes Gradle
-// substitute com.example.pipeline:included-lib-3 with the local project in all builds
-// that include library-a.
-includeBuild("../included-lib-3")
+// version-utils is a peer dependency of deployer; including it here makes Gradle
+// substitute com.example.pipeline:version-utils with the local project in all builds
+// that include deployer.
+includeBuild("../version-utils")

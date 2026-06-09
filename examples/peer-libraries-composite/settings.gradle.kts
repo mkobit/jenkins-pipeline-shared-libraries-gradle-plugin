@@ -15,7 +15,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "peer-libraries-composite"
 
-// library-a internally includes included-lib-3; Gradle composes nested included builds,
-// so included-lib-3 is available for GAV substitution without an explicit includeBuild here.
-includeBuild("library-a")
-includeBuild("library-b")
+// deployer internally includes version-utils; Gradle composes nested included builds,
+// so version-utils is available for GAV substitution without an explicit includeBuild here.
+includeBuild("deployer")
+includeBuild("notifier")
