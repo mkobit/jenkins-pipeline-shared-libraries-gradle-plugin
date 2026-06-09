@@ -118,8 +118,7 @@ abstract class SharedLibraryExtension
       objects.property<Boolean>().convention(true)
 
     /**
-     * Controls the
-     * [implicit][org.jenkinsci.plugins.workflow.libs.LibraryConfiguration.implicit]
+     * Controls the `implicit`
      * flag on the shared library registered in the embedded Jenkins test instance.
      * When `true` (default), pipeline scripts can call vars without an explicit `@Library`
      * declaration.
