@@ -38,6 +38,7 @@ updates:
       - "/examples/kotest"
       - "/examples/library-resource"
       - "/examples/peer-libraries"
+      - "/examples/peer-libraries-composite"
       - "/examples/version-catalog"
     schedule:
       interval: "weekly"

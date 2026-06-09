@@ -111,6 +111,7 @@ The [`examples/`](examples/) directory contains standalone Gradle composite buil
 | [`kotest`](examples/kotest) | Kotlin source with Kotest unit and integration test suites |
 | [`library-resource`](examples/library-resource) | Steps that read files via `libraryResource()` |
 | [`peer-libraries`](examples/peer-libraries) | Declaring another shared library as a peer dependency for cross-library step access |
+| [`peer-libraries-composite`](examples/peer-libraries-composite) | Peer libraries across separate Gradle builds via `includeBuild` and GAV notation; transitive nested composite |
 | [`version-catalog`](examples/version-catalog) | Version catalog wiring for plugin versions and Jenkins plugin coordinates |
 
 Run all examples from the repo root:
