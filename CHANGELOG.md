@@ -26,7 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `libraryName` property (default: `project.name`) — controls the Jenkins library identifier used in `@Library("...")` pipeline scripts and `LocalLibraryRetriever.implicitLibrary()`.
 - Generated `LocalLibraryRetriever` class — loads the local shared library in integration tests without network access.
 - Built-in Jenkins CodeNarc rules (`codenarcJenkinsMain` task) — validates CPS-safety and Serializable type compliance on shared library sources.
-- ~~OpenRewrite migration recipe `com.mkobit.jenkins.pipelines.MigrateSharedLibraryPlugin010To011` for automated 0.10.x → 0.11.x migration.~~ (Removed as it was untested)
+- OpenRewrite migration recipe `com.mkobit.jenkins.pipelines.MigrateSharedLibraryPlugin010To011` for automated 0.10.x → 0.11.x migration.
+
+  > [!WARNING]
+  > This recipe was untested and has been removed in newer versions. The recommended path is to manually migrate your code.
 - Configuration cache support.
 - Java 17, 21, and 25 toolchain support.
 - Jenkins LTS 2.479.x, 2.528.x, and 2.541.x compatibility with full BOM alignment.
