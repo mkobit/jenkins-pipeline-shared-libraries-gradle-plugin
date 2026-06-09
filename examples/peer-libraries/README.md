@@ -1,14 +1,22 @@
 # Peer-libraries example
 
-This example demonstrates how to declare another shared library as a peer dependency using `sharedLibrary { dependencies { sharedLibrary(project(":peer-lib")) } }`.
+Demonstrates all peer library dependency variants in a single build: subproject `project()` deps, an `includeBuild` GAV dep, transitive peer resolution, custom `libraryName` configuration, and both unit and integration testing patterns.
 
-## Purpose
+## Libraries
 
-The root project (`peer-libraries`) provides a `sayHello` step that delegates to the `greet` step defined in the `:peer-lib` subproject.
-Both libraries are registered in the embedded Jenkins at integration-test time by the auto-registrar, so cross-library step calls work without any manual `GlobalLibraries` wiring.
+| Library | Gradle dep type | Jenkins library name | Step |
+|---|---|---|---|
+| `deploy-lib` | `project(":deploy-lib")` | `deployer` | `deployTo(env, service)` |
+| `shell-lib` | transitive via `deploy-lib` | `shell-utils` | `runShell(cmd)` |
+| `checks-lib` | `project(":checks-lib")` | `pre-checks` | `preCheck(service)` |
+| `notify-lib` | GAV via `includeBuild` | `notifier` | `notifySlack(msg)` |
 
-## Structure
+`shell-lib` is only declared as a peer of `deploy-lib`; the root picks it up transitively through the `sharedLibrarySourceElements` variant chain.
 
-- `peer-lib/` — a minimal shared library that provides a `greet` step
-- `vars/sayHello.groovy` — calls `greet(name)` from the peer library
-- `test/integration/java/SayHelloStepTest.java` — verifies the cross-library call in an embedded Jenkins
+## Tests
+
+Each library has unit tests (pipeline-unit) exercising its own vars in isolation.
+The root `deploy-pipeline` library has:
+
+- `test/unit` — mocks all four peer steps with `BasePipelineTest` to test orchestration logic without Jenkins
+- `test/integration` — runs the full pipeline in an embedded Jenkins instance and asserts on log output

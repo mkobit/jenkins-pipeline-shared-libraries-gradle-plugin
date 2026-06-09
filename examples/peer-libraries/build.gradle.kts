@@ -4,8 +4,14 @@ plugins {
 
 sharedLibrary {
     dependencies {
-        sharedLibrary(project(":peer-lib")) {
-            libraryName = "deploy-config"
+        sharedLibrary(project(":deploy-lib")) {
+            libraryName = "deployer"
+        }
+        sharedLibrary(project(":checks-lib")) {
+            libraryName = "pre-checks"
+        }
+        sharedLibrary("com.example.pipeline:notify-lib:1.0") {
+            libraryName = "notifier"
         }
     }
 }

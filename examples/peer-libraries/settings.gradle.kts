@@ -1,5 +1,5 @@
 pluginManagement {
-  includeBuild("../..")
+  includeBuild("../..") // the plugin itself
   repositories {
     gradlePluginPortal()
   }
@@ -13,5 +13,11 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "peer-libraries"
-include("peer-lib")
+rootProject.name = "deploy-pipeline"
+
+// Subproject peer libraries — resolved via project() dependency notation.
+// shell-lib is only declared as a peer of deploy-lib; the root picks it up transitively.
+include(":deploy-lib", ":shell-lib", ":checks-lib")
+
+// Included build peer library — resolved via GAV notation with composite substitution.
+includeBuild("notify-lib")
