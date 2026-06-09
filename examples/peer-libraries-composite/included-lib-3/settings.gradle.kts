@@ -13,4 +13,4 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "included-lib-3"
+rootProject.name = "version-utils"

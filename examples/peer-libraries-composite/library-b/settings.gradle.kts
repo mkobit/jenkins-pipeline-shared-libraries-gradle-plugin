@@ -13,4 +13,4 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "library-b"
+rootProject.name = "notifier"

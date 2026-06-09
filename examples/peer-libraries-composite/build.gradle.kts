@@ -4,7 +4,7 @@ plugins {
 
 sharedLibrary {
     dependencies {
-        sharedLibrary("com.example.pipeline:library-a:1.0")
-        sharedLibrary("com.example.pipeline:library-b:1.0")
+        sharedLibrary("com.example.pipeline:deployer:1.0")
+        sharedLibrary("com.example.pipeline:notifier:1.0")
     }
 }

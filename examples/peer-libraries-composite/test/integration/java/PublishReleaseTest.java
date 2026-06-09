@@ -6,14 +6,15 @@ import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 @WithJenkins
-class GreetStepTest {
+class PublishReleaseTest {
 
     @Test
-    void runGreetingsCallsBothPeerLibraries(JenkinsRule jenkins) throws Exception {
+    void publishReleaseStampsVersionAndLogsUrl(JenkinsRule jenkins) throws Exception {
         WorkflowJob job = jenkins.createProject(WorkflowJob.class);
-        job.setDefinition(new CpsFlowDefinition("runGreetings()", false));
+        job.setDefinition(new CpsFlowDefinition(
+            "publishRelease('catalog-api', '2.1.0', '99', 'prod')", false));
         WorkflowRun run = jenkins.buildAndAssertSuccess(job);
-        jenkins.assertLogContains("[lib3] Hello, World!", run);
-        jenkins.assertLogContains("Hi from B, World!", run);
+        jenkins.assertLogContains("Released catalog-api@2.1.0+build.99 to https://catalog-api.prod.internal", run);
+        jenkins.assertLogContains("[SUCCESS] catalog-api", run);
     }
 }
