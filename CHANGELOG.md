@@ -14,7 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > See the [migration guide in the README](README.md#migration-from-010x).
 >
 > > [!WARNING]
-> > The recommended path is to manually migrate your code (an OpenRewrite recipe was included initially but later removed as it was untested).
+> > The recommended path is to manually migrate your code
+> > (an OpenRewrite recipe was included initially but later removed as it was untested).
 
 ### Added
 
@@ -29,7 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - OpenRewrite migration recipe `com.mkobit.jenkins.pipelines.MigrateSharedLibraryPlugin010To011` for automated 0.10.x → 0.11.x migration.
 
   > [!WARNING]
-  > This recipe was untested and has been removed in newer versions. The recommended path is to manually migrate your code.
+  > This recipe was untested and has been removed in newer versions.
+  > The recommended path is to manually migrate your code.
 - Configuration cache support.
 - Java 17, 21, and 25 toolchain support.
 - Jenkins LTS 2.479.x, 2.528.x, and 2.541.x compatibility with full BOM alignment.
