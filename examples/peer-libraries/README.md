@@ -18,10 +18,12 @@ Demonstrates all peer library dependency variants in a single build: subproject 
 `deploy-lib` and `shell-lib` each ship a class under `src/` (`DeployTarget`, `ShellStep`).
 A library's own `vars/` scripts can import those classes freely — they share the same `GroovyClassLoader`.
 
-Cross-library class imports — e.g. `deploy-lib/vars/deployTo.groovy` importing `com.example.ShellStep` from `shell-lib/src/` — do **not** work, even with embedded Jenkins.
-Jenkins gives each loaded library its own `GroovyClassLoader` (siblings under the Jenkins system classloader), so one library's compiled classes are invisible to another library's scripts.
-This is intentional: `vars/` steps are the only supported coupling point between libraries.
-The Gradle plugin wires peer `src/` onto `compileClasspath` so cross-library compilation succeeds; it is a runtime classloader boundary that prevents the import.
+Cross-library class imports do **not** work at runtime.
+Jenkins gives each loaded library its own `GroovyClassLoader`; these are siblings under the Jenkins system classloader, so one library's compiled `src/` classes are invisible to another library's scripts.
+Adding `@Library` to the pipeline script does not bridge this gap — it only adds classes to the Jenkinsfile's classloader, not to other libraries' classloaders.
+`vars/` steps are the only supported coupling point between libraries.
+
+The Gradle plugin wires peer `src/` onto `compileClasspath` so cross-library imports compile cleanly; the failure is purely at runtime in the Jenkins classloader.
 
 ## Tests
 

@@ -297,6 +297,73 @@ class SharedLibraryPluginPeerLibraryTest :
       }
     }
 
+    describe("cross-library src/ import: @Library in vars script bridges classloader") {
+      forGradleVersions { gradleVersion ->
+        withTestProject {
+          // Two peer libs: src-lib has only a src/ class; step-lib has a vars/ script that
+          // declares @Library('src-lib') at the top and imports that class directly.
+          // If @Library in a vars script causes Jenkins to share the peer's classloader,
+          // the import should resolve and the step should succeed.
+          settingsFile.writeText(jenkinsSettings("cross-src-root", includes = listOf("src-lib", "step-lib")))
+          buildFile.writeText(
+            """
+            plugins { id("com.mkobit.jenkins.pipelines.shared-library") }
+            sharedLibrary {
+                dependencies {
+                    sharedLibrary(project(":src-lib"))
+                    sharedLibrary(project(":step-lib"))
+                }
+            }
+            """.trimIndent(),
+          )
+
+          file("src-lib/build.gradle.kts").writeText(barePeerSubproject())
+          file("src-lib/src/com/example/CrossClass.groovy").writeText(
+            """
+            package com.example
+            class CrossClass implements Serializable {
+                String value(String input) { "cross: \$input" }
+            }
+            """.trimIndent(),
+          )
+
+          file("step-lib/build.gradle.kts").writeText(barePeerSubproject(declaresPeerProjects = listOf(":src-lib")))
+          file("step-lib/vars/crossStep.groovy").writeText(
+            """
+            @Library('src-lib') _
+            import com.example.CrossClass
+            def call(String input) { return new CrossClass().value(input) }
+            """.trimIndent(),
+          )
+
+          file("test/integration/java/CrossSrcIT.java").writeText(
+            """
+            import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+            import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+            import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+            import org.junit.jupiter.api.Test;
+            import org.jvnet.hudson.test.JenkinsRule;
+            import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
+
+            @WithJenkins
+            class CrossSrcIT {
+                @Test
+                void stepLibVarsCanUseClassFromPeerSrcViaLibraryAnnotation(JenkinsRule jenkins) throws Exception {
+                    WorkflowJob job = jenkins.createProject(WorkflowJob.class);
+                    job.setDefinition(new CpsFlowDefinition("echo crossStep('hello')", false));
+                    WorkflowRun run = jenkins.buildAndAssertSuccess(job);
+                    jenkins.assertLogContains("cross: hello", run);
+                }
+            }
+            """.trimIndent(),
+          )
+
+          val result = runner(gradleVersion).build("integrationTest")
+          result.task(":integrationTest") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
+        }
+      }
+    }
+
     // Tracked in https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/165
     // sharedLibrarySourceElements ships a directory artifact that Maven's publishing pipeline cannot
     // checksum or upload, so the variant metadata never lands in a repo. Unblocking this requires a
