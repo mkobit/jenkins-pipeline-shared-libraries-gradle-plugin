@@ -25,9 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Built-in Jenkins CodeNarc rules (`codenarcJenkinsMain` task) — validates CPS-safety and Serializable type compliance on shared library sources.
 - OpenRewrite migration recipe `com.mkobit.jenkins.pipelines.MigrateSharedLibraryPlugin010To011` for automated 0.10.x → 0.11.x migration.
 
-  > [!WARNING]
-  > This recipe was untested and has been removed in newer versions.
-  > The recommended path is to manually migrate your code.
+> [!WARNING]
+> This recipe was untested and has been removed in newer versions.
+> The recommended path is to manually migrate your code.
 - Configuration cache support.
 - Java 17, 21, and 25 toolchain support.
 - Jenkins LTS 2.479.x, 2.528.x, and 2.541.x compatibility with full BOM alignment.
@@ -316,7 +316,7 @@ For a complete working project, see the example repository:
 - Support for using Jenkins core and plugins in library source code
 - Support for `@Grab` in library source
 
-  > [!WARNING]
+> [!WARNING]
   > Unit testing code that uses `@Grab` does not work.
   > See [this StackOverflow question](https://stackoverflow.com/questions/4611230/no-suitable-classloader-found-for-grab).
   > You can still test other code that does not use `@Grab`.
