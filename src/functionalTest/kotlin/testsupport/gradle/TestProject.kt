@@ -28,20 +28,28 @@ class TestProject(
       }
 }
 
+data class GradleProperties(
+  val jvmArgs: String? = "-Xmx512m -XX:MaxMetaspaceSize=384m",
+) {
+  fun writeTo(path: Path) {
+    val props = java.util.Properties()
+    jvmArgs?.let { props.setProperty("org.gradle.jvmargs", it) }
+
+    if (props.isNotEmpty()) {
+      path.outputStream().use { os ->
+        props.store(os, null)
+      }
+    }
+  }
+}
+
 context(config: TestConfiguration)
 fun withTestProject(
   // Without an explicit -Xmx the daemon JVM uses ergonomic defaults (25% of system RAM).
-  gradleProperties: Map<String, String> = mapOf("org.gradle.jvmargs" to "-Xmx512m -XX:MaxMetaspaceSize=384m"),
+  gradleProperties: GradleProperties = GradleProperties(),
   block: TestProject.() -> Unit,
 ) {
   val dir = config.tempdir("shared-library-functional-test").toPath()
-  if (gradleProperties.isNotEmpty()) {
-    dir.resolve("gradle.properties").outputStream().use { os ->
-      java.util
-        .Properties()
-        .apply { putAll(gradleProperties) }
-        .store(os, null)
-    }
-  }
+  gradleProperties.writeTo(dir.resolve("gradle.properties"))
   TestProject(dir).block()
 }
