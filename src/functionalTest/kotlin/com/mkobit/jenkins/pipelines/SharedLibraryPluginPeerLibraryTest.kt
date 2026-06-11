@@ -360,7 +360,7 @@ class SharedLibraryPluginPeerLibraryTest :
     // publish-side sources-JAR variant and a consumer-side ArtifactTransform to unzip it back to a
     // directory — a non-trivial design given that JSL source is not compiled before publishing.
     xdescribe("binary GAV (blocked on sources-JAR + ArtifactTransform — see issue #165)") {
-      xdescribe("sharedLibrary(\"group:artifact:version\") from a local Maven repo") {
+      xdescribe("""sharedLibrary("group:artifact:version") from a local Maven repo""") {
         forGradleVersions { gradleVersion ->
           withTestProject {
             val mavenRepoPath = dir.resolve("local-maven-repo").toUri().toString()
