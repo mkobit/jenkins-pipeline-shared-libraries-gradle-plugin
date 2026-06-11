@@ -5,7 +5,6 @@ junit-jupiter = "6.0.3"
 kotest = "6.1.11"
 mockk = "1.14.9"
 okhttp = "5.3.2"
-openrewrite = "7.33.0"
 plugin-publish = "2.1.1"
 spotless = "8.5.1"
 
@@ -23,5 +22,4 @@ okhttp-mockwebserver = { module = "com.squareup.okhttp3:mockwebserver", version.
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 foojay = { id = "org.gradle.toolchains.foojay-resolver-convention", version.ref = "foojay" }
 gradle-publish = { id = "com.gradle.plugin-publish", version.ref = "plugin-publish" }
-openrewrite = { id = "org.openrewrite.rewrite", version.ref = "openrewrite" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }

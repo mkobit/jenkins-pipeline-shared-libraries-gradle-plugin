@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > **This is a complete rewrite** — the first release since 0.10.1 (July 2019), nearly seven years later.
 > The plugin has been rebuilt from the ground up for Gradle 9.4+, Java 17/21, and modern Jenkins LTS lines.
 > All 0.10.x APIs have been removed.
-> See the [migration guide in the README](README.md#migration-from-010x) or run the bundled OpenRewrite recipe.
+> See the [migration guide in the README](README.md#migration-from-010x).
 
 ### Added
 
@@ -23,7 +23,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `libraryName` property (default: `project.name`) — controls the Jenkins library identifier used in `@Library("...")` pipeline scripts and `LocalLibraryRetriever.implicitLibrary()`.
 - Generated `LocalLibraryRetriever` class — loads the local shared library in integration tests without network access.
 - Built-in Jenkins CodeNarc rules (`codenarcJenkinsMain` task) — validates CPS-safety and Serializable type compliance on shared library sources.
-- OpenRewrite migration recipe `com.mkobit.jenkins.pipelines.MigrateSharedLibraryPlugin010To011` for automated 0.10.x → 0.11.x migration.
+- ~~OpenRewrite migration recipe `com.mkobit.jenkins.pipelines.MigrateSharedLibraryPlugin010To011` for automated 0.10.x → 0.11.x migration.~~
+
+> [!WARNING]
+> This recipe was untested and has been removed in newer versions.
+> The recommended path is to manually migrate your code.
+
 - Configuration cache support.
 - Java 17, 21, and 25 toolchain support.
 - Jenkins LTS 2.479.x, 2.528.x, and 2.541.x compatibility with full BOM alignment.
@@ -312,7 +317,7 @@ For a complete working project, see the example repository:
 - Support for using Jenkins core and plugins in library source code
 - Support for `@Grab` in library source
 
-  > [!WARNING]
+> [!WARNING]
   > Unit testing code that uses `@Grab` does not work.
   > See [this StackOverflow question](https://stackoverflow.com/questions/4611230/no-suitable-classloader-found-for-grab).
   > You can still test other code that does not use `@Grab`.

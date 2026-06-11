@@ -185,7 +185,7 @@ testing {
 
 ## Migration from 0.10.x
 
-See the [0.11.0 entry in CHANGELOG.md](CHANGELOG.md) for the full API diff and the bundled OpenRewrite migration recipe.
+See the [0.11.0 entry in CHANGELOG.md](CHANGELOG.md) for the full API diff.
 
 ## Troubleshooting
 

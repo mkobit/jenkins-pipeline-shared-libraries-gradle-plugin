@@ -11,7 +11,6 @@ plugins {
   `kotlin-dsl`
   alias(libs.plugins.dokka)
   alias(libs.plugins.gradle.publish)
-  alias(libs.plugins.openrewrite)
   alias(libs.plugins.spotless)
   id("ci-tasks")
 }
