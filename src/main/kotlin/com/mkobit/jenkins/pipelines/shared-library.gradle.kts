@@ -243,6 +243,26 @@ configurations.compileOnly {
   extendsFrom(sharedLibraryDependencies)
 }
 
+// Jenkins' CPS compiler implicitly imports org.jenkinsci.plugins.workflow.libs.Library so that
+// @Library works in pipeline scripts without an explicit import statement. Replicate that here so
+// vars/ scripts can use @Library the same way they would inside Jenkins.
+val groovyCompilerConfigFile: File =
+  layout.buildDirectory.file("tmp/compileGroovyConfig/jenkins-imports.groovy").get().asFile.also { f ->
+    f.parentFile.mkdirs()
+    f.writeText(
+      """
+      withConfig(configuration) {
+          imports {
+              normal 'org.jenkinsci.plugins.workflow.libs.Library'
+          }
+      }
+      """.trimIndent(),
+    )
+  }
+tasks.named<GroovyCompile>("compileGroovy") {
+  groovyOptions.configurationScript = groovyCompilerConfigFile
+}
+
 // Integration tests need groovy-all at *runtime only* so SandboxInterceptor
 // (script-security plugin) can load SqlGroovyMethods and other Groovy 2.4 DGM classes
 // that no longer exist in the groovy-3.x module jars. An isolated configuration bypasses

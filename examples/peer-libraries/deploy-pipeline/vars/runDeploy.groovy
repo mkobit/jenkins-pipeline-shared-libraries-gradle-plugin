@@ -1,5 +1,3 @@
-@Library(['deployer', 'pre-checks', 'notifier', 'shell-lib']) _
-
 def call(String service, String env) {
     echo preCheck(service)
     echo runShell("deploy ${service}")

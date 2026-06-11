@@ -13,11 +13,9 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "deploy-pipeline"
+rootProject.name = "peer-libraries"
 
-// Subproject peer libraries — resolved via project() dependency notation.
-// shell-lib is only declared as a peer of deploy-lib (src/-only, no vars/) and is picked up transitively.
-include(":deploy-lib", ":shell-lib", ":checks-lib")
+include(":deploy-pipeline", ":deploy-lib", ":shell-lib", ":checks-lib")
 
-// Included build peer library — resolved via GAV notation with composite substitution.
+// notify-lib is an included build peer library resolved via GAV notation.
 includeBuild("notify-lib")

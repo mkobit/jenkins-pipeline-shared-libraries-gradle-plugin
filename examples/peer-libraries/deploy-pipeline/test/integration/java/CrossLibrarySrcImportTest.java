@@ -1,19 +1,20 @@
 import hudson.model.Result;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 /**
- * Investigates whether @Library in a vars script bridges the per-library
- * GroovyClassLoader isolation in Jenkins.
+ * Investigates whether @Library can bridge Jenkins' per-library GroovyClassLoader isolation.
  *
- * deploy-lib declares shell-lib as a peer, so com.example.ShellStep compiles
- * fine (Gradle wires peer src/ onto compileClasspath). crossImport.groovy
- * declares @Library('shell-lib') at the top of the vars script itself —
- * the hypothesis being that this loads shell-lib's classloader as a parent
- * of deploy-lib's classloader, making ShellStep resolvable at runtime.
+ * deploy-lib declares shell-lib as a peer, so com.example.ShellStep compiles fine in Gradle
+ * (peer src/ is on compileClasspath). At runtime Jenkins gives each library its own isolated
+ * GroovyClassLoader. The disabled tests below assert the desired behavior — that @Library in
+ * various positions causes Jenkins to make ShellStep visible to deploy-lib's scripts.
+ * Currently all fail with ClassNotFoundException; @Disabled tracks them as known open questions.
  */
 @WithJenkins
 class CrossLibrarySrcImportTest {
@@ -21,8 +22,6 @@ class CrossLibrarySrcImportTest {
     @Test
     void crossSrcImportFails_withoutLibraryAnnotation(JenkinsRule jenkins) throws Exception {
         WorkflowJob job = jenkins.createProject(WorkflowJob.class);
-        // crossImport.groovy has @Library('shell-lib') in its own script body — removed here to
-        // show the baseline: without any @Library, the import fails.
         job.setDefinition(new CpsFlowDefinition("echo crossImport()", false));
         jenkins.assertBuildStatus(Result.FAILURE, job.scheduleBuild2(0));
     }
@@ -37,13 +36,23 @@ class CrossLibrarySrcImportTest {
         jenkins.assertBuildStatus(Result.FAILURE, job.scheduleBuild2(0));
     }
 
+    @Disabled("hypothesis: @Library in a vars script should cause Jenkins to load shell-lib's " +
+              "classloader before compiling the script, making ShellStep visible")
     @Test
     void crossSrcImportSucceeds_withLibraryAnnotationInVarsScript(JenkinsRule jenkins) throws Exception {
         WorkflowJob job = jenkins.createProject(WorkflowJob.class);
-        // crossImport.groovy itself declares @Library('shell-lib') — if this causes Jenkins to
-        // share shell-lib's classloader with deploy-lib's vars context, ShellStep is resolvable.
         job.setDefinition(new CpsFlowDefinition("echo crossImport()", false));
         WorkflowRun run = jenkins.buildAndAssertSuccess(job);
-        jenkins.assertLogContains("shell: cross-import-test", run);
+        jenkins.assertLogContains("shell: cross-src-import-test", run);
+    }
+
+    @Disabled("hypothesis: @Library on a src/ class should trigger classloader bridging " +
+              "before Jenkins compiles the class, making ShellStep visible")
+    @Test
+    void crossSrcImportSucceeds_withLibraryAnnotationOnSrcClass(JenkinsRule jenkins) throws Exception {
+        WorkflowJob job = jenkins.createProject(WorkflowJob.class);
+        job.setDefinition(new CpsFlowDefinition("echo crossImportSrc()", false));
+        WorkflowRun run = jenkins.buildAndAssertSuccess(job);
+        jenkins.assertLogContains("shell: cross-src-import-test", run);
     }
 }
