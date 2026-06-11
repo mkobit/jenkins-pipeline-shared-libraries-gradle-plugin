@@ -37,6 +37,8 @@ updates:
       - "/examples/junit-groovy"
       - "/examples/kotest"
       - "/examples/library-resource"
+      - "/examples/peer-libraries"
+      - "/examples/peer-libraries-composite"
       - "/examples/version-catalog"
     schedule:
       interval: "weekly"
@@ -68,7 +70,7 @@ updates:
     schedule:
       interval: "weekly"
     labels:
-      - "infrastructure"
+      - "infra"
     cooldown:
       default-days: 30
     commit-message:

@@ -1,8 +1,16 @@
 # Examples directory
 
 Each subdirectory is a standalone Gradle project demonstrating a plugin usage pattern.
-Run from the repo root with `./gradlew :examples:example-<name>`.
-Examples do not need their own Gradle wrapper.
+
+## Running examples
+
+Always run from the **repo root**:
+
+```
+./gradlew :examples:example-<name>
+```
+
+Examples do not have their own Gradle wrapper — never `cd` into an example directory and invoke Gradle from there.
 
 Use [basic/](basic/) as the reference when adding a new example.
 

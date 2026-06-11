@@ -83,6 +83,10 @@ sharedLibrary {
     plugins {
         plugin("org.jenkins-ci.plugins:git")        // additional Jenkins plugins
     }
+    dependencies {
+        sharedLibrary(project(":peer-lib"))          // peer shared library (multi-project)
+        sharedLibrary("com.example:config-lib:1.0") // peer via composite build (includeBuild)
+    }
     pipelineUnitVersion = "1.29"                    // JenkinsPipelineUnit version (test suite)
     libraryName = "my-shared-lib"                   // Jenkins library name (default: project.name)
     autoRegisterLibrary = true                      // generate SharedLibraryAutoRegistrar (default: true)
@@ -106,6 +110,8 @@ The [`examples/`](examples/) directory contains standalone Gradle composite buil
 | [`junit-groovy`](examples/junit-groovy) | Unit tests written in Groovy using JenkinsPipelineUnit |
 | [`kotest`](examples/kotest) | Kotlin source with Kotest unit and integration test suites |
 | [`library-resource`](examples/library-resource) | Steps that read files via `libraryResource()` |
+| [`peer-libraries`](examples/peer-libraries) | Declaring another shared library as a peer dependency for cross-library step access |
+| [`peer-libraries-composite`](examples/peer-libraries-composite) | Peer libraries across separate Gradle builds via `includeBuild` and GAV notation; transitive nested composite |
 | [`version-catalog`](examples/version-catalog) | Version catalog wiring for plugin versions and Jenkins plugin coordinates |
 
 Run all examples from the repo root:
@@ -164,6 +170,34 @@ tasks.check {
 > On Jenkins 2.479.x LTS this conflicts with the bundled `groovy-all:2.4.21` when `sandbox=true`.
 > Use `sandbox=false` in `CpsFlowDefinition` for test suites on 2.479.x.
 > This restriction is expected to lift on Jenkins 2.492.x+ once its internal Groovy 3 migration completes.
+
+## Peer libraries
+
+A shared library can declare other shared libraries as peer dependencies so their steps and classes are available during integration tests.
+Peer libraries are registered in the embedded Jenkins runtime alongside the project's own library — no manual `GlobalLibraries` wiring is needed.
+
+```kotlin
+sharedLibrary {
+    dependencies {
+        sharedLibrary(project(":peer-lib"))                    // subproject in the same build
+        sharedLibrary("com.example:config-lib:1.0.0")         // composite build (includeBuild)
+        sharedLibrary(project(":config-lib")) {
+            libraryName.set("config")   // override the Jenkins library name
+            implicit.set(false)         // require @Library('config') _ in pipelines
+        }
+    }
+}
+```
+
+Peer library classes are available on `compileOnly` for symbol resolution in the consuming library's Groovy source.
+Peer library source directories (`src/`, `vars/`, `resources/`) are injected into the embedded Jenkins at integration-test time via `test.library.N.*` system properties.
+
+> [!NOTE]
+> Binary GAV coordinates (`"group:artifact:version"`) work when the peer is declared via `includeBuild(...)` in `settings.gradle.kts` and Gradle substitutes the coordinate with the local project.
+> Resolution from a remote Maven repository is not supported: the `sharedLibrarySourceElements` variant ships a directory artifact that Maven's publishing pipeline cannot upload.
+> See [issue #165](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/165).
+
+See the [`peer-libraries`](examples/peer-libraries) example.
 
 ## JUnit 4
 
