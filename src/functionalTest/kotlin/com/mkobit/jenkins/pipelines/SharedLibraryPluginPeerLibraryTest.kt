@@ -305,38 +305,28 @@ class SharedLibraryPluginPeerLibraryTest :
       forGradleVersions { gradleVersion ->
         withTestProject {
           settingsFile.writeText(jenkinsSettings("cross-src-root", includes = listOf("src-lib", "step-lib")))
-          buildFile.writeText(
-            """
-            plugins { id("com.mkobit.jenkins.pipelines.shared-library") }
-            sharedLibrary {
-                dependencies {
-                    sharedLibrary(project(":src-lib"))
-                    sharedLibrary(project(":step-lib"))
-                }
-            }
-            """.trimIndent(),
-          )
+          buildFile.writeText("""plugins { id("com.mkobit.jenkins.pipelines.shared-library") apply false }""")
 
           file("src-lib/build.gradle.kts").writeText(barePeerSubproject())
           file("src-lib/src/com/example/CrossClass.groovy").writeText(
-            """
+            $$"""
             package com.example
             class CrossClass implements Serializable {
-                String value(String input) { "cross: ${'$'}input" }
+                String value(String input) { "cross: $input" }
             }
             """.trimIndent(),
           )
 
           file("step-lib/build.gradle.kts").writeText(barePeerSubproject(declaresPeerProjects = listOf(":src-lib")))
           file("step-lib/vars/crossStep.groovy").writeText(
-            """
+            $$"""
             @Library('src-lib') _
             import com.example.CrossClass
             def call(String input) { return new CrossClass().value(input) }
             """.trimIndent(),
           )
 
-          file("test/integration/java/CrossSrcIT.java").writeText(
+          file("step-lib/test/integration/java/CrossSrcIT.java").writeText(
             """
             import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
             import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -358,8 +348,8 @@ class SharedLibraryPluginPeerLibraryTest :
             """.trimIndent(),
           )
 
-          val result = runner(gradleVersion).build("integrationTest")
-          result.task(":integrationTest") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
+          val result = runner(gradleVersion).build(":step-lib:integrationTest")
+          result.task(":step-lib:integrationTest") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
         }
       }
     }
