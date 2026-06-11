@@ -305,7 +305,7 @@ class SharedLibraryPluginPeerLibraryTest :
       forGradleVersions { gradleVersion ->
         withTestProject {
           settingsFile.writeText(jenkinsSettings("cross-src-root", includes = listOf("src-lib", "step-lib")))
-          buildFile.writeText("""plugins { id("com.mkobit.jenkins.pipelines.shared-library") apply false }""")
+          buildFile.writeText(AGGREGATOR_BUILD_FILE)
 
           file("src-lib/build.gradle.kts").writeText(barePeerSubproject())
           file("src-lib/src/com/example/CrossClass.groovy").writeText(
@@ -431,6 +431,8 @@ private const val PRINT_RESOLVED_TASK = """tasks.register("printResolved") {
     }
 }"""
 
+private val AGGREGATOR_BUILD_FILE = """plugins { id("com.mkobit.jenkins.pipelines.shared-library") apply false }"""
+
 private fun rootBuildFile(sharedLibraryBody: String): String =
   """
   plugins { id("com.mkobit.jenkins.pipelines.shared-library") }
@@ -438,17 +440,21 @@ private fun rootBuildFile(sharedLibraryBody: String): String =
   $PRINT_RESOLVED_TASK
   """.trimIndent()
 
-private fun barePeerSubproject(declaresPeerProjects: List<String> = emptyList()): String =
-  buildString {
-    appendLine("""plugins { id("com.mkobit.jenkins.pipelines.shared-library") }""")
-    if (declaresPeerProjects.isNotEmpty()) {
-      appendLine("sharedLibrary {")
-      appendLine("    dependencies {")
-      declaresPeerProjects.forEach { appendLine("        sharedLibrary(project(\"$it\"))") }
-      appendLine("    }")
-      appendLine("}")
+private fun barePeerSubproject(declaresPeerProjects: List<String> = emptyList()): String {
+  val deps = declaresPeerProjects.joinToString("\n") { """        sharedLibrary(project("$it"))""" }
+  return if (deps.isEmpty()) {
+    """plugins { id("com.mkobit.jenkins.pipelines.shared-library") }"""
+  } else {
+    """
+    plugins { id("com.mkobit.jenkins.pipelines.shared-library") }
+    sharedLibrary {
+        dependencies {
+    $deps
+        }
     }
+    """.trimIndent()
   }
+}
 
 private fun BuildResult.peerSourceLines(): List<String> = output.lines().filterMatching { it.shouldStartWith("peer-source:") }
 
