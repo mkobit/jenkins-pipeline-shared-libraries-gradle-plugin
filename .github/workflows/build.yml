@@ -5,7 +5,9 @@ on:
     branches:
       - main
     paths-ignore:
-      - '**.md'
+      - '**/README.md'
+      - '**/CHANGELOG.md'
+      - '**/CLAUDE.md'
       - 'LICENSE.txt'
       - '.gitignore'
       - 'release-please-config.json'
@@ -16,7 +18,9 @@ on:
       - '.github/workflows/pr-title-check.yml'
   pull_request:
     paths-ignore:
-      - '**.md'
+      - '**/README.md'
+      - '**/CHANGELOG.md'
+      - '**/CLAUDE.md'
       - 'LICENSE.txt'
       - '.gitignore'
       - 'release-please-config.json'
