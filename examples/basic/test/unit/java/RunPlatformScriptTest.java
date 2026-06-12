@@ -2,6 +2,8 @@ import com.lesfurets.jenkins.unit.BasePipelineTest;
 import groovy.lang.Script;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import java.util.Collections;
+import groovy.lang.Closure;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -13,10 +15,28 @@ public class RunPlatformScriptTest extends BasePipelineTest {
     }
 
     @Test
-    void testRunPlatformScript() throws Exception {
+    void testRunPlatformScriptUnix() throws Exception {
+        getHelper().registerAllowedMethod("isUnix", Collections.emptyList(), new Closure<Boolean>(null, null) {
+            public Boolean doCall(Object... args) {
+                return true;
+            }
+        });
         Script script = loadScript("vars/runPlatformScript.groovy");
         script.invokeMethod("call", new Object[]{});
-        // Verify that either the Unix or Windows branch executed successfully
-        assertTrue(getHelper().getCallStack().stream().anyMatch(c -> c.toString().contains("Executing on Unix") || c.toString().contains("Executing on Windows")));
+
+        assertTrue(getHelper().getCallStack().stream().anyMatch(c -> c.toString().contains("Executing on Unix")));
+    }
+
+    @Test
+    void testRunPlatformScriptWindows() throws Exception {
+        getHelper().registerAllowedMethod("isUnix", Collections.emptyList(), new Closure<Boolean>(null, null) {
+            public Boolean doCall(Object... args) {
+                return false;
+            }
+        });
+        Script script = loadScript("vars/runPlatformScript.groovy");
+        script.invokeMethod("call", new Object[]{});
+
+        assertTrue(getHelper().getCallStack().stream().anyMatch(c -> c.toString().contains("Executing on Windows")));
     }
 }
