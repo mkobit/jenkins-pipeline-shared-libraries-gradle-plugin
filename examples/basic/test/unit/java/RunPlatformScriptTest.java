@@ -14,9 +14,9 @@ public class RunPlatformScriptTest extends BasePipelineTest {
 
     @Test
     void testRunPlatformScript() throws Exception {
-        // Just load the script and call it. JenkinsPipelineUnit doesn't execute sh or bat by default but intercepts it.
         Script script = loadScript("vars/runPlatformScript.groovy");
         script.invokeMethod("call", new Object[]{});
-        // By default JenkinsPipelineUnit might consider isUnix() as false unless mocked, or we can just verify it doesn't crash.
+        // Verify that either the Unix or Windows branch executed successfully
+        assertTrue(getHelper().getCallStack().stream().anyMatch(c -> c.toString().contains("Executing on Unix") || c.toString().contains("Executing on Windows")));
     }
 }
