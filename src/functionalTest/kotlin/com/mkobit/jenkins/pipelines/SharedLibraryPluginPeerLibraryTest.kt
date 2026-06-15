@@ -339,6 +339,117 @@ class SharedLibraryPluginPeerLibraryTest :
       }
     }
 
+    describe("implicit=false: pipeline must explicitly @Library the peer to call its steps") {
+      forGradleVersions { gradleVersion ->
+        withTestProject {
+          // implicit=true (default) auto-loads the peer into every pipeline. implicit=false forces
+          // pipelines to opt in with @Library('name'). This test runs two pipelines back-to-back:
+          // one without @Library (must fail), one with (must succeed). Gates the implicit flag's
+          // effect end-to-end at Jenkins runtime, not just at DSL capture time.
+          settingsFile.writeText(jenkinsSettings("peer-implicit-consumer", includes = listOf("peer-lib")))
+          buildFile.writeText(
+            """
+            plugins { id("com.mkobit.jenkins.pipelines.shared-library") }
+            sharedLibrary {
+                dependencies {
+                    sharedLibrary(project(":peer-lib")) {
+                        implicit = false
+                    }
+                }
+            }
+            """.trimIndent(),
+          )
+          file("vars/consumerStep.groovy").writeText("def call() {}")
+          file("peer-lib/build.gradle.kts").writeText(barePeerSubproject())
+          file("peer-lib/vars/explicitOnlyStep.groovy").writeText(
+            "def call() { return 'explicit-loaded' }",
+          )
+          file("test/integration/java/ImplicitFalseIT.java").writeText(
+            """
+            import hudson.model.Result;
+            import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+            import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+            import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+            import org.junit.jupiter.api.Test;
+            import org.jvnet.hudson.test.JenkinsRule;
+            import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
+
+            @WithJenkins
+            class ImplicitFalseIT {
+                @Test
+                void pipelineWithoutLibraryAnnotationCannotResolvePeerStep(JenkinsRule jenkins) throws Exception {
+                    WorkflowJob job = jenkins.createProject(WorkflowJob.class);
+                    job.setDefinition(new CpsFlowDefinition("echo explicitOnlyStep()", false));
+                    jenkins.assertBuildStatus(Result.FAILURE, job.scheduleBuild2(0));
+                }
+
+                @Test
+                void pipelineWithLibraryAnnotationLoadsPeerStep(JenkinsRule jenkins) throws Exception {
+                    WorkflowJob job = jenkins.createProject(WorkflowJob.class);
+                    job.setDefinition(new CpsFlowDefinition(
+                        "@Library('peer-lib') _\necho explicitOnlyStep()", false));
+                    WorkflowRun run = jenkins.buildAndAssertSuccess(job);
+                    jenkins.assertLogContains("explicit-loaded", run);
+                }
+            }
+            """.trimIndent(),
+          )
+
+          val result = runner(gradleVersion).build("integrationTest")
+          result.task(":integrationTest") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
+        }
+      }
+    }
+
+    describe("peer resources/: pipeline can read a resource file from a peer via libraryResource") {
+      forGradleVersions { gradleVersion ->
+        withTestProject {
+          // resources/ in a peer library are loaded by Jenkins via the libraryResource step.
+          // Verifies the sync wiring covers resources/ in addition to src/ and vars/.
+          settingsFile.writeText(jenkinsSettings("peer-resources-consumer", includes = listOf("peer-lib")))
+          buildFile.writeText(
+            """
+            plugins { id("com.mkobit.jenkins.pipelines.shared-library") }
+            sharedLibrary {
+                dependencies {
+                    sharedLibrary(project(":peer-lib"))
+                }
+            }
+            """.trimIndent(),
+          )
+          file("vars/consumerStep.groovy").writeText("def call() {}")
+          file("peer-lib/build.gradle.kts").writeText(barePeerSubproject())
+          file("peer-lib/vars/peerHello.groovy").writeText("def call() {}")
+          file("peer-lib/resources/com/example/greeting.txt").writeText("hello from peer resource")
+          file("test/integration/java/PeerResourceIT.java").writeText(
+            """
+            import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+            import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+            import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+            import org.junit.jupiter.api.Test;
+            import org.jvnet.hudson.test.JenkinsRule;
+            import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
+
+            @WithJenkins
+            class PeerResourceIT {
+                @Test
+                void pipelineReadsResourceFromPeer(JenkinsRule jenkins) throws Exception {
+                    WorkflowJob job = jenkins.createProject(WorkflowJob.class);
+                    job.setDefinition(new CpsFlowDefinition(
+                        "echo libraryResource('com/example/greeting.txt')", false));
+                    WorkflowRun run = jenkins.buildAndAssertSuccess(job);
+                    jenkins.assertLogContains("hello from peer resource", run);
+                }
+            }
+            """.trimIndent(),
+          )
+
+          val result = runner(gradleVersion).build("integrationTest")
+          result.task(":integrationTest") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
+        }
+      }
+    }
+
     describe("integrationTest end-to-end: pipeline calls a peer's vars step") {
       forGradleVersions { gradleVersion ->
         withTestProject {
