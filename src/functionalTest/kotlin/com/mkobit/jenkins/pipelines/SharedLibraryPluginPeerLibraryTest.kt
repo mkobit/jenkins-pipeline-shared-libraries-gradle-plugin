@@ -399,6 +399,69 @@ class SharedLibraryPluginPeerLibraryTest :
       }
     }
 
+    describe("custom test suite with useTestHarness=true gets the same peer wiring as integrationTest") {
+      forGradleVersions { gradleVersion ->
+        withTestProject {
+          // Plugin wires peer libraries via testing.suites.withType<JvmTestSuite>().configureEach,
+          // which should fire for any user-registered JvmTestSuite that flips useTestHarness=true.
+          // Without this guarantee, alternate suites (Spock, Kotest, etc.) would silently miss
+          // peer libraries — they'd register the self-library but no peers.
+          settingsFile.writeText(jenkinsSettings("peer-custom-suite-consumer", includes = listOf("peer-lib")))
+          buildFile.writeText(
+            """
+            import com.mkobit.jenkins.pipelines.jenkins
+            plugins { id("com.mkobit.jenkins.pipelines.shared-library") }
+            sharedLibrary {
+                dependencies {
+                    sharedLibrary(project(":peer-lib"))
+                }
+            }
+            testing {
+                suites {
+                    register<JvmTestSuite>("integrationTestAlt") {
+                        useJUnitJupiter()
+                        sources {
+                            java.setSrcDirs(listOf("test/integration-alt/java"))
+                        }
+                        jenkins.useTestHarness.set(true)
+                    }
+                }
+            }
+            """.trimIndent(),
+          )
+          file("vars/consumerStep.groovy").writeText("def call() {}")
+          file("peer-lib/build.gradle.kts").writeText(barePeerSubproject())
+          file("peer-lib/vars/peerGreet.groovy").writeText(
+            "def call(String who) { return \"hello, \${who}\" }",
+          )
+          file("test/integration-alt/java/PeerAltIT.java").writeText(
+            """
+            import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+            import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+            import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+            import org.junit.jupiter.api.Test;
+            import org.jvnet.hudson.test.JenkinsRule;
+            import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
+
+            @WithJenkins
+            class PeerAltIT {
+                @Test
+                void customSuiteResolvesPeerVarsStep(JenkinsRule jenkins) throws Exception {
+                    WorkflowJob job = jenkins.createProject(WorkflowJob.class);
+                    job.setDefinition(new CpsFlowDefinition("echo peerGreet('alt-suite')", false));
+                    WorkflowRun run = jenkins.buildAndAssertSuccess(job);
+                    jenkins.assertLogContains("hello, alt-suite", run);
+                }
+            }
+            """.trimIndent(),
+          )
+
+          val result = runner(gradleVersion).build("integrationTestAlt")
+          result.task(":integrationTestAlt") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
+        }
+      }
+    }
+
     describe("implicit=false: pipeline must explicitly @Library the peer to call its steps") {
       forGradleVersions { gradleVersion ->
         withTestProject {
