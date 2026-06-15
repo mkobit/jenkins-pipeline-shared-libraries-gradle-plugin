@@ -1,4 +1,3 @@
-@Library('shell-lib') _
 import com.example.ShellStep
 
 def call() {

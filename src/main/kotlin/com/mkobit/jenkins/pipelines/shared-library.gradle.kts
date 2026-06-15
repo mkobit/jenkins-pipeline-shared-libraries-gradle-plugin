@@ -343,10 +343,16 @@ testing.suites.withType<JvmTestSuite>().configureEach {
       .also { it.useTestHarness.convention(false) }
   configurations.named(sources.implementationConfigurationName) {
     extendsFrom(jenkinsPlugin)
-    // Peer shared library classes need to be on test runtime classpaths so consumer test
-    // code can reference symbols defined in peer libraries.
-    extendsFrom(sharedLibraryDependencies)
     exclude(mapOf("group" to "org.codehaus.groovy", "module" to "groovy-all"))
+  }
+  // Peer shared library classes are compile-only for test code: they let test code reference
+  // peer types for symbol resolution, but stay off the runtime classpath. At runtime Jenkins
+  // (or JPU) compiles peer src/ from the synced source directory; having pre-compiled peer
+  // classes on the JVM classpath shadows that and forces them to load via AppClassLoader,
+  // breaking cross-library type visibility that Jenkins normally provides via one shared
+  // CpsGroovyShell classloader per pipeline run.
+  configurations.named(sources.compileOnlyConfigurationName) {
+    extendsFrom(sharedLibraryDependencies)
   }
   dependencies {
     implementation(SharedLibraryDefaults.GROOVY_COORDINATES)
