@@ -186,6 +186,48 @@ class SharedLibraryPluginPeerLibraryTest :
         }
       }
 
+      describe("integrationTest suite: peer JAR is on compile classpath but NOT on runtime classpath") {
+        forGradleVersions { gradleVersion ->
+          withTestProject {
+            // Regression guard for the leak fix: if peer JARs sneak back onto the integration test
+            // runtime classpath, direct peers load via the JVM AppClassLoader instead of Jenkins'
+            // CpsGroovyShell, breaking cross-library type visibility that real Jenkins provides.
+            settingsFile.writeText(jenkinsSettings("peer-classpath-isolation", includes = listOf("peer-lib")))
+            buildFile.writeText(
+              """
+              plugins { id("com.mkobit.jenkins.pipelines.shared-library") }
+              sharedLibrary {
+                  dependencies {
+                      sharedLibrary(project(":peer-lib"))
+                  }
+              }
+              tasks.register("printIntegrationTestClasspaths") {
+                  val compile = configurations.named("integrationTestCompileClasspath")
+                  val runtime = configurations.named("integrationTestRuntimeClasspath")
+                  doLast {
+                      compile.get().files.forEach { println("itc:" + it.name) }
+                      runtime.get().files.forEach { println("itr:" + it.name) }
+                  }
+              }
+              """.trimIndent(),
+            )
+            file("peer-lib/build.gradle.kts").writeText(barePeerSubproject())
+            file("peer-lib/vars/peerStep.groovy").writeText("def call() {}")
+
+            val output = runner(gradleVersion).build("printIntegrationTestClasspaths").output
+            val compileLines = output.lines().filter { it.startsWith("itc:") }
+            val runtimeLines = output.lines().filter { it.startsWith("itr:") }
+
+            compileLines.forOne { it shouldContain "peer-lib" }
+            if (runtimeLines.any { it.contains("peer-lib") }) {
+              throw AssertionError(
+                "peer JAR leaked back onto integration test runtime classpath:\n${runtimeLines.joinToString("\n")}",
+              )
+            }
+          }
+        }
+      }
+
       describe("peer library JVM args injected into integrationTest task") {
         forGradleVersions { gradleVersion ->
           withTestProject {
@@ -297,13 +339,65 @@ class SharedLibraryPluginPeerLibraryTest :
       }
     }
 
-    // Hypothesis: @Library in a vars script should cause Jenkins to load the peer library's
-    // classloader before compiling the script, making its src/ classes visible.
-    // Currently fails with ClassNotFoundException — @Library does not appear to bridge
-    // per-library GroovyClassLoader isolation at the vars script level.
-    xdescribe("cross-library src/ import: @Library in vars script bridges classloader isolation") {
+    describe("integrationTest end-to-end: pipeline calls a peer's vars step") {
       forGradleVersions { gradleVersion ->
         withTestProject {
+          // Gates the actual Jenkins-runtime behavior of the peer feature: spin up embedded
+          // Jenkins, define a pipeline that calls a step defined in a peer library, assert the
+          // build succeeds and logs what the step echoed.
+          settingsFile.writeText(jenkinsSettings("peer-e2e-consumer", includes = listOf("peer-lib")))
+          buildFile.writeText(
+            """
+            plugins { id("com.mkobit.jenkins.pipelines.shared-library") }
+            sharedLibrary {
+                dependencies {
+                    sharedLibrary(project(":peer-lib"))
+                }
+            }
+            """.trimIndent(),
+          )
+          // Consumer must have at least one src/ or vars/ file because the autoregistrar
+          // registers the consumer itself as a library, and Jenkins rejects empty libraries.
+          file("vars/consumerStep.groovy").writeText("def call() {}")
+          file("peer-lib/build.gradle.kts").writeText(barePeerSubproject())
+          file("peer-lib/vars/peerGreet.groovy").writeText(
+            "def call(String who) { return \"hello, \${who}\" }",
+          )
+          file("test/integration/java/PeerE2EIT.java").writeText(
+            """
+            import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+            import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+            import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+            import org.junit.jupiter.api.Test;
+            import org.jvnet.hudson.test.JenkinsRule;
+            import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
+
+            @WithJenkins
+            class PeerE2EIT {
+                @Test
+                void pipelineCallsPeerVarsStep(JenkinsRule jenkins) throws Exception {
+                    WorkflowJob job = jenkins.createProject(WorkflowJob.class);
+                    job.setDefinition(new CpsFlowDefinition("echo peerGreet('world')", false));
+                    WorkflowRun run = jenkins.buildAndAssertSuccess(job);
+                    jenkins.assertLogContains("hello, world", run);
+                }
+            }
+            """.trimIndent(),
+          )
+
+          val result = runner(gradleVersion).build("integrationTest")
+          result.task(":integrationTest") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
+        }
+      }
+    }
+
+    describe("cross-library src/ import: peer src class is visible to another peer's vars at Jenkins runtime") {
+      forGradleVersions { gradleVersion ->
+        withTestProject {
+          // Real Jenkins gives every library in a pipeline run the same CpsGroovyShell
+          // CleanGroovyClassLoader, so a class compiled from one peer's src/ is visible to
+          // another peer's vars script via a plain import — no @Library, no merged sources.
+          // The leak fix is what makes this provable in our integration tests.
           settingsFile.writeText(jenkinsSettings("cross-src-root", includes = listOf("src-lib", "step-lib")))
           buildFile.writeText(AGGREGATOR_BUILD_FILE)
 
@@ -319,8 +413,7 @@ class SharedLibraryPluginPeerLibraryTest :
 
           file("step-lib/build.gradle.kts").writeText(barePeerSubproject(declaresPeerProjects = listOf(":src-lib")))
           file("step-lib/vars/crossStep.groovy").writeText(
-            $$"""
-            @Library('src-lib') _
+            """
             import com.example.CrossClass
             def call(String input) { return new CrossClass().value(input) }
             """.trimIndent(),
@@ -338,7 +431,7 @@ class SharedLibraryPluginPeerLibraryTest :
             @WithJenkins
             class CrossSrcIT {
                 @Test
-                void atLibraryInVarsScriptBridgesClassloaderIsolation(JenkinsRule jenkins) throws Exception {
+                void varsCanImportPeerSrcClassNatively(JenkinsRule jenkins) throws Exception {
                     WorkflowJob job = jenkins.createProject(WorkflowJob.class);
                     job.setDefinition(new CpsFlowDefinition("echo crossStep('hello')", false));
                     WorkflowRun run = jenkins.buildAndAssertSuccess(job);
