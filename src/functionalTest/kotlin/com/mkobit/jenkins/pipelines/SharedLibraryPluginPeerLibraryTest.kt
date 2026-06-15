@@ -625,6 +625,42 @@ class SharedLibraryPluginPeerLibraryTest :
       }
     }
 
+    describe("bidirectional cross-library src/ refs fail at Gradle task scheduling (documented limitation)") {
+      forGradleVersions { gradleVersion ->
+        withTestProject {
+          // jimklimov's shape (issue #158): two libraries whose src/ classes reference each other
+          // in both directions. At Jenkins runtime, one shared CleanGroovyClassLoader would resolve
+          // the bidirectional refs fine — but Gradle's compile graph requires A:jar before
+          // B:compileGroovy and B:jar before A:compileGroovy, creating a circular dependency that
+          // Gradle refuses to schedule. The classic workaround is jimklimov's "merge both libs'
+          // sources into one library's sharedLibrarySource dir" hack (a single Groovy compile, no
+          // cycle). Whether to lift that into a first-class plugin feature is tracked separately.
+          settingsFile.writeText(jenkinsSettings("peer-bidirectional", includes = listOf("lib-a", "lib-b")))
+          buildFile.writeText(AGGREGATOR_BUILD_FILE)
+
+          file("lib-a/build.gradle.kts").writeText(barePeerSubproject(declaresPeerProjects = listOf(":lib-b")))
+          file("lib-a/src/com/example/AClass.groovy").writeText(
+            """
+            package com.example
+            class AClass implements Serializable { String greet() { new BClass().reply() } }
+            """.trimIndent(),
+          )
+          file("lib-b/build.gradle.kts").writeText(barePeerSubproject(declaresPeerProjects = listOf(":lib-a")))
+          file("lib-b/src/com/example/BClass.groovy").writeText(
+            """
+            package com.example
+            class BClass implements Serializable { String reply() { new AClass().toString() } }
+            """.trimIndent(),
+          )
+
+          val result = runner(gradleVersion).buildAndFail(":lib-a:compileGroovy")
+          result.output shouldContain "Circular dependency"
+          result.output shouldContain ":lib-a:compileGroovy"
+          result.output shouldContain ":lib-b:compileGroovy"
+        }
+      }
+    }
+
     describe("cross-library src/ import: peer src class is visible to another peer's vars at Jenkins runtime") {
       forGradleVersions { gradleVersion ->
         withTestProject {
