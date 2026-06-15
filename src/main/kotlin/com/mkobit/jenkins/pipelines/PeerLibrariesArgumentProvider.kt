@@ -1,7 +1,9 @@
 package com.mkobit.jenkins.pipelines
 
+import org.gradle.api.GradleException
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.provider.ListProperty
+import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.PathSensitive
@@ -27,12 +29,31 @@ internal abstract class PeerLibrariesArgumentProvider : CommandLineArgumentProvi
   @get:Input
   abstract val entries: ListProperty<PeerLibraryEntry>
 
+  /** Consumer's own libraryName (registered at index 0). Included so collisions with peer names can be detected eagerly. */
+  @get:Input
+  abstract val selfLibraryName: Property<String>
+
   @get:InputFiles
   @get:PathSensitive(PathSensitivity.RELATIVE)
   abstract val sourceDirectories: ConfigurableFileCollection
 
-  override fun asArguments(): List<String> =
-    entries.get().flatMapIndexed { idx, entry ->
+  override fun asArguments(): List<String> {
+    val peers = entries.get()
+    val allNames = listOf(selfLibraryName.get()) + peers.map { it.libraryName }
+    val duplicates =
+      allNames
+        .groupingBy { it }
+        .eachCount()
+        .filterValues { it > 1 }
+        .keys
+    if (duplicates.isNotEmpty()) {
+      throw GradleException(
+        "duplicate Jenkins shared library name(s) across consumer and peers: ${duplicates.joinToString(", ")}. " +
+          "Each library registered in Jenkins must have a unique name; set a distinct " +
+          "`libraryName` on the colliding peer in the sharedLibrary { dependencies { } } block.",
+      )
+    }
+    return peers.flatMapIndexed { idx, entry ->
       val i = idx + 1
       listOf(
         "-Dtest.library.$i.name=${entry.libraryName}",
@@ -40,4 +61,5 @@ internal abstract class PeerLibrariesArgumentProvider : CommandLineArgumentProvi
         "-Dtest.library.$i.implicit=${entry.implicit}",
       )
     }
+  }
 }

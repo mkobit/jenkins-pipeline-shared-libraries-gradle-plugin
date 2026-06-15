@@ -450,6 +450,7 @@ testing.suites.withType<JvmTestSuite>().configureEach {
       jvmArgumentProviders.add(
         objects.newInstance<PeerLibrariesArgumentProvider>().apply {
           entries.set(peerLibraryEntries)
+          selfLibraryName.set(sharedLibrary.libraryName)
           sourceDirectories.from(peerLibrarySourceFiles)
         },
       )

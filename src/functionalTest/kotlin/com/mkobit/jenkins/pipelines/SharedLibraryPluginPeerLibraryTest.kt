@@ -272,6 +272,66 @@ class SharedLibraryPluginPeerLibraryTest :
         }
       }
 
+      describe("duplicate libraryName across peers fails at task validation with a clear message") {
+        forGradleVersions { gradleVersion ->
+          withTestProject {
+            // Two peers both want libraryName "shared" — at runtime Jenkins would silently use
+            // whichever LibraryConfiguration was registered last. Fail at task validation so the
+            // user knows up front instead of debugging mysterious "wrong step" issues later.
+            settingsFile.writeText(jenkinsSettings("peer-name-collision", includes = listOf("lib-a", "lib-b")))
+            buildFile.writeText(
+              """
+              plugins { id("com.mkobit.jenkins.pipelines.shared-library") }
+              sharedLibrary {
+                  dependencies {
+                      sharedLibrary(project(":lib-a")) { libraryName = "shared" }
+                      sharedLibrary(project(":lib-b")) { libraryName = "shared" }
+                  }
+              }
+              """.trimIndent(),
+            )
+            file("vars/consumerStep.groovy").writeText("def call() {}")
+            file("test/integration/java/StubIT.java").writeText(STUB_INTEGRATION_TEST)
+            file("lib-a/build.gradle.kts").writeText(barePeerSubproject())
+            file("lib-a/vars/aStep.groovy").writeText("def call() {}")
+            file("lib-b/build.gradle.kts").writeText(barePeerSubproject())
+            file("lib-b/vars/bStep.groovy").writeText("def call() {}")
+
+            val result = runner(gradleVersion).buildAndFail("integrationTest")
+            result.output shouldContain "duplicate Jenkins shared library name"
+            result.output shouldContain "shared"
+          }
+        }
+      }
+
+      describe("peer libraryName colliding with consumer libraryName fails at task validation") {
+        forGradleVersions { gradleVersion ->
+          withTestProject {
+            // The consumer is registered at index 0 with project.name. If a peer chooses the same
+            // libraryName, the consumer's library would be silently shadowed in Jenkins.
+            settingsFile.writeText(jenkinsSettings("self-collision", includes = listOf("peer-lib")))
+            buildFile.writeText(
+              """
+              plugins { id("com.mkobit.jenkins.pipelines.shared-library") }
+              sharedLibrary {
+                  dependencies {
+                      sharedLibrary(project(":peer-lib")) { libraryName = "self-collision" }
+                  }
+              }
+              """.trimIndent(),
+            )
+            file("vars/consumerStep.groovy").writeText("def call() {}")
+            file("test/integration/java/StubIT.java").writeText(STUB_INTEGRATION_TEST)
+            file("peer-lib/build.gradle.kts").writeText(barePeerSubproject())
+            file("peer-lib/vars/peerStep.groovy").writeText("def call() {}")
+
+            val result = runner(gradleVersion).buildAndFail("integrationTest")
+            result.output shouldContain "duplicate Jenkins shared library name"
+            result.output shouldContain "self-collision"
+          }
+        }
+      }
+
       describe("missing peer plugin: clear variant-selection error when project(\":lib\") does not apply the plugin") {
         forGradleVersions { gradleVersion ->
           withTestProject {
@@ -636,6 +696,14 @@ private const val PRINT_RESOLVED_TASK = """tasks.register("printResolved") {
 }"""
 
 private val AGGREGATOR_BUILD_FILE = """plugins { id("com.mkobit.jenkins.pipelines.shared-library") apply false }"""
+
+// Minimal integration test that forces integrationTest to have at least one test case, so the
+// task's jvmArgumentProviders actually fire (NO-SOURCE skips them entirely).
+private val STUB_INTEGRATION_TEST =
+  """
+  import org.junit.jupiter.api.Test;
+  class StubIT { @Test void noop() {} }
+  """.trimIndent()
 
 private fun rootBuildFile(sharedLibraryBody: String): String =
   """
