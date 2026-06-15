@@ -419,8 +419,40 @@ testing.suites.withType<JvmTestSuite>().configureEach {
 
   targets.configureEach {
     testTask.configure {
+      // Library metadata (self + peers) is always exposed, regardless of useTestHarness.
+      // JPU test code in the default `test` suite can read these system properties to register
+      // peer libraries via helper.registerSharedLibrary(...) — without them users would have to
+      // hard-code relative paths into sibling subprojects' build dirs.
+      val syncTask = tasks.named<SyncSharedLibrarySource>("syncSharedLibrarySource")
+      inputs.files(syncTask).withPropertyName("sharedLibrarySource")
+      jvmArgumentProviders.add(
+        objects.newInstance<LibraryLocationArgumentProvider>().apply {
+          libraryLocation = syncTask.flatMap { it.destinationDir }
+        },
+      )
+      jvmArgumentProviders.add(
+        objects.newInstance<LibraryNameArgumentProvider>().apply {
+          libraryName.set(sharedLibrary.libraryName)
+        },
+      )
+      jvmArgumentProviders.add(
+        objects.newInstance<LibraryImplicitArgumentProvider>().apply {
+          implicit.set(sharedLibrary.implicit)
+        },
+      )
+      // Peer shared library source directories — injects test.library.N.{name,location,implicit}
+      // for each declared peer library. Indices start at 1 (the project's own library is at 0).
+      jvmArgumentProviders.add(
+        objects.newInstance<PeerLibrariesArgumentProvider>().apply {
+          entries.set(peerLibraryEntries)
+          selfLibraryName.set(sharedLibrary.libraryName)
+          sourceDirectories.from(peerLibrarySourceFiles)
+        },
+      )
+
       if (!jenkinsExt.useTestHarness.getOrElse(false)) return@configure
 
+      // Embedded Jenkins (JenkinsRule) wiring — only for suites that opt in.
       val suiteJenkinsDir = layout.buildDirectory.dir("jenkins-for-test/$name")
       mustRunAfter(tasks.test)
       usesService(jenkinsTestSuiteService)
@@ -438,35 +470,9 @@ testing.suites.withType<JvmTestSuite>().configureEach {
       classpath += files(groovyAllRuntime)
       maxParallelForks = 1
       maxHeapSize = SharedLibraryDefaults.INTEGRATION_TEST_MAX_HEAP_SIZE
-      val syncTask = tasks.named<SyncSharedLibrarySource>("syncSharedLibrarySource")
-      inputs.files(syncTask).withPropertyName("sharedLibrarySource")
-      jvmArgumentProviders.add(
-        objects.newInstance<LibraryLocationArgumentProvider>().apply {
-          libraryLocation = syncTask.flatMap { it.destinationDir }
-        },
-      )
-      // Peer shared library source directories — injects test.library.N.{name,location,implicit}
-      // for each declared peer library. Indices start at 1 (the project's own library is at 0).
-      jvmArgumentProviders.add(
-        objects.newInstance<PeerLibrariesArgumentProvider>().apply {
-          entries.set(peerLibraryEntries)
-          selfLibraryName.set(sharedLibrary.libraryName)
-          sourceDirectories.from(peerLibrarySourceFiles)
-        },
-      )
       jvmArgumentProviders.add(
         objects.newInstance<JenkinsWarJvmArgumentProvider>().apply {
           warFile.fileProvider(jenkinsWarFile)
-        },
-      )
-      jvmArgumentProviders.add(
-        objects.newInstance<LibraryNameArgumentProvider>().apply {
-          libraryName.set(sharedLibrary.libraryName)
-        },
-      )
-      jvmArgumentProviders.add(
-        objects.newInstance<LibraryImplicitArgumentProvider>().apply {
-          implicit.set(sharedLibrary.implicit)
         },
       )
       jvmArgs(

@@ -7,41 +7,39 @@ import static com.lesfurets.jenkins.unit.global.lib.ProjectSource.projectSource
 import static org.junit.jupiter.api.Assertions.assertTrue
 
 /**
- * Probe: JenkinsPipelineUnit loading peer libraries for real (vs. mocking them with
- * registerAllowedMethod, as RunDeployTest does). Each peer's syncSharedLibrarySource task
- * stages sources at {peerProject}/build/sharedLibrarySource/{peerProject.name}/. JPU is
- * pointed at those directories via projectSource.
- *
- * Current friction this exposes:
- *   - Hard-coded relative paths into other subprojects' build dirs (brittle to refactors,
- *     and would break if libraryName overrides were used).
- *   - Each peer must be registered manually here; the plugin already knows the list and
- *     could surface it (the integrationTest suite gets it via test.library.N.* JVM args
- *     when useTestHarness=true, but JPU's `test` suite does not).
- *   - No analogue of SharedLibraryAutoRegistrar for JPU.
+ * JenkinsPipelineUnit loading peer libraries for real (vs. mocking them with
+ * registerAllowedMethod, as RunDeployTest does). The plugin injects
+ * test.library.N.{name,location,implicit} system properties on every test task,
+ * so JPU tests can read them and register peer libraries without hard-coding
+ * paths into sibling subprojects' build dirs.
  */
 class RunDeployJpuPeerTest extends BasePipelineTest {
 
     @BeforeEach
     void setup() throws Exception {
         setUp()
-        registerPeerLibrary('deploy-lib', 'deployer')
-        registerPeerLibrary('checks-lib', 'pre-checks')
-        registerPeerLibrary('shell-lib', 'shell-utils')
-        // notify-lib is composite (includeBuild) so its synced dir lives elsewhere; skip for now.
+        // Index 0 is the consumer's own library, indices 1+ are peers.
+        int i = 1
+        while (true) {
+            String name = System.getProperty("test.library.${i}.name")
+            String location = System.getProperty("test.library.${i}.location")
+            if (name == null || location == null) break
+            boolean implicit = !'false'.equalsIgnoreCase(
+                System.getProperty("test.library.${i}.implicit", 'true'))
+            helper.registerSharedLibrary(library()
+                .name(name)
+                .retriever(projectSource(location))
+                .targetPath(location)
+                .defaultVersion('main')
+                .allowOverride(true)
+                .implicit(implicit)
+                .build())
+            i++
+        }
+        // notify-lib is resolved via includeBuild; its library JAR lands on test compile classpath
+        // but its synced source dir isn't currently surfaced by the plugin to JPU tests (only the
+        // peer src dirs of project-style peers are). Mock notifySlack until that gap is closed.
         helper.registerAllowedMethod('notifySlack', [String]) { msg -> "[slack] ${msg}" }
-    }
-
-    private void registerPeerLibrary(String projectName, String jenkinsLibraryName) {
-        String location = "../${projectName}/build/sharedLibrarySource/${projectName}"
-        helper.registerSharedLibrary(library()
-            .name(jenkinsLibraryName)
-            .retriever(projectSource(location))
-            .targetPath(location)
-            .defaultVersion('main')
-            .allowOverride(true)
-            .implicit(true)
-            .build())
     }
 
     @Test

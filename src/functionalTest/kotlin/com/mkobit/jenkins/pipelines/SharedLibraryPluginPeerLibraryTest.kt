@@ -228,6 +228,47 @@ class SharedLibraryPluginPeerLibraryTest :
         }
       }
 
+      describe("peer library JVM args injected into the default `test` suite too (for JPU)") {
+        forGradleVersions { gradleVersion ->
+          withTestProject {
+            // JPU tests in the default `test` suite need to know peer library locations to
+            // register them with helper.registerSharedLibrary(...). The plugin exposes
+            // test.library.N.{name,location,implicit} on every suite, not only useTestHarness=true
+            // ones, so JPU code can iterate them without hard-coding paths.
+            settingsFile.writeText(jenkinsSettings("peer-jpu-args", includes = listOf("peer-lib")))
+            buildFile.writeText(
+              """
+              plugins { id("com.mkobit.jenkins.pipelines.shared-library") }
+              sharedLibrary {
+                  dependencies {
+                      sharedLibrary(project(":peer-lib"))
+                  }
+              }
+              tasks.register("printTestJvmArgs") {
+                  dependsOn(":peer-lib:syncSharedLibrarySource")
+                  doLast {
+                      tasks.named<Test>("test").get()
+                          .jvmArgumentProviders
+                          .flatMap { it.asArguments() }
+                          .filter { it.startsWith("-Dtest.library.") }
+                          .forEach { println("test-arg:" + it) }
+                  }
+              }
+              """.trimIndent(),
+            )
+            file("peer-lib/build.gradle.kts").writeText(barePeerSubproject())
+            file("peer-lib/vars/peerStep.groovy").writeText("def call() {}")
+
+            val output = runner(gradleVersion).build("printTestJvmArgs").output
+            val argLines = output.lines().filter { it.startsWith("test-arg:") }
+            // self-library (index 0, 3 props) + one peer (index 1, 3 props)
+            argLines shouldHaveSize 6
+            argLines.forOne { it shouldContain "-Dtest.library.0.name=peer-jpu-args" }
+            argLines.forOne { it shouldContain "-Dtest.library.1.name=peer-lib" }
+          }
+        }
+      }
+
       describe("peer library JVM args injected into integrationTest task") {
         forGradleVersions { gradleVersion ->
           withTestProject {
