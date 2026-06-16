@@ -7,7 +7,6 @@ sharedLibrary {
         sharedLibrary(project(":shell-lib")) {
             libraryName = "shell-utils"
         }
-        sharedLibrary(project(":metrics-lib"))
     }
 }
 
