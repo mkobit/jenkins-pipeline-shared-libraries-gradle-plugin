@@ -1,6 +1,5 @@
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
-import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
@@ -15,17 +14,17 @@ class CrossLibrarySrcImportTest {
 
     @Test
     void varsScriptCanImportSrcClassFromPeerLibrary(JenkinsRule jenkins) throws Exception {
-        WorkflowJob job = jenkins.createProject(WorkflowJob.class);
+        var job = jenkins.createProject(WorkflowJob.class);
         job.setDefinition(new CpsFlowDefinition("echo crossImport()", false));
-        WorkflowRun run = jenkins.buildAndAssertSuccess(job);
+        var run = jenkins.buildAndAssertSuccess(job);
         jenkins.assertLogContains("shell: cross-import-test", run);
     }
 
     @Test
     void srcClassCanReferenceSrcClassFromPeerLibrary(JenkinsRule jenkins) throws Exception {
-        WorkflowJob job = jenkins.createProject(WorkflowJob.class);
+        var job = jenkins.createProject(WorkflowJob.class);
         job.setDefinition(new CpsFlowDefinition("echo crossImportSrc()", false));
-        WorkflowRun run = jenkins.buildAndAssertSuccess(job);
+        var run = jenkins.buildAndAssertSuccess(job);
         jenkins.assertLogContains("shell: cross-src-import-test", run);
     }
 }

@@ -482,9 +482,9 @@ class SharedLibraryPluginPeerLibraryTest :
             class PeerAltIT {
                 @Test
                 void customSuiteResolvesPeerVarsStep(JenkinsRule jenkins) throws Exception {
-                    WorkflowJob job = jenkins.createProject(WorkflowJob.class);
+                    var job = jenkins.createProject(WorkflowJob.class);
                     job.setDefinition(new CpsFlowDefinition("echo peerGreet('alt-suite')", false));
-                    WorkflowRun run = jenkins.buildAndAssertSuccess(job);
+                    var run = jenkins.buildAndAssertSuccess(job);
                     jenkins.assertLogContains("hello, alt-suite", run);
                 }
             }
@@ -533,17 +533,17 @@ class SharedLibraryPluginPeerLibraryTest :
             class ImplicitFalseIT {
                 @Test
                 void pipelineWithoutLibraryAnnotationCannotResolvePeerStep(JenkinsRule jenkins) throws Exception {
-                    WorkflowJob job = jenkins.createProject(WorkflowJob.class);
+                    var job = jenkins.createProject(WorkflowJob.class);
                     job.setDefinition(new CpsFlowDefinition("echo explicitOnlyStep()", false));
                     jenkins.assertBuildStatus(Result.FAILURE, job.scheduleBuild2(0));
                 }
 
                 @Test
                 void pipelineWithLibraryAnnotationLoadsPeerStep(JenkinsRule jenkins) throws Exception {
-                    WorkflowJob job = jenkins.createProject(WorkflowJob.class);
+                    var job = jenkins.createProject(WorkflowJob.class);
                     job.setDefinition(new CpsFlowDefinition(
                         "@Library('peer-lib') _\necho explicitOnlyStep()", false));
-                    WorkflowRun run = jenkins.buildAndAssertSuccess(job);
+                    var run = jenkins.buildAndAssertSuccess(job);
                     jenkins.assertLogContains("explicit-loaded", run);
                 }
             }
@@ -589,10 +589,10 @@ class SharedLibraryPluginPeerLibraryTest :
             class PeerResourceIT {
                 @Test
                 void pipelineReadsResourceFromPeer(JenkinsRule jenkins) throws Exception {
-                    WorkflowJob job = jenkins.createProject(WorkflowJob.class);
+                    var job = jenkins.createProject(WorkflowJob.class);
                     job.setDefinition(new CpsFlowDefinition(
                         "echo libraryResource('com/example/greeting.txt')", false));
-                    WorkflowRun run = jenkins.buildAndAssertSuccess(job);
+                    var run = jenkins.buildAndAssertSuccess(job);
                     jenkins.assertLogContains("hello from peer resource", run);
                 }
             }
@@ -639,9 +639,9 @@ class SharedLibraryPluginPeerLibraryTest :
             class PeerE2EIT {
                 @Test
                 void pipelineCallsPeerVarsStep(JenkinsRule jenkins) throws Exception {
-                    WorkflowJob job = jenkins.createProject(WorkflowJob.class);
+                    var job = jenkins.createProject(WorkflowJob.class);
                     job.setDefinition(new CpsFlowDefinition("echo peerGreet('world')", false));
-                    WorkflowRun run = jenkins.buildAndAssertSuccess(job);
+                    var run = jenkins.buildAndAssertSuccess(job);
                     jenkins.assertLogContains("hello, world", run);
                 }
             }
@@ -726,9 +726,9 @@ class SharedLibraryPluginPeerLibraryTest :
             class CrossSrcIT {
                 @Test
                 void varsCanImportPeerSrcClassNatively(JenkinsRule jenkins) throws Exception {
-                    WorkflowJob job = jenkins.createProject(WorkflowJob.class);
+                    var job = jenkins.createProject(WorkflowJob.class);
                     job.setDefinition(new CpsFlowDefinition("echo crossStep('hello')", false));
-                    WorkflowRun run = jenkins.buildAndAssertSuccess(job);
+                    var run = jenkins.buildAndAssertSuccess(job);
                     jenkins.assertLogContains("cross: hello", run);
                 }
             }
