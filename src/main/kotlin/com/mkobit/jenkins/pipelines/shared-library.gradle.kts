@@ -137,8 +137,7 @@ val jenkinsPlugin =
 
 // Peer shared library dependencies — declared via `sharedLibrary { dependencies { sharedLibrary(...) } }`.
 // Acts as a bucket fed by the DSL's `DependencyCollector`. Flows into:
-//   - `compileOnly` on main: peer JAR classes available for Groovy/IDE symbol resolution
-//   - test suites' `implementation`: peer JAR classes on unit-test and integration-test runtime
+//   - `compileOnly` on main and on every test suite: peer JAR classes available for symbol resolution
 //   - `peerLibrarySource` resolvable config: source-directory variants for Jenkins runtime loading
 // Mirrors the `jenkinsPlugin` collector-bucket pattern (line above).
 val sharedLibraryDependencies =
@@ -345,12 +344,9 @@ testing.suites.withType<JvmTestSuite>().configureEach {
     extendsFrom(jenkinsPlugin)
     exclude(mapOf("group" to "org.codehaus.groovy", "module" to "groovy-all"))
   }
-  // Peer shared library classes are compile-only for test code: they let test code reference
-  // peer types for symbol resolution, but stay off the runtime classpath. At runtime Jenkins
-  // (or JPU) compiles peer src/ from the synced source directory; having pre-compiled peer
-  // classes on the JVM classpath shadows that and forces them to load via AppClassLoader,
-  // breaking cross-library type visibility that Jenkins normally provides via one shared
-  // CpsGroovyShell classloader per pipeline run.
+  // Peer classes are compile-only for test code. On the runtime classpath they would shadow
+  // Jenkins' own compile-from-source loader and load via AppClassLoader instead, breaking
+  // cross-library type visibility between peers in a pipeline run.
   configurations.named(sources.compileOnlyConfigurationName) {
     extendsFrom(sharedLibraryDependencies)
   }
@@ -419,10 +415,9 @@ testing.suites.withType<JvmTestSuite>().configureEach {
 
   targets.configureEach {
     testTask.configure {
-      // Library metadata (self + peers) is always exposed, regardless of useTestHarness.
-      // JPU test code in the default `test` suite can read these system properties to register
-      // peer libraries via helper.registerSharedLibrary(...) — without them users would have to
-      // hard-code relative paths into sibling subprojects' build dirs.
+      // Library metadata (self + peers) is exposed on every suite — useTestHarness only gates the
+      // embedded Jenkins runtime wiring below. JPU tests in the default `test` suite read these
+      // system properties to register peer libraries dynamically.
       val syncTask = tasks.named<SyncSharedLibrarySource>("syncSharedLibrarySource")
       inputs.files(syncTask).withPropertyName("sharedLibrarySource")
       jvmArgumentProviders.add(

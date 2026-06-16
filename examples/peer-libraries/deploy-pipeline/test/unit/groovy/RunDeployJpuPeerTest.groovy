@@ -36,9 +36,7 @@ class RunDeployJpuPeerTest extends BasePipelineTest {
                 .build())
             i++
         }
-        // notify-lib is resolved via includeBuild; its library JAR lands on test compile classpath
-        // but its synced source dir isn't currently surfaced by the plugin to JPU tests (only the
-        // peer src dirs of project-style peers are). Mock notifySlack until that gap is closed.
+        // notify-lib (includeBuild GAV peer) isn't surfaced to JPU tests yet — mock its step.
         helper.registerAllowedMethod('notifySlack', [String]) { msg -> "[slack] ${msg}" }
     }
 
@@ -46,11 +44,7 @@ class RunDeployJpuPeerTest extends BasePipelineTest {
     void loadsPeerVarsForReal() {
         def script = loadScript('vars/runDeploy.groovy')
         script.invokeMethod('call', ['api-service', 'production'] as Object[])
-        // The strings in the call stack come from the consumer's runDeploy, which echoes
-        // each peer step's return value. If JPU loaded the peer vars for real, the echoed
-        // strings match what the actual peer scripts return (preCheck returns "Pre-checks
-        // passed for X", runShell returns "shell: X", etc.). If JPU fell back to mocks,
-        // the return values would be nulls and these substrings wouldn't appear.
+        // Assertions match each peer script's real return value — fails if JPU mocks instead of loads.
         def transcript = helper.callStack*.toString().join('\n')
         assertTrue(transcript.contains('Pre-checks passed for api-service'),
             "preCheck output missing — peer wasn't really loaded\n" + transcript)

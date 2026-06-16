@@ -189,9 +189,8 @@ class SharedLibraryPluginPeerLibraryTest :
       describe("integrationTest suite: peer JAR is on compile classpath but NOT on runtime classpath") {
         forGradleVersions { gradleVersion ->
           withTestProject {
-            // Regression guard for the leak fix: if peer JARs sneak back onto the integration test
-            // runtime classpath, direct peers load via the JVM AppClassLoader instead of Jenkins'
-            // CpsGroovyShell, breaking cross-library type visibility that real Jenkins provides.
+            // If peer JARs land on the runtime classpath, direct peers load via AppClassLoader
+            // and stop sharing a classloader with transitive peers — breaks cross-library imports.
             settingsFile.writeText(jenkinsSettings("peer-classpath-isolation", includes = listOf("peer-lib")))
             buildFile.writeText(
               """
@@ -231,10 +230,8 @@ class SharedLibraryPluginPeerLibraryTest :
       describe("peer library JVM args injected into the default `test` suite too (for JPU)") {
         forGradleVersions { gradleVersion ->
           withTestProject {
-            // JPU tests in the default `test` suite need to know peer library locations to
-            // register them with helper.registerSharedLibrary(...). The plugin exposes
-            // test.library.N.{name,location,implicit} on every suite, not only useTestHarness=true
-            // ones, so JPU code can iterate them without hard-coding paths.
+            // JPU lives in the default `test` suite. test.library.N.{name,location,implicit} are
+            // exposed there too so JPU tests can iterate peers without hard-coding paths.
             settingsFile.writeText(jenkinsSettings("peer-jpu-args", includes = listOf("peer-lib")))
             buildFile.writeText(
               """
@@ -316,9 +313,8 @@ class SharedLibraryPluginPeerLibraryTest :
       describe("duplicate libraryName across peers fails at task validation with a clear message") {
         forGradleVersions { gradleVersion ->
           withTestProject {
-            // Two peers both want libraryName "shared" — at runtime Jenkins would silently use
-            // whichever LibraryConfiguration was registered last. Fail at task validation so the
-            // user knows up front instead of debugging mysterious "wrong step" issues later.
+            // Without the check, duplicates silently shadow each other in Jenkins
+            // (last-registration-wins) and surface later as confusing "wrong step" failures.
             settingsFile.writeText(jenkinsSettings("peer-name-collision", includes = listOf("lib-a", "lib-b")))
             buildFile.writeText(
               """
@@ -348,8 +344,8 @@ class SharedLibraryPluginPeerLibraryTest :
       describe("peer libraryName colliding with consumer libraryName fails at task validation") {
         forGradleVersions { gradleVersion ->
           withTestProject {
-            // The consumer is registered at index 0 with project.name. If a peer chooses the same
-            // libraryName, the consumer's library would be silently shadowed in Jenkins.
+            // Consumer registers at index 0 with project.name; a peer choosing the same name
+            // would silently shadow it in Jenkins.
             settingsFile.writeText(jenkinsSettings("self-collision", includes = listOf("peer-lib")))
             buildFile.writeText(
               """
@@ -443,10 +439,8 @@ class SharedLibraryPluginPeerLibraryTest :
     describe("custom test suite with useTestHarness=true gets the same peer wiring as integrationTest") {
       forGradleVersions { gradleVersion ->
         withTestProject {
-          // Plugin wires peer libraries via testing.suites.withType<JvmTestSuite>().configureEach,
-          // which should fire for any user-registered JvmTestSuite that flips useTestHarness=true.
-          // Without this guarantee, alternate suites (Spock, Kotest, etc.) would silently miss
-          // peer libraries — they'd register the self-library but no peers.
+          // Guards that user-registered JvmTestSuites (Spock, Kotest, etc.) flipping
+          // useTestHarness=true receive the same peer library wiring as the built-in integrationTest.
           settingsFile.writeText(jenkinsSettings("peer-custom-suite-consumer", includes = listOf("peer-lib")))
           buildFile.writeText(
             """
@@ -506,10 +500,7 @@ class SharedLibraryPluginPeerLibraryTest :
     describe("implicit=false: pipeline must explicitly @Library the peer to call its steps") {
       forGradleVersions { gradleVersion ->
         withTestProject {
-          // implicit=true (default) auto-loads the peer into every pipeline. implicit=false forces
-          // pipelines to opt in with @Library('name'). This test runs two pipelines back-to-back:
-          // one without @Library (must fail), one with (must succeed). Gates the implicit flag's
-          // effect end-to-end at Jenkins runtime, not just at DSL capture time.
+          // Two pipelines run back-to-back: one without @Library (must fail), one with (must succeed).
           settingsFile.writeText(jenkinsSettings("peer-implicit-consumer", includes = listOf("peer-lib")))
           buildFile.writeText(
             """
@@ -617,9 +608,6 @@ class SharedLibraryPluginPeerLibraryTest :
     describe("integrationTest end-to-end: pipeline calls a peer's vars step") {
       forGradleVersions { gradleVersion ->
         withTestProject {
-          // Gates the actual Jenkins-runtime behavior of the peer feature: spin up embedded
-          // Jenkins, define a pipeline that calls a step defined in a peer library, assert the
-          // build succeeds and logs what the step echoed.
           settingsFile.writeText(jenkinsSettings("peer-e2e-consumer", includes = listOf("peer-lib")))
           buildFile.writeText(
             """
@@ -666,16 +654,11 @@ class SharedLibraryPluginPeerLibraryTest :
       }
     }
 
-    describe("bidirectional cross-library src/ refs fail at Gradle task scheduling (documented limitation)") {
+    describe("bidirectional cross-library src/ refs fail with a Gradle circular dependency") {
       forGradleVersions { gradleVersion ->
         withTestProject {
-          // jimklimov's shape (issue #158): two libraries whose src/ classes reference each other
-          // in both directions. At Jenkins runtime, one shared CleanGroovyClassLoader would resolve
-          // the bidirectional refs fine — but Gradle's compile graph requires A:jar before
-          // B:compileGroovy and B:jar before A:compileGroovy, creating a circular dependency that
-          // Gradle refuses to schedule. The classic workaround is jimklimov's "merge both libs'
-          // sources into one library's sharedLibrarySource dir" hack (a single Groovy compile, no
-          // cycle). Whether to lift that into a first-class plugin feature is tracked separately.
+          // Two peers each importing the other's src/ class. Jenkins would resolve at runtime
+          // (one shared CleanGroovyClassLoader) but Gradle can't schedule the compile graph.
           settingsFile.writeText(jenkinsSettings("peer-bidirectional", includes = listOf("lib-a", "lib-b")))
           buildFile.writeText(AGGREGATOR_BUILD_FILE)
 
