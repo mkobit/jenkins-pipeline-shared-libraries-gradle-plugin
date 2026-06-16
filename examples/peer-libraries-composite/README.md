@@ -1,30 +1,41 @@
 # Peer-libraries composite example
 
-This example demonstrates peer library dependencies across separate Gradle builds using composite build (`includeBuild`) and GAV notation.
+Demonstrates peer library dependencies across separate Gradle builds using composite build (`includeBuild`) and GAV notation.
+
+For the multi-project (`project(":lib")`) variant of peer libraries, see [`peer-libraries/`](../peer-libraries/).
+For `libraryName` override and `implicit` controls on a single library, see [`explicit-library-name/`](../explicit-library-name/).
 
 ## Purpose
 
-The root project declares `library-a` and `library-b` as peers via their published coordinates.
-`library-a` itself depends on `included-lib-3` for a helper step — that transitive peer is pulled in automatically because Gradle composes nested included builds and the `sharedLibrarySourceElements` variant propagates transitively.
+The root project declares `deployer` and `notifier` as peers via their published coordinates (`com.example.pipeline:deployer:1.0` and `com.example.pipeline:notifier:1.0`).
+`deployer` itself depends on `version-utils` for a helper step — that transitive peer is pulled in automatically because Gradle composes nested included builds and the `sharedLibrarySourceElements` variant propagates transitively.
 
 ## Dependency graph
 
-```
-peer-libraries-composite
-├── library-a (com.example.pipeline:library-a:1.0)
-│   └── included-lib-3 (com.example.pipeline:included-lib-3:1.0)
-└── library-b (com.example.pipeline:library-b:1.0)
+```mermaid
+graph TD
+    Root[peer-libraries-composite<br/>consumer]
+    Dep[deployer<br/>pipeline-deployer]
+    Not[notifier<br/>pipeline-notifier]
+    VU[version-utils<br/>transitive via deployer]
+
+    Root --> Dep
+    Root --> Not
+    Dep --> VU
 ```
 
 ## Structure
 
-- `library-a/` — provides `greetA`, calls `tag` from `included-lib-3`
-- `library-b/` — provides `greetB`, standalone
-- `included-lib-3/` — provides `tag`, a simple string-tagging helper
-- `test/integration/java/GreetStepTest.java` — exercises both `greetA` (transitive) and `greetB`
+- `deployer/` — provides `deploymentUrl`, declares `version-utils` as a peer
+- `notifier/` — provides `buildReport`, standalone
+- `version-utils/` — provides `semverLabel`, a simple helper
+- `vars/publishRelease.groovy` — consumer vars step that calls all three peers
+- `test/integration/java/PublishReleaseTest.java` — exercises the full pipeline
 
 ## How the composite wiring works
 
 Each library's `settings.gradle.kts` uses `pluginManagement { includeBuild("../../..") }` to find the plugin.
-`library-a/settings.gradle.kts` also includes `included-lib-3` via `includeBuild("../included-lib-3")`.
-The root only needs `includeBuild("library-a")` and `includeBuild("library-b")` — Gradle composes the nested included build automatically.
+`deployer/settings.gradle.kts` also includes `version-utils` via `includeBuild("../version-utils")`.
+The root only needs `includeBuild("deployer")` and `includeBuild("notifier")` — Gradle composes the nested included build automatically, so `version-utils` is available for GAV substitution without an explicit `includeBuild` here.
+
+Both direct peers are mapped to renamed library names via the DSL: `pipeline-deployer` and `pipeline-notifier`.

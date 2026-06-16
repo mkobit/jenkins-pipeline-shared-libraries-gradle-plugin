@@ -1,17 +1,22 @@
 # Peer-libraries example
 
-Demonstrates the peer-library DSL surface in a single build: subproject `project()` deps, an `includeBuild` GAV dep, transitive resolution, custom `libraryName` overrides, cross-library `src/` imports, and both unit and integration testing patterns.
+Demonstrates the peer-library DSL surface in a single build: subproject `project()` deps, an `includeBuild` GAV dep, transitive resolution, custom `libraryName` overrides, the `implicit` toggle, cross-library `src/` imports, and both unit and integration testing patterns.
+
+For an all-composite (GAV-only) topology across separate Gradle builds, see [`peer-libraries-composite/`](../peer-libraries-composite/).
+For `libraryName` + `implicit` controls on a single, non-peer library, see [`explicit-library-name/`](../explicit-library-name/).
 
 ## Libraries
 
-| Library | Gradle dep type | Jenkins library name | Step |
-|---|---|---|---|
-| `deploy-lib` | `project(":deploy-lib")` | `deployer` | `deployTo(env, service)` |
-| `shell-lib` | transitive via `deploy-lib` | `shell-utils` | `runShell(cmd)` |
-| `checks-lib` | `project(":checks-lib")` | `pre-checks` | `preCheck(service)` |
-| `notify-lib` | GAV via `includeBuild` | `notifier` | `notifySlack(msg)` |
+| Library | Gradle dep type | Jenkins library name | Implicit | Step |
+|---|---|---|---|---|
+| `deploy-lib` | `project(":deploy-lib")` | `deployer` | yes | `deployTo(env, service)` |
+| `shell-lib` | transitive via `deploy-lib` | `shell-utils` | yes | `runShell(cmd)` |
+| `checks-lib` | `project(":checks-lib")` | `pre-checks` | yes | `preCheck(service)` |
+| `notify-lib` | GAV via `includeBuild` | `notifier` | **no** | `notifySlack(msg)` |
 
 `shell-lib` is only declared by `deploy-lib`; the root picks it up transitively through the `sharedLibrarySourceElements` variant chain.
+`notifier` is registered with `implicit = false` to demonstrate the opt-in pattern: pipelines that want notifications must add `@Library('notifier') _` at the top of the Jenkinsfile.
+`RunDeployTest.java` shows that.
 
 ## Dependency graph
 

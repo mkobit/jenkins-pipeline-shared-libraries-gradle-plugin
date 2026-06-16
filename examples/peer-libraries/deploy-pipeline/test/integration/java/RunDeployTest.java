@@ -10,7 +10,12 @@ class RunDeployTest {
     @Test
     void deploysPipelineUsingAllLibrariesIncludingTransitive(JenkinsRule jenkins) throws Exception {
         var job = jenkins.createProject(WorkflowJob.class);
-        job.setDefinition(new CpsFlowDefinition("runDeploy('api-service', 'production')", false));
+        // `notifier` is configured with implicit=false so a Jenkinsfile must opt in via @Library.
+        // The other peers (deployer, pre-checks, shell-utils) remain implicit and auto-load.
+        job.setDefinition(new CpsFlowDefinition("""
+            @Library('notifier') _
+            runDeploy('api-service', 'production')
+            """, false));
         var run = jenkins.buildAndAssertSuccess(job);
         jenkins.assertLogContains("Pre-checks passed for api-service", run);
         jenkins.assertLogContains("shell: deploy api-service", run);
