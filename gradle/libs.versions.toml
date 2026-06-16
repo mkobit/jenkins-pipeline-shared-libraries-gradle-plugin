@@ -6,7 +6,7 @@ kotest = "6.1.11"
 mockk = "1.14.11"
 okhttp = "5.3.2"
 plugin-publish = "2.1.1"
-spotless = "8.5.1"
+spotless = "8.6.0"
 
 [libraries]
 kotest-assertions = { module = "io.kotest:kotest-assertions-core" }
