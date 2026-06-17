@@ -173,8 +173,8 @@ tasks.check {
 
 ## Peer libraries
 
-A shared library can declare other shared libraries as peer dependencies so their steps and classes are available during integration tests.
-Peer libraries are registered in the embedded Jenkins runtime alongside the project's own library — no manual `GlobalLibraries` wiring is needed.
+A shared library can declare other shared libraries as peer dependencies.
+Each declared peer is registered with the embedded Jenkins as a normal Jenkins Global Library — the same entries an admin would configure in *Manage Jenkins → Global Pipeline Libraries* — so pipelines call peer steps and reference peer classes exactly as they would in production.
 
 ```kotlin
 sharedLibrary {
@@ -182,15 +182,12 @@ sharedLibrary {
         sharedLibrary(project(":peer-lib"))                    // subproject in the same build
         sharedLibrary("com.example:config-lib:1.0.0")         // composite build (includeBuild)
         sharedLibrary(project(":config-lib")) {
-            libraryName.set("config")   // override the Jenkins library name
-            implicit.set(false)         // require @Library('config') _ in pipelines
+            libraryName = "config"   // override the Jenkins library name
+            implicit = false         // require @Library('config') _ in pipelines
         }
     }
 }
 ```
-
-Peer library classes are available on `compileOnly` for symbol resolution in the consuming library's Groovy source.
-Peer library source directories (`src/`, `vars/`, `resources/`) are injected into the embedded Jenkins at integration-test time via `test.library.N.*` system properties.
 
 > [!NOTE]
 > Binary GAV coordinates (`"group:artifact:version"`) work when the peer is declared via `includeBuild(...)` in `settings.gradle.kts` and Gradle substitutes the coordinate with the local project.
