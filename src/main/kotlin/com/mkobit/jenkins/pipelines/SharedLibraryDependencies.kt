@@ -16,20 +16,14 @@ import javax.inject.Inject
 /**
  * Dependency block for declaring peer Jenkins shared library dependencies inside `sharedLibrary {}`.
  *
- * Each declared peer library participates in two resolutions:
- * 1. As a compiled JAR on the consumer's `compileOnly` and test suite `implementation` configurations
- *    — for Groovy/IDE symbol resolution against types defined in the peer library.
- * 2. As a `sharedLibrarySourceElements` directory artefact — injected into Jenkins at integration-test
- *    runtime via `test.library.N.location` so the peer library's `src/`, `vars/`, and `resources/`
- *    are available to pipelines without manual `GlobalLibraries` wiring.
+ * Each declared peer is registered with the embedded Jenkins as a Global Library, the same way an
+ * administrator would configure it under *Manage Jenkins → Global Pipeline Libraries*.
  *
  * **`project(":path")`** works for subprojects in the same Gradle build.
  *
  * **GAV notation (`"g:a:v"`)** works when Gradle substitutes the coordinate with a local project —
- * i.e. the peer is declared via `includeBuild(...)` in `settings.gradle.kts`. GAV does **not** work
- * against a Maven repository: the `sharedLibrarySourceElements` variant ships a directory artifact
- * that Maven's publishing pipeline cannot upload. Remote binary resolution requires a sources-JAR
- * variant and a consumer-side `ArtifactTransform`; see issue #165.
+ * i.e. the peer is declared via `includeBuild(...)` in `settings.gradle.kts`. Resolution from a
+ * remote Maven repository is not supported yet; see issue #165.
  *
  * ```kotlin
  * sharedLibrary {
@@ -37,8 +31,8 @@ import javax.inject.Inject
  *     sharedLibrary(project(":config-lib"))                    // subproject
  *     sharedLibrary("com.example:config-lib:1.0.0")           // composite build (includeBuild)
  *     sharedLibrary(project(":config-lib")) {
- *       libraryName.set("config")     // override the Jenkins library name
- *       implicit.set(false)            // require @Library('config') _ in pipelines
+ *       libraryName = "config"   // override the Jenkins library name
+ *       implicit = false         // require @Library('config') _ in pipelines
  *     }
  *   }
  * }

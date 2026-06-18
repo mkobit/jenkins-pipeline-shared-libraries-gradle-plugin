@@ -16,8 +16,8 @@ import javax.inject.Inject
  * sharedLibrary {
  *   dependencies {
  *     sharedLibrary("com.example:config-lib:1.0.0") {
- *       libraryName.set("config")
- *       implicit.set(false)
+ *       libraryName = "config"
+ *       implicit = false
  *     }
  *   }
  * }

@@ -118,8 +118,8 @@ class SharedLibraryPluginPeerLibraryTest :
               sharedLibrary {
                   dependencies {
                       sharedLibrary(project(":peer-lib")) {
-                          libraryName.set("renamed-in-tests")
-                          implicit.set(false)
+                          libraryName = "renamed-in-tests"
+                          implicit = false
                       }
                   }
               }

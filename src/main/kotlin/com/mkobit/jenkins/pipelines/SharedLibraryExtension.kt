@@ -83,10 +83,8 @@ abstract class SharedLibraryExtension
     val dependencies: SharedLibraryDependencies = objects.newInstance<SharedLibraryDependencies>()
 
     /**
-     * Declares peer shared library dependencies.
-     *
-     * Each peer library is resolved as both a compiled JAR (for source-set compile / IDE) and a
-     * source directory (loaded into Jenkins at integration-test runtime via `test.library.N.location`).
+     * Declares peer shared library dependencies — other shared libraries this project
+     * depends on. Each peer is registered with the embedded Jenkins as a Global Library.
      *
      * ```kotlin
      * sharedLibrary {
