@@ -5,26 +5,30 @@ import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 /**
- * Cross-library src/ imports work natively: a class defined in one peer's src/ can be referenced
- * by another peer's vars or src with a plain import, because all libraries in a pipeline run
- * share one CpsGroovyShell classloader.
+ * deploy-lib's steps and src class freely import com.example.shell.ShellStep from shell-lib
+ * — peer libraries can reference each other's classes by their normal package paths.
  */
 @WithJenkins
 class CrossLibrarySrcImportTest {
 
+    // sandbox=false: the bundled groovy-all on Jenkins 2.479.x LTS conflicts with the sandbox
+    // resolver. See the "Groovy 3.x" note in the root README; once Jenkins 2.492+ is the floor
+    // we can flip to true and add coverage for both.
+    private static final boolean SANDBOX = false;
+
     @Test
-    void varsScriptCanImportSrcClassFromPeerLibrary(JenkinsRule jenkins) throws Exception {
+    void varsScriptCanImportClassFromPeerLibrarySrc(JenkinsRule jenkins) throws Exception {
         var job = jenkins.createProject(WorkflowJob.class);
-        job.setDefinition(new CpsFlowDefinition("echo crossImport()", false));
+        job.setDefinition(new CpsFlowDefinition("echo restartService('api-service')", SANDBOX));
         var run = jenkins.buildAndAssertSuccess(job);
-        jenkins.assertLogContains("shell: cross-import-test", run);
+        jenkins.assertLogContains("shell: systemctl restart api-service", run);
     }
 
     @Test
-    void srcClassCanReferenceSrcClassFromPeerLibrary(JenkinsRule jenkins) throws Exception {
+    void srcClassCanImportClassFromPeerLibrarySrc(JenkinsRule jenkins) throws Exception {
         var job = jenkins.createProject(WorkflowJob.class);
-        job.setDefinition(new CpsFlowDefinition("echo crossImportSrc()", false));
+        job.setDefinition(new CpsFlowDefinition("echo runHealthCheck('api-service')", SANDBOX));
         var run = jenkins.buildAndAssertSuccess(job);
-        jenkins.assertLogContains("shell: cross-src-import-test", run);
+        jenkins.assertLogContains("shell: healthcheck api-service", run);
     }
 }

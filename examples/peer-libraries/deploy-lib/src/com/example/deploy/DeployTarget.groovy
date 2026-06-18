@@ -1,4 +1,4 @@
-package com.example
+package com.example.deploy
 
 class DeployTarget implements Serializable {
     String env
