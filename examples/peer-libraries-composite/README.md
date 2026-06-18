@@ -14,14 +14,14 @@ The root project declares `deployer` and `notifier` as peers via their published
 
 ```mermaid
 graph TD
-    Root[peer-libraries-composite<br/>consumer]
-    Dep[deployer<br/>pipeline-deployer]
-    Not[notifier<br/>pipeline-notifier]
-    VU[version-utils<br/>transitive via deployer]
+    consumerRoot[peer-libraries-composite<br/>consumer]
+    deployer[deployer<br/>pipeline-deployer]
+    notifier[notifier<br/>pipeline-notifier]
+    versionUtils[version-utils<br/>transitive via deployer]
 
-    Root --> Dep
-    Root --> Not
-    Dep --> VU
+    consumerRoot --> deployer
+    consumerRoot --> notifier
+    deployer --> versionUtils
 ```
 
 ## Structure
@@ -39,3 +39,13 @@ Each library's `settings.gradle.kts` uses `pluginManagement { includeBuild("../.
 The root only needs `includeBuild("deployer")` and `includeBuild("notifier")` — Gradle composes the nested included build automatically, so `version-utils` is available for GAV substitution without an explicit `includeBuild` here.
 
 Both direct peers are mapped to renamed library names via the DSL: `pipeline-deployer` and `pipeline-notifier`.
+`pipeline-notifier` is registered with `implicit = false`, so the test pipeline opts in with `@Library('pipeline-notifier') _` before calling `publishRelease`.
+
+### Why GAV notation with `includeBuild`
+
+The root build declares peers with `sharedLibrary("com.example.pipeline:deployer:1.0")` even though the producer lives in a local directory.
+Gradle's composite-build substitution matches the declared coordinates against the included builds' `group:name` and swaps them in transparently, which is why this works without a published artifact.
+
+GAV resolution from an actual remote Maven repository is **not** supported yet — the `sharedLibrarySourceElements` variant ships a directory artifact that Maven's publishing pipeline cannot upload.
+See [issue #165](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/165).
+Until that lands, GAV notation is essentially an addressing convention that only resolves through `includeBuild` — useful precisely because it keeps the consumer's build script identical to what a future remote-resolved version would look like.
