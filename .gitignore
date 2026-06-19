@@ -183,3 +183,6 @@ gradle-app.setting
 .claude/settings.local.json
 .claude/.agents/
 CLAUDE.local.md
+
+# Local scratch / working notes
+.scratch/
