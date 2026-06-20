@@ -13,8 +13,6 @@ import org.gradle.api.plugins.quality.CodeNarc
 import org.gradle.api.services.BuildService
 import org.gradle.api.services.BuildServiceParameters
 import org.gradle.api.tasks.compile.GroovyCompile
-import org.gradle.api.tasks.testing.Test
-import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.*
 import org.gradle.language.base.plugins.LifecycleBasePlugin
@@ -523,13 +521,6 @@ val ivy =
 dependencies {
   ivy(SharedLibraryDefaults.IVY_COORDINATES)
 }
-tasks.withType<Test>().configureEach {
-  testLogging {
-    events("failed")
-    exceptionFormat = TestExceptionFormat.SHORT
-  }
-}
-
 tasks.withType<GroovyCompile>().configureEach {
   groovyClasspath += files(ivy)
 }
