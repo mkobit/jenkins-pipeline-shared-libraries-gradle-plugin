@@ -7,9 +7,6 @@ import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 @WithJenkins
 class RunDeployTest {
 
-    // See CrossLibrarySrcImportTest for the sandbox=false rationale.
-    private static final boolean SANDBOX = false;
-
     @Test
     void deploysPipelineUsingAllLibrariesIncludingTransitive(JenkinsRule jenkins) throws Exception {
         var job = jenkins.createProject(WorkflowJob.class);
@@ -18,7 +15,7 @@ class RunDeployTest {
         job.setDefinition(new CpsFlowDefinition("""
             @Library('notifier') _
             runDeploy('api-service', 'production')
-            """, SANDBOX));
+            """, true));
         var run = jenkins.buildAndAssertSuccess(job);
         jenkins.assertLogContains("Pre-checks passed for api-service", run);
         jenkins.assertLogContains("shell: deploy api-service", run);

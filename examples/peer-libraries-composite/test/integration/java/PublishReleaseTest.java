@@ -7,9 +7,6 @@ import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 @WithJenkins
 class PublishReleaseTest {
 
-    // See peer-libraries/CrossLibrarySrcImportTest for the sandbox=false rationale.
-    private static final boolean SANDBOX = false;
-
     @Test
     void publishReleaseStampsVersionAndLogsUrl(JenkinsRule jenkins) throws Exception {
         var job = jenkins.createProject(WorkflowJob.class);
@@ -19,7 +16,7 @@ class PublishReleaseTest {
         job.setDefinition(new CpsFlowDefinition("""
             @Library('pipeline-notifier') _
             publishRelease('catalog-api', '2.1.0', '99', 'prod')
-            """, SANDBOX));
+            """, true));
         var run = jenkins.buildAndAssertSuccess(job);
         jenkins.assertLogContains("Released catalog-api@2.1.0+build.99 to https://catalog-api.prod.internal", run);
         jenkins.assertLogContains("[SUCCESS] catalog-api", run);

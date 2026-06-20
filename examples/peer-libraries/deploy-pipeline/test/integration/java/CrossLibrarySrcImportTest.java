@@ -11,15 +11,10 @@ import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 @WithJenkins
 class CrossLibrarySrcImportTest {
 
-    // sandbox=false: the bundled groovy-all on Jenkins 2.479.x LTS conflicts with the sandbox
-    // resolver. See the "Groovy 3.x" note in the root README; once Jenkins 2.492+ is the floor
-    // we can flip to true and add coverage for both.
-    private static final boolean SANDBOX = false;
-
     @Test
     void varsScriptCanImportClassFromPeerLibrarySrc(JenkinsRule jenkins) throws Exception {
         var job = jenkins.createProject(WorkflowJob.class);
-        job.setDefinition(new CpsFlowDefinition("echo restartService('api-service')", SANDBOX));
+        job.setDefinition(new CpsFlowDefinition("echo restartService('api-service')", true));
         var run = jenkins.buildAndAssertSuccess(job);
         jenkins.assertLogContains("shell: systemctl restart api-service", run);
     }
@@ -27,7 +22,7 @@ class CrossLibrarySrcImportTest {
     @Test
     void srcClassCanImportClassFromPeerLibrarySrc(JenkinsRule jenkins) throws Exception {
         var job = jenkins.createProject(WorkflowJob.class);
-        job.setDefinition(new CpsFlowDefinition("echo runHealthCheck('api-service')", SANDBOX));
+        job.setDefinition(new CpsFlowDefinition("echo runHealthCheck('api-service')", true));
         var run = jenkins.buildAndAssertSuccess(job);
         jenkins.assertLogContains("shell: healthcheck api-service", run);
     }

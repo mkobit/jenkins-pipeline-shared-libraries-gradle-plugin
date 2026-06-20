@@ -483,7 +483,7 @@ class SharedLibraryPluginPeerLibraryTest :
                 @Test
                 void customSuiteResolvesPeerVarsStep(JenkinsRule jenkins) throws Exception {
                     var job = jenkins.createProject(WorkflowJob.class);
-                    job.setDefinition(new CpsFlowDefinition("echo peerGreet('alt-suite')", false));
+                    job.setDefinition(new CpsFlowDefinition("echo peerGreet('alt-suite')", true));
                     var run = jenkins.buildAndAssertSuccess(job);
                     jenkins.assertLogContains("hello, alt-suite", run);
                 }
@@ -534,7 +534,7 @@ class SharedLibraryPluginPeerLibraryTest :
                 @Test
                 void pipelineWithoutLibraryAnnotationCannotResolvePeerStep(JenkinsRule jenkins) throws Exception {
                     var job = jenkins.createProject(WorkflowJob.class);
-                    job.setDefinition(new CpsFlowDefinition("echo explicitOnlyStep()", false));
+                    job.setDefinition(new CpsFlowDefinition("echo explicitOnlyStep()", true));
                     jenkins.assertBuildStatus(Result.FAILURE, job.scheduleBuild2(0));
                 }
 
@@ -542,7 +542,7 @@ class SharedLibraryPluginPeerLibraryTest :
                 void pipelineWithLibraryAnnotationLoadsPeerStep(JenkinsRule jenkins) throws Exception {
                     var job = jenkins.createProject(WorkflowJob.class);
                     job.setDefinition(new CpsFlowDefinition(
-                        "@Library('peer-lib') _\necho explicitOnlyStep()", false));
+                        "@Library('peer-lib') _\necho explicitOnlyStep()", true));
                     var run = jenkins.buildAndAssertSuccess(job);
                     jenkins.assertLogContains("explicit-loaded", run);
                 }
@@ -591,7 +591,7 @@ class SharedLibraryPluginPeerLibraryTest :
                 void pipelineReadsResourceFromPeer(JenkinsRule jenkins) throws Exception {
                     var job = jenkins.createProject(WorkflowJob.class);
                     job.setDefinition(new CpsFlowDefinition(
-                        "echo libraryResource('com/example/greeting.txt')", false));
+                        "echo libraryResource('com/example/greeting.txt')", true));
                     var run = jenkins.buildAndAssertSuccess(job);
                     jenkins.assertLogContains("hello from peer resource", run);
                 }
@@ -640,7 +640,7 @@ class SharedLibraryPluginPeerLibraryTest :
                 @Test
                 void pipelineCallsPeerVarsStep(JenkinsRule jenkins) throws Exception {
                     var job = jenkins.createProject(WorkflowJob.class);
-                    job.setDefinition(new CpsFlowDefinition("echo peerGreet('world')", false));
+                    job.setDefinition(new CpsFlowDefinition("echo peerGreet('world')", true));
                     var run = jenkins.buildAndAssertSuccess(job);
                     jenkins.assertLogContains("hello, world", run);
                 }
@@ -727,7 +727,7 @@ class SharedLibraryPluginPeerLibraryTest :
                 @Test
                 void varsCanImportPeerSrcClassNatively(JenkinsRule jenkins) throws Exception {
                     var job = jenkins.createProject(WorkflowJob.class);
-                    job.setDefinition(new CpsFlowDefinition("echo crossStep('hello')", false));
+                    job.setDefinition(new CpsFlowDefinition("echo crossStep('hello')", true));
                     var run = jenkins.buildAndAssertSuccess(job);
                     jenkins.assertLogContains("cross: hello", run);
                 }
