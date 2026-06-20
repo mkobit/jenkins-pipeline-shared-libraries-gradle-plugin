@@ -166,10 +166,10 @@ tasks.check {
 ```
 
 > [!NOTE]
-> Spock 2.x brings Groovy 3.x onto the runtime classpath.
-> On Jenkins 2.479.x LTS this conflicts with the bundled `groovy-all:2.4.21` when `sandbox=true`.
-> Use `sandbox=false` in `CpsFlowDefinition` for test suites on 2.479.x.
-> This restriction is expected to lift on Jenkins 2.492.x+ once its internal Groovy 3 migration completes.
+> Spock 2.x brings Groovy 3.x onto the runtime classpath, which conflicts with the bundled `groovy-all:2.4.21` on Jenkins 2.479.x LTS when `sandbox=true`.
+> Use `sandbox=false` in `CpsFlowDefinition` only for Spock-based suites on 2.479.x.
+> JUnit-based suites (the default `test` and `integrationTest`) are unaffected and should keep using `sandbox=true`.
+> The Spock restriction is expected to lift on Jenkins 2.492.x+ once its internal Groovy 3 migration completes.
 
 ## Peer libraries
 
