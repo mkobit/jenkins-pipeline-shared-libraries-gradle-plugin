@@ -605,6 +605,55 @@ class SharedLibraryPluginPeerLibraryTest :
       }
     }
 
+    describe("consumer with no src/ or vars/ fails at Jenkins runtime — Jenkins rejects empty libraries") {
+      forGradleVersions { gradleVersion ->
+        withTestProject {
+          // Jenkins-side requirement: every registered library must contain at least one of src/
+          // or vars/ (resources/ alone is not enough). The autoregistrar registers the consumer
+          // itself, so this fails at runtime if the consumer has only peers and no own files.
+          settingsFile.writeText(jenkinsSettings("empty-consumer", includes = listOf("peer-lib")))
+          buildFile.writeText(
+            """
+            plugins { id("com.mkobit.jenkins.pipelines.shared-library") }
+            sharedLibrary {
+                dependencies {
+                    sharedLibrary(project(":peer-lib"))
+                }
+            }
+            """.trimIndent(),
+          )
+          // No vars/ or src/ in the consumer — deliberate.
+          file("peer-lib/build.gradle.kts").writeText(barePeerSubproject())
+          file("peer-lib/vars/peerStep.groovy").writeText("def call() {}")
+          file("test/integration/java/EmptyConsumerIT.java").writeText(
+            """
+            import hudson.model.Result;
+            import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+            import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+            import org.junit.jupiter.api.Test;
+            import org.jvnet.hudson.test.JenkinsRule;
+            import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
+
+            @WithJenkins
+            class EmptyConsumerIT {
+                @Test
+                void emptyConsumerLibraryIsRejectedByJenkins(JenkinsRule jenkins) throws Exception {
+                    WorkflowJob job = jenkins.createProject(WorkflowJob.class);
+                    job.setDefinition(new CpsFlowDefinition("echo peerStep()", true));
+                    jenkins.assertBuildStatus(Result.FAILURE, job.scheduleBuild2(0));
+                    jenkins.assertLogContains("expected to contain at least one of src or vars directories",
+                        job.getLastBuild());
+                }
+            }
+            """.trimIndent(),
+          )
+
+          val result = runner(gradleVersion).build("integrationTest")
+          result.task(":integrationTest") shouldNotBeNull { outcome shouldBe TaskOutcome.SUCCESS }
+        }
+      }
+    }
+
     describe("integrationTest end-to-end: pipeline calls a peer's vars step") {
       forGradleVersions { gradleVersion ->
         withTestProject {

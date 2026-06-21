@@ -243,21 +243,34 @@ configurations.compileOnly {
 // Jenkins' CPS compiler implicitly imports org.jenkinsci.plugins.workflow.libs.Library so that
 // @Library works in pipeline scripts without an explicit import statement. Replicate that here so
 // vars/ scripts can use @Library the same way they would inside Jenkins.
-val groovyCompilerConfigFile: File =
-  layout.buildDirectory.file("tmp/compileGroovyConfig/jenkins-imports.groovy").get().asFile.also { f ->
-    f.parentFile.mkdirs()
-    f.writeText(
-      """
-      withConfig(configuration) {
-          imports {
-              normal 'org.jenkinsci.plugins.workflow.libs.Library'
-          }
+val groovyCompilerImportsConfig =
+  """
+  withConfig(configuration) {
+      imports {
+          normal 'org.jenkinsci.plugins.workflow.libs.Library'
       }
-      """.trimIndent(),
-    )
+  }
+  """.trimIndent()
+val generateGroovyImportsConfig =
+  tasks.register("generateGroovyImportsConfig") {
+    description = "Writes a Groovy compiler configuration script that adds Jenkins pipeline default imports"
+    val output = layout.buildDirectory.file("tmp/compileGroovyConfig/jenkins-imports.groovy")
+    inputs.property("content", groovyCompilerImportsConfig)
+    outputs.file(output)
+    doLast {
+      val file = output.get().asFile
+      file.parentFile.mkdirs()
+      file.writeText(groovyCompilerImportsConfig)
+    }
   }
 tasks.named<GroovyCompile>("compileGroovy") {
-  groovyOptions.configurationScript = groovyCompilerConfigFile
+  inputs.files(generateGroovyImportsConfig)
+  doFirst {
+    groovyOptions.configurationScript =
+      generateGroovyImportsConfig
+        .get()
+        .outputs.files.singleFile
+  }
 }
 
 // Integration tests need groovy-all at *runtime only* so SandboxInterceptor

@@ -116,6 +116,11 @@ abstract class SharedLibraryExtension
      *     libraryName = "my-shared-lib"
      * }
      * ```
+     *
+     * Jenkins requires every registered library to contain at least one of `src/` or `vars/`;
+     * a `resources/`-only library is rejected at runtime. A project that's purely an aggregator
+     * of peers needs to either ship an own `src/` or `vars/` file or disable self-registration
+     * by setting `autoRegisterLibrary = false`.
      */
     val libraryName: Property<String> =
       objects.property<String>().convention(project.name)
