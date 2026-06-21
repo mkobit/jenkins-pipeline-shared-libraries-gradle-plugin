@@ -1,6 +1,8 @@
 # Explicit library name example
 
-This example demonstrates how to override the default shared library name and disable implicit loading.
+This example demonstrates how to override the default shared library name and disable implicit loading **on the project's own library**.
+
+For applying `libraryName` and `implicit` to **peer** libraries, see [`peer-libraries/`](../peer-libraries/) (project peers + transitive + opt-in via `implicit = false`) and [`peer-libraries-composite/`](../peer-libraries-composite/) (all-composite GAV peers).
 
 ## Purpose
 

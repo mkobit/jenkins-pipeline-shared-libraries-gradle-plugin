@@ -79,6 +79,24 @@ abstract class SharedLibraryExtension
      */
     fun plugins(action: Action<in JenkinsPlugins>) = action.execute(plugins)
 
+    /** Peer shared library dependencies declared via [dependencies]. */
+    val dependencies: SharedLibraryDependencies = objects.newInstance<SharedLibraryDependencies>()
+
+    /**
+     * Declares peer shared library dependencies — other shared libraries this project
+     * depends on. Each peer is registered with the embedded Jenkins as a Global Library.
+     *
+     * ```kotlin
+     * sharedLibrary {
+     *     dependencies {
+     *         sharedLibrary("com.example:config-lib:1.0.0")
+     *         sharedLibrary(project(":config-lib"))
+     *     }
+     * }
+     * ```
+     */
+    fun dependencies(action: Action<in SharedLibraryDependencies>) = action.execute(dependencies)
+
     /** `com.lesfurets:jenkins-pipeline-unit` version used in the `test` suite. */
     val pipelineUnitVersion: Property<String> =
       objects.property<String>().convention(SharedLibraryDefaults.PIPELINE_UNIT_VERSION)
@@ -98,6 +116,11 @@ abstract class SharedLibraryExtension
      *     libraryName = "my-shared-lib"
      * }
      * ```
+     *
+     * Jenkins requires every registered library to contain at least one of `src/` or `vars/`;
+     * a `resources/`-only library is rejected at runtime. A project that's purely an aggregator
+     * of peers needs to either ship an own `src/` or `vars/` file or disable self-registration
+     * by setting `autoRegisterLibrary = false`.
      */
     val libraryName: Property<String> =
       objects.property<String>().convention(project.name)

@@ -10,6 +10,8 @@ internal const val JENKINS_WAR_CONFIGURATION = "jenkinsWar"
 internal const val GROOVY_ALL_RUNTIME_CONFIGURATION = "integrationTestGroovyAllRuntime"
 internal const val IVY_CONFIGURATION = "sharedLibraryIvy"
 internal const val SHARED_LIBRARY_SOURCE_ELEMENTS_CONFIGURATION = "sharedLibrarySourceElements"
+internal const val SHARED_LIBRARY_DEPENDENCIES_CONFIGURATION = "sharedLibraryDependencies"
+internal const val PEER_LIBRARY_SOURCE_CONFIGURATION = "peerLibrarySource"
 
 internal const val PIPELINE_GROOVY_LIB_MODULE = "io.jenkins.plugins:pipeline-groovy-lib"
 internal const val WORKFLOW_JOB_MODULE = "org.jenkins-ci.plugins.workflow:workflow-job"

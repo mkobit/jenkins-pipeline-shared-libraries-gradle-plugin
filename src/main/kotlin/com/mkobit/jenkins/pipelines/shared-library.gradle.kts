@@ -2,15 +2,17 @@
 
 package com.mkobit.jenkins.pipelines
 
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier
+import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition
 import org.gradle.api.attributes.Category
 import org.gradle.api.attributes.Usage
+import org.gradle.api.component.AdhocComponentWithVariants
 import org.gradle.api.plugins.jvm.JvmTestSuite
 import org.gradle.api.plugins.quality.CodeNarc
 import org.gradle.api.services.BuildService
 import org.gradle.api.services.BuildServiceParameters
 import org.gradle.api.tasks.compile.GroovyCompile
-import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.*
 import org.gradle.language.base.plugins.LifecycleBasePlugin
@@ -104,23 +106,6 @@ val syncSharedLibrarySource =
     destinationDir = sharedLibrarySourceDir
   }
 
-// Outgoing variant: exposes the Sync task output as a resolvable artifact so other Gradle
-// projects can declare this project as a shared library source dependency.
-// Variant attribute Category="shared-library-source" identifies it as library source, not code.
-configurations.register(SHARED_LIBRARY_SOURCE_ELEMENTS_CONFIGURATION) {
-  isCanBeResolved = false
-  isCanBeConsumed = true
-  description = "Shared library source files for consumption by dependent projects via variant-aware resolution"
-  attributes {
-    attribute(Category.CATEGORY_ATTRIBUTE, objects.named<Category>(SHARED_LIBRARY_SOURCE_CATEGORY))
-    attribute(Usage.USAGE_ATTRIBUTE, objects.named<Usage>(SHARED_LIBRARY_SOURCE_USAGE))
-  }
-  outgoing.artifact(syncSharedLibrarySource.flatMap { it.destinationDir }) {
-    type = "directory"
-    builtBy(syncSharedLibrarySource)
-  }
-}
-
 val jenkinsBom =
   configurations.register(JENKINS_BOM_CONFIGURATION) {
     isCanBeResolved = false
@@ -147,6 +132,74 @@ val jenkinsPlugin =
     extendsFrom(jenkinsBom)
     fromDependencyCollector(sharedLibrary.plugins.pluginCollector)
   }
+
+// Peer shared library dependencies — declared via `sharedLibrary { dependencies { sharedLibrary(...) } }`.
+// Acts as a bucket fed by the DSL's `DependencyCollector`. Flows into:
+//   - `compileOnly` on main and on every test suite: peer JAR classes available for symbol resolution
+//   - `peerLibrarySource` resolvable config: source-directory variants for Jenkins runtime loading
+// Mirrors the `jenkinsPlugin` collector-bucket pattern (line above).
+val sharedLibraryDependencies =
+  configurations.register(SHARED_LIBRARY_DEPENDENCIES_CONFIGURATION) {
+    isCanBeResolved = false
+    isCanBeConsumed = false
+    description = "Peer Jenkins shared library dependencies"
+    fromDependencyCollector(sharedLibrary.dependencies.sharedLibraryCollector)
+  }
+
+// Outgoing variant: exposes the Sync task output as a resolvable artifact so other Gradle
+// projects can declare this project as a shared library source dependency.
+// Registered AFTER `sharedLibraryDependencies` so the `extendsFrom` reference resolves at the
+// point the variant is realized (variant attachment below triggers realization eagerly).
+configurations.register(SHARED_LIBRARY_SOURCE_ELEMENTS_CONFIGURATION) {
+  isCanBeResolved = false
+  isCanBeConsumed = true
+  description = "Shared library source files for consumption by dependent projects via variant-aware resolution"
+  // Source-variant transitivity: a consumer resolving this project's source variant also receives
+  // the source directories of every peer library *this* project declared via
+  // `sharedLibrary { dependencies { sharedLibrary(...) } }`. Without this, a consumer C that
+  // depends on A would see A's source only — never B's, even when A declared peer B itself.
+  // The compile-classpath side stays compileOnly (non-transitive) by design so Jenkins' runtime
+  // classloader doesn't see duplicate compiled copies; this only affects what Jenkins-runtime
+  // source directories get loaded into GlobalLibraries during integrationTest.
+  extendsFrom(sharedLibraryDependencies)
+  attributes {
+    attribute(Category.CATEGORY_ATTRIBUTE, objects.named<Category>(SHARED_LIBRARY_SOURCE_CATEGORY))
+    attribute(Usage.USAGE_ATTRIBUTE, objects.named<Usage>(SHARED_LIBRARY_SOURCE_USAGE))
+  }
+  outgoing.artifact(syncSharedLibrarySource.flatMap { it.destinationDir }) {
+    type = "directory"
+    builtBy(syncSharedLibrarySource)
+  }
+}
+
+// Attach the source variant to the `java` SoftwareComponent so peer-library consumers can discover
+// it via project dependency metadata (`project(":lib")`) and via composite-build substitution.
+// `skip()` excludes the variant from any maven-publish / ivy-publish output: the artefact is a
+// directory, which the publication-side checksum/upload pipeline cannot consume. Cross-project
+// resolution uses Gradle's in-memory component model, so skip() does not affect project deps or
+// includeBuild substitution. Binary-GAV consumers require a future sources-JAR fallback variant.
+(components["java"] as AdhocComponentWithVariants).addVariantsFromConfiguration(
+  configurations.getByName(SHARED_LIBRARY_SOURCE_ELEMENTS_CONFIGURATION),
+) { skip() }
+
+// Resolvable view of peer shared libraries that selects the `sharedLibrarySourceElements` variant
+// (Category=jenkins-shared-library, Usage=jenkins-shared-library-source). Each resolved artefact
+// is a directory containing the peer library's `src/`, `vars/`, and `resources/`; these are
+// injected into Jenkins at integration-test runtime via `test.library.N.location`.
+val peerLibrarySource =
+  configurations.register(PEER_LIBRARY_SOURCE_CONFIGURATION) {
+    isCanBeResolved = true
+    isCanBeConsumed = false
+    description = "Resolved source directories of peer Jenkins shared libraries"
+    extendsFrom(sharedLibraryDependencies)
+    attributes {
+      attribute(Category.CATEGORY_ATTRIBUTE, objects.named<Category>(SHARED_LIBRARY_SOURCE_CATEGORY))
+      attribute(Usage.USAGE_ATTRIBUTE, objects.named<Usage>(SHARED_LIBRARY_SOURCE_USAGE))
+    }
+  }
+
+val peerLibrarySourceFiles =
+  peerLibrarySource.map { it.incoming.artifacts.artifactFiles }
 dependencies {
   jenkinsPlugin(sharedLibrary.jenkins.version.map { v -> "org.jenkins-ci.main:jenkins-core:$v" })
   jenkinsPlugin(PIPELINE_GROOVY_LIB_MODULE)
@@ -180,8 +233,44 @@ sourceSets.main.configure {
   resources.setSrcDirs(listOf("resources"))
 }
 // Jenkins APIs are compile-only for the shared library; the library runs inside Jenkins at runtime.
+// Peer shared libraries follow the same pattern — at runtime Jenkins loads the peer's source via
+// our LocalLibraryRetriever, so the consumer's compiled JAR doesn't need peer classes on runtime.
 configurations.compileOnly {
   extendsFrom(jenkinsPlugin)
+  extendsFrom(sharedLibraryDependencies)
+}
+
+// Jenkins' CPS compiler implicitly imports org.jenkinsci.plugins.workflow.libs.Library so that
+// @Library works in pipeline scripts without an explicit import statement. Replicate that here so
+// vars/ scripts can use @Library the same way they would inside Jenkins.
+val groovyCompilerImportsConfig =
+  """
+  withConfig(configuration) {
+      imports {
+          normal 'org.jenkinsci.plugins.workflow.libs.Library'
+      }
+  }
+  """.trimIndent()
+val generateGroovyImportsConfig =
+  tasks.register("generateGroovyImportsConfig") {
+    description = "Writes a Groovy compiler configuration script that adds Jenkins pipeline default imports"
+    val output = layout.buildDirectory.file("tmp/compileGroovyConfig/jenkins-imports.groovy")
+    inputs.property("content", groovyCompilerImportsConfig)
+    outputs.file(output)
+    doLast {
+      val file = output.get().asFile
+      file.parentFile.mkdirs()
+      file.writeText(groovyCompilerImportsConfig)
+    }
+  }
+tasks.named<GroovyCompile>("compileGroovy") {
+  inputs.files(generateGroovyImportsConfig)
+  doFirst {
+    groovyOptions.configurationScript =
+      generateGroovyImportsConfig
+        .get()
+        .outputs.files.singleFile
+  }
 }
 
 // Integration tests need groovy-all at *runtime only* so SandboxInterceptor
@@ -266,6 +355,12 @@ testing.suites.withType<JvmTestSuite>().configureEach {
     extendsFrom(jenkinsPlugin)
     exclude(mapOf("group" to "org.codehaus.groovy", "module" to "groovy-all"))
   }
+  // Peer classes are compile-only for test code. On the runtime classpath they would shadow
+  // Jenkins' own compile-from-source loader and load via AppClassLoader instead, breaking
+  // cross-library type visibility between peers in a pipeline run.
+  configurations.named(sources.compileOnlyConfigurationName) {
+    extendsFrom(sharedLibraryDependencies)
+  }
   dependencies {
     implementation(SharedLibraryDefaults.GROOVY_COORDINATES)
     implementation(
@@ -285,10 +380,85 @@ testing.suites.withType<JvmTestSuite>().configureEach {
     )
   }
 
+  // Resolved peer library metadata — maps each artifact back to its DSL spec to derive
+  // libraryName and implicit. Computed once per suite; injected into every target task.
+  val peerLibraryEntries =
+    peerLibrarySource.flatMap { cfg ->
+      cfg.incoming.artifacts.resolvedArtifacts.zip(sharedLibrary.dependencies.specs) { artifacts, specs ->
+        val specByIdentifier: Map<String, PeerLibrarySpec> = specs.associateBy { it.identifier.get() }
+        // Composite build substitution: a GAV dependency resolved via includeBuild() produces a
+        // ProjectComponentIdentifier whose projectPath is ":" (the root of the included build),
+        // losing the original group:artifact identity. Retain it by consulting resolutionResult,
+        // which preserves the declared module version even after substitution.
+        val moduleVersionByComponent =
+          cfg.incoming.resolutionResult.allComponents
+            .mapNotNull { c -> c.moduleVersion?.let { mv -> c.id to "${mv.group}:${mv.name}" } }
+            .toMap()
+        artifacts.map { artifact ->
+          val owner = artifact.id.componentIdentifier
+          val ownerId: String =
+            when (owner) {
+              is ModuleComponentIdentifier -> {
+                "${owner.group}:${owner.module}"
+              }
+
+              is ProjectComponentIdentifier -> {
+                // Prefer the retained module GAV when the project path is ":" (composite root),
+                // otherwise the project path identifies the subproject within the same build.
+                moduleVersionByComponent[owner]?.takeIf { owner.projectPath == ":" }
+                  ?: owner.projectPath
+              }
+
+              else -> {
+                owner.displayName
+              }
+            }
+          val spec = specByIdentifier[ownerId]
+          val defaultName = ownerId.substringAfterLast(":").ifEmpty { ownerId }
+          PeerLibraryEntry(
+            libraryName = spec?.libraryName?.getOrElse(defaultName) ?: defaultName,
+            locationPath = artifact.file.absolutePath,
+            implicit = spec?.implicit?.getOrElse(true) ?: true,
+          )
+        }
+      }
+    }
+
   targets.configureEach {
     testTask.configure {
+      // Library metadata (self + peers) is exposed on every suite — useTestHarness only gates the
+      // embedded Jenkins runtime wiring below. JPU tests in the default `test` suite read these
+      // system properties to register peer libraries dynamically.
+      val syncTask = tasks.named<SyncSharedLibrarySource>("syncSharedLibrarySource")
+      inputs.files(syncTask).withPropertyName("sharedLibrarySource")
+      jvmArgumentProviders.add(
+        objects.newInstance<LibraryLocationArgumentProvider>().apply {
+          libraryLocation = syncTask.flatMap { it.destinationDir }
+        },
+      )
+      jvmArgumentProviders.add(
+        objects.newInstance<LibraryNameArgumentProvider>().apply {
+          libraryName.set(sharedLibrary.libraryName)
+        },
+      )
+      jvmArgumentProviders.add(
+        objects.newInstance<LibraryImplicitArgumentProvider>().apply {
+          implicit.set(sharedLibrary.implicit)
+        },
+      )
+      // Peer shared library source directories — injects test.library.N.{name,location,implicit}
+      // for each declared peer library. Indices start at 1 (the project's own library is at 0).
+      jvmArgumentProviders.add(
+        objects.newInstance<PeerLibrariesArgumentProvider>().apply {
+          entries.set(peerLibraryEntries)
+          selfLibraryName.set(sharedLibrary.libraryName)
+          sourceDirectories.from(peerLibrarySourceFiles)
+        },
+      )
+
       if (!jenkinsExt.useTestHarness.getOrElse(false)) return@configure
 
+      // Embedded Jenkins (JenkinsRule) wiring — only for suites that opt in.
       val suiteJenkinsDir = layout.buildDirectory.dir("jenkins-for-test/$name")
       mustRunAfter(tasks.test)
       usesService(jenkinsTestSuiteService)
@@ -306,26 +476,9 @@ testing.suites.withType<JvmTestSuite>().configureEach {
       classpath += files(groovyAllRuntime)
       maxParallelForks = 1
       maxHeapSize = SharedLibraryDefaults.INTEGRATION_TEST_MAX_HEAP_SIZE
-      val syncTask = tasks.named<SyncSharedLibrarySource>("syncSharedLibrarySource")
-      inputs.files(syncTask).withPropertyName("sharedLibrarySource")
-      jvmArgumentProviders.add(
-        objects.newInstance<LibraryLocationArgumentProvider>().apply {
-          libraryLocation = syncTask.flatMap { it.destinationDir }
-        },
-      )
       jvmArgumentProviders.add(
         objects.newInstance<JenkinsWarJvmArgumentProvider>().apply {
           warFile.fileProvider(jenkinsWarFile)
-        },
-      )
-      jvmArgumentProviders.add(
-        objects.newInstance<LibraryNameArgumentProvider>().apply {
-          libraryName.set(sharedLibrary.libraryName)
-        },
-      )
-      jvmArgumentProviders.add(
-        objects.newInstance<LibraryImplicitArgumentProvider>().apply {
-          implicit.set(sharedLibrary.implicit)
         },
       )
       jvmArgs(
