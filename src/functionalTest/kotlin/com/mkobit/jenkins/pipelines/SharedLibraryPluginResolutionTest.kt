@@ -264,6 +264,62 @@ class SharedLibraryPluginResolutionTest :
       }
     }
 
+    describe("applying the plugin resolves no plugin/HPI/war configurations during configuration phase") {
+      // Resolution of jenkinsPlugin / jenkinsWar / sharedLibraryDependencies / peerLibrarySource
+      // during configuration is a footgun: it requires network, slows clean builds, and breaks
+      // the configuration-cache contract. The task body runs after configuration is fully done,
+      // so any config whose state is still UNRESOLVED was not touched by the plugin's wiring.
+      val trackedConfigurations =
+        listOf(
+          "jenkinsBom",
+          "jenkinsPlugin",
+          "jenkinsPluginHpis",
+          "jenkinsWar",
+          "sharedLibraryDependencies",
+          "sharedLibrarySourceElements",
+          "peerLibrarySource",
+          "integrationTestGroovyAllRuntime",
+          "sharedLibraryIvy",
+        )
+      withData(TestedGradleVersion.all) { gradleVersion ->
+        withTestProject {
+          settingsFile.writeText(jenkinsSettings("no-config-resolution-test"))
+          buildFile.writeText(
+            """
+            plugins {
+                id("com.mkobit.jenkins.pipelines.shared-library")
+            }
+            sharedLibrary {
+                plugins {
+                    plugin("$WORKFLOW_API")
+                }
+            }
+            tasks.register("verifyConfigurationStates") {
+                val configsByName = configurations
+                doLast {
+                    listOf(${trackedConfigurations.joinToString { "\"$it\"" }}).forEach { name ->
+                        val c = configsByName.findByName(name)
+                        println("config-state:" + name + ":" + (c?.state?.name ?: "MISSING"))
+                    }
+                }
+            }
+            """.trimIndent(),
+          )
+          val result = runner(gradleVersion).withArguments("verifyConfigurationStates").build()
+          val stateLines =
+            result.output
+              .lines()
+              .filterMatching { it.shouldStartWith("config-state:") }
+          stateLines.size shouldBe trackedConfigurations.size
+          trackedConfigurations.forEach { name ->
+            stateLines.forAtLeastOne {
+              it shouldContain "config-state:$name:UNRESOLVED"
+            }
+          }
+        }
+      }
+    }
+
     describe("BOM version constraint propagates through jenkinsPlugin") {
       withData(TestedGradleVersion.all) { gradleVersion ->
         // workflow-api is declared without a version — the BOM must supply it.
