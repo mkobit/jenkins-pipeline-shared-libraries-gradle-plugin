@@ -270,10 +270,10 @@ class SharedLibraryPluginSmokeTest :
                 val t = tasks.integrationTest
                 doLast {
                     val arg = t.get().jvmArgumentProviders
-                        .filterIsInstance<com.mkobit.jenkins.pipelines.LibraryImplicitArgumentProvider>()
+                        .filterIsInstance<com.mkobit.jenkins.pipelines.SelfLibraryArgumentProvider>()
                         .firstOrNull()
                         ?.asArguments()
-                        ?.firstOrNull()
+                        ?.firstOrNull { it.startsWith("-Dtest.library.0.implicit=") }
                     println("implicitArg=${'$'}arg")
                 }
             }
@@ -300,10 +300,10 @@ class SharedLibraryPluginSmokeTest :
                 val t = tasks.integrationTest
                 doLast {
                     val arg = t.get().jvmArgumentProviders
-                        .filterIsInstance<com.mkobit.jenkins.pipelines.LibraryImplicitArgumentProvider>()
+                        .filterIsInstance<com.mkobit.jenkins.pipelines.SelfLibraryArgumentProvider>()
                         .firstOrNull()
                         ?.asArguments()
-                        ?.firstOrNull()
+                        ?.firstOrNull { it.startsWith("-Dtest.library.0.implicit=") }
                     println("implicitArg=${'$'}arg")
                 }
             }

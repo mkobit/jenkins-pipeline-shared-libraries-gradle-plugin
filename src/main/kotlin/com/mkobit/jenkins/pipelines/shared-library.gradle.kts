@@ -432,17 +432,9 @@ testing.suites.withType<JvmTestSuite>().configureEach {
       val syncTask = tasks.named<SyncSharedLibrarySource>("syncSharedLibrarySource")
       inputs.files(syncTask).withPropertyName("sharedLibrarySource")
       jvmArgumentProviders.add(
-        objects.newInstance<LibraryLocationArgumentProvider>().apply {
+        objects.newInstance<SelfLibraryArgumentProvider>().apply {
           libraryLocation = syncTask.flatMap { it.destinationDir }
-        },
-      )
-      jvmArgumentProviders.add(
-        objects.newInstance<LibraryNameArgumentProvider>().apply {
           libraryName.set(sharedLibrary.libraryName)
-        },
-      )
-      jvmArgumentProviders.add(
-        objects.newInstance<LibraryImplicitArgumentProvider>().apply {
           implicit.set(sharedLibrary.implicit)
         },
       )
