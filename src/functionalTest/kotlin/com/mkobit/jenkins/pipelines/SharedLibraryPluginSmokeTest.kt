@@ -267,6 +267,7 @@ class SharedLibraryPluginSmokeTest :
                 id("com.mkobit.jenkins.pipelines.shared-library")
             }
             tasks.register("printImplicitArg") {
+                dependsOn(tasks.named("syncSharedLibrarySource"))
                 val t = tasks.integrationTest
                 doLast {
                     val arg = t.get().jvmArgumentProviders
@@ -297,6 +298,7 @@ class SharedLibraryPluginSmokeTest :
                 implicit = false
             }
             tasks.register("printImplicitArg") {
+                dependsOn(tasks.named("syncSharedLibrarySource"))
                 val t = tasks.integrationTest
                 doLast {
                     val arg = t.get().jvmArgumentProviders

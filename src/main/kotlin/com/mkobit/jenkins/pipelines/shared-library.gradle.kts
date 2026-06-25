@@ -430,12 +430,17 @@ testing.suites.withType<JvmTestSuite>().configureEach {
       // embedded Jenkins runtime wiring below. JPU tests in the default `test` suite read these
       // system properties to register peer libraries dynamically.
       val syncTask = tasks.named<SyncSharedLibrarySource>("syncSharedLibrarySource")
+      val selfLibraryEntry =
+        syncTask.flatMap { it.destinationDir }.map { dir ->
+          SharedLibraryEntry(
+            libraryName = sharedLibrary.libraryName.get(),
+            locationPath = dir.asFile.absolutePath,
+            implicit = sharedLibrary.implicit.get(),
+          )
+        }
       jvmArgumentProviders.add(
         objects.newInstance<SharedLibrariesArgumentProvider>().apply {
-          selfLibraryName = sharedLibrary.libraryName
-          selfLibraryLocation = syncTask.flatMap { it.destinationDir }
-          selfLibraryImplicit = sharedLibrary.implicit
-          peerEntries = peerLibraryEntries
+          entries = selfLibraryEntry.zip(peerLibraryEntries) { self, peers -> listOf(self) + peers }
           sourceDirectories.from(syncTask.flatMap { it.destinationDir })
           sourceDirectories.from(peerLibrarySourceFiles)
         },

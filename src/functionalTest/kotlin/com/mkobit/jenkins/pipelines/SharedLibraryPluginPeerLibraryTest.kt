@@ -242,7 +242,7 @@ class SharedLibraryPluginPeerLibraryTest :
                   }
               }
               tasks.register("printTestJvmArgs") {
-                  dependsOn(":peer-lib:syncSharedLibrarySource")
+                  dependsOn("syncSharedLibrarySource", ":peer-lib:syncSharedLibrarySource")
                   doLast {
                       tasks.named<Test>("test").get()
                           .jvmArgumentProviders
@@ -279,7 +279,7 @@ class SharedLibraryPluginPeerLibraryTest :
                   }
               }
               tasks.register("printPeerJvmArgs") {
-                  dependsOn(":peer-lib:syncSharedLibrarySource")
+                  dependsOn("syncSharedLibrarySource", ":peer-lib:syncSharedLibrarySource")
                   doLast {
                       tasks.named<Test>("integrationTest").get()
                           .jvmArgumentProviders
