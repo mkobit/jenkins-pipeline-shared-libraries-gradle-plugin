@@ -415,7 +415,7 @@ testing.suites.withType<JvmTestSuite>().configureEach {
             }
           val spec = specByIdentifier[ownerId]
           val defaultName = ownerId.substringAfterLast(":").ifEmpty { ownerId }
-          PeerLibraryEntry(
+          SharedLibraryEntry(
             libraryName = spec?.libraryName?.getOrElse(defaultName) ?: defaultName,
             locationPath = artifact.file.absolutePath,
             implicit = spec?.implicit?.getOrElse(true) ?: true,
@@ -430,28 +430,18 @@ testing.suites.withType<JvmTestSuite>().configureEach {
       // embedded Jenkins runtime wiring below. JPU tests in the default `test` suite read these
       // system properties to register peer libraries dynamically.
       val syncTask = tasks.named<SyncSharedLibrarySource>("syncSharedLibrarySource")
-      inputs.files(syncTask).withPropertyName("sharedLibrarySource")
+      val selfLibraryEntry =
+        syncTask.flatMap { it.destinationDir }.map { dir ->
+          SharedLibraryEntry(
+            libraryName = sharedLibrary.libraryName.get(),
+            locationPath = dir.asFile.absolutePath,
+            implicit = sharedLibrary.implicit.get(),
+          )
+        }
       jvmArgumentProviders.add(
-        objects.newInstance<LibraryLocationArgumentProvider>().apply {
-          libraryLocation = syncTask.flatMap { it.destinationDir }
-        },
-      )
-      jvmArgumentProviders.add(
-        objects.newInstance<LibraryNameArgumentProvider>().apply {
-          libraryName.set(sharedLibrary.libraryName)
-        },
-      )
-      jvmArgumentProviders.add(
-        objects.newInstance<LibraryImplicitArgumentProvider>().apply {
-          implicit.set(sharedLibrary.implicit)
-        },
-      )
-      // Peer shared library source directories — injects test.library.N.{name,location,implicit}
-      // for each declared peer library. Indices start at 1 (the project's own library is at 0).
-      jvmArgumentProviders.add(
-        objects.newInstance<PeerLibrariesArgumentProvider>().apply {
-          entries.set(peerLibraryEntries)
-          selfLibraryName.set(sharedLibrary.libraryName)
+        objects.newInstance<SharedLibrariesArgumentProvider>().apply {
+          entries = selfLibraryEntry.zip(peerLibraryEntries) { self, peers -> listOf(self) + peers }
+          sourceDirectories.from(syncTask.flatMap { it.destinationDir })
           sourceDirectories.from(peerLibrarySourceFiles)
         },
       )
@@ -506,7 +496,7 @@ val integrationTestSuite =
       groovy.setSrcDirs(listOf("test/integration/groovy"))
       resources.setSrcDirs(listOf("test/integration/resources"))
     }
-    jenkins.useTestHarness.set(true)
+    jenkins.useTestHarness = true
   }
 
 tasks.check {

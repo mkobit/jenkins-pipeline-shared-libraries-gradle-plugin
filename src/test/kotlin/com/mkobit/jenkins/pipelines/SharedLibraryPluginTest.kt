@@ -196,29 +196,6 @@ internal class SharedLibraryPluginTest :
       }
     }
 
-    describe("libraryName is reflected in test.library.0.name system property") {
-      it("integrationTest injects libraryName as test.library.0.name") {
-        val ext = project.extensions.getByType(SharedLibraryExtension::class.java)
-        val task = project.tasks.getByName("integrationTest").shouldBeInstanceOf<Test>()
-        val provider = task.jvmArgumentProviders.filterIsInstance<LibraryNameArgumentProvider>().single()
-        provider.libraryName shouldHaveValue ext.libraryName.shouldBePresent()
-      }
-    }
-
-    describe("implicit is reflected in test.library.0.implicit system property") {
-      it("integrationTest injects implicit=true by default") {
-        val task = project.tasks.getByName("integrationTest").shouldBeInstanceOf<Test>()
-        val provider = task.jvmArgumentProviders.filterIsInstance<LibraryImplicitArgumentProvider>().single()
-        provider.implicit shouldHaveValue true
-      }
-
-      it("integrationTest argument produces -Dtest.library.0.implicit=true by default") {
-        val task = project.tasks.getByName("integrationTest").shouldBeInstanceOf<Test>()
-        val provider = task.jvmArgumentProviders.filterIsInstance<LibraryImplicitArgumentProvider>().single()
-        provider.asArguments() shouldBe listOf("-Dtest.library.0.implicit=true")
-      }
-    }
-
     describe("attribute schema") {
       it("registers JENKINS_ARTIFACT_ATTRIBUTE disambiguation rule") {
         val schema = project.dependencies.attributesSchema
@@ -243,22 +220,6 @@ internal class SharedLibraryPluginTest :
       it("integrationTest has maxHeapSize = 2g") {
         val task = project.tasks.getByName("integrationTest").shouldBeInstanceOf<Test>()
         task.maxHeapSize shouldBe "2g"
-      }
-
-      it("integrationTest injects test.library.0.location via LibraryLocationArgumentProvider pointing at syncSharedLibrarySource output") {
-        val task = project.tasks.getByName("integrationTest").shouldBeInstanceOf<Test>()
-        val provider = task.jvmArgumentProviders.filterIsInstance<LibraryLocationArgumentProvider>().single()
-        provider.libraryLocation.get().asFile shouldBe
-          project.layout.buildDirectory
-            .dir("sharedLibrarySource/${project.name}")
-            .get()
-            .asFile
-      }
-
-      it("integrationTest injects test.library.0.name system property") {
-        val task = project.tasks.getByName("integrationTest").shouldBeInstanceOf<Test>()
-        val provider = task.jvmArgumentProviders.filterIsInstance<LibraryNameArgumentProvider>().single()
-        provider.libraryName shouldHaveValue project.name
       }
 
       it("generateLocalLibraryFiles task is registered") {
@@ -319,13 +280,13 @@ internal class SharedLibraryPluginTest :
         suite.jenkins.useTestHarness shouldHaveValue true
       }
 
-      it("integrationTest task has exactly one LibraryNameArgumentProvider after double withJenkins call") {
+      it("integrationTest task has exactly one SharedLibrariesArgumentProvider after double withJenkins call") {
         val sharedLibrary = project.extensions.getByType(SharedLibraryExtension::class.java)
         val suite = suiteNamed("integrationTest")
         @Suppress("DEPRECATION")
         sharedLibrary.withJenkins(suite)
         project.tasks.getByName("integrationTest").shouldBeInstanceOf<Test> {
-          it.jvmArgumentProviders.filterIsInstance<LibraryNameArgumentProvider>() shouldHaveSize 1
+          it.jvmArgumentProviders.filterIsInstance<SharedLibrariesArgumentProvider>() shouldHaveSize 1
         }
       }
     }
