@@ -52,6 +52,7 @@ updates:
     ignore:
       - dependency-name: "gradle"
       - dependency-name: "gradle-wrapper"
+      - dependency-name: "com.gradle.develocity"
     groups:
       jetbrains:
         patterns:
