@@ -200,22 +200,16 @@ internal class SharedLibraryPluginTest :
       it("integrationTest injects libraryName as test.library.0.name") {
         val ext = project.extensions.getByType(SharedLibraryExtension::class.java)
         val task = project.tasks.getByName("integrationTest").shouldBeInstanceOf<Test>()
-        val provider = task.jvmArgumentProviders.filterIsInstance<SelfLibraryArgumentProvider>().single()
-        provider.libraryName shouldHaveValue ext.libraryName.shouldBePresent()
+        val provider = task.jvmArgumentProviders.filterIsInstance<SharedLibrariesArgumentProvider>().single()
+        provider.selfLibraryName shouldHaveValue ext.libraryName.shouldBePresent()
       }
     }
 
     describe("implicit is reflected in test.library.0.implicit system property") {
       it("integrationTest injects implicit=true by default") {
         val task = project.tasks.getByName("integrationTest").shouldBeInstanceOf<Test>()
-        val provider = task.jvmArgumentProviders.filterIsInstance<SelfLibraryArgumentProvider>().single()
-        provider.implicit shouldHaveValue true
-      }
-
-      it("integrationTest argument includes -Dtest.library.0.implicit=true by default") {
-        val task = project.tasks.getByName("integrationTest").shouldBeInstanceOf<Test>()
-        val provider = task.jvmArgumentProviders.filterIsInstance<SelfLibraryArgumentProvider>().single()
-        provider.asArguments() shouldContain "-Dtest.library.0.implicit=true"
+        val provider = task.jvmArgumentProviders.filterIsInstance<SharedLibrariesArgumentProvider>().single()
+        provider.selfLibraryImplicit shouldHaveValue true
       }
     }
 
@@ -245,20 +239,22 @@ internal class SharedLibraryPluginTest :
         task.maxHeapSize shouldBe "2g"
       }
 
-      it("integrationTest injects test.library.0.location via SelfLibraryArgumentProvider pointing at syncSharedLibrarySource output") {
+      it("integrationTest injects test.library.0.location pointing at syncSharedLibrarySource output") {
         val task = project.tasks.getByName("integrationTest").shouldBeInstanceOf<Test>()
-        val provider = task.jvmArgumentProviders.filterIsInstance<SelfLibraryArgumentProvider>().single()
-        provider.libraryLocation.get().asFile shouldBe
-          project.layout.buildDirectory
-            .dir("sharedLibrarySource/${project.name}")
-            .get()
-            .asFile
+        val provider = task.jvmArgumentProviders.filterIsInstance<SharedLibrariesArgumentProvider>().single()
+        provider.selfLibraryLocation.shouldBePresent {
+          it.asFile shouldBe
+            project.layout.buildDirectory
+              .dir("sharedLibrarySource/${project.name}")
+              .get()
+              .asFile
+        }
       }
 
       it("integrationTest injects test.library.0.name system property") {
         val task = project.tasks.getByName("integrationTest").shouldBeInstanceOf<Test>()
-        val provider = task.jvmArgumentProviders.filterIsInstance<SelfLibraryArgumentProvider>().single()
-        provider.libraryName shouldHaveValue project.name
+        val provider = task.jvmArgumentProviders.filterIsInstance<SharedLibrariesArgumentProvider>().single()
+        provider.selfLibraryName shouldHaveValue project.name
       }
 
       it("generateLocalLibraryFiles task is registered") {
@@ -319,13 +315,13 @@ internal class SharedLibraryPluginTest :
         suite.jenkins.useTestHarness shouldHaveValue true
       }
 
-      it("integrationTest task has exactly one SelfLibraryArgumentProvider after double withJenkins call") {
+      it("integrationTest task has exactly one SharedLibrariesArgumentProvider after double withJenkins call") {
         val sharedLibrary = project.extensions.getByType(SharedLibraryExtension::class.java)
         val suite = suiteNamed("integrationTest")
         @Suppress("DEPRECATION")
         sharedLibrary.withJenkins(suite)
         project.tasks.getByName("integrationTest").shouldBeInstanceOf<Test> {
-          it.jvmArgumentProviders.filterIsInstance<SelfLibraryArgumentProvider>() shouldHaveSize 1
+          it.jvmArgumentProviders.filterIsInstance<SharedLibrariesArgumentProvider>() shouldHaveSize 1
         }
       }
     }

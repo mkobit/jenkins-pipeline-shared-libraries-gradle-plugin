@@ -415,7 +415,7 @@ testing.suites.withType<JvmTestSuite>().configureEach {
             }
           val spec = specByIdentifier[ownerId]
           val defaultName = ownerId.substringAfterLast(":").ifEmpty { ownerId }
-          PeerLibraryEntry(
+          SharedLibraryEntry(
             libraryName = spec?.libraryName?.getOrElse(defaultName) ?: defaultName,
             locationPath = artifact.file.absolutePath,
             implicit = spec?.implicit?.getOrElse(true) ?: true,
@@ -430,20 +430,13 @@ testing.suites.withType<JvmTestSuite>().configureEach {
       // embedded Jenkins runtime wiring below. JPU tests in the default `test` suite read these
       // system properties to register peer libraries dynamically.
       val syncTask = tasks.named<SyncSharedLibrarySource>("syncSharedLibrarySource")
-      inputs.files(syncTask).withPropertyName("sharedLibrarySource")
       jvmArgumentProviders.add(
-        objects.newInstance<SelfLibraryArgumentProvider>().apply {
-          libraryLocation = syncTask.flatMap { it.destinationDir }
-          libraryName.set(sharedLibrary.libraryName)
-          implicit.set(sharedLibrary.implicit)
-        },
-      )
-      // Peer shared library source directories — injects test.library.N.{name,location,implicit}
-      // for each declared peer library. Indices start at 1 (the project's own library is at 0).
-      jvmArgumentProviders.add(
-        objects.newInstance<PeerLibrariesArgumentProvider>().apply {
-          entries.set(peerLibraryEntries)
-          selfLibraryName.set(sharedLibrary.libraryName)
+        objects.newInstance<SharedLibrariesArgumentProvider>().apply {
+          selfLibraryName = sharedLibrary.libraryName
+          selfLibraryLocation = syncTask.flatMap { it.destinationDir }
+          selfLibraryImplicit = sharedLibrary.implicit
+          peerEntries = peerLibraryEntries
+          sourceDirectories.from(syncTask.flatMap { it.destinationDir })
           sourceDirectories.from(peerLibrarySourceFiles)
         },
       )
@@ -498,7 +491,7 @@ val integrationTestSuite =
       groovy.setSrcDirs(listOf("test/integration/groovy"))
       resources.setSrcDirs(listOf("test/integration/resources"))
     }
-    jenkins.useTestHarness.set(true)
+    jenkins.useTestHarness = true
   }
 
 tasks.check {

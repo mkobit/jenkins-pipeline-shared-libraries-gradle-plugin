@@ -270,7 +270,7 @@ class SharedLibraryPluginSmokeTest :
                 val t = tasks.integrationTest
                 doLast {
                     val arg = t.get().jvmArgumentProviders
-                        .filterIsInstance<com.mkobit.jenkins.pipelines.SelfLibraryArgumentProvider>()
+                        .filterIsInstance<com.mkobit.jenkins.pipelines.SharedLibrariesArgumentProvider>()
                         .firstOrNull()
                         ?.asArguments()
                         ?.firstOrNull { it.startsWith("-Dtest.library.0.implicit=") }
@@ -300,7 +300,7 @@ class SharedLibraryPluginSmokeTest :
                 val t = tasks.integrationTest
                 doLast {
                     val arg = t.get().jvmArgumentProviders
-                        .filterIsInstance<com.mkobit.jenkins.pipelines.SelfLibraryArgumentProvider>()
+                        .filterIsInstance<com.mkobit.jenkins.pipelines.SharedLibrariesArgumentProvider>()
                         .firstOrNull()
                         ?.asArguments()
                         ?.firstOrNull { it.startsWith("-Dtest.library.0.implicit=") }
