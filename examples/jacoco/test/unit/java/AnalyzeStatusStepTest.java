@@ -12,17 +12,47 @@ public class AnalyzeStatusStepTest extends BasePipelineTest {
         setUp();
     }
 
+    private void invokeAndAssertLogged(Object status, String expected) throws Exception {
+        Script script = loadScript("vars/analyzeStatus.groovy");
+        script.invokeMethod("call", new Object[]{status});
+        assertTrue(
+            getHelper().getCallStack().stream().anyMatch(c -> c.toString().contains(expected)),
+            "expected call stack to contain: " + expected
+        );
+    }
+
     @Test
     void successStatus() throws Exception {
-        Script script = loadScript("vars/analyzeStatus.groovy");
-        script.invokeMethod("call", new Object[]{"SUCCESS"});
-        assertTrue(getHelper().getCallStack().stream().anyMatch(c -> c.toString().contains("The build completed successfully. Great job!")));
+        invokeAndAssertLogged("SUCCESS", "The build completed successfully. Great job!");
+    }
+
+    @Test
+    void failureStatus() throws Exception {
+        invokeAndAssertLogged("FAILURE", "The build failed. Please check the logs for errors.");
+    }
+
+    @Test
+    void unstableStatus() throws Exception {
+        invokeAndAssertLogged("UNSTABLE", "The build is unstable. Some tests might be failing.");
+    }
+
+    @Test
+    void abortedStatus() throws Exception {
+        invokeAndAssertLogged("ABORTED", "The build was aborted manually.");
+    }
+
+    @Test
+    void unrecognizedStatus() throws Exception {
+        invokeAndAssertLogged("WAT", "Unrecognized build status: WAT.");
     }
 
     @Test
     void unknownStatus() throws Exception {
-        Script script = loadScript("vars/analyzeStatus.groovy");
-        script.invokeMethod("call", new Object[]{null});
-        assertTrue(getHelper().getCallStack().stream().anyMatch(c -> c.toString().contains("Status is unknown.")));
+        invokeAndAssertLogged(null, "Status is unknown.");
+    }
+
+    @Test
+    void notBuiltStatusBypassesAnalyzer() throws Exception {
+        invokeAndAssertLogged("NOT_BUILT", "Pipeline has not been built yet.");
     }
 }
