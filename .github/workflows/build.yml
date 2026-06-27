@@ -72,7 +72,7 @@ jobs:
         with:
           java-version: 17
       - name: Generate matrices
-        run: ./gradlew generateGradleCompatMatrix generateJavaCompatMatrix generateJenkinsCompatMatrix generateExamplesMatrix --console=plain
+        run: ./gradlew generateGradleCompatMatrix generateJavaCompatMatrix generateJenkinsCompatMatrix :examples:generateExamplesMatrix --console=plain
       - name: Validate matrix task suffixes
         run: |
           for f in build/ci/gradle-compat-matrix.json \
@@ -89,7 +89,7 @@ jobs:
           echo "gradle-matrix=$(cat build/ci/gradle-compat-matrix.json)" >> "$GITHUB_OUTPUT"
           echo "java-matrix=$(cat build/ci/java-compat-matrix.json)" >> "$GITHUB_OUTPUT"
           echo "jenkins-matrix=$(cat build/ci/jenkins-compat-matrix.json)" >> "$GITHUB_OUTPUT"
-          echo "examples-matrix=$(cat build/ci/examples-matrix.json)" >> "$GITHUB_OUTPUT"
+          echo "examples-matrix=$(cat examples/build/ci/examples-matrix.json)" >> "$GITHUB_OUTPUT"
 
   gate:
     name: Gate (Gradle ${{ needs.build-config.outputs.gradle-version }} / Java ${{ needs.build-config.outputs.java-version }})

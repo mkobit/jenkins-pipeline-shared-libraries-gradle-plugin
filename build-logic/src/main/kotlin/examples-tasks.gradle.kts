@@ -30,19 +30,29 @@ val examplesBuildService =
                 .orElse(1)
     }
 
-val exampleTasks =
+val exampleDirs =
     projectDir
         .listFiles { f -> f.isDirectory && f.resolve("settings.gradle.kts").exists() }
         ?.sortedBy { it.name }
-        ?.map { exampleDir ->
-            tasks.register<Exec>("example-${exampleDir.name}") {
-                group = JavaBasePlugin.VERIFICATION_GROUP
-                description = "Runs check for the ${exampleDir.name} example"
-                workingDir = exampleDir
-                commandLine(gradlew.absolutePath, "check")
-                usesService(examplesBuildService)
-            }
-        } ?: emptyList()
+        .orEmpty()
+
+val exampleTasks =
+    exampleDirs.map { exampleDir ->
+        tasks.register<Exec>("example-${exampleDir.name}") {
+            group = JavaBasePlugin.VERIFICATION_GROUP
+            description = "Runs check for the ${exampleDir.name} example"
+            workingDir = exampleDir
+            commandLine(gradlew.absolutePath, "check")
+            usesService(examplesBuildService)
+        }
+    }
+
+tasks.register<GenerateJsonMatrix>("generateExamplesMatrix") {
+    group = "CI"
+    description = "Writes the examples CI matrix JSON to <build>/ci/examples-matrix.json"
+    matrixEntries = exampleDirs.map { MatrixEntry(mapOf("example" to it.name)) }
+    outputFile = layout.buildDirectory.dir("ci").map { it.file("examples-matrix.json") }
+}
 
 tasks.check {
     dependsOn(exampleTasks)
