@@ -4,7 +4,6 @@ foojay = "1.0.0"
 junit-jupiter = "6.0.3"
 kotest = "6.1.11"
 mockk = "1.14.11"
-okhttp = "5.3.2"
 plugin-publish = "2.1.1"
 spotless = "8.6.0"
 
@@ -15,8 +14,6 @@ kotest-decoroutinator = { module = "io.kotest:kotest-extensions-decoroutinator",
 kotest-engine = { module = "io.kotest:kotest-framework-engine" }
 kotest-runner = { module = "io.kotest:kotest-runner-junit5" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
-okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
-okhttp-mockwebserver = { module = "com.squareup.okhttp3:mockwebserver", version.ref = "okhttp" }
 
 [plugins]
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }

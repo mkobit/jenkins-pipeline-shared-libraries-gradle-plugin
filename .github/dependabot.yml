@@ -24,7 +24,6 @@ updates:
       testing:
         patterns:
           - "io.mockk:*"
-          - "com.squareup.okhttp3:*"
           - "org.junit.*:*"
 
   - package-ecosystem: "gradle"
@@ -64,7 +63,6 @@ updates:
       testing:
         patterns:
           - "io.mockk:*"
-          - "com.squareup.okhttp3:*"
           - "org.junit.*:*"
 
   - package-ecosystem: "github-actions"
