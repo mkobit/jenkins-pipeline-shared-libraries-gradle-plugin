@@ -40,6 +40,7 @@ updates:
       - "/examples/peer-libraries-composite"
       - "/examples/version-catalog"
       - "/examples/jacoco"
+      - "/examples/spock"
     schedule:
       interval: "weekly"
     labels:
