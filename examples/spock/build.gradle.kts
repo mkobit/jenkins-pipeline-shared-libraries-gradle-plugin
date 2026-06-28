@@ -11,7 +11,7 @@ testing {
             }
             dependencies {
                 // JenkinsRule uses JUnit 4 @Rule; spock-junit4 wires that into Spock 2.x.
-                implementation("org.spockframework:spock-junit4:2.3-groovy-3.0")
+                implementation("org.spockframework:spock-junit4:2.4-groovy-3.0")
             }
         }
     }
