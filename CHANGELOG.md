@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.1](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/compare/v0.12.0...v0.12.1) (2026-06-29)
+
+
+### Bug fixes
+
+* restore configuration cache compatibility for plugin consumers ([#269](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/269)) ([8813b17](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/8813b1755bf8a54d71038718d8e4904a0b75158e))
+
 ## [0.12.0](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/compare/v0.11.0...v0.12.0) (2026-06-28)
 
 
