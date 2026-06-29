@@ -87,6 +87,48 @@ tasks.register<GenerateJsonMatrix>("generateExamplesMatrix") {
     outputFile = layout.buildDirectory.dir("ci").map { it.file("examples-matrix.json") }
 }
 
+// Baseline gradle.properties keys every example must declare so CI exercises the
+// plugin under configuration cache and surfaces Gradle deprecations.
+// Adding a new key here will fail validateExampleSettings until every example is updated.
+val requiredExamplePropertyKeys =
+    mapOf(
+        "org.gradle.configuration-cache" to "true",
+        "org.gradle.java.installations.auto-download" to "false",
+        "org.gradle.warning.mode" to "fail",
+    )
+
+val validateExampleSettings =
+    tasks.register("validateExampleSettings") {
+        group = JavaBasePlugin.VERIFICATION_GROUP
+        description = "Asserts every example declares the required gradle.properties baseline"
+        val expectations = requiredExamplePropertyKeys
+        val propertyFiles = exampleDirs.associate { it.name to it.resolve("gradle.properties") }
+        inputs.files(propertyFiles.values).optional(true)
+        inputs.property("expected", expectations)
+        doLast {
+            val problems = mutableListOf<String>()
+            propertyFiles.forEach { (name, file) ->
+                if (!file.exists()) {
+                    problems += "$name: missing gradle.properties (required for example baseline)"
+                    return@forEach
+                }
+                val parsed = java.util.Properties().apply { file.reader().use { load(it) } }
+                expectations.forEach { (key, expected) ->
+                    val actual = parsed.getProperty(key)
+                    if (actual != expected) {
+                        problems +=
+                            "$name: gradle.properties[$key] expected \"$expected\", got \"${actual ?: "<absent>"}\""
+                    }
+                }
+            }
+            if (problems.isNotEmpty()) {
+                throw GradleException(
+                    "Example settings baseline violation:\n  " + problems.joinToString("\n  "),
+                )
+            }
+        }
+    }
+
 tasks.check {
-    dependsOn(exampleTasks)
+    dependsOn(exampleTasks, validateExampleSettings)
 }
