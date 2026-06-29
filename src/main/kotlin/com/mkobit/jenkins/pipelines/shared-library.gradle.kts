@@ -255,21 +255,24 @@ val generateGroovyImportsConfig =
   tasks.register("generateGroovyImportsConfig") {
     description = "Writes a Groovy compiler configuration script that adds Jenkins pipeline default imports"
     val output = layout.buildDirectory.file("tmp/compileGroovyConfig/jenkins-imports.groovy")
-    inputs.property("content", groovyCompilerImportsConfig)
+    // Capture script-level val into a local before doLast so the action lambda does not pull in
+    // the surrounding script object — required for configuration cache compatibility.
+    val content = groovyCompilerImportsConfig
+    inputs.property("content", content)
     outputs.file(output)
     doLast {
       val file = output.get().asFile
       file.parentFile.mkdirs()
-      file.writeText(groovyCompilerImportsConfig)
+      file.writeText(content)
     }
   }
 tasks.named<GroovyCompile>("compileGroovy") {
   inputs.files(generateGroovyImportsConfig)
+  // Capture into a local Provider so the doFirst action lambda does not reference the script-level
+  // TaskProvider — required for configuration cache compatibility.
+  val configScriptFile = generateGroovyImportsConfig.map { it.outputs.files.singleFile }
   doFirst {
-    groovyOptions.configurationScript =
-      generateGroovyImportsConfig
-        .get()
-        .outputs.files.singleFile
+    groovyOptions.configurationScript = configScriptFile.get()
   }
 }
 
@@ -380,11 +383,25 @@ testing.suites.withType<JvmTestSuite>().configureEach {
     )
   }
 
+  // Hoist script-level references into local vals so the Provider chains and task action lambdas
+  // below do not capture the surrounding script object — required for configuration cache.
+  val capturedLibraryName = sharedLibrary.libraryName
+  val capturedLibraryImplicit = sharedLibrary.implicit
+  val capturedDependencySpecs = sharedLibrary.dependencies.specs
+  val capturedPeerLibrarySource = peerLibrarySource
+  val capturedPeerLibrarySourceFiles = peerLibrarySourceFiles
+  val syncTaskProvider = tasks.named<SyncSharedLibrarySource>("syncSharedLibrarySource")
+  val unitTestTaskProvider = tasks.test
+  val capturedJenkinsTestSuiteService = jenkinsTestSuiteService
+  val capturedHpiFiles = hpiFiles
+  val capturedGroovyAllRuntime = groovyAllRuntime
+  val capturedJenkinsWarFile = jenkinsWarFile
+
   // Resolved peer library metadata — maps each artifact back to its DSL spec to derive
   // libraryName and implicit. Computed once per suite; injected into every target task.
   val peerLibraryEntries =
-    peerLibrarySource.flatMap { cfg ->
-      cfg.incoming.artifacts.resolvedArtifacts.zip(sharedLibrary.dependencies.specs) { artifacts, specs ->
+    capturedPeerLibrarySource.flatMap { cfg ->
+      cfg.incoming.artifacts.resolvedArtifacts.zip(capturedDependencySpecs) { artifacts, specs ->
         val specByIdentifier: Map<String, PeerLibrarySpec> = specs.associateBy { it.identifier.get() }
         // Composite build substitution: a GAV dependency resolved via includeBuild() produces a
         // ProjectComponentIdentifier whose projectPath is ":" (the root of the included build),
@@ -429,20 +446,19 @@ testing.suites.withType<JvmTestSuite>().configureEach {
       // Library metadata (self + peers) is exposed on every suite — useTestHarness only gates the
       // embedded Jenkins runtime wiring below. JPU tests in the default `test` suite read these
       // system properties to register peer libraries dynamically.
-      val syncTask = tasks.named<SyncSharedLibrarySource>("syncSharedLibrarySource")
       val selfLibraryEntry =
-        syncTask.flatMap { it.destinationDir }.map { dir ->
+        syncTaskProvider.flatMap { it.destinationDir }.map { dir ->
           SharedLibraryEntry(
-            libraryName = sharedLibrary.libraryName.get(),
+            libraryName = capturedLibraryName.get(),
             locationPath = dir.asFile.absolutePath,
-            implicit = sharedLibrary.implicit.get(),
+            implicit = capturedLibraryImplicit.get(),
           )
         }
       jvmArgumentProviders.add(
         objects.newInstance<SharedLibrariesArgumentProvider>().apply {
           entries = selfLibraryEntry.zip(peerLibraryEntries) { self, peers -> listOf(self) + peers }
-          sourceDirectories.from(syncTask.flatMap { it.destinationDir })
-          sourceDirectories.from(peerLibrarySourceFiles)
+          sourceDirectories.from(syncTaskProvider.flatMap { it.destinationDir })
+          sourceDirectories.from(capturedPeerLibrarySourceFiles)
         },
       )
 
@@ -450,8 +466,8 @@ testing.suites.withType<JvmTestSuite>().configureEach {
 
       // Embedded Jenkins (JenkinsRule) wiring — only for suites that opt in.
       val suiteJenkinsDir = layout.buildDirectory.dir("jenkins-for-test/$name")
-      mustRunAfter(tasks.test)
-      usesService(jenkinsTestSuiteService)
+      mustRunAfter(unitTestTaskProvider)
+      usesService(capturedJenkinsTestSuiteService)
       jvmArgumentProviders.add(
         objects.newInstance<BuildDirJvmArgumentProvider>().apply {
           dir = suiteJenkinsDir
@@ -460,15 +476,15 @@ testing.suites.withType<JvmTestSuite>().configureEach {
       outputs.dir(suiteJenkinsDir)
       // HPI archives require attribute-based resolution (artifactType=hpi) set up at the
       // project level — must be added via classpath += rather than suite.dependencies.
-      classpath += files(hpiFiles)
+      classpath += files(capturedHpiFiles)
       // groovy-all:2.4 is required by CpsFlowDefinition at runtime. classpath += bypasses
       // version-conflict resolution intentionally: without it, Gradle would prefer groovy:3.x.
-      classpath += files(groovyAllRuntime)
+      classpath += files(capturedGroovyAllRuntime)
       maxParallelForks = 1
       maxHeapSize = SharedLibraryDefaults.INTEGRATION_TEST_MAX_HEAP_SIZE
       jvmArgumentProviders.add(
         objects.newInstance<JenkinsWarJvmArgumentProvider>().apply {
-          warFile.fileProvider(jenkinsWarFile)
+          warFile.fileProvider(capturedJenkinsWarFile)
         },
       )
       jvmArgs(
