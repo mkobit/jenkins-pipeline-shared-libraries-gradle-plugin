@@ -399,18 +399,22 @@ testing.suites.withType<JvmTestSuite>().configureEach {
 
   // Resolved peer library metadata — maps each artifact back to its DSL spec to derive
   // libraryName and implicit. Computed once per suite; injected into every target task.
+  //
+  // The intermediate `moduleVersionByComponent` map is computed outside the inner zip combiner
+  // and captured as a plain Map — keeping the Configuration (cfg) out of the combiner closure,
+  // which is what the configuration cache serializes.
   val peerLibraryEntries =
     capturedPeerLibrarySource.flatMap { cfg ->
+      // Composite build substitution: a GAV dependency resolved via includeBuild() produces a
+      // ProjectComponentIdentifier whose projectPath is ":" (the root of the included build),
+      // losing the original group:artifact identity. Retain it by consulting resolutionResult,
+      // which preserves the declared module version even after substitution.
+      val moduleVersionByComponent: Map<ComponentIdentifier, String> =
+        cfg.incoming.resolutionResult.allComponents
+          .mapNotNull { c -> c.moduleVersion?.let { mv -> c.id to "${mv.group}:${mv.name}" } }
+          .toMap()
       cfg.incoming.artifacts.resolvedArtifacts.zip(capturedDependencySpecs) { artifacts, specs ->
         val specByIdentifier: Map<String, PeerLibrarySpec> = specs.associateBy { it.identifier.get() }
-        // Composite build substitution: a GAV dependency resolved via includeBuild() produces a
-        // ProjectComponentIdentifier whose projectPath is ":" (the root of the included build),
-        // losing the original group:artifact identity. Retain it by consulting resolutionResult,
-        // which preserves the declared module version even after substitution.
-        val moduleVersionByComponent =
-          cfg.incoming.resolutionResult.allComponents
-            .mapNotNull { c -> c.moduleVersion?.let { mv -> c.id to "${mv.group}:${mv.name}" } }
-            .toMap()
         artifacts.map { artifact ->
           val owner = artifact.id.componentIdentifier
           val ownerId: String =
@@ -441,6 +445,10 @@ testing.suites.withType<JvmTestSuite>().configureEach {
       }
     }
 
+  // Capture the resolved peer library entries into a local before the targets.configureEach block
+  // so the per-target Provider chain does not pick up the script-level binding name.
+  val capturedPeerLibraryEntries = peerLibraryEntries
+
   targets.configureEach {
     testTask.configure {
       // Library metadata (self + peers) is exposed on every suite — useTestHarness only gates the
@@ -456,7 +464,7 @@ testing.suites.withType<JvmTestSuite>().configureEach {
         }
       jvmArgumentProviders.add(
         objects.newInstance<SharedLibrariesArgumentProvider>().apply {
-          entries = selfLibraryEntry.zip(peerLibraryEntries) { self, peers -> listOf(self) + peers }
+          entries = selfLibraryEntry.zip(capturedPeerLibraryEntries) { self, peers -> listOf(self) + peers }
           sourceDirectories.from(syncTaskProvider.flatMap { it.destinationDir })
           sourceDirectories.from(capturedPeerLibrarySourceFiles)
         },

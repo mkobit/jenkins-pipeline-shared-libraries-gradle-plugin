@@ -47,6 +47,39 @@ val exampleTasks =
         }
     }
 
+// Discover nested included builds inside each example (a child directory with its own
+// settings.gradle.kts). Computed once per example at configuration time so the resulting
+// prune-example-<name> tasks have a stable, CC-safe input.
+val pruneExampleTasks =
+    exampleDirs.map { exampleDir ->
+        val nestedBuildDirs =
+            exampleDir
+                .listFiles { f -> f.isDirectory && f.resolve("settings.gradle.kts").exists() }
+                ?.sortedBy { it.name }
+                .orEmpty()
+        val stateDirs =
+            (listOf(exampleDir) + nestedBuildDirs).flatMap { dir ->
+                listOf(dir.resolve("build"), dir.resolve(".gradle"))
+            }
+        tasks.register<Delete>("prune-example-${exampleDir.name}") {
+            group = "Example Maintenance"
+            description =
+                "Deletes Gradle state (.gradle/, build/) for the ${exampleDir.name} example and any nested included builds"
+            delete(stateDirs)
+            // If the matching example-<name> run task is in the same task graph, run after it
+            // so a single invocation like `:examples:example-foo :examples:prune-example-foo`
+            // produces a fresh-then-cleaned sequence. shouldRunAfter is a soft constraint —
+            // prune-example-<name> can be invoked standalone without the run task being scheduled.
+            shouldRunAfter("example-${exampleDir.name}")
+        }
+    }
+
+tasks.register("pruneAllExamples") {
+    group = "Example Maintenance"
+    description = "Prunes Gradle state from every example"
+    dependsOn(pruneExampleTasks)
+}
+
 tasks.register<GenerateJsonMatrix>("generateExamplesMatrix") {
     group = "CI"
     description = "Writes the examples CI matrix JSON to <build>/ci/examples-matrix.json"
