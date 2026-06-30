@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.2](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/compare/v0.12.1...v0.12.2) (2026-06-30)
+
+
+### Dependency updates
+
+* **deps:** bump org.spockframework:spock-junit4 from 2.3-groovy-3.0 to 2.4-groovy-3.0 in /examples/spock ([#268](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/268)) ([d032766](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/d03276644470c01e366895400f86080676846d95))
+
 ## [0.12.1](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/compare/v0.12.0...v0.12.1) (2026-06-29)
 
 
