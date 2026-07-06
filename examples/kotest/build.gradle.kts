@@ -15,7 +15,7 @@ testing {
                 kotlin.setSrcDirs(listOf("test/unit/kotlin"))
             }
             dependencies {
-                implementation(platform("io.kotest:kotest-bom:6.1.11"))
+                implementation(platform("io.kotest:kotest-bom:6.2.1"))
                 implementation("io.kotest:kotest-framework-engine")
                 implementation("io.kotest:kotest-assertions-core")
                 implementation("io.kotest:kotest-extensions-decoroutinator")
@@ -28,7 +28,7 @@ testing {
                 kotlin.setSrcDirs(listOf("test/integration/kotlin"))
             }
             dependencies {
-                implementation(platform("io.kotest:kotest-bom:6.1.11"))
+                implementation(platform("io.kotest:kotest-bom:6.2.1"))
                 implementation("io.kotest:kotest-framework-engine")
                 implementation("io.kotest:kotest-assertions-core")
                 implementation("io.kotest:kotest-extensions-decoroutinator")
