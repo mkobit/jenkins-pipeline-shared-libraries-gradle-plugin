@@ -10,7 +10,7 @@ tasks {
   val ciDir = layout.buildDirectory.dir("ci")
 
   register<GenerateJsonMatrix>("generateGradleCompatMatrix") {
-    group = "CI"
+    group = "ci"
     description = "Writes the Gradle compat CI matrix JSON to <build>/ci/gradle-compat-matrix.json"
     matrixEntries =
       testMatrix.gradleVersions.map { version ->
@@ -20,7 +20,7 @@ tasks {
   }
 
   register<GenerateJsonMatrix>("generateJavaCompatMatrix") {
-    group = "CI"
+    group = "ci"
     description = "Writes the Java compat CI matrix JSON to <build>/ci/java-compat-matrix.json"
     matrixEntries =
       testMatrix.javaVersions.map { java ->
@@ -30,14 +30,14 @@ tasks {
   }
 
   register<GenerateJenkinsCompatMatrix>("generateJenkinsCompatMatrix") {
-    group = "CI"
+    group = "ci"
     description = "Writes the Jenkins LTS compat CI matrix JSON to <build>/ci/jenkins-compat-matrix.json"
     entries = testMatrix.jenkinsLtsEntries
     outputFile = ciDir.map { it.file("jenkins-compat-matrix.json") }
   }
 
   register<GenerateBuildConfig>("generateBuildConfig") {
-    group = "CI"
+    group = "ci"
     description = "Writes the wrapper Gradle version and Java toolchain spec to <build>/ci/build-config.json"
     gradleVersion = GradleVersion.current().version
     javaVersion = project.java.toolchain.languageVersion.map { it.asInt() }
