@@ -53,7 +53,7 @@ val exampleBuildDirs: Map<File, List<File>> =
 val exampleTasks =
     exampleDirs.map { exampleDir ->
         tasks.register<Exec>("example-${exampleDir.name}") {
-            group = "Example Verification"
+            group = "example verification"
             description = "Runs check for the ${exampleDir.name} example"
             workingDir = exampleDir
             commandLine(gradlew.absolutePath, "check")
@@ -68,7 +68,7 @@ val pruneExampleTasks =
                 listOf(dir.resolve("build"), dir.resolve(".gradle"))
             }
         tasks.register<Delete>("prune-example-${exampleDir.name}") {
-            group = "Example Maintenance"
+            group = "example maintenance"
             description =
                 "Deletes Gradle state (.gradle/, build/) for the ${exampleDir.name} example and any nested included builds"
             delete(stateDirs)
@@ -81,7 +81,7 @@ val pruneExampleTasks =
     }
 
 tasks.register("pruneAllExamples") {
-    group = "Example Maintenance"
+    group = "example maintenance"
     description = "Prunes Gradle state from every example"
     dependsOn(pruneExampleTasks)
 }
