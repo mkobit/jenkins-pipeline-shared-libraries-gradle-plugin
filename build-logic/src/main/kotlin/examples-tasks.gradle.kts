@@ -53,7 +53,7 @@ val exampleBuildDirs: Map<File, List<File>> =
 val exampleTasks =
     exampleDirs.map { exampleDir ->
         tasks.register<Exec>("example-${exampleDir.name}") {
-            group = JavaBasePlugin.VERIFICATION_GROUP
+            group = "Example Verification"
             description = "Runs check for the ${exampleDir.name} example"
             workingDir = exampleDir
             commandLine(gradlew.absolutePath, "check")
