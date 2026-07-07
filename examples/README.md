@@ -6,7 +6,7 @@ This directory contains standalone Gradle builds demonstrating common usage patt
 
 The repository uses a Gradle composite build configuration to include all example projects.
 You must run all Gradle tasks from the repository root using the root Gradle wrapper.
-Do not invoke Gradle from within the individual example directories (e.g., do not `cd` into an example and run gradle).
+Do not invoke Gradle from within the individual example directories (e.g., do not `cd` into an example and run `./gradlew`).
 
 ### Running individual tasks
 
@@ -20,9 +20,9 @@ For example, to run the `test` or `integrationTest` task for the `basic` example
 
 ### Running full checks with memory constraints
 
-The root project provides wrapper tasks in the `:examples` project named `:examples:example-<name>`.
+The root project provides runner tasks in the `:examples` project named `:examples:example-<name>`.
 These tasks run the full `check` suite for an example in a separate, memory-capped process.
-For example, to run the full check for the `basic` example using this wrapper, run:
+For example, to run the full check for the `basic` example using this runner task, run:
 
 ```shell
 ./gradlew :examples:example-basic

@@ -87,7 +87,7 @@ tasks.register("pruneAllExamples") {
 }
 
 tasks.register<GenerateJsonMatrix>("generateExamplesMatrix") {
-    group = "CI"
+    group = "ci"
     description = "Writes the examples CI matrix JSON to <build>/ci/examples-matrix.json"
     matrixEntries = exampleDirs.map { MatrixEntry(mapOf("example" to it.name)) }
     outputFile = layout.buildDirectory.dir("ci").map { it.file("examples-matrix.json") }
