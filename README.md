@@ -122,6 +122,14 @@ Run all examples from the repo root:
 
 For a complete standalone example see the [example repository](https://github.com/mkobit/jenkins-pipeline-shared-library-example).
 
+### IntelliJ IDEA import
+
+The main project and all examples load together in a single IntelliJ IDEA import.
+Open or import the root project directory in the IDE.
+The composite build configuration automatically registers each example as an included build.
+You can run and debug tasks (such as `:examples:example-*` or individual tests) directly from the IDE's Gradle tool window or from the code editor.
+See [examples/README.md](examples/README.md) for detailed instructions and troubleshooting notes on importing and running examples in the IDE.
+
 ## Running tests
 
 ```shell
