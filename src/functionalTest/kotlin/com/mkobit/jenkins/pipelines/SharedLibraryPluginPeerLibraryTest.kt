@@ -45,7 +45,7 @@ class SharedLibraryPluginPeerLibraryTest :
             val sourceLines = result.peerSourceLines()
             sourceLines shouldHaveSize 1
             sourceLines.single() shouldContain "peer-lib"
-            sourceLines.single() shouldContain "project :peer-lib"
+            val singleLine = sourceLines.single(); if (!singleLine.contains("project :peer-lib") && !singleLine.contains("project ':peer-lib'")) throw AssertionError("Expected project reference, got $singleLine")
             result.compileLines().forAtLeastOnePeer()
           }
         }
@@ -912,7 +912,7 @@ private fun List<String>.forAtLeastOnePeer() {
 }
 
 private fun List<String>.shouldContainProject(projectPath: String) {
-  if (none { it.contains("project $projectPath") }) {
+  if (none { it.contains("project $projectPath") || it.contains("project '$projectPath'") }) {
     throw AssertionError("expected at least one line to reference project $projectPath, got:\n${joinToString("\n")}")
   }
 }
