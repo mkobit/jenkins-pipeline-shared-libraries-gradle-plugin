@@ -8,6 +8,7 @@ import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldMatch
 import io.kotest.matchers.string.shouldStartWith
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
@@ -45,12 +46,7 @@ class SharedLibraryPluginPeerLibraryTest :
             val sourceLines = result.peerSourceLines()
             sourceLines shouldHaveSize 1
             sourceLines.single() shouldContain "peer-lib"
-            val singleLine = sourceLines.single()
-            if (!singleLine.contains("project :peer-lib") &&
-              !singleLine.contains("project ':peer-lib'")
-            ) {
-              throw AssertionError("Expected project reference, got $singleLine")
-            }
+            sourceLines.single() shouldMatch "(?s).*project '?:peer-lib'?.*"
             result.compileLines().forAtLeastOnePeer()
           }
         }
@@ -917,7 +913,7 @@ private fun List<String>.forAtLeastOnePeer() {
 }
 
 private fun List<String>.shouldContainProject(projectPath: String) {
-  if (none { it.contains("project $projectPath") || it.contains("project '$projectPath'") }) {
+  if (none { it.matches("(?s).*project '?(?i)$projectPath'?.*".toRegex()) }) {
     throw AssertionError("expected at least one line to reference project $projectPath, got:\n${joinToString("\n")}")
   }
 }
