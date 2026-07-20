@@ -1,0 +1,13 @@
+initscript {
+    repositories {
+        mavenCentral()
+        maven { url = 'https://plugins.gradle.org/m2/' }
+    }
+    dependencies {
+        classpath 'org.gradle:github-dependency-graph-gradle-plugin:1.4.2'
+    }
+}
+try {
+    Class<?> pluginClass = Class.forName("org.gradle.github.dependencygraph.GitHubDependencyGraphPlugin", true, buildscript.classLoader)
+    apply plugin: pluginClass
+} catch (Exception e) {}
