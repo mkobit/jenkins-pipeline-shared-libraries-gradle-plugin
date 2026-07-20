@@ -294,5 +294,5 @@ jobs:
           distribution: temurin
       - uses: gradle/actions/dependency-submission@3f131e8634966bd73d06cc69884922b02e6faf92
         with:
-          build-root-directory: examples/${{ matrix.example }}
+          additional-arguments: "-p examples/${{ matrix.example }}"
           gradle-version: ${{ needs.build-config.outputs.gradle-version }}
