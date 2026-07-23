@@ -275,14 +275,12 @@ jobs:
           java-version: ${{ needs.build-config.outputs.java-version }}
           distribution: temurin
       - uses: gradle/actions/dependency-submission@3f131e8634966bd73d06cc69884922b02e6faf92
-        with:
-          # Every examples/* dir is included via includeBuild(), and each one includes this
-          # build back via pluginManagement.includeBuild("../.."). The dependency-submission
-          # action's ForceDependencyResolutionPlugin wires a resolveAllDependencies task into
-          # every project in the whole composite graph, turning that mutual includeBuild into
-          # a literal task cycle. Exclude the example builds (and their nested peer-library
-          # included builds) so this job only resolves the root build's own graph.
-          dependency-graph-exclude-projects: '^:(basic|junit-groovy|kotest|jacoco|spock|peer-libraries|peer-libraries-composite|explicit-library-name|version-catalog|additional-test-suites|library-resource|notify-lib|deployer|notifier|version-utils)(:.*)?$'
+        env:
+          # See settings.gradle.kts: root includeBuild()s every examples/* dir, and each one
+          # includes root back via pluginManagement, so ForceDependencyResolutionPlugin's
+          # unconditional gradle.includedBuilds walk forms a literal task cycle. This skips
+          # root's forward side of that loop for dependency-submission runs only.
+          GRADLE_DEPENDENCY_SUBMISSION: "true"
 
   dependency-submission-examples:
     name: Submit dependency graph — example/${{ matrix.example }}
@@ -306,7 +304,7 @@ jobs:
         with:
           additional-arguments: "-p examples/${{ matrix.example }}"
           gradle-version: ${{ needs.build-config.outputs.gradle-version }}
-          # Mirror of the exclusion above: this example's settings.gradle.kts includes the
-          # root build back via pluginManagement, which would otherwise reintroduce the same
-          # resolveAllDependencies task cycle.
-          dependency-graph-exclude-projects: '^:jenkins-pipeline-shared-libraries-gradle-plugin(:.*)?$'
+        env:
+          # Root is pulled in here via this example's pluginManagement.includeBuild("../..").
+          # Same flag as the root job: stops root from including every other example back in.
+          GRADLE_DEPENDENCY_SUBMISSION: "true"
