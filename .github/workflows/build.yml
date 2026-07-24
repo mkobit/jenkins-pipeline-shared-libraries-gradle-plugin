@@ -282,27 +282,3 @@ jobs:
           # -P project property (not an env var) since it must survive daemon reuse and
           # propagate into included builds — see the comment in settings.gradle.kts.
           additional-arguments: "-PdependencySubmission=true"
-
-  dependency-submission-examples:
-    name: Submit dependency graph — example/${{ matrix.example }}
-    needs: [build-config, matrix-gen, gate, examples]
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      contents: write
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJSON(needs.matrix-gen.outputs.examples-matrix) }}
-    steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
-      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
-        with:
-          java-version: ${{ needs.build-config.outputs.java-version }}
-          distribution: temurin
-      - uses: gradle/actions/dependency-submission@3f131e8634966bd73d06cc69884922b02e6faf92
-        with:
-          # Root is pulled in here via this example's pluginManagement.includeBuild("../..").
-          # Same flag as the root job: stops root from including every other example back in.
-          additional-arguments: "-p examples/${{ matrix.example }} -PdependencySubmission=true"
-          gradle-version: ${{ needs.build-config.outputs.gradle-version }}
