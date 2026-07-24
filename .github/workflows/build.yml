@@ -262,8 +262,7 @@ jobs:
   dependency-submission:
     name: Submit dependency graph
     needs: [build-config, gate, gradle-compat, platform-compat, jenkins-compat, java-compat, examples]
-    # TODO: drop `|| github.event_name == 'pull_request'` once the -PdependencySubmission fix is confirmed on a PR run.
-    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -287,8 +286,7 @@ jobs:
   dependency-submission-examples:
     name: Submit dependency graph — example/${{ matrix.example }}
     needs: [build-config, matrix-gen, gate, examples]
-    # TODO: drop `|| github.event_name == 'pull_request'` once the -PdependencySubmission fix is confirmed on a PR run.
-    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
