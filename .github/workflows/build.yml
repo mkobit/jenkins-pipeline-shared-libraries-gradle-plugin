@@ -274,6 +274,14 @@ jobs:
           java-version: ${{ needs.build-config.outputs.java-version }}
           distribution: temurin
       - uses: gradle/actions/dependency-submission@3f131e8634966bd73d06cc69884922b02e6faf92
+        with:
+          # See settings.gradle.kts: root includeBuild()s every examples/* dir, and each one
+          # includes root back via pluginManagement, so ForceDependencyResolutionPlugin's
+          # unconditional gradle.includedBuilds walk forms a literal task cycle. This skips
+          # root's forward side of that loop for dependency-submission runs only. Passed as a
+          # -P project property (not an env var) since it must survive daemon reuse and
+          # propagate into included builds — see the comment in settings.gradle.kts.
+          additional-arguments: "-PdependencySubmission=true"
 
   dependency-submission-examples:
     name: Submit dependency graph — example/${{ matrix.example }}
@@ -294,5 +302,7 @@ jobs:
           distribution: temurin
       - uses: gradle/actions/dependency-submission@3f131e8634966bd73d06cc69884922b02e6faf92
         with:
-          additional-arguments: "-p examples/${{ matrix.example }}"
+          # Root is pulled in here via this example's pluginManagement.includeBuild("../..").
+          # Same flag as the root job: stops root from including every other example back in.
+          additional-arguments: "-p examples/${{ matrix.example }} -PdependencySubmission=true"
           gradle-version: ${{ needs.build-config.outputs.gradle-version }}
