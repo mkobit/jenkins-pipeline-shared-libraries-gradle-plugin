@@ -44,7 +44,7 @@ jobs:
       gradle-version: ${{ steps.gen.outputs.gradle-version }}
       java-version: ${{ steps.gen.outputs.java-version }}
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
       - uses: ./.github/actions/setup-env
         with:
           java-version: 17
@@ -67,7 +67,7 @@ jobs:
       jenkins-matrix: ${{ steps.gen.outputs.jenkins-matrix }}
       examples-matrix: ${{ steps.gen.outputs.examples-matrix }}
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
       - uses: ./.github/actions/setup-env
         with:
           java-version: 17
@@ -102,7 +102,7 @@ jobs:
     env:
       DEVELOCITY_PUBLISH: "1"
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
       - uses: ./.github/actions/setup-env
         with:
           java-version: ${{ needs.build-config.outputs.java-version }}
@@ -130,7 +130,7 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJSON(needs.matrix-gen.outputs.gradle-matrix) }}
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
       - uses: ./.github/actions/setup-env
         with:
           java-version: ${{ needs.build-config.outputs.java-version }}
@@ -164,7 +164,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: git config --system core.longpaths true
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
       - uses: ./.github/actions/setup-env
         with:
           java-version: ${{ needs.build-config.outputs.java-version }}
@@ -192,7 +192,7 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJSON(needs.matrix-gen.outputs.jenkins-matrix) }}
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
       - uses: ./.github/actions/setup-env
         with:
           java-version: ${{ needs.build-config.outputs.java-version }}
@@ -218,7 +218,7 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJSON(needs.matrix-gen.outputs.java-matrix) }}
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
       - uses: ./.github/actions/setup-env
         with:
           java-version: ${{ needs.build-config.outputs.java-version }}
@@ -245,7 +245,7 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJSON(needs.matrix-gen.outputs.examples-matrix) }}
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
       - uses: ./.github/actions/setup-env
         with:
           java-version: ${{ needs.build-config.outputs.java-version }}
@@ -268,8 +268,8 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
-      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+      - uses: actions/setup-java@1bcf9fb12cf4aa7d266a90ae39939e61372fe520
         with:
           java-version: ${{ needs.build-config.outputs.java-version }}
           distribution: temurin
