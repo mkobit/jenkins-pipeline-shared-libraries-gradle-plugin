@@ -5,6 +5,6 @@ pipeline-unit = "1.29"
 
 [libraries]
 jenkins-plugins-input = { module = "org.jenkins-ci.plugins:pipeline-input-step", version = "551.vdff487c5998c" }
-jenkins-plugins-lock = { module = "org.6wind.jenkins:lockable-resources", version = "1524.v2c727b_b_e56ef" }
+jenkins-plugins-lock = { module = "org.6wind.jenkins:lockable-resources", version = "1539.v4db_b_fc1cc115" }
 jenkins-plugins-milestone = { module = "org.jenkins-ci.plugins:pipeline-milestone-step", version = "152.v6e22b_8cfc66c" }
 jenkins-plugins-stage = { module = "org.jenkins-ci.plugins:pipeline-stage-step", version = "345.va_96187909426" }
