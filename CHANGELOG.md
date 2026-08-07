@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.2](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/compare/v0.12.1...v0.12.2) (2026-07-26)
+
+
+### Bug fixes
+
+* dependency-submission for composite examples ([#284](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/284)) ([ca95742](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/ca95742047879dafb031ff31bf34837aad0db9e0))
+* exclude included builds from dependency-submission resolution ([#289](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/289)) ([e260911](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/e260911cffb74b96d64287a64719b77068abafa0))
+
+
+### Dependency updates
+
+* bump the kotest group across 1 directory with 2 updates ([#293](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/293)) ([d132e04](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/d132e04dc74b6f125bd7e8169c42762ced804e73))
+* **deps:** bump com.diffplug.spotless from 8.6.0 to 8.7.0 ([#277](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/277)) ([4d76f5d](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/4d76f5d21950370874ecd6882059bfc88a6a6132))
+* **deps:** bump com.diffplug.spotless from 8.7.0 to 8.8.0 ([#286](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/286)) ([5016366](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/5016366dffae7b92a28887bd6570688ccf7929e0))
+* **deps:** bump com.gradle.develocity from 4.4.2 to 4.4.3 ([#274](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/274)) ([f2b3727](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/f2b372745f3ccbbd670e0ba7123975b256962330))
+* **deps:** bump com.gradle.develocity from 4.4.3 to 4.5.0 ([#285](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/285)) ([91ef2e9](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/91ef2e9a8c3506d0d7d06e5b21e289648dc466a4))
+* **deps:** bump io.kotest:kotest-bom from 6.1.11 to 6.2.1 in /examples/kotest in the kotest group across 1 directory ([#273](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/273)) ([9894d32](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/9894d32dfaa15d9d6572f852b105a5d55ed97654))
+* **deps:** bump org.spockframework:spock-junit4 from 2.3-groovy-3.0 to 2.4-groovy-3.0 in /examples/spock ([#268](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/268)) ([d032766](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/d03276644470c01e366895400f86080676846d95))
+* **deps:** bump the kotest group across 1 directory with 2 updates ([#272](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/272)) ([edb1d81](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/edb1d81ceba19c391260265212a1231b4659c675))
+
+
+### Documentation
+
+* add IntelliJ import guide and examples README ([#278](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/issues/278)) ([62b55c4](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/commit/62b55c4082af4eb8077256ed08bd31d7d6337769))
+
 ## [0.12.1](https://github.com/mkobit/jenkins-pipeline-shared-libraries-gradle-plugin/compare/v0.12.0...v0.12.1) (2026-06-29)
 
 
