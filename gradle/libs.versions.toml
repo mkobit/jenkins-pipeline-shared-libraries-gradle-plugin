@@ -2,7 +2,7 @@
 dokka = "2.2.0"
 foojay = "1.0.0"
 junit-jupiter = "6.0.3"
-kotest = "6.2.2"
+kotest = "6.2.3"
 mockk = "1.14.11"
 plugin-publish = "2.1.1"
 spotless = "8.8.0"
