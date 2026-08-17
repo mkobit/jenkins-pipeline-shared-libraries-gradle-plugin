@@ -5,7 +5,7 @@ junit-jupiter = "6.0.3"
 kotest = "6.2.2"
 mockk = "1.14.11"
 plugin-publish = "2.1.1"
-spotless = "8.8.0"
+spotless = "8.9.0"
 
 [libraries]
 kotest-assertions = { module = "io.kotest:kotest-assertions-core" }
