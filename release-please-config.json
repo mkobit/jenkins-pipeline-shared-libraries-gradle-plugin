@@ -12,6 +12,8 @@
       ],
       "bump-minor-pre-major": true,
       "include-v-in-tag": true,
+      "draft": true,
+      "force-tag-creation": true,
       "changelog-sections": [
         {"type": "feat", "section": "Features"},
         {"type": "fix", "section": "Bug fixes"},

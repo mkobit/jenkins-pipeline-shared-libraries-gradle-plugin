@@ -15,16 +15,6 @@ on:
       - '.github/workflows/release.yml'
       - '.github/workflows/pr-title-check.yml'
   pull_request:
-    paths-ignore:
-      - '**.md'
-      - 'LICENSE.txt'
-      - '.gitignore'
-      - 'release-please-config.json'
-      - '.release-please-manifest.json'
-      - '.github/dependabot.yml'
-      - '.github/workflows/release-please.yml'
-      - '.github/workflows/release.yml'
-      - '.github/workflows/pr-title-check.yml'
   workflow_dispatch:
 
 permissions: {}
@@ -258,6 +248,18 @@ jobs:
           report_paths: 'examples/${{ matrix.example }}/build/test-results/**/*.xml'
           check_name: 'Test results — example/${{ matrix.example }}'
           fail_on_failure: false
+
+  required-build:
+    name: Required build
+    if: always()
+    needs: [build-config, matrix-gen, gate, gradle-compat, platform-compat, jenkins-compat, java-compat, examples]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require every build job to succeed
+        env:
+          JOB_RESULTS: ${{ toJSON(needs) }}
+        run: jq -e 'all(.[]; .result == "success")' <<< "$JOB_RESULTS"
 
   dependency-submission:
     name: Submit dependency graph
