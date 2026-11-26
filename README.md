@@ -130,6 +130,15 @@ The composite build configuration automatically registers each example as an inc
 You can run and debug tasks (such as `:examples:example-*` or individual tests) directly from the IDE's Gradle tool window or from the code editor.
 See [examples/README.md](examples/README.md) for detailed instructions and troubleshooting notes on importing and running examples in the IDE.
 
+## Pull requests and releases
+
+The `Required build` check reports the results of the build and compatibility jobs for every pull request.
+Merge to `main` with a squash commit after this check passes.
+
+Release Please keeps the existing `vMAJOR.MINOR.PATCH` tag format and creates a draft GitHub release.
+The release workflow attaches JARs to the draft, publishes to the Gradle Plugin Portal, and then publishes the GitHub release.
+If only the final publication job fails, rerun the failed job to publish the draft without repeating the Plugin Portal upload.
+
 ## Running tests
 
 ```shell

@@ -29,14 +29,47 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92
 
+      - name: Attach artifacts to the draft release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -Eeuo pipefail
+
+          # Release Please creates the tag before it creates the draft.
+          for attempt in {1..12}; do
+            if draft=$(gh release view "$GITHUB_REF_NAME" --json isDraft --jq .isDraft 2>/dev/null); then
+              if [[ "$draft" != true ]]; then
+                printf 'Expected a draft release for %s.\n' "$GITHUB_REF_NAME" >&2
+                exit 1
+              fi
+              break
+            fi
+            if [[ "$attempt" == 12 ]]; then
+              printf 'Could not find the draft release for %s.\n' "$GITHUB_REF_NAME" >&2
+              exit 1
+            fi
+            sleep 5
+          done
+          ./gradlew assemble sourcesJar javadocJar
+          gh release upload "$GITHUB_REF_NAME" build/libs/*.jar --clobber
+
       - name: Publish to Gradle Plugin Portal
         env:
           GRADLE_PUBLISH_KEY: ${{ secrets.GRADLE_PUBLISH_KEY }}
           GRADLE_PUBLISH_SECRET: ${{ secrets.GRADLE_PUBLISH_SECRET }}
         run: ./gradlew publishPlugins --no-build-cache
 
-      - name: Attach artifacts to GitHub release
-        if: github.event_name == 'push'
+  publish-github:
+    name: Publish GitHub release
+    if: github.event_name == 'push'
+    needs: release
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Publish the draft with its assets
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.ref_name }}" build/libs/*.jar
+        run: gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft=false
