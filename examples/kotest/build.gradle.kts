@@ -1,6 +1,6 @@
 plugins {
     id("com.mkobit.jenkins.pipelines.shared-library")
-    kotlin("jvm") version "2.4.0"
+    kotlin("jvm") version "2.4.10"
 }
 
 // TODO(#173): remove once codenarcMain is opt-in or ships a default config
